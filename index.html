@@ -154,7 +154,15 @@
       <button class="rnp-stop" id="rnpStop">■ Stop</button>
     </div>
     <div class="radio-grid" id="radioGrid"></div>
-    <p style="font-size:0.7rem;color:var(--text-dim);margin-top:16px;text-align:center">Stream URLs may vary — tap to try. Add custom stations in settings.</p>
+
+    <!-- ERi-TV Live TV section -->
+    <div class="section-hdr" style="margin-top:24px;margin-bottom:12px">
+      <h2 class="section-title">📺 Live TV</h2>
+      <span style="font-size:0.72rem;color:var(--text-dim)">Eritrean Television</span>
+    </div>
+    <div class="tv-grid" id="tvGrid"></div>
+
+    <p style="font-size:0.7rem;color:var(--text-dim);margin-top:20px;text-align:center">Streams may require a stable connection · Tap card to watch live</p>
   </div>
 
   <!-- TRANSLATE VIEW -->
@@ -457,6 +465,57 @@
     <div class="modal-actions">
       <button class="btn-primary" id="newPlCreate">Create</button>
       <button class="btn-secondary" id="newPlClose">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TV PLAYER OVERLAY -->
+<div class="tv-overlay" id="tvOverlay" style="display:none">
+  <div class="tv-overlay-header">
+    <div class="tv-overlay-info">
+      <span class="tv-live-badge"><span class="radio-live-dot"></span> LIVE</span>
+      <span class="tv-overlay-name" id="tvOverlayName">ERi-TV</span>
+    </div>
+    <div class="tv-overlay-btns">
+      <a id="tvYTLink" href="#" target="_blank" rel="noopener" class="tv-yt-btn">▶ YouTube</a>
+      <button class="tv-close-btn" id="tvClose">✕</button>
+    </div>
+  </div>
+  <div class="tv-iframe-wrap">
+    <iframe id="tvIframe" frameborder="0" allowfullscreen
+      allow="autoplay; encrypted-media; picture-in-picture"
+      referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+  <div class="tv-overlay-footer">
+    <p id="tvOverlayDesc">ERi-TV — Eritrean State Television · Tigrinya · Arabic · English</p>
+    <p style="font-size:0.7rem;margin-top:4px;color:rgba(255,255,255,0.4)">If the stream doesn't load, tap "YouTube" to watch on YouTube</p>
+  </div>
+</div>
+
+<!-- FEEDBACK FAB -->
+<button class="feedback-fab" id="feedbackFab" title="Share your feedback">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+
+<!-- FEEDBACK MODAL -->
+<div class="modal-overlay" id="feedbackModal">
+  <div class="modal-box feedback-modal-box">
+    <h3>💬 Share Your Thoughts</h3>
+    <p class="modal-sub">Help us improve ERI-FAM for the community</p>
+    <div class="star-row" id="starRow">
+      <button class="star-btn" data-val="1">★</button>
+      <button class="star-btn" data-val="2">★</button>
+      <button class="star-btn" data-val="3">★</button>
+      <button class="star-btn" data-val="4">★</button>
+      <button class="star-btn" data-val="5">★</button>
+    </div>
+    <p class="star-label" id="starLabel">Tap to rate</p>
+    <input type="text" id="feedbackName" class="modal-input" placeholder="Your name (optional)" maxlength="50" />
+    <textarea id="feedbackText" class="trans-textarea" placeholder="What do you think of ERI-FAM?  Ideas, bugs, love it, want more…" rows="4" maxlength="500" style="margin-bottom:8px"></textarea>
+    <div class="trans-char-row"><span id="feedbackCharCount">0 / 500</span></div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn-primary" id="feedbackSubmitBtn">Send Feedback</button>
+      <button class="btn-secondary" id="feedbackCloseBtn">Cancel</button>
     </div>
   </div>
 </div>

@@ -77,8 +77,9 @@ function showPage(name) {
   document.querySelectorAll('.sb-item').forEach(b => b.classList.toggle('active', b.getAttribute('data-page') === name));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
   document.getElementById('sidebar').classList.remove('open');
-  if (name === 'tracks') loadTracks();
+  if (name === 'tracks')   loadTracks();
   if (name === 'dashboard') loadDashboard();
+  if (name === 'feedback') loadFeedback();
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -421,3 +422,67 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
     toast('✅ Settings saved');
   } catch(e) { toast('⚠ Save failed: ' + e.message); }
 });
+
+// ── Feedback ───────────────────────────────────────────────────
+let allFeedback = [];
+
+async function loadFeedback() {
+  if (!_db) { toast('⚠ Firebase not connected'); return; }
+  const list = document.getElementById('feedbackList');
+  list.innerHTML = '<p style="padding:20px;color:var(--text-dim);font-size:0.85rem">Loading…</p>';
+  try {
+    const snap = await fbFunctions.getDocs(fbFunctions.query(fbFunctions.collection(_db, 'feedback'), fbFunctions.orderBy('createdAt', 'desc')));
+    allFeedback = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    renderFeedback();
+  } catch(e) {
+    list.innerHTML = `<p style="color:var(--red);padding:20px">${e.message}</p>`;
+  }
+}
+
+function renderFeedback() {
+  const list = document.getElementById('feedbackList');
+  if (!allFeedback.length) {
+    list.innerHTML = '<p style="color:var(--text-dim);padding:20px;font-size:0.85rem">No feedback yet. Share the app with users!</p>';
+    document.getElementById('fbTotal').textContent = '0';
+    document.getElementById('fbAvgRating').textContent = '—';
+    document.getElementById('fbFiveStars').textContent = '0';
+    return;
+  }
+  const total     = allFeedback.length;
+  const avg       = (allFeedback.reduce((a, f) => a + (f.rating || 0), 0) / total).toFixed(1);
+  const fiveStars = allFeedback.filter(f => f.rating === 5).length;
+  document.getElementById('fbTotal').textContent     = total;
+  document.getElementById('fbAvgRating').textContent = avg + ' ★';
+  document.getElementById('fbFiveStars').textContent = fiveStars;
+
+  list.innerHTML = allFeedback.map(f => {
+    const stars = '★'.repeat(f.rating || 0) + '☆'.repeat(5 - (f.rating || 0));
+    const date  = f.createdAt ? new Date(f.createdAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
+    return `<div class="feedback-card" data-docid="${f.docId}">
+      <div class="feedback-card-header">
+        <span class="feedback-stars">${stars}</span>
+        <span class="feedback-meta">${date}</span>
+      </div>
+      ${f.name ? `<div class="feedback-name">${esc(f.name)}</div>` : ''}
+      <div class="feedback-text">${esc(f.message || '')}</div>
+      <div style="text-align:right;margin-top:8px">
+        <button class="feedback-del" data-docid="${f.docId}">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.feedback-del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const docId = btn.getAttribute('data-docid');
+      if (!confirm('Delete this feedback?')) return;
+      try {
+        await fbFunctions.deleteDoc(fbFunctions.doc(_db, 'feedback', docId));
+        allFeedback = allFeedback.filter(f => f.docId !== docId);
+        renderFeedback();
+        toast('🗑 Deleted');
+      } catch(e) { toast('⚠ ' + e.message); }
+    });
+  });
+}
+
+document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);

@@ -1499,3 +1499,180 @@ notifStyle.textContent = `
 `;
 document.head.appendChild(notifStyle);
 
+/* ════════════════════════════════════════════════════════════════
+   ERi-TV + LIVE TV PLAYER
+   ════════════════════════════════════════════════════════════════ */
+const TV_STATIONS = [
+  {
+    id:       'eritv',
+    name:     'ERi-TV',
+    desc:     'Eritrean State Television — News, Culture & Entertainment',
+    lang:     'Tigrinya · Arabic · English',
+    icon:     '📺',
+    thumb:    '',
+    // ERi-TV live YouTube embed (official ERi-TV channel)
+    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCyPNJEIuDrYXKBXBnuDl_xQ&autoplay=1&rel=0',
+    ytUrl:    'https://www.youtube.com/@EritvEritrea/live',
+  },
+  {
+    id:       'eritv2',
+    name:     'ERi-TV 2',
+    desc:     'Culture, Sports & Entertainment Channel',
+    lang:     'Tigrinya · Arabic',
+    icon:     '🎬',
+    thumb:    '',
+    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCyPNJEIuDrYXKBXBnuDl_xQ&autoplay=1&rel=0',
+    ytUrl:    'https://www.youtube.com/@EritvEritrea/live',
+  },
+  {
+    id:       'shaeb',
+    name:     'Shabait TV',
+    desc:     'Official Eritrean government media portal',
+    lang:     'Tigrinya · Arabic · English',
+    icon:     '📡',
+    thumb:    '',
+    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCyPNJEIuDrYXKBXBnuDl_xQ&autoplay=1&rel=0',
+    ytUrl:    'https://shabait.com',
+  },
+];
+
+function renderTVGrid() {
+  const grid = document.getElementById('tvGrid');
+  if (!grid) return;
+  grid.innerHTML = TV_STATIONS.map(s => `
+    <div class="tv-card" data-tvid="${s.id}">
+      <div class="tv-card-thumb">
+        ${s.thumb ? `<img src="${s.thumb}" alt="" loading="lazy" />` : s.icon}
+        <div class="tv-thumb-overlay">
+          <div class="tv-play-btn"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+        </div>
+        <div class="tv-live-pill"><span class="radio-live-dot" style="width:5px;height:5px;background:white"></span> LIVE</div>
+      </div>
+      <div class="tv-card-info">
+        <div class="tv-card-name">${esc(s.name)}</div>
+        <div class="tv-card-desc">${esc(s.desc)}</div>
+        <div class="tv-card-lang">${esc(s.lang)}</div>
+      </div>
+    </div>`).join('');
+  grid.querySelectorAll('.tv-card').forEach(card => {
+    card.addEventListener('click', () => openTVPlayer(card.getAttribute('data-tvid')));
+  });
+}
+
+function openTVPlayer(id) {
+  const station = TV_STATIONS.find(s => s.id === id);
+  if (!station) return;
+  // Pause music while watching TV
+  if (S.playing) { audio.pause(); S.playing = false; updatePlayIcons(); }
+  if (radioAudio) stopRadio();
+  document.getElementById('tvOverlayName').textContent = station.name;
+  document.getElementById('tvOverlayDesc').textContent = `${station.name} — ${station.desc} · ${station.lang}`;
+  document.getElementById('tvYTLink').href = station.ytUrl;
+  document.getElementById('tvIframe').src  = station.embedUrl;
+  document.getElementById('tvOverlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  // Media session
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: `${station.name} — Live`, artist: 'ERi-TV', artwork: [] });
+  }
+}
+
+function closeTVPlayer() {
+  const iframe = document.getElementById('tvIframe');
+  iframe.src = '';
+  document.getElementById('tvOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.getElementById('tvClose').addEventListener('click', closeTVPlayer);
+
+// Render TV grid when radio view is first shown
+document.querySelectorAll('.nav-item').forEach(btn => {
+  if (btn.getAttribute('data-view') === 'radio') {
+    btn.addEventListener('click', renderTVGrid, { once: true });
+  }
+});
+// Also render on init if already on radio view
+renderTVGrid();
+
+/* ════════════════════════════════════════════════════════════════
+   USER FEEDBACK SYSTEM
+   ════════════════════════════════════════════════════════════════ */
+let feedbackRating = 0;
+
+// FAB opens feedback modal
+document.getElementById('feedbackFab').addEventListener('click', () => {
+  feedbackRating = 0;
+  updateStars(0);
+  document.getElementById('feedbackName').value  = '';
+  document.getElementById('feedbackText').value  = '';
+  document.getElementById('feedbackCharCount').textContent = '0 / 500';
+  document.getElementById('starLabel').textContent = 'Tap to rate';
+  openModal('feedbackModal');
+});
+document.getElementById('feedbackCloseBtn').addEventListener('click', () => closeModal('feedbackModal'));
+document.getElementById('feedbackModal').addEventListener('click', e => { if (e.target.id === 'feedbackModal') closeModal('feedbackModal'); });
+
+// Star rating
+const starBtns = document.querySelectorAll('.star-btn');
+const starLabels = ['', 'Poor 😔', 'Fair 🙂', 'Good 👍', 'Great 😊', 'Amazing! 🔥'];
+starBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    feedbackRating = parseInt(btn.getAttribute('data-val'));
+    updateStars(feedbackRating);
+    document.getElementById('starLabel').textContent = starLabels[feedbackRating] || '';
+  });
+  btn.addEventListener('mouseenter', () => updateStars(parseInt(btn.getAttribute('data-val')), true));
+  btn.addEventListener('mouseleave', () => updateStars(feedbackRating));
+});
+
+function updateStars(val, hovering = false) {
+  starBtns.forEach(b => {
+    const bv = parseInt(b.getAttribute('data-val'));
+    b.classList.toggle('active',   !hovering && bv <= val);
+    b.classList.toggle('hovered',   hovering && bv <= val);
+  });
+}
+
+// Character count
+document.getElementById('feedbackText').addEventListener('input', e => {
+  document.getElementById('feedbackCharCount').textContent = e.target.value.length + ' / 500';
+});
+
+// Submit feedback
+document.getElementById('feedbackSubmitBtn').addEventListener('click', async () => {
+  const message = document.getElementById('feedbackText').value.trim();
+  const name    = document.getElementById('feedbackName').value.trim();
+  if (!message) { document.getElementById('feedbackText').focus(); toast('⚠ Please write a message'); return; }
+  if (!feedbackRating) { toast('⚠ Please select a rating'); return; }
+  const btn = document.getElementById('feedbackSubmitBtn');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  try {
+    const ready = await FB_READY;
+    if (ready) {
+      await db.addDoc(db.collection(db._db, 'feedback'), {
+        rating: feedbackRating,
+        message,
+        name: name || 'Anonymous',
+        createdAt: Date.now(),
+        appVersion: '2.0',
+      });
+    } else {
+      // Fallback: store locally so it's not lost
+      const pending = JSON.parse(localStorage.getItem('erifam_feedback_pending') || '[]');
+      pending.push({ rating: feedbackRating, message, name: name || 'Anonymous', createdAt: Date.now() });
+      localStorage.setItem('erifam_feedback_pending', JSON.stringify(pending));
+    }
+    closeModal('feedbackModal');
+    // Thank you animation
+    setTimeout(() => {
+      toast(`🙏  የቐንየለይ (Thank you)! Your feedback was received`);
+    }, 200);
+  } catch(e) {
+    toast('⚠ Could not submit — saved locally');
+    console.warn('[Feedback]', e);
+  } finally {
+    btn.textContent = 'Send Feedback'; btn.disabled = false;
+  }
+});
+

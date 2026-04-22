@@ -815,3 +815,142 @@ svg { display: block; }
   text-align: center; font-size: 0.65rem; color: var(--text-dim);
   padding: 4px 0 0; letter-spacing: 0.5px;
 }
+
+/* ══════════════════════════════════════════════
+   FEEDBACK + ERi-TV — v3
+   ══════════════════════════════════════════════ */
+
+/* ── LIVE TV GRID ─────────────────────────────── */
+.tv-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
+.tv-card {
+  background: var(--card); border-radius: var(--radius); overflow: hidden;
+  cursor: pointer; transition: all 0.2s; border: 2px solid transparent;
+  position: relative;
+}
+.tv-card:hover { background: var(--card-hover); transform: scale(1.01); }
+.tv-card.watching { border-color: var(--red); }
+.tv-card.watching::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: linear-gradient(90deg, var(--red), #ff6b6b);
+}
+.tv-card-thumb {
+  width: 100%; aspect-ratio: 16/9; background: #0a0a14;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem; position: relative; overflow: hidden;
+}
+.tv-card-thumb img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.tv-thumb-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.2s;
+}
+.tv-play-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center;
+}
+.tv-play-btn svg { width: 18px; height: 18px; fill: #000; margin-left: 3px; }
+.tv-live-pill {
+  position: absolute; top: 8px; left: 8px;
+  background: var(--red); color: white;
+  font-size: 0.6rem; font-weight: 800; padding: 2px 7px; border-radius: 4px;
+  display: flex; align-items: center; gap: 4px; letter-spacing: 0.5px;
+}
+.tv-card-info { padding: 10px 12px 12px; }
+.tv-card-name { font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; }
+.tv-card-desc { font-size: 0.72rem; color: var(--text-sub); }
+.tv-card-lang { font-size: 0.64rem; color: var(--text-dim); margin-top: 4px; }
+
+/* ── TV OVERLAY (full-screen player) ─────────────── */
+.tv-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: #000;
+  display: flex; flex-direction: column;
+  animation: fadeIn 0.25s ease;
+}
+.tv-overlay-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+.tv-overlay-info { display: flex; align-items: center; gap: 10px; }
+.tv-live-badge {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--red); padding: 3px 10px; border-radius: 4px;
+  font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; color: white;
+}
+.tv-overlay-name { font-size: 0.95rem; font-weight: 700; color: white; }
+.tv-overlay-btns { display: flex; align-items: center; gap: 10px; }
+.tv-yt-btn {
+  background: var(--red); color: white; padding: 6px 14px;
+  border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+  text-decoration: none; display: flex; align-items: center; gap: 5px;
+}
+.tv-close-btn { color: white; font-size: 1.3rem; padding: 4px 8px; opacity: 0.8; }
+.tv-close-btn:hover { opacity: 1; }
+.tv-iframe-wrap {
+  flex: 1; position: relative; background: #000;
+}
+.tv-iframe-wrap iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+}
+.tv-overlay-footer {
+  padding: 10px 16px; background: rgba(0,0,0,0.8);
+  flex-shrink: 0; text-align: center;
+}
+.tv-overlay-footer p { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+
+/* ── FEEDBACK FAB ─────────────────────────────── */
+.feedback-fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--nav-h) + 16px);
+  z-index: 98;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-dk), var(--blue));
+  color: white; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,179,86,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.feedback-fab svg { width: 20px; height: 20px; }
+.feedback-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(0,179,86,0.5); }
+.feedback-fab:active { transform: scale(0.96); }
+
+/* ── STAR RATING ──────────────────────────────── */
+.feedback-modal-box { max-width: 400px; }
+.star-row {
+  display: flex; gap: 6px; justify-content: center; margin: 4px 0 6px;
+}
+.star-btn {
+  font-size: 2rem; color: var(--border); transition: color 0.15s, transform 0.1s;
+  padding: 2px 4px;
+}
+.star-btn.active, .star-btn.hovered { color: var(--gold); }
+.star-btn:active { transform: scale(1.2); }
+.star-label {
+  text-align: center; font-size: 0.78rem; color: var(--text-sub);
+  margin-bottom: 12px; min-height: 1.2em;
+}
+
+/* ── ADMIN FEEDBACK STYLES ────────────────────── */
+.feedback-list { display: flex; flex-direction: column; gap: 12px; }
+.feedback-card {
+  background: var(--card); border-radius: var(--radius); padding: 16px;
+  border-left: 3px solid var(--green);
+}
+.feedback-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.feedback-stars { color: var(--gold); font-size: 1rem; letter-spacing: 1px; }
+.feedback-meta { font-size: 0.72rem; color: var(--text-dim); }
+.feedback-name { font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; }
+.feedback-text { font-size: 0.88rem; color: var(--text-sub); line-height: 1.6; }
+.feedback-del { color: var(--red); font-size: 0.75rem; font-weight: 600; padding: 4px 8px; }
+.feedback-stats-row {
+  display: flex; gap: 16px; margin-bottom: 20px;
+  background: var(--card); border-radius: var(--radius); padding: 14px 18px;
+}
+.fb-stat { text-align: center; flex: 1; }
+.fb-stat-num { font-size: 1.5rem; font-weight: 800; color: var(--gold); }
+.fb-stat-label { font-size: 0.72rem; color: var(--text-sub); margin-top: 3px; }
