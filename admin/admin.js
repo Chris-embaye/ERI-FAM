@@ -192,6 +192,7 @@ async function uploadAll() {
   const album   = document.getElementById('metaAlbum').value.trim();
   const genre   = document.getElementById('metaGenre').value.trim();
   const artwork = document.getElementById('metaArtwork').value.trim();
+  const lyrics  = document.getElementById('metaLyrics').value.trim();
   const tags    = document.getElementById('metaTags').value.split(',').map(t => t.trim()).filter(Boolean);
   if (!title || !artist) { toast('⚠ Title and Artist are required'); return; }
   const progDiv  = document.getElementById('uploadProgress');
@@ -235,7 +236,7 @@ async function uploadAll() {
       // Save metadata to Firestore
       await fbFunctions.addDoc(fbFunctions.collection(_db, 'tracks'), {
         id: trackId, title: trackTitle.trim(), artist, album, genre, tags,
-        artwork: artwork || '', url, duration: dur, size: item.file.size,
+        artwork: artwork || '', lyrics: lyrics || '', url, duration: dur, size: item.file.size,
         addedAt: Date.now(), playCount: 0, likes: 0, type: 'cloud'
       });
       item.status = 'done'; done++;
@@ -352,6 +353,7 @@ function openEditModal(docId) {
   document.getElementById('editAlbum').value   = t.album || '';
   document.getElementById('editGenre').value   = t.genre || '';
   document.getElementById('editArtwork').value = t.artwork || '';
+  document.getElementById('editLyrics').value  = t.lyrics || '';
   openModal('editModal');
 }
 document.getElementById('editCancelBtn').addEventListener('click', () => closeModal('editModal'));
@@ -364,6 +366,7 @@ document.getElementById('editSaveBtn').addEventListener('click', async () => {
     album:   document.getElementById('editAlbum').value.trim(),
     genre:   document.getElementById('editGenre').value.trim(),
     artwork: document.getElementById('editArtwork').value.trim(),
+    lyrics:  document.getElementById('editLyrics').value.trim(),
   };
   if (!updates.title || !updates.artist) { toast('Title and Artist required'); return; }
   try {

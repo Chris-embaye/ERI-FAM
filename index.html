@@ -73,6 +73,12 @@
       </div>
     </div>
 
+    <!-- Top Charts -->
+    <div class="top-charts-section" id="topChartsSection" style="display:none">
+      <div class="section-hdr"><h2 class="section-title">🔥 Top Charts</h2><span class="charts-sub">Most played this week</span></div>
+      <div class="chart-scroll" id="chartScroll"></div>
+    </div>
+
     <!-- Sync notification -->
     <div class="sync-banner" id="syncBanner" style="display:none">
       <span class="sync-dot"></span>
@@ -135,6 +141,22 @@
     </div>
   </div>
 
+  <!-- RADIO VIEW -->
+  <div class="view" id="view-radio">
+    <h2 class="section-title" style="margin-bottom:6px">📻 Live Radio</h2>
+    <p style="font-size:0.78rem;color:var(--text-sub);margin-bottom:16px">Stream Eritrean radio stations live</p>
+    <div id="radioNowPlaying" class="radio-now-playing" style="display:none">
+      <div class="rnp-art" id="rnpArt">📻</div>
+      <div class="rnp-info">
+        <div class="rnp-name" id="rnpName">Loading…</div>
+        <div class="rnp-status"><span class="radio-live-dot"></span> Live</div>
+      </div>
+      <button class="rnp-stop" id="rnpStop">■ Stop</button>
+    </div>
+    <div class="radio-grid" id="radioGrid"></div>
+    <p style="font-size:0.7rem;color:var(--text-dim);margin-top:16px;text-align:center">Stream URLs may vary — tap to try. Add custom stations in settings.</p>
+  </div>
+
   <!-- TRANSLATE VIEW -->
   <div class="view" id="view-translate">
     <div class="translate-panel">
@@ -187,6 +209,10 @@
     <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     <span>Library</span>
   </button>
+  <button class="nav-item" data-view="radio">
+    <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>
+    <span>Radio</span>
+  </button>
   <button class="nav-item" data-view="translate">
     <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
     <span>Translate</span>
@@ -231,13 +257,17 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         ID Song
       </button>
+      <button class="viz-toggle-btn" id="vizToggleBtn" title="Visualizer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </button>
     </div>
+    <canvas id="vizCanvas" class="viz-canvas" style="display:none"></canvas>
 
     <div class="fp-info">
       <div class="fp-title-row">
         <div class="fp-titles">
           <h2 class="fp-title" id="fpTitle">Select a track</h2>
-          <p class="fp-artist" id="fpArtist">—</p>
+          <p class="fp-artist fp-artist-clickable" id="fpArtist">—</p>
         </div>
         <button class="like-btn" id="likeBtn" title="Like">
           <svg id="likeIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -272,6 +302,9 @@
       <button class="extra-btn" id="eqBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>EQ</button>
       <button class="extra-btn" id="sleepBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Sleep</button>
       <button class="extra-btn" id="addToPlBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Playlist</button>
+      <button class="extra-btn" id="lyricsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/></svg>Lyrics</button>
+      <button class="extra-btn" id="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
+      <button class="extra-btn" id="dlTrackBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save</button>
     </div>
 
   </div>
@@ -361,6 +394,24 @@
   <div class="sheet-handle"></div>
   <div class="sheet-track-info" id="sheetInfo"></div>
   <div class="sheet-actions" id="sheetActions"></div>
+</div>
+
+<!-- LYRICS PANEL -->
+<div class="side-panel" id="lyricsPanel">
+  <div class="panel-hdr"><h3>🎵 Lyrics</h3><button class="panel-close" id="lyricsClose">✕</button></div>
+  <div class="lyrics-body" id="lyricsBody"><p class="empty-msg" style="padding:24px">No lyrics available for this track.</p></div>
+</div>
+
+<!-- ARTIST MODAL -->
+<div class="modal-overlay" id="artistModal">
+  <div class="modal-box modal-wide">
+    <h3 id="artistModalName">Artist</h3>
+    <p id="artistModalCount" style="margin-top:0;margin-bottom:10px;font-size:0.78rem"></p>
+    <div id="artistModalTracks" class="track-list" style="max-height:55vh;overflow-y:auto"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn-secondary" id="artistModalClose">Close</button>
+    </div>
+  </div>
 </div>
 
 <!-- IDENTIFY MODAL -->

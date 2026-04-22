@@ -48,7 +48,7 @@ const audio = new Audio();
 audio.volume = S.volume;
 audio.preload = 'metadata';
 
-let audioCtx, gainNode, eqBands = [];
+let audioCtx, gainNode, analyserNode, eqBands = [];
 const EQ_FREQS = [60, 170, 310, 600, 1000, 3000, 6000,12000, 14000, 16000];
 const EQ_PRESETS = {
   flat:       [0,0,0,0,0,0,0,0,0,0],
@@ -74,8 +74,11 @@ function initAudioCtx() {
     prev = f;
     eqBands.push(f);
   });
+  analyserNode = audioCtx.createAnalyser();
+  analyserNode.fftSize = 128;
   prev.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
+  gainNode.connect(analyserNode);
+  analyserNode.connect(audioCtx.destination);
 }
 
 // ── IndexedDB ──────────────────────────────────────────────────
@@ -181,13 +184,11 @@ async function importFiles(files) {
     const existing = S.tracks.find(t => t.hashKey === hashKey);
     if (existing) { URL.revokeObjectURL(url); continue; }
 
-    // Extract basic metadata from filename
-    let title = file.name.replace(/\.[^.]+$/, '');
-    let artist = 'Unknown Artist';
-    if (title.includes(' - ')) { [artist, title] = title.split(' - ', 2); }
+    // Smart metadata extraction from filename
+    const { title, artist } = parseFilename(file.name);
 
     const track = {
-      id: uid(), title: title.trim(), artist: artist.trim(),
+      id: uid(), title, artist,
       album: '', duration, size: file.size,
       addedAt: Date.now(), playCount: 0, liked: false,
       type: 'local', hashKey,
@@ -518,6 +519,7 @@ function openTrackSheet(id) {
   document.getElementById('sheetAddPl').onclick  = () => { closeSheet(); openAddToPlaylist(id); };
   document.getElementById('sheetQueue').onclick  = () => { S.queue.push(track); toast('Added to queue'); closeSheet(); };
   document.getElementById('sheetDelete').onclick = () => { deleteTrack(id); closeSheet(); };
+  addCloudSheetActions(track);
   document.getElementById('sheetOverlay').classList.add('open');
   document.getElementById('trackSheet').classList.add('open');
 }
@@ -999,6 +1001,7 @@ async function syncCloud() {
     renderTracks(); updateStats();
     document.getElementById('syncMsg').textContent = `✅ ${S.cloudTracks.length} cloud tracks loaded`;
     setTimeout(() => banner.style.display = 'none', 3000);
+    renderTopCharts();
   } catch(e) {
     console.warn('[Sync]', e);
     banner.style.display = 'none';
@@ -1054,11 +1057,445 @@ async function init() {
   if (vol) { S.volume = vol.value; audio.volume = S.volume; document.getElementById('volSlider').value = S.volume * 100; }
 
   await loadLocalTracks();
+  renderTopCharts();
   buildEqSliders();
   renderPlaylists();
+  renderRadioGrid();
+  initSwipeGestures();
+  initNotificationListener();
+  handlePlayParam();
 
   // Cloud sync if online
   if (navigator.onLine) syncCloud();
 }
 
 init();
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 1 — Smart Filename Parser
+   ════════════════════════════════════════════════════════════════ */
+function parseFilename(filename) {
+  let name = filename.replace(/\.[^.]+$/, '').trim();
+  let artist = 'Unknown Artist', title = name, featStr = '';
+
+  // Remove leading track number: "01 - ", "1. ", "01.", "1 " etc.
+  name = name.replace(/^\d{1,3}[\s.\-]+/, '').trim();
+
+  // Extract feat./ft. section: "(feat. X)", "[ft. X]", "feat. X"
+  const featRx = /[\(\[]?(?:feat|ft)\.?\s+([^\)\]]+)[\)\]]?/i;
+  const featMatch = name.match(featRx);
+  if (featMatch) {
+    featStr = featMatch[1].trim();
+    name = name.replace(featMatch[0], '').trim().replace(/\s{2,}/g, ' ');
+  }
+
+  // Primary split on " - "
+  if (name.includes(' - ')) {
+    const parts = name.split(' - ');
+    artist = parts[0].trim();
+    title  = parts.slice(1).join(' - ').trim();
+  } else if (name.includes(' _ ')) {
+    const parts = name.split(' _ ');
+    artist = parts[0].trim(); title = parts.slice(1).join(' ').trim();
+  } else {
+    title = name;
+  }
+
+  // Clean up stray parens/brackets
+  title  = title.replace(/\s*[\(\[]\s*[\)\]]/g, '').trim();
+  artist = artist.replace(/\s*[\(\[]\s*[\)\]]/g, '').trim();
+
+  if (featStr) title += ` (feat. ${featStr})`;
+  return { title: title || 'Unknown Title', artist: artist || 'Unknown Artist' };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 2 — Waveform / Audio Visualizer
+   ════════════════════════════════════════════════════════════════ */
+let vizActive = false, vizRaf = null;
+
+function startVisualizer() {
+  const canvas = document.getElementById('vizCanvas');
+  if (!analyserNode || !canvas) return;
+  const ctx = canvas.getContext('2d');
+  const buf = new Uint8Array(analyserNode.frequencyBinCount);
+
+  function draw() {
+    if (!vizActive) return;
+    vizRaf = requestAnimationFrame(draw);
+    analyserNode.getByteFrequencyData(buf);
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const barW = (W / buf.length) * 2.2;
+    let x = 0;
+    buf.forEach(val => {
+      const h = (val / 255) * H;
+      const r = 0, g = Math.floor(100 + val * 0.6), b = Math.floor(80 + val * 0.4);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(x, H - h, barW - 1, h);
+      x += barW + 1;
+    });
+  }
+  draw();
+}
+
+function stopVisualizer() {
+  if (vizRaf) cancelAnimationFrame(vizRaf);
+  vizRaf = null;
+  const canvas = document.getElementById('vizCanvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+document.getElementById('vizToggleBtn').addEventListener('click', () => {
+  vizActive = !vizActive;
+  const canvas = document.getElementById('vizCanvas');
+  const btn = document.getElementById('vizToggleBtn');
+  if (vizActive) {
+    canvas.width  = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    canvas.style.display = '';
+    btn.classList.add('active');
+    if (S.playing) startVisualizer();
+  } else {
+    canvas.style.display = 'none';
+    btn.classList.remove('active');
+    stopVisualizer();
+  }
+});
+
+audio.addEventListener('play',  () => { if (vizActive) startVisualizer(); });
+audio.addEventListener('pause', () => stopVisualizer());
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 3 — Swipe Gestures
+   ════════════════════════════════════════════════════════════════ */
+function initSwipeGestures() {
+  // Mini player: swipe left = next, swipe right = prev
+  const mini = document.getElementById('miniPlayer');
+  let mTouchX = 0;
+  mini.addEventListener('touchstart', e => { mTouchX = e.touches[0].clientX; }, { passive: true });
+  mini.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - mTouchX;
+    if (Math.abs(dx) > 50) { dx < 0 ? nextTrack() : prevTrack(); }
+  }, { passive: true });
+
+  // Full player: swipe down = close
+  const fp = document.getElementById('fullPlayer');
+  let fpTouchY = 0;
+  fp.addEventListener('touchstart', e => { fpTouchY = e.touches[0].clientY; }, { passive: true });
+  fp.addEventListener('touchend', e => {
+    const dy = e.changedTouches[0].clientY - fpTouchY;
+    if (dy > 80) closePanel('fullPlayer');
+  }, { passive: true });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 4 — Live Eritrean Radio
+   ════════════════════════════════════════════════════════════════ */
+const RADIO_STATIONS = [
+  { id: 're',    name: 'Radio Erena',       desc: 'Eritrean Diaspora Radio',   lang: 'Tigrinya · Arabic',    icon: '📻', url: 'https://streaming.radioerena.net/radio_erena' },
+  { id: 'dh',    name: 'Dimtsi Hafash',     desc: 'Voice of Broad Masses',     lang: 'Tigrinya · Arabic',    icon: '🎙', url: 'https://stream.eritrea.net/live' },
+  { id: 've',    name: 'Voice of Eritrea',  desc: 'Community Radio',           lang: 'Tigrinya',             icon: '📡', url: 'https://voiceoferitrea.net/stream' },
+  { id: 'awate', name: 'Awate Radio',       desc: 'News & Commentary',         lang: 'Tigrinya · English',   icon: '🗞', url: 'https://awate.com/radio/stream' },
+  { id: 'assna', name: 'Assenna Radio',     desc: 'Independent Eritrean Radio',lang: 'Tigrinya',             icon: '🌍', url: 'https://assenna.com/radio/stream' },
+  { id: 'zara',  name: 'Radio Zara',        desc: 'Eritrean Music & Culture',  lang: 'Tigrinya · English',   icon: '🎶', url: 'https://radiosalina.net/stream' },
+];
+
+let radioAudio = null, currentStation = null;
+
+function renderRadioGrid() {
+  const grid = document.getElementById('radioGrid');
+  grid.innerHTML = RADIO_STATIONS.map(s => `
+    <div class="radio-card${currentStation?.id === s.id ? ' playing' : ''}" data-rid="${s.id}">
+      <div class="radio-card-icon">${s.icon}</div>
+      <div class="radio-card-name">${esc(s.name)}</div>
+      <div class="radio-card-desc">${esc(s.desc)}</div>
+      <div class="radio-card-lang">${esc(s.lang)}</div>
+      ${currentStation?.id === s.id
+        ? '<div class="radio-live-badge"><span class="radio-live-dot"></span> Live</div>'
+        : '<div class="radio-card-lang" style="color:var(--text-dim)">Tap to stream</div>'}
+    </div>`).join('');
+  grid.querySelectorAll('.radio-card').forEach(card => {
+    card.addEventListener('click', () => playRadio(card.getAttribute('data-rid')));
+  });
+}
+
+function playRadio(id) {
+  const station = RADIO_STATIONS.find(s => s.id === id);
+  if (!station) return;
+  if (currentStation?.id === id) { stopRadio(); return; }
+  stopRadio();
+  // Pause main audio
+  if (S.playing) { audio.pause(); S.playing = false; updatePlayIcons(); }
+  radioAudio = new Audio(station.url);
+  radioAudio.crossOrigin = 'anonymous';
+  radioAudio.volume = S.volume;
+  radioAudio.play().catch(() => toast('⚠ Could not connect to this stream'));
+  currentStation = station;
+  const rnp = document.getElementById('radioNowPlaying');
+  document.getElementById('rnpArt').textContent  = station.icon;
+  document.getElementById('rnpName').textContent = station.name;
+  rnp.style.display = '';
+  renderRadioGrid();
+  toast(`📻 ${station.name}`);
+  // Media session for radio
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: station.name, artist: station.desc, album: 'Live Radio', artwork: [] });
+    navigator.mediaSession.setActionHandler('pause', stopRadio);
+    navigator.mediaSession.setActionHandler('play', () => radioAudio?.play());
+  }
+}
+
+function stopRadio() {
+  if (radioAudio) { radioAudio.pause(); radioAudio.src = ''; radioAudio = null; }
+  currentStation = null;
+  document.getElementById('radioNowPlaying').style.display = 'none';
+  renderRadioGrid();
+}
+
+document.getElementById('rnpStop').addEventListener('click', stopRadio);
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 5 — Artist Page (click artist name)
+   ════════════════════════════════════════════════════════════════ */
+document.getElementById('fpArtist').addEventListener('click', () => {
+  const t = S.currentTrack;
+  if (!t || !t.artist || t.artist === '—') return;
+  openArtistModal(t.artist);
+});
+
+function openArtistModal(artistName) {
+  const all = [...S.tracks, ...S.cloudTracks].filter(t => t.artist === artistName);
+  document.getElementById('artistModalName').textContent = artistName;
+  document.getElementById('artistModalCount').textContent = `${all.length} track${all.length !== 1 ? 's' : ''}`;
+  const list = document.getElementById('artistModalTracks');
+  list.innerHTML = all.map((t, i) => `
+    <div class="track-row" data-id="${t.id}" data-idx="${i}">
+      <div class="tr-art">${artEl(t,'list')}</div>
+      <div class="tr-info">
+        <div class="tr-title">${esc(t.title)}</div>
+        <div class="tr-artist">${esc(t.album || fmtTime(t.duration))}</div>
+      </div>
+      <span class="tr-dur">${fmtTime(t.duration)}</span>
+    </div>`).join('');
+  list.querySelectorAll('.track-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const track = all.find(t => t.id === row.getAttribute('data-id'));
+      if (track) { playTrack(track, all); closeModal('artistModal'); }
+    });
+  });
+  openModal('artistModal');
+}
+
+document.getElementById('artistModalClose').addEventListener('click', () => closeModal('artistModal'));
+document.getElementById('artistModal').addEventListener('click', e => { if (e.target.id === 'artistModal') closeModal('artistModal'); });
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 6 — Share a Song
+   ════════════════════════════════════════════════════════════════ */
+document.getElementById('shareBtn').addEventListener('click', async () => {
+  const t = S.currentTrack;
+  if (!t) { toast('Play a track first'); return; }
+  const shareUrl = `${location.origin}${location.pathname}?play=${t.id}`;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: t.title, text: `🎵 ${t.title} — ${t.artist} on ERI-FAM`, url: shareUrl });
+    } catch (e) { if (e.name !== 'AbortError') toast('Share cancelled'); }
+  } else {
+    try { await navigator.clipboard.writeText(shareUrl); toast('📋 Link copied to clipboard!'); }
+    catch { toast('Share: ' + shareUrl); }
+  }
+});
+
+// Handle ?play=trackId on load
+function handlePlayParam() {
+  const params = new URLSearchParams(location.search);
+  const playId = params.get('play');
+  if (!playId) return;
+  const check = setInterval(() => {
+    const track = [...S.tracks, ...S.cloudTracks].find(t => t.id === playId);
+    if (track) { clearInterval(check); playTrack(track, getAllTracks()); openPanel('fullPlayer'); }
+  }, 800);
+  setTimeout(() => clearInterval(check), 10000);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 7 — Top Charts (most played from Firestore)
+   ════════════════════════════════════════════════════════════════ */
+function renderTopCharts() {
+  const section = document.getElementById('topChartsSection');
+  const scroll  = document.getElementById('chartScroll');
+  const all = [...S.cloudTracks, ...S.tracks].filter(t => (t.playCount || 0) > 0);
+  const top = [...all].sort((a, b) => (b.playCount || 0) - (a.playCount || 0)).slice(0, 10);
+  if (!top.length) { section.style.display = 'none'; return; }
+  scroll.innerHTML = top.map((t, i) => `
+    <div class="chart-item" data-id="${t.id}">
+      <div class="chart-item-art">
+        ${t.artwork ? `<img src="${t.artwork}" alt="" loading="lazy" />` : artEl(t,'card')}
+        <div class="chart-rank${i < 3 ? ' top3' : ''}">${i + 1}</div>
+      </div>
+      <div class="chart-item-info">
+        <div class="chart-title">${esc(t.title)}</div>
+        <div class="chart-artist">${esc(t.artist)}</div>
+        <div class="chart-plays">▶ ${t.playCount || 0}</div>
+      </div>
+    </div>`).join('');
+  scroll.querySelectorAll('.chart-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const track = top.find(t => t.id === item.getAttribute('data-id'));
+      if (track) playTrack(track, top);
+    });
+  });
+  section.style.display = '';
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 8 — Lyrics Panel
+   ════════════════════════════════════════════════════════════════ */
+document.getElementById('lyricsBtn').addEventListener('click', () => {
+  const t = S.currentTrack;
+  const body = document.getElementById('lyricsBody');
+  if (!t) { toast('Play a track first'); return; }
+  const lyrics = t.lyrics || '';
+  if (lyrics) {
+    body.innerHTML = `
+      <div class="lyrics-track-info">
+        <h4>${esc(t.title)}</h4><p>${esc(t.artist)}</p>
+      </div>
+      <div class="lyrics-text">${esc(lyrics)}</div>`;
+  } else {
+    body.innerHTML = `
+      <div class="lyrics-track-info"><h4>${esc(t.title)}</h4><p>${esc(t.artist)}</p></div>
+      <p class="empty-msg">No lyrics available for this track.<br>Admin can add lyrics from the admin panel.</p>`;
+  }
+  openPanel('lyricsPanel');
+});
+document.getElementById('lyricsClose').addEventListener('click', () => closePanel('lyricsPanel'));
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 9 — Download Cloud Track for Offline
+   ════════════════════════════════════════════════════════════════ */
+document.getElementById('dlTrackBtn').addEventListener('click', () => {
+  const t = S.currentTrack;
+  if (!t) { toast('Play a track first'); return; }
+  if (t.type === 'local') { toast('✅ Already saved locally'); return; }
+  if (!t.url) { toast('⚠ No download URL'); return; }
+  downloadCloudTrack(t);
+});
+
+async function downloadCloudTrack(track) {
+  if (track._downloading) return;
+  track._downloading = true;
+  toast('⬇ Downloading…');
+  try {
+    const res  = await fetch(track.url);
+    if (!res.ok) throw new Error('Network error');
+    const buf  = await res.arrayBuffer();
+    const local = {
+      ...track,
+      type: 'local',
+      data: buf,
+      hashKey: track.title.toLowerCase() + '_' + Math.round(track.duration || 0),
+      addedAt: Date.now(),
+    };
+    delete local._blobUrl;
+    await idbPut('tracks', local);
+    local._blobUrl = URL.createObjectURL(new Blob([buf]));
+    // Remove cloud copy from S.cloudTracks to avoid duplicate display
+    S.cloudTracks = S.cloudTracks.filter(t => t.id !== track.id);
+    // Add as local
+    const existing = S.tracks.findIndex(t => t.id === track.id);
+    if (existing > -1) S.tracks[existing] = local;
+    else S.tracks.push(local);
+    renderTracks(); updateStats(); renderTopCharts();
+    toast('✅ Saved to your library!');
+  } catch(e) {
+    toast('⚠ Download failed: ' + e.message);
+  } finally {
+    track._downloading = false;
+  }
+}
+
+// Add cloud-only actions (download + share) after the sheet opens
+function addCloudSheetActions(track) {
+  if (track.type !== 'cloud') return;
+  const actions = document.getElementById('sheetActions');
+  const dlBtn = document.createElement('button');
+  dlBtn.className = 'sheet-action';
+  dlBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:var(--text-sub)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save Offline`;
+  dlBtn.onclick = () => { downloadCloudTrack(track); closeSheet(); };
+  actions.appendChild(dlBtn);
+  const shareBtn2 = document.createElement('button');
+  shareBtn2.className = 'sheet-action';
+  shareBtn2.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:var(--text-sub)"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share Song`;
+  shareBtn2.onclick = async () => {
+    closeSheet();
+    const url = `${location.origin}${location.pathname}?play=${track.id}`;
+    if (navigator.share) { try { await navigator.share({ title: track.title, text: `🎵 ${track.title} — ${track.artist}`, url }); } catch(e) {} }
+    else { try { await navigator.clipboard.writeText(url); toast('📋 Link copied!'); } catch(e) {} }
+  };
+  actions.appendChild(shareBtn2);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FEATURE 10 — Push Notification Listener
+   ════════════════════════════════════════════════════════════════ */
+async function initNotificationListener() {
+  const ready = await FB_READY;
+  if (!ready) return;
+  let lastCheck = Date.now() - 60000;
+  try {
+    db.onSnapshot(
+      db.query(db.collection(db._db, 'notifications'), db.orderBy('createdAt', 'desc')),
+      snap => {
+        snap.docChanges().forEach(change => {
+          if (change.type === 'added') {
+            const n = change.doc.data();
+            if ((n.createdAt || 0) > lastCheck) {
+              lastCheck = Date.now();
+              showInAppNotification(n);
+            }
+          }
+        });
+      }
+    );
+  } catch(e) { console.warn('[Notifications]', e); }
+}
+
+function showInAppNotification(n) {
+  const el = document.createElement('div');
+  el.className = 'notif-banner';
+  el.innerHTML = `
+    <div class="notif-inner">
+      <span class="notif-icon">🔔</span>
+      <div class="notif-text"><strong>${esc(n.title || '')}</strong><span>${esc(n.body || '')}</span></div>
+      <button class="notif-close">✕</button>
+    </div>`;
+  el.querySelector('.notif-close').onclick = () => el.remove();
+  if (n.url) el.style.cursor = 'pointer', el.addEventListener('click', () => window.open(n.url));
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 8000);
+}
+
+// Notification banner styles (injected dynamically so they don't need separate CSS)
+const notifStyle = document.createElement('style');
+notifStyle.textContent = `
+  .notif-banner {
+    position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+    z-index: 9998; max-width: 360px; width: calc(100% - 32px);
+    background: var(--surface); border: 1px solid rgba(0,179,86,0.4);
+    border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: fadeIn 0.3s ease forwards;
+  }
+  .notif-inner { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  .notif-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .notif-text { flex: 1; min-width: 0; }
+  .notif-text strong { display: block; font-size: 0.88rem; font-weight: 700; }
+  .notif-text span { font-size: 0.78rem; color: var(--text-sub); }
+  .notif-close { color: var(--text-dim); padding: 4px 8px; font-size: 1rem; flex-shrink: 0; }
+`;
+document.head.appendChild(notifStyle);
+
