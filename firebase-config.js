@@ -6,17 +6,18 @@
 // ================================================================
 
 const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey:            "AIzaSyCcvA7TBrkdsfXVSIT-J9U-asNsIKWvX2E",
+  authDomain:        "eri-fam.firebaseapp.com",
+  databaseURL:       "https://eri-fam-default-rtdb.firebaseio.com",
+  projectId:         "eri-fam",
+  storageBucket:     "eri-fam.firebasestorage.app",
+  messagingSenderId: "640644486226",
+  appId:             "1:640644486226:web:9a076e9775c58763cffb8b",
+  measurementId:     "G-GMYL5P3F1P"
 };
 
-// Admin credentials (used in admin panel)
-const ADMIN_EMAIL    = "your@email.com";
-const ADMIN_PASSWORD = "yourpassword";
+// Admin email (pre-fills the login form — password is entered manually for security)
+const ADMIN_EMAIL = "embayechris@gmail.com";
 
 // Music Identification — free tier at https://audd.io
 const AUDD_API_KEY   = "";

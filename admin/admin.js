@@ -27,6 +27,9 @@ async function initFirebase() {
 }
 
 // ── Auth ───────────────────────────────────────────────────────
+// Pre-fill admin email if configured
+if (typeof ADMIN_EMAIL !== 'undefined') document.getElementById('loginEmail').value = ADMIN_EMAIL;
+
 document.getElementById('loginBtn').addEventListener('click', signIn);
 document.getElementById('loginEmail').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
 document.getElementById('loginPass').addEventListener('keydown',  e => { if (e.key === 'Enter') signIn(); });
