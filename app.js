@@ -948,7 +948,7 @@ document.querySelectorAll('.phrase-chip').forEach(chip => {
   });
 });
 
-// ── YouTube → MP3 (via cobalt.tools — free, no backend needed) ──
+// ── YouTube → MP3 ─────────────────────────────────────────────
 document.getElementById('ytBtn').addEventListener('click', () => openModal('ytModal'));
 document.getElementById('ytClose').addEventListener('click', () => closeModal('ytModal'));
 document.getElementById('ytConvertBtn').addEventListener('click', async () => {
@@ -957,35 +957,52 @@ document.getElementById('ytConvertBtn').addEventListener('click', async () => {
     document.getElementById('ytStatus').textContent = '⚠ Enter a valid YouTube URL';
     return;
   }
-  const statusEl = document.getElementById('ytStatus');
+  const statusEl  = document.getElementById('ytStatus');
   const convertBtn = document.getElementById('ytConvertBtn');
   statusEl.textContent = '⏳ Converting… this may take a moment';
   convertBtn.disabled = true;
+
+  // Try cobalt.tools new API (v10+)
+  const cobaltResult = await tryCobalt(url);
+  if (cobaltResult) {
+    triggerDownload(cobaltResult);
+    statusEl.innerHTML = '✅ Download started!<br><small>Save the MP3 then add it to ERI-FAM with the + button.</small>';
+    convertBtn.disabled = false;
+    return;
+  }
+
+  // Fallback: open loader.to in new tab
+  const loaderUrl = `https://loader.to/api/button/?url=${encodeURIComponent(url)}&f=mp3`;
+  statusEl.innerHTML = `Cobalt unavailable — opening <strong>loader.to</strong> as backup…`;
+  setTimeout(() => {
+    window.open(loaderUrl, '_blank', 'noopener');
+    statusEl.innerHTML = '✅ Opened loader.to — download the MP3 then add it to ERI-FAM with the + button.';
+    convertBtn.disabled = false;
+  }, 800);
+});
+
+async function tryCobalt(url) {
+  // cobalt.tools API v10+ (new format)
   try {
-    const res = await fetch('https://api.cobalt.tools/api/json', {
+    const res = await fetch('https://api.cobalt.tools/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ url, isAudioOnly: true, aFormat: 'mp3', filenamePattern: 'basic' })
+      body: JSON.stringify({ url, downloadMode: 'audio', audioFormat: 'mp3', filenamePattern: 'basic' }),
+      signal: AbortSignal.timeout(15000),
     });
+    if (!res.ok) return null;
     const data = await res.json();
-    if (data.url) {
-      const link = document.createElement('a');
-      link.href = data.url;
-      link.target = '_blank';
-      link.rel = 'noopener';
-      link.click();
-      statusEl.textContent = '✅ Download started! Add the MP3 to ERI-FAM using the + button.';
-    } else if (data.status === 'error') {
-      throw new Error(data.text || 'Conversion failed');
-    } else {
-      throw new Error('Could not convert this video');
-    }
-  } catch(e) {
-    statusEl.textContent = '⚠ ' + (e.message || 'Conversion failed — try again');
-  } finally {
-    convertBtn.disabled = false;
-  }
-});
+    if ((data.status === 'tunnel' || data.status === 'redirect') && data.url) return data.url;
+    if (data.url) return data.url;
+    return null;
+  } catch { return null; }
+}
+
+function triggerDownload(href) {
+  const a = document.createElement('a');
+  a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.click();
+}
+
 document.getElementById('ytModal').addEventListener('click', e => { if (e.target.id === 'ytModal') closeModal('ytModal'); });
 
 // ── Firebase Cloud Sync ────────────────────────────────────────
