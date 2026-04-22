@@ -25,5 +25,9 @@ const AUDD_API_KEY   = "";
 // AI Translation — Gemini free at https://aistudio.google.com/app/apikey
 const GEMINI_API_KEY = "";
 
+// Cloudinary (free audio storage — cloudinary.com)
+const CLOUDINARY_CLOUD  = "dcbqqqpmw";
+const CLOUDINARY_PRESET = "eri-fam-music";
+
 // YouTube backend URL (optional — deploy yt-dlp backend separately)
 const YT_BACKEND_URL = "";

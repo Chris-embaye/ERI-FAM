@@ -183,7 +183,10 @@ document.getElementById('uploadAllBtn').addEventListener('click', uploadAll);
 
 async function uploadAll() {
   if (!uploadQueue.length) { toast('No files in queue'); return; }
-  if (!_db || !_st) { toast('⚠ Firebase not connected'); return; }
+  if (!_db) { toast('⚠ Firebase not connected'); return; }
+  const cloudName  = typeof CLOUDINARY_CLOUD  !== 'undefined' ? CLOUDINARY_CLOUD  : '';
+  const preset     = typeof CLOUDINARY_PRESET !== 'undefined' ? CLOUDINARY_PRESET : '';
+  if (!cloudName || !preset) { toast('⚠ Set CLOUDINARY_CLOUD and CLOUDINARY_PRESET in firebase-config.js'); return; }
   const title   = document.getElementById('metaTitle').value.trim();
   const artist  = document.getElementById('metaArtist').value.trim();
   const album   = document.getElementById('metaAlbum').value.trim();
@@ -191,8 +194,8 @@ async function uploadAll() {
   const artwork = document.getElementById('metaArtwork').value.trim();
   const tags    = document.getElementById('metaTags').value.split(',').map(t => t.trim()).filter(Boolean);
   if (!title || !artist) { toast('⚠ Title and Artist are required'); return; }
-  const progDiv = document.getElementById('uploadProgress');
-  const upBar   = document.getElementById('upBar');
+  const progDiv  = document.getElementById('uploadProgress');
+  const upBar    = document.getElementById('upBar');
   const upStatus = document.getElementById('upStatus');
   progDiv.style.display = '';
   let done = 0;
@@ -201,37 +204,47 @@ async function uploadAll() {
     if (item.status === 'done') { done++; continue; }
     upStatus.textContent = `Uploading ${i+1} of ${uploadQueue.length}: ${item.file.name}`;
     try {
-      // Upload audio to Storage
-      const trackId = Date.now().toString(36) + Math.random().toString(36).slice(2);
-      const audioRef = fbFunctions.ref(_st, `music/${trackId}.${item.file.name.split('.').pop()}`);
-      await new Promise((res, rej) => {
-        const task = fbFunctions.uploadBytesResumable(audioRef, item.file, { contentType: item.file.type });
-        task.on('state_changed',
-          snap => { upBar.style.width = (((i + snap.bytesTransferred/snap.totalBytes) / uploadQueue.length) * 100) + '%'; },
-          rej, res
-        );
+      // Upload to Cloudinary (free, no server needed)
+      const form = new FormData();
+      form.append('file', item.file);
+      form.append('upload_preset', preset);
+      form.append('resource_type', 'auto');
+      const xhr = new XMLHttpRequest();
+      const url = await new Promise((res, rej) => {
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`);
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) upBar.style.width = (((i + e.loaded/e.total) / uploadQueue.length) * 100) + '%';
+        };
+        xhr.onload = () => {
+          const data = JSON.parse(xhr.responseText);
+          if (data.secure_url) res(data.secure_url);
+          else rej(new Error(data.error?.message || 'Upload failed'));
+        };
+        xhr.onerror = () => rej(new Error('Network error'));
+        xhr.send(form);
       });
-      const url = await fbFunctions.getDownloadURL(audioRef);
       // Get duration
       const dur = await getFileDuration(item.file);
-      // Save metadata to Firestore
+      // Auto-parse title from filename if multiple files
       const trackTitle = uploadQueue.length > 1
         ? (item.file.name.replace(/\.[^.]+$/,'').includes(' - ')
           ? item.file.name.replace(/\.[^.]+$/,'').split(' - ')[1]
           : item.file.name.replace(/\.[^.]+$/,''))
         : title;
+      const trackId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+      // Save metadata to Firestore
       await fbFunctions.addDoc(fbFunctions.collection(_db, 'tracks'), {
         id: trackId, title: trackTitle.trim(), artist, album, genre, tags,
         artwork: artwork || '', url, duration: dur, size: item.file.size,
         addedAt: Date.now(), playCount: 0, likes: 0, type: 'cloud'
       });
       item.status = 'done'; done++;
-    } catch(e) { item.status = 'error'; console.error('Upload error', e); }
+    } catch(e) { item.status = 'error'; console.error('Upload error', e); toast('⚠ ' + e.message); }
     renderQueue();
   }
   upBar.style.width = '100%';
   upStatus.textContent = `✅ Uploaded ${done} of ${uploadQueue.length} tracks`;
-  toast(`✅ ${done} track${done>1?'s':''} uploaded`);
+  toast(`✅ ${done} track${done>1?'s':''} uploaded to cloud`);
   setTimeout(() => { progDiv.style.display = 'none'; upBar.style.width = '0%'; }, 3000);
   loadDashboard();
 }
