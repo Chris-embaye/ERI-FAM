@@ -946,28 +946,42 @@ document.querySelectorAll('.phrase-chip').forEach(chip => {
   });
 });
 
-// ── YouTube → MP3 ──────────────────────────────────────────────
+// ── YouTube → MP3 (via cobalt.tools — free, no backend needed) ──
 document.getElementById('ytBtn').addEventListener('click', () => openModal('ytModal'));
 document.getElementById('ytClose').addEventListener('click', () => closeModal('ytModal'));
 document.getElementById('ytConvertBtn').addEventListener('click', async () => {
-  const url   = document.getElementById('ytUrl').value.trim();
-  const backend = typeof YT_BACKEND_URL !== 'undefined' ? YT_BACKEND_URL : '';
-  if (!backend) { document.getElementById('ytStatus').textContent = '⚠ YT_BACKEND_URL not set in firebase-config.js. See README for setup.'; return; }
-  if (!url.includes('youtube.com') && !url.includes('youtu.be')) { toast('⚠ Enter a valid YouTube URL'); return; }
-  document.getElementById('ytStatus').textContent = '⏳ Converting…';
-  document.getElementById('ytConvertBtn').disabled = true;
+  const url = document.getElementById('ytUrl').value.trim();
+  if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+    document.getElementById('ytStatus').textContent = '⚠ Enter a valid YouTube URL';
+    return;
+  }
+  const statusEl = document.getElementById('ytStatus');
+  const convertBtn = document.getElementById('ytConvertBtn');
+  statusEl.textContent = '⏳ Converting… this may take a moment';
+  convertBtn.disabled = true;
   try {
-    const res  = await fetch(backend + '/convert', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url }) });
+    const res = await fetch('https://api.cobalt.tools/api/json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ url, isAudioOnly: true, aFormat: 'mp3', filenamePattern: 'basic' })
+    });
     const data = await res.json();
-    if (data.downloadUrl) {
+    if (data.url) {
       const link = document.createElement('a');
-      link.href = data.downloadUrl; link.download = data.title || 'track.mp3'; link.click();
-      document.getElementById('ytStatus').textContent = '✅ Done! Check your downloads.';
-    } else throw new Error(data.error || 'Conversion failed');
+      link.href = data.url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.click();
+      statusEl.textContent = '✅ Download started! Add the MP3 to ERI-FAM using the + button.';
+    } else if (data.status === 'error') {
+      throw new Error(data.text || 'Conversion failed');
+    } else {
+      throw new Error('Could not convert this video');
+    }
   } catch(e) {
-    document.getElementById('ytStatus').textContent = '⚠ ' + e.message;
+    statusEl.textContent = '⚠ ' + (e.message || 'Conversion failed — try again');
   } finally {
-    document.getElementById('ytConvertBtn').disabled = false;
+    convertBtn.disabled = false;
   }
 });
 document.getElementById('ytModal').addEventListener('click', e => { if (e.target.id === 'ytModal') closeModal('ytModal'); });
