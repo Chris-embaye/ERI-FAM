@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>ERI-FAM — Eritrean Music</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#007A3D" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ERI-FAM" />
+  <link rel="apple-touch-icon" href="icons/icon-512.png" />
+  <link rel="icon" href="icons/icon-512.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- INSTALL BANNER -->
+<div id="installBanner" class="install-banner" style="display:none">
+  <div class="install-inner">
+    <img src="icons/icon-512.png" class="ib-icon" alt="ERI-FAM" />
+    <div class="ib-text"><strong>Install ERI-FAM</strong><span>Works offline · No App Store</span></div>
+    <button id="installBtn" class="ib-confirm">Install</button>
+    <button id="installDismiss" class="ib-dismiss">✕</button>
+  </div>
+</div>
+
+<!-- TOP HEADER -->
+<header class="app-header" id="appHeader">
+  <div class="header-left">
+    <img src="icons/icon-512.png" class="header-logo" alt="ERI-FAM" onerror="this.style.display='none'" />
+    <span class="header-title">ERI-<strong>FAM</strong></span>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" id="searchToggleBtn" title="Search">
+      <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </button>
+    <button class="icon-btn" id="ytBtn" title="YouTube to MP3">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.58 7.19a2.76 2.76 0 0 0-1.94-1.95C18 4.8 12 4.8 12 4.8s-6 0-7.64.44A2.76 2.76 0 0 0 2.42 7.19 29 29 0 0 0 2 12a29 29 0 0 0 .42 4.81 2.76 2.76 0 0 0 1.94 1.95C6 19.2 12 19.2 12 19.2s6 0 7.64-.44a2.76 2.76 0 0 0 1.94-1.95A29 29 0 0 0 22 12a29 29 0 0 0-.42-4.81zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>
+    </button>
+    <button class="icon-btn" id="settingsBtn" title="Settings">
+      <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- SEARCH BAR -->
+<div class="search-bar" id="searchBar">
+  <div class="search-wrap">
+    <svg class="search-ico" viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="search" id="searchInput" placeholder="Search songs, artists…" autocomplete="off" spellcheck="false" />
+    <button id="searchClose" class="search-close-btn">✕</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main-content" id="mainContent">
+
+  <!-- HOME VIEW -->
+  <div class="view active" id="view-home">
+
+    <!-- Upload zone -->
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-inner">
+        <svg viewBox="0 0 24 24" class="upload-svg" stroke-width="1.5" fill="none" stroke="currentColor"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        <p><strong>Add Music</strong></p>
+        <p class="upload-sub">Drag & drop MP3 · M4A · FLAC · WAV<br>or <span class="upload-link">tap to browse</span></p>
+        <input type="file" id="fileInput" accept=".mp3,.m4a,.flac,.wav,.ogg,.aac" multiple hidden />
+      </div>
+    </div>
+
+    <!-- Sync notification -->
+    <div class="sync-banner" id="syncBanner" style="display:none">
+      <span class="sync-dot"></span>
+      <span id="syncMsg">Checking for new tracks…</span>
+      <button id="syncDismiss" class="sync-x">✕</button>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="stats-bar" id="statsBar" style="display:none">
+      <span id="statTracks">0 tracks</span>
+      <span class="stat-divider">·</span>
+      <span id="statSize">0 MB</span>
+      <span class="stat-divider">·</span>
+      <button class="stat-sync-btn" id="statSyncBtn">☁ Sync</button>
+    </div>
+
+    <!-- Filter row -->
+    <div class="filter-row" id="filterRow" style="display:none">
+      <button class="filter-chip active" data-filter="all">All</button>
+      <button class="filter-chip" data-filter="local">📱 Local</button>
+      <button class="filter-chip" data-filter="cloud">☁ Cloud</button>
+      <button class="filter-chip" data-filter="liked">❤ Liked</button>
+      <div class="view-toggle-wrap">
+        <button class="view-tog active" id="gridViewBtn" title="Grid">⊞</button>
+        <button class="view-tog" id="listViewBtn" title="List">☰</button>
+      </div>
+    </div>
+
+    <!-- Track grid -->
+    <div class="track-grid" id="trackGrid"></div>
+    <div class="track-list" id="trackList" style="display:none"></div>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🎵</div>
+      <h3>Your library is empty</h3>
+      <p>Upload music above, or sync from the cloud when you're online</p>
+      <button class="btn-primary" onclick="document.getElementById('fileInput').click()">Add Music</button>
+    </div>
+
+  </div>
+
+  <!-- SEARCH VIEW -->
+  <div class="view" id="view-search">
+    <div class="search-results-wrap">
+      <div id="searchResults" class="track-list">
+        <p class="empty-msg">Type to search your library…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIBRARY / PLAYLISTS VIEW -->
+  <div class="view" id="view-library">
+    <div class="section-hdr">
+      <h2 class="section-title">📁 Playlists</h2>
+      <button class="btn-sm" id="newPlaylistBtn">+ New</button>
+    </div>
+    <div class="playlist-grid" id="playlistGrid">
+      <p class="empty-msg">No playlists yet. Create one!</p>
+    </div>
+  </div>
+
+  <!-- TRANSLATE VIEW -->
+  <div class="view" id="view-translate">
+    <div class="translate-panel">
+      <h2 class="section-title">🌐 AI Translator</h2>
+      <p class="trans-sub">Eritrean languages ↔ English</p>
+      <div class="trans-lang-row">
+        <select id="transFrom" class="lang-select">
+          <option value="ti">Tigrinya (ትግርኛ)</option>
+          <option value="ar">Arabic (عربية)</option>
+          <option value="en" selected>English</option>
+          <option value="ti">Tigre (ትግረ)</option>
+        </select>
+        <button class="swap-lang-btn" id="swapLangBtn">⇄</button>
+        <select id="transTo" class="lang-select">
+          <option value="en" selected>English</option>
+          <option value="ti">Tigrinya (ትግርኛ)</option>
+          <option value="ar">Arabic (عربية)</option>
+        </select>
+      </div>
+      <textarea id="transInput" class="trans-textarea" placeholder="Enter text to translate…" rows="5" maxlength="1000"></textarea>
+      <div class="trans-char-row">
+        <span id="transCharCount">0 / 1000</span>
+        <button class="btn-primary" id="transBtn">Translate</button>
+      </div>
+      <div class="trans-output" id="transOutput"><p class="empty-msg">Translation will appear here…</p></div>
+      <div class="phrase-chips" id="phraseChips">
+        <span class="phrase-chip" data-text="ሰላም">ሰላም (Hello)</span>
+        <span class="phrase-chip" data-text="የቐንየለይ">Thank you</span>
+        <span class="phrase-chip" data-text="ሙዚቃ">Music (ሙዚቃ)</span>
+        <span class="phrase-chip" data-text="ሓደ ህዝቢ ሓደ ልቢ">One People One Heart</span>
+        <span class="phrase-chip" data-text="ኤርትራ ሃገረይ ኢያ">Eritrea is my country</span>
+        <span class="phrase-chip" data-text="ርሑስ ጽባሕ">Good morning</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- BOTTOM NAVIGATION -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-item active" data-view="home">
+    <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="nav-item" data-view="search">
+    <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <span>Search</span>
+  </button>
+  <button class="nav-item" data-view="library">
+    <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <span>Library</span>
+  </button>
+  <button class="nav-item" data-view="translate">
+    <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
+    <span>Translate</span>
+  </button>
+</nav>
+
+<!-- MINI PLAYER -->
+<div class="mini-player" id="miniPlayer" style="display:none">
+  <div class="mini-player-inner" id="miniPlayerExpand">
+    <div class="mini-art" id="miniArt"><span class="mini-art-ph">🎵</span></div>
+    <div class="mini-info">
+      <div class="mini-title" id="miniTitle">No track</div>
+      <div class="mini-artist" id="miniArtist">—</div>
+    </div>
+    <div class="mini-btns">
+      <button class="mini-btn" id="miniPrev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+      <button class="mini-btn mini-play" id="miniPlay"><svg id="miniPlayIco" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+      <button class="mini-btn" id="miniNext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+    </div>
+  </div>
+  <div class="mini-prog"><div class="mini-prog-fill" id="miniProgFill"></div></div>
+</div>
+
+<!-- FULL PLAYER -->
+<div class="full-player" id="fullPlayer">
+  <div class="fp-bg" id="fpBg"></div>
+  <div class="fp-overlay"></div>
+  <div class="fp-content">
+
+    <div class="fp-header">
+      <button class="icon-btn" id="fpClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+      <span class="fp-header-label" id="fpLabel">Now Playing</span>
+      <button class="icon-btn" id="fpMenu"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+    </div>
+
+    <div class="fp-art-wrap">
+      <div class="fp-art" id="fpArt">
+        <span class="fp-art-ph">🎵</span>
+        <img id="fpArtImg" src="" alt="" style="display:none" />
+      </div>
+      <button class="id-btn" id="identifyBtn" title="Identify song">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        ID Song
+      </button>
+    </div>
+
+    <div class="fp-info">
+      <div class="fp-title-row">
+        <div class="fp-titles">
+          <h2 class="fp-title" id="fpTitle">Select a track</h2>
+          <p class="fp-artist" id="fpArtist">—</p>
+        </div>
+        <button class="like-btn" id="likeBtn" title="Like">
+          <svg id="likeIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="fp-progress-wrap">
+      <div class="fp-progress-track" id="fpProgressTrack">
+        <div class="fp-progress-fill" id="fpProgFill"></div>
+        <div class="fp-progress-thumb" id="fpProgThumb"></div>
+      </div>
+      <div class="fp-times"><span id="fpCurTime">0:00</span><span id="fpDuration">0:00</span></div>
+    </div>
+
+    <div class="fp-controls">
+      <button class="ctrl-btn" id="shuffleBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg></button>
+      <button class="ctrl-btn ctrl-prev" id="prevBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+      <button class="ctrl-btn ctrl-play" id="playBtn"><svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+      <button class="ctrl-btn ctrl-next" id="nextBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+      <button class="ctrl-btn" id="repeatBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
+    </div>
+
+    <div class="fp-volume">
+      <svg viewBox="0 0 24 24" class="vol-ico" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
+      <input type="range" id="volSlider" min="0" max="100" value="80" class="vol-range" />
+      <svg viewBox="0 0 24 24" class="vol-ico" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    </div>
+
+    <div class="fp-extras">
+      <button class="extra-btn" id="queueBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Queue</button>
+      <button class="extra-btn" id="eqBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>EQ</button>
+      <button class="extra-btn" id="sleepBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Sleep</button>
+      <button class="extra-btn" id="addToPlBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Playlist</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- QUEUE PANEL -->
+<div class="side-panel" id="queuePanel">
+  <div class="panel-hdr"><h3>Up Next</h3><button class="panel-close" id="queueClose">✕</button></div>
+  <div class="queue-list" id="queueList"></div>
+</div>
+
+<!-- EQ PANEL -->
+<div class="side-panel" id="eqPanel">
+  <div class="panel-hdr"><h3>Equalizer</h3><button class="panel-close" id="eqClose">✕</button></div>
+  <div class="eq-content">
+    <div class="eq-presets" id="eqPresets">
+      <button class="eq-pre active" data-preset="flat">Flat</button>
+      <button class="eq-pre" data-preset="bass">Bass Boost</button>
+      <button class="eq-pre" data-preset="treble">Treble</button>
+      <button class="eq-pre" data-preset="vocal">Vocal</button>
+      <button class="eq-pre" data-preset="electronic">Electronic</button>
+    </div>
+    <div class="eq-sliders" id="eqSliders"></div>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="side-panel" id="settingsPanel">
+  <div class="panel-hdr"><h3>⚙️ Settings</h3><button class="panel-close" id="settingsClose">✕</button></div>
+  <div class="settings-body">
+    <div class="settings-section">
+      <h4>Playback</h4>
+      <label class="setting-row"><span>Crossfade</span><input type="range" id="crossfadeSlider" min="0" max="12" value="0" /><span id="crossfadeVal">0s</span></label>
+      <label class="setting-row"><span>Normalize Volume</span><input type="checkbox" id="normalizeCheck" class="toggle" /></label>
+      <label class="setting-row"><span>Gapless Playback</span><input type="checkbox" id="gaplessCheck" class="toggle" checked /></label>
+    </div>
+    <div class="settings-section">
+      <h4>Library</h4>
+      <button class="btn-setting" id="findDupsBtn">🔍 Find & Remove Duplicates</button>
+      <button class="btn-setting" id="syncNowBtn">☁️ Sync from Cloud</button>
+      <button class="btn-setting" id="clearCacheBtn">🗑 Clear Local Cache</button>
+    </div>
+    <div class="settings-section">
+      <h4>Stats</h4>
+      <div class="setting-row"><span>Tracks</span><span id="settingTrackCount">0</span></div>
+      <div class="setting-row"><span>Storage Used</span><span id="settingStorage">0 MB</span></div>
+      <div class="setting-row"><span>App Version</span><span>1.0.0</span></div>
+    </div>
+    <div class="settings-section">
+      <h4>Admin</h4>
+      <button class="btn-setting btn-admin-go" id="goAdminBtn">🔐 Admin Panel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SLEEP TIMER MODAL -->
+<div class="modal-overlay" id="sleepModal">
+  <div class="modal-box">
+    <h3>⏱ Sleep Timer</h3>
+    <p>Stop playback after:</p>
+    <div class="sleep-opts">
+      <button class="sleep-opt" data-min="15">15 min</button>
+      <button class="sleep-opt" data-min="30">30 min</button>
+      <button class="sleep-opt" data-min="45">45 min</button>
+      <button class="sleep-opt" data-min="60">60 min</button>
+      <button class="sleep-opt" data-min="90">90 min</button>
+      <button class="sleep-opt" data-min="0">Cancel Timer</button>
+    </div>
+  </div>
+</div>
+
+<!-- DUPLICATES MODAL -->
+<div class="modal-overlay" id="dupModal">
+  <div class="modal-box modal-wide">
+    <h3>🔍 Duplicate Tracks</h3>
+    <div id="dupList" class="dup-list"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="removeAllDupsBtn">Remove All Duplicates</button>
+      <button class="btn-secondary" id="dupClose">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRACK OPTIONS BOTTOM SHEET -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="bottom-sheet" id="trackSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-track-info" id="sheetInfo"></div>
+  <div class="sheet-actions" id="sheetActions"></div>
+</div>
+
+<!-- IDENTIFY MODAL -->
+<div class="modal-overlay" id="identifyModal">
+  <div class="modal-box">
+    <h3>🎵 Identify Song</h3>
+    <div id="identifyResult"></div>
+    <button class="btn-secondary" id="identifyClose">Close</button>
+  </div>
+</div>
+
+<!-- YOUTUBE TO MP3 MODAL -->
+<div class="modal-overlay" id="ytModal">
+  <div class="modal-box">
+    <h3>▶️ YouTube → MP3</h3>
+    <p class="modal-sub">Paste a YouTube link to convert & download</p>
+    <input type="url" id="ytUrl" class="modal-input" placeholder="https://youtube.com/watch?v=…" />
+    <div class="modal-actions">
+      <button class="btn-primary" id="ytConvertBtn">Convert & Add</button>
+      <button class="btn-secondary" id="ytClose">Cancel</button>
+    </div>
+    <p class="modal-note" id="ytStatus">⚠ Requires YT backend URL set in firebase-config.js</p>
+  </div>
+</div>
+
+<!-- ADD TO PLAYLIST MODAL -->
+<div class="modal-overlay" id="addPlModal">
+  <div class="modal-box">
+    <h3>Add to Playlist</h3>
+    <div id="addPlOptions" class="pl-options"></div>
+    <div class="modal-actions">
+      <button class="btn-sm" id="addPlNew">+ New Playlist</button>
+      <button class="btn-secondary" id="addPlClose">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW PLAYLIST MODAL -->
+<div class="modal-overlay" id="newPlModal">
+  <div class="modal-box">
+    <h3>New Playlist</h3>
+    <input type="text" id="newPlName" class="modal-input" placeholder="Playlist name…" maxlength="50" />
+    <div class="modal-actions">
+      <button class="btn-primary" id="newPlCreate">Create</button>
+      <button class="btn-secondary" id="newPlClose">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- OFFLINE BANNER -->
+<div class="offline-bar" id="offlineBar" style="display:none">📡 Offline — your music still plays!</div>
+
+<script src="firebase-config.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

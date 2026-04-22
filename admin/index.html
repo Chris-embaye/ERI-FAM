@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERI-FAM Admin</title>
+  <link rel="icon" href="../icons/icon-512.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <img src="../icons/icon-512.png" class="login-logo" alt="ERI-FAM" onerror="this.style.display='none'" />
+    <h1>ERI-FAM <span>Admin</span></h1>
+    <p class="login-sub">Sign in to manage your music app</p>
+    <div id="loginError" class="login-error" style="display:none"></div>
+    <input type="email"    id="loginEmail" class="login-input" placeholder="Email address" autocomplete="email" />
+    <input type="password" id="loginPass"  class="login-input" placeholder="Password" autocomplete="current-password" />
+    <button class="btn-login" id="loginBtn">Sign In</button>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div class="admin-app" id="adminApp" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <img src="../icons/icon-512.png" class="sb-logo" alt="ERI-FAM" onerror="this.style.display='none'" />
+      <div class="sb-title">ERI-FAM <span>Admin</span></div>
+    </div>
+    <nav class="sb-nav">
+      <button class="sb-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="sb-item" data-page="upload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        Upload Music
+      </button>
+      <button class="sb-item" data-page="tracks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        Manage Tracks
+      </button>
+      <button class="sb-item" data-page="users">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Users
+      </button>
+      <button class="sb-item" data-page="notify">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Push Notify
+      </button>
+      <button class="sb-item" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        App Settings
+      </button>
+    </nav>
+    <div class="sb-footer">
+      <a href="../" target="_blank" class="sb-app-link">← Open App</a>
+      <button class="sb-signout" id="signOutBtn">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="admin-main" id="adminMain">
+
+    <!-- Mobile header -->
+    <div class="mobile-header">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <span>ERI-FAM Admin</span>
+      <span></span>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <span id="dashDate" class="page-date"></span>
+      </div>
+      <div class="stat-cards" id="statCards">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(0,179,86,0.15);color:#00B356">🎵</div>
+          <div class="stat-info"><div class="stat-num" id="dashTracks">—</div><div class="stat-label">Total Tracks</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(74,144,226,0.15);color:#4A90E2">▶️</div>
+          <div class="stat-info"><div class="stat-num" id="dashPlays">—</div><div class="stat-label">Total Plays</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(245,197,66,0.15);color:#F5C542">💾</div>
+          <div class="stat-info"><div class="stat-num" id="dashSize">—</div><div class="stat-label">Storage Used</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(226,58,68,0.15);color:#E23A44">❤️</div>
+          <div class="stat-info"><div class="stat-num" id="dashLiked">—</div><div class="stat-label">Most Liked</div></div>
+        </div>
+      </div>
+      <div class="dash-row">
+        <div class="dash-panel">
+          <h3>Recent Uploads</h3>
+          <div id="recentUploads" class="admin-track-list"></div>
+        </div>
+        <div class="dash-panel">
+          <h3>Quick Actions</h3>
+          <div class="quick-actions">
+            <button class="qa-btn" onclick="showPage('upload')">⬆ Upload Music</button>
+            <button class="qa-btn" onclick="showPage('notify')">🔔 Push Notification</button>
+            <button class="qa-btn" id="refreshBtn">🔄 Refresh Data</button>
+            <a class="qa-btn" href="../" target="_blank">👁 View App</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD PAGE -->
+    <div class="page" id="page-upload">
+      <div class="page-header"><h1>Upload Music</h1></div>
+
+      <!-- Dropzone -->
+      <div class="upload-zone" id="adminUploadZone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="uz-ico"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        <p><strong>Drop MP3 / M4A / FLAC files here</strong></p>
+        <p class="uz-sub">or <span class="uz-link">click to browse</span></p>
+        <input type="file" id="adminFileInput" accept=".mp3,.m4a,.flac,.wav,.ogg,.aac" multiple hidden />
+      </div>
+
+      <!-- Upload queue -->
+      <div id="uploadQueue" class="upload-queue"></div>
+
+      <!-- Metadata form (shown when file selected) -->
+      <div class="meta-form" id="metaForm" style="display:none">
+        <h3>Track Details</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" id="metaTitle" class="form-input" placeholder="Track title" />
+          </div>
+          <div class="form-group">
+            <label>Artist *</label>
+            <input type="text" id="metaArtist" class="form-input" placeholder="Artist name" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Album</label>
+            <input type="text" id="metaAlbum" class="form-input" placeholder="Album name" />
+          </div>
+          <div class="form-group">
+            <label>Genre</label>
+            <input type="text" id="metaGenre" class="form-input" placeholder="Genre" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Artwork URL (optional)</label>
+          <input type="url" id="metaArtwork" class="form-input" placeholder="https://…" />
+        </div>
+        <div class="form-group">
+          <label>Tags (comma separated)</label>
+          <input type="text" id="metaTags" class="form-input" placeholder="eritrean, tigrinya, traditional" />
+        </div>
+        <div class="upload-actions">
+          <button class="btn-primary" id="uploadAllBtn">⬆ Upload All to Cloud</button>
+          <button class="btn-secondary" id="clearQueueBtn">Clear Queue</button>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div id="uploadProgress" class="upload-progress" style="display:none">
+        <div class="up-bar-wrap"><div class="up-bar" id="upBar"></div></div>
+        <p id="upStatus">Uploading…</p>
+      </div>
+    </div>
+
+    <!-- MANAGE TRACKS PAGE -->
+    <div class="page" id="page-tracks">
+      <div class="page-header">
+        <h1>Manage Tracks</h1>
+        <input type="search" id="trackSearch" class="search-input" placeholder="Search tracks…" />
+      </div>
+      <div class="tracks-toolbar">
+        <span id="trackCount">0 tracks</span>
+        <button class="btn-sm-danger" id="deleteSelectedBtn" style="display:none">Delete Selected</button>
+      </div>
+      <div class="admin-track-list" id="adminTrackList"></div>
+    </div>
+
+    <!-- USERS PAGE -->
+    <div class="page" id="page-users">
+      <div class="page-header"><h1>Users</h1></div>
+      <div class="info-box">
+        <p>👥 User tracking requires Firebase Analytics to be enabled in your project. Anonymous play counts are tracked per track in Firestore.</p>
+        <p style="margin-top:8px">Configure <strong>Firebase Authentication</strong> → <strong>Anonymous</strong> in your Firebase console to enable user tracking.</p>
+        <a href="https://console.firebase.google.com" target="_blank" class="btn-primary" style="display:inline-block;margin-top:12px">Open Firebase Console</a>
+      </div>
+    </div>
+
+    <!-- PUSH NOTIFICATIONS PAGE -->
+    <div class="page" id="page-notify">
+      <div class="page-header"><h1>Push Notification</h1></div>
+      <div class="notify-form">
+        <div class="form-group">
+          <label>Notification Title</label>
+          <input type="text" id="notifyTitle" class="form-input" placeholder="New music added!" maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="notifyBody" class="form-textarea" placeholder="Check out the latest Eritrean music on ERI-FAM…" rows="4" maxlength="300"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Link (optional)</label>
+          <input type="url" id="notifyUrl" class="form-input" placeholder="https://…" />
+        </div>
+        <div class="form-group">
+          <label>Schedule (optional)</label>
+          <input type="datetime-local" id="notifySchedule" class="form-input" />
+        </div>
+        <button class="btn-primary" id="sendNotifyBtn">Send Notification</button>
+        <p class="form-note">Requires Firebase Cloud Messaging (FCM) to be configured. Saves to Firestore /notifications collection which your service worker can listen to.</p>
+      </div>
+    </div>
+
+    <!-- APP SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="page-header"><h1>App Settings</h1></div>
+      <div class="settings-form">
+        <div class="settings-group">
+          <h3>App Info</h3>
+          <div class="form-group">
+            <label>App Name</label>
+            <input type="text" id="setAppName" class="form-input" value="ERI-FAM" />
+          </div>
+          <div class="form-group">
+            <label>Tagline</label>
+            <input type="text" id="setTagline" class="form-input" placeholder="Eritrean Music, Everywhere" />
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3>Featured Track</h3>
+          <div class="form-group">
+            <label>Featured Track ID</label>
+            <input type="text" id="setFeatured" class="form-input" placeholder="Track ID from Firestore" />
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3>Maintenance</h3>
+          <label class="toggle-row">
+            <span>Maintenance Mode</span>
+            <input type="checkbox" id="setMaintenance" class="toggle" />
+          </label>
+          <label class="toggle-row">
+            <span>Allow New User Registrations</span>
+            <input type="checkbox" id="setAllowReg" class="toggle" checked />
+          </label>
+        </div>
+        <button class="btn-primary" id="saveSettingsBtn">Save Settings</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- EDIT TRACK MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <h3>Edit Track</h3>
+    <input type="hidden" id="editId" />
+    <div class="form-group"><label>Title</label><input type="text" id="editTitle" class="form-input" /></div>
+    <div class="form-group"><label>Artist</label><input type="text" id="editArtist" class="form-input" /></div>
+    <div class="form-group"><label>Album</label><input type="text" id="editAlbum" class="form-input" /></div>
+    <div class="form-group"><label>Genre</label><input type="text" id="editGenre" class="form-input" /></div>
+    <div class="form-group"><label>Artwork URL</label><input type="url" id="editArtwork" class="form-input" /></div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="editSaveBtn">Save Changes</button>
+      <button class="btn-secondary" id="editCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="a-toast" id="aToast"></div>
+
+<script src="../firebase-config.js"></script>
+<script type="module" src="admin.js"></script>
+</body>
+</html>
