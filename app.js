@@ -191,7 +191,7 @@ async function importFiles(files) {
       id: uid(), title, artist,
       album: '', duration, size: file.size,
       addedAt: Date.now(), playCount: 0, liked: false,
-      type: 'local', hashKey,
+      type: 'local', hashKey, mimeType: file.type || 'audio/mpeg',
       data: buf,
     };
     await idbPut('tracks', track);
@@ -224,7 +224,7 @@ async function loadLocalTracks() {
 function getBlobUrl(track) {
   if (track._blobUrl) return track._blobUrl;
   if (track.data) {
-    track._blobUrl = URL.createObjectURL(new Blob([track.data]));
+    track._blobUrl = URL.createObjectURL(new Blob([track.data], { type: track.mimeType || 'audio/mpeg' }));
     return track._blobUrl;
   }
   return null;
