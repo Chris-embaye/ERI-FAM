@@ -234,7 +234,7 @@ function getBlobUrl(track) {
 async function playTrack(track, queueTracks) {
   if (!track) return;
   initAudioCtx();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
 
   S.currentTrack = track;
   if (queueTracks) {
@@ -247,7 +247,14 @@ async function playTrack(track, queueTracks) {
 
   audio.src = src;
   audio.volume = S.volume;
-  try { await audio.play(); S.playing = true; } catch(e) { console.warn(e); }
+  try {
+    await audio.play();
+    S.playing = true;
+  } catch(e) {
+    console.warn(e);
+    if (e.name === 'NotAllowedError') toast('⚠ Tap again to start audio');
+    else if (e.name !== 'AbortError') toast('⚠ Could not play — ' + (e.message || e.name));
+  }
 
   track.playCount = (track.playCount || 0) + 1;
   if (track.type === 'local') idbPut('tracks', { ...track, _blobUrl: undefined, data: track.data });
@@ -1521,35 +1528,36 @@ document.head.appendChild(notifStyle);
    ════════════════════════════════════════════════════════════════ */
 const TV_STATIONS = [
   {
-    id:       'eritv',
-    name:     'ERi-TV',
-    desc:     'Eritrean State Television — News, Culture & Entertainment',
-    lang:     'Tigrinya · Arabic · English',
-    icon:     '📺',
-    thumb:    '',
-    // ERi-TV live YouTube embed (official ERi-TV channel)
-    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCyPNJEIuDrYXKBXBnuDl_xQ&autoplay=1&rel=0',
-    ytUrl:    'https://www.youtube.com/@EritvEritrea/live',
+    id:    'eritv',
+    name:  'ERi-TV',
+    desc:  'Eritrean State Television — News, Culture & Entertainment',
+    lang:  'Tigrinya · Arabic · English',
+    icon:  '📺',
+    ytUrl: 'https://www.youtube.com/@EritvEritrea/live',
   },
   {
-    id:       'eritv2',
-    name:     'ERi-TV 2',
-    desc:     'Culture, Sports & Entertainment Channel',
-    lang:     'Tigrinya · Arabic',
-    icon:     '🎬',
-    thumb:    '',
-    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCyPNJEIuDrYXKBXBnuDl_xQ&autoplay=1&rel=0',
-    ytUrl:    'https://www.youtube.com/@EritvEritrea/live',
+    id:    'eritv2',
+    name:  'ERi-TV 2',
+    desc:  'Culture, Sports & Entertainment Channel',
+    lang:  'Tigrinya · Arabic',
+    icon:  '🎬',
+    ytUrl: 'https://www.youtube.com/@EritvEritrea/live',
   },
   {
-    id:       'shaeb',
-    name:     'Shabait TV',
-    desc:     'Official Eritrean government media portal',
-    lang:     'Tigrinya · Arabic · English',
-    icon:     '📡',
-    thumb:    '',
-    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCyPNJEIuDrYXKBXBnuDl_xQ&autoplay=1&rel=0',
-    ytUrl:    'https://shabait.com',
+    id:    'erisat',
+    name:  'ERISAT',
+    desc:  'Eritrean Satellite Television — News & Commentary',
+    lang:  'Tigrinya · English',
+    icon:  '📡',
+    ytUrl: 'https://www.youtube.com/@ERISATEritrea/live',
+  },
+  {
+    id:    'assenna',
+    name:  'Assenna TV',
+    desc:  'Independent Eritrean Media — News & Analysis',
+    lang:  'Tigrinya',
+    icon:  '🎙',
+    ytUrl: 'https://www.youtube.com/@assennacom/live',
   },
 ];
 
@@ -1582,16 +1590,9 @@ function openTVPlayer(id) {
   // Pause music while watching TV
   if (S.playing) { audio.pause(); S.playing = false; updatePlayIcons(); }
   if (radioAudio) stopRadio();
-  document.getElementById('tvOverlayName').textContent = station.name;
-  document.getElementById('tvOverlayDesc').textContent = `${station.name} — ${station.desc} · ${station.lang}`;
-  document.getElementById('tvYTLink').href = station.ytUrl;
-  document.getElementById('tvIframe').src  = station.embedUrl;
-  document.getElementById('tvOverlay').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  // Media session
-  if ('mediaSession' in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({ title: `${station.name} — Live`, artist: 'ERi-TV', artwork: [] });
-  }
+  // YouTube iframes block live embeds — open directly in browser
+  window.open(station.ytUrl, '_blank', 'noopener,noreferrer');
+  toast(`📺 Opening ${station.name} on YouTube…`);
 }
 
 function closeTVPlayer() {
