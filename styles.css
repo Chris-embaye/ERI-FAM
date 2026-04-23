@@ -318,6 +318,113 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 .section-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 14px; }
 .section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 
+/* ── LIBRARY TABS ───────────────────────────────────────── */
+.lib-tabs {
+  display: flex; gap: 0; margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.lib-tab {
+  flex: 1; padding: 10px 4px; font-size: 0.82rem; font-weight: 600;
+  color: var(--text-sub); border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: color 0.18s, border-color 0.18s;
+  text-align: center;
+}
+.lib-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.lib-panel { display: none; }
+.lib-panel.active { display: block; }
+
+/* ── SONGS ACTIONS (Play / Shuffle) ─────────────────────── */
+.songs-actions {
+  display: flex; gap: 10px; margin-bottom: 16px;
+}
+.songs-play-btn, .songs-shuffle-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 13px; border-radius: var(--radius); font-size: 0.9rem; font-weight: 700;
+  transition: opacity 0.15s;
+}
+.songs-play-btn:active, .songs-shuffle-btn:active { opacity: 0.7; }
+.songs-play-btn    { background: var(--accent); color: #fff; }
+.songs-shuffle-btn { background: var(--card); color: var(--text); }
+
+/* ── SONGS LIST ─────────────────────────────────────────── */
+.lib-song-list { display: flex; flex-direction: column; }
+.lib-song-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 4px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.12s; border-radius: 6px;
+}
+.lib-song-row:last-child { border-bottom: none; }
+.lib-song-row:active { background: var(--card); }
+.lib-song-row.playing { color: var(--accent); }
+.lib-song-num  { width: 22px; text-align: center; font-size: 0.75rem; color: var(--text-dim); flex-shrink: 0; }
+.lib-song-row.playing .lib-song-num { color: var(--accent); }
+.lib-song-info { flex: 1; min-width: 0; }
+.lib-song-title  { font-size: 0.88rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-song-row.playing .lib-song-title { color: var(--accent); }
+.lib-song-artist { font-size: 0.73rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-song-dur    { font-size: 0.72rem; color: var(--text-dim); flex-shrink: 0; }
+
+/* ── ARTISTS LIST ───────────────────────────────────────── */
+.lib-list { display: flex; flex-direction: column; }
+.lib-artist-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 11px 4px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.12s; border-radius: 6px;
+}
+.lib-artist-row:last-child { border-bottom: none; }
+.lib-artist-row:active { background: var(--card); }
+.lib-artist-avatar {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--card-hover), var(--card));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; overflow: hidden;
+}
+.lib-artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.lib-artist-name  { flex: 1; font-size: 0.9rem; font-weight: 600; }
+.lib-artist-count { font-size: 0.73rem; color: var(--text-sub); }
+.lib-chevron { color: var(--text-dim); font-size: 0.8rem; }
+
+/* ── ALBUMS GRID ────────────────────────────────────────── */
+.lib-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.lib-album-card {
+  background: var(--card); border-radius: var(--radius);
+  overflow: hidden; cursor: pointer; transition: background 0.15s;
+}
+.lib-album-card:active { background: var(--card-hover); }
+.lib-album-art {
+  width: 100%; aspect-ratio: 1;
+  background: linear-gradient(145deg, #2C2C2E, #1C1C1E);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.2rem; position: relative; overflow: hidden;
+}
+.lib-album-art img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.lib-album-info { padding: 9px 10px 11px; }
+.lib-album-title  { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-album-artist { font-size: 0.71rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+
+/* ── ARTIST / ALBUM DETAIL ──────────────────────────────── */
+.lib-detail-hdr {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+}
+.lib-detail-back {
+  font-size: 0.9rem; color: var(--accent); font-weight: 600;
+  display: flex; align-items: center; gap: 4px; margin-bottom: 14px; cursor: pointer;
+}
+.lib-detail-avatar {
+  width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--card-hover), var(--card));
+  display: flex; align-items: center; justify-content: center; font-size: 2rem; overflow: hidden;
+}
+.lib-detail-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.lib-detail-art {
+  width: 100px; height: 100px; border-radius: var(--radius); flex-shrink: 0;
+  background: linear-gradient(145deg, #2C2C2E, #1C1C1E);
+  display: flex; align-items: center; justify-content: center; font-size: 2.5rem; overflow: hidden;
+}
+.lib-detail-art img { width: 100%; height: 100%; object-fit: cover; }
+.lib-detail-name  { font-size: 1.1rem; font-weight: 700; }
+.lib-detail-meta  { font-size: 0.78rem; color: var(--text-sub); margin-top: 3px; }
+
 /* ── PLAYLIST GRID ──────────────────────────────────────── */
 .playlist-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .pl-card {

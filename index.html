@@ -133,15 +133,53 @@
     </div>
   </div>
 
-  <!-- LIBRARY / PLAYLISTS VIEW -->
+  <!-- LIBRARY VIEW -->
   <div class="view" id="view-library">
-    <div class="section-hdr">
-      <h2 class="section-title">📁 Playlists</h2>
-      <button class="btn-sm" id="newPlaylistBtn">+ New</button>
+
+    <!-- Library tab bar -->
+    <div class="lib-tabs">
+      <button class="lib-tab active" data-libtab="playlists">Playlists</button>
+      <button class="lib-tab" data-libtab="artists">Artists</button>
+      <button class="lib-tab" data-libtab="albums">Albums</button>
+      <button class="lib-tab" data-libtab="songs">Songs</button>
     </div>
-    <div class="playlist-grid" id="playlistGrid">
-      <p class="empty-msg">No playlists yet. Create one!</p>
+
+    <!-- Playlists tab -->
+    <div class="lib-panel active" id="libtab-playlists">
+      <div class="section-hdr" style="margin-top:4px">
+        <h2 class="section-title">Playlists</h2>
+        <button class="btn-sm" id="newPlaylistBtn">+ New</button>
+      </div>
+      <div class="playlist-grid" id="playlistGrid">
+        <p class="empty-msg">No playlists yet. Create one!</p>
+      </div>
     </div>
+
+    <!-- Artists tab -->
+    <div class="lib-panel" id="libtab-artists">
+      <div class="lib-list" id="artistList"></div>
+    </div>
+
+    <!-- Albums tab -->
+    <div class="lib-panel" id="libtab-albums">
+      <div class="lib-grid" id="albumGrid"></div>
+    </div>
+
+    <!-- Songs tab -->
+    <div class="lib-panel" id="libtab-songs">
+      <div class="songs-actions">
+        <button class="songs-play-btn" id="songsPlayBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Play
+        </button>
+        <button class="songs-shuffle-btn" id="songsShuffleBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+          Shuffle
+        </button>
+      </div>
+      <div class="lib-song-list" id="songList"></div>
+    </div>
+
   </div>
 
   <!-- RADIO VIEW -->

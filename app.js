@@ -940,6 +940,204 @@ async function renderPlaylists() {
   });
 }
 
+// ── Library tabs ───────────────────────────────────────────────
+let activeLibTab = 'playlists';
+
+document.querySelectorAll('.lib-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeLibTab = btn.getAttribute('data-libtab');
+    document.querySelectorAll('.lib-tab').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.lib-panel').forEach(p => p.classList.toggle('active', p.id === 'libtab-' + activeLibTab));
+    if (activeLibTab === 'artists') renderArtists();
+    if (activeLibTab === 'albums')  renderAlbums();
+    if (activeLibTab === 'songs')   renderSongs();
+  });
+});
+
+function renderArtists() {
+  const all = [...S.tracks, ...S.cloudTracks];
+  const map = {};
+  all.forEach(t => {
+    const a = t.artist || 'Unknown Artist';
+    if (!map[a]) map[a] = { name: a, tracks: [], artwork: null };
+    map[a].tracks.push(t);
+    if (!map[a].artwork && t.artwork) map[a].artwork = t.artwork;
+  });
+  const artists = Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+  const el = document.getElementById('artistList');
+  if (!artists.length) { el.innerHTML = '<p class="empty-msg">No artists yet.</p>'; return; }
+  el.innerHTML = artists.map(a => `
+    <div class="lib-artist-row" data-artist="${esc(a.name)}">
+      <div class="lib-artist-avatar">
+        ${a.artwork ? `<img src="${esc(a.artwork)}" alt="" loading="lazy" />` : '🎤'}
+      </div>
+      <div class="lib-artist-info">
+        <div class="lib-artist-name">${esc(a.name)}</div>
+        <div class="lib-artist-count">${a.tracks.length} song${a.tracks.length !== 1 ? 's' : ''}</div>
+      </div>
+      <span class="lib-chevron">›</span>
+    </div>`).join('');
+  el.querySelectorAll('.lib-artist-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const name   = row.getAttribute('data-artist');
+      const artist = artists.find(a => a.name === name);
+      if (artist) openArtistDetail(artist);
+    });
+  });
+}
+
+function openArtistDetail(artist) {
+  const panel = document.getElementById('libtab-artists');
+  panel.innerHTML = `
+    <div class="lib-detail-back" id="artistBack">‹ Artists</div>
+    <div class="lib-detail-hdr">
+      <div class="lib-detail-avatar">
+        ${artist.artwork ? `<img src="${esc(artist.artwork)}" alt="" />` : '🎤'}
+      </div>
+      <div>
+        <div class="lib-detail-name">${esc(artist.name)}</div>
+        <div class="lib-detail-meta">${artist.tracks.length} song${artist.tracks.length !== 1 ? 's' : ''}</div>
+      </div>
+    </div>
+    <div class="songs-actions">
+      <button class="songs-play-btn" id="artistPlayBtn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play
+      </button>
+      <button class="songs-shuffle-btn" id="artistShuffleBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg> Shuffle
+      </button>
+    </div>
+    <div class="lib-song-list">
+      ${artist.tracks.map((t, i) => `
+        <div class="lib-song-row${S.currentTrack?.id === t.id ? ' playing' : ''}" data-idx="${i}">
+          <span class="lib-song-num">${i + 1}</span>
+          <div class="lib-song-info">
+            <div class="lib-song-title">${esc(t.title)}</div>
+            <div class="lib-song-artist">${esc(t.album || t.artist)}</div>
+          </div>
+          <span class="lib-song-dur">${fmtTime(t.duration)}</span>
+        </div>`).join('')}
+    </div>`;
+  panel.querySelector('#artistBack').addEventListener('click', () => renderArtists());
+  panel.querySelector('#artistPlayBtn').addEventListener('click', () => { S.shuffle = false; playTrack(artist.tracks[0], artist.tracks); });
+  panel.querySelector('#artistShuffleBtn').addEventListener('click', () => {
+    S.shuffle = true;
+    const idx = Math.floor(Math.random() * artist.tracks.length);
+    playTrack(artist.tracks[idx], artist.tracks);
+  });
+  panel.querySelectorAll('.lib-song-row').forEach(row => {
+    row.addEventListener('click', () => playTrack(artist.tracks[parseInt(row.dataset.idx)], artist.tracks));
+  });
+}
+
+function renderAlbums() {
+  const all = [...S.tracks, ...S.cloudTracks];
+  const map = {};
+  all.forEach(t => {
+    const key = (t.album || '').trim() || 'Unknown Album';
+    if (!map[key]) map[key] = { name: key, artist: t.artist, tracks: [], artwork: null };
+    map[key].tracks.push(t);
+    if (!map[key].artwork && t.artwork) map[key].artwork = t.artwork;
+  });
+  const albums = Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+  const el = document.getElementById('albumGrid');
+  if (!albums.length) { el.innerHTML = '<p class="empty-msg">No albums yet.</p>'; return; }
+  el.innerHTML = albums.map(a => `
+    <div class="lib-album-card" data-album="${esc(a.name)}">
+      <div class="lib-album-art">
+        ${a.artwork ? `<img src="${esc(a.artwork)}" alt="" loading="lazy" />` : '💿'}
+      </div>
+      <div class="lib-album-info">
+        <div class="lib-album-title">${esc(a.name)}</div>
+        <div class="lib-album-artist">${esc(a.artist)}</div>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('.lib-album-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const name  = card.getAttribute('data-album');
+      const album = albums.find(a => a.name === name);
+      if (album) openAlbumDetail(album);
+    });
+  });
+}
+
+function openAlbumDetail(album) {
+  const panel = document.getElementById('libtab-albums');
+  panel.innerHTML = `
+    <div class="lib-detail-back" id="albumBack">‹ Albums</div>
+    <div class="lib-detail-hdr">
+      <div class="lib-detail-art">
+        ${album.artwork ? `<img src="${esc(album.artwork)}" alt="" />` : '💿'}
+      </div>
+      <div>
+        <div class="lib-detail-name">${esc(album.name)}</div>
+        <div class="lib-detail-meta">${esc(album.artist)} · ${album.tracks.length} song${album.tracks.length !== 1 ? 's' : ''}</div>
+      </div>
+    </div>
+    <div class="songs-actions">
+      <button class="songs-play-btn" id="albumPlayBtn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play
+      </button>
+      <button class="songs-shuffle-btn" id="albumShuffleBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg> Shuffle
+      </button>
+    </div>
+    <div class="lib-song-list">
+      ${album.tracks.map((t, i) => `
+        <div class="lib-song-row${S.currentTrack?.id === t.id ? ' playing' : ''}" data-idx="${i}">
+          <span class="lib-song-num">${i + 1}</span>
+          <div class="lib-song-info">
+            <div class="lib-song-title">${esc(t.title)}</div>
+            <div class="lib-song-artist">${esc(t.artist)}</div>
+          </div>
+          <span class="lib-song-dur">${fmtTime(t.duration)}</span>
+        </div>`).join('')}
+    </div>`;
+  panel.querySelector('#albumBack').addEventListener('click', () => renderAlbums());
+  panel.querySelector('#albumPlayBtn').addEventListener('click', () => { S.shuffle = false; playTrack(album.tracks[0], album.tracks); });
+  panel.querySelector('#albumShuffleBtn').addEventListener('click', () => {
+    S.shuffle = true;
+    const idx = Math.floor(Math.random() * album.tracks.length);
+    playTrack(album.tracks[idx], album.tracks);
+  });
+  panel.querySelectorAll('.lib-song-row').forEach(row => {
+    row.addEventListener('click', () => playTrack(album.tracks[parseInt(row.dataset.idx)], album.tracks));
+  });
+}
+
+function renderSongs() {
+  const tracks = [...S.tracks, ...S.cloudTracks].sort((a, b) => a.title.localeCompare(b.title));
+  const el = document.getElementById('songList');
+  if (!tracks.length) { el.innerHTML = '<p class="empty-msg">No songs yet.</p>'; return; }
+  el.innerHTML = tracks.map((t, i) => `
+    <div class="lib-song-row${S.currentTrack?.id === t.id ? ' playing' : ''}" data-idx="${i}">
+      <span class="lib-song-num">${i + 1}</span>
+      <div class="lib-song-info">
+        <div class="lib-song-title">${esc(t.title)}</div>
+        <div class="lib-song-artist">${esc(t.artist)}</div>
+      </div>
+      <span class="lib-song-dur">${fmtTime(t.duration)}</span>
+    </div>`).join('');
+  el.querySelectorAll('.lib-song-row').forEach(row => {
+    row.addEventListener('click', () => playTrack(tracks[parseInt(row.dataset.idx)], tracks));
+  });
+}
+
+document.getElementById('songsPlayBtn').addEventListener('click', () => {
+  const tracks = [...S.tracks, ...S.cloudTracks].sort((a, b) => a.title.localeCompare(b.title));
+  if (!tracks.length) { toast('No songs yet'); return; }
+  S.shuffle = false;
+  playTrack(tracks[0], tracks);
+});
+
+document.getElementById('songsShuffleBtn').addEventListener('click', () => {
+  const tracks = [...S.tracks, ...S.cloudTracks];
+  if (!tracks.length) { toast('No songs yet'); return; }
+  S.shuffle = true;
+  const idx = Math.floor(Math.random() * tracks.length);
+  playTrack(tracks[idx], tracks);
+});
+
 // ── Settings ───────────────────────────────────────────────────
 document.getElementById('settingsBtn').addEventListener('click',  () => openPanel('settingsPanel'));
 document.getElementById('settingsClose').addEventListener('click',() => closePanel('settingsPanel'));
