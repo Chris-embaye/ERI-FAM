@@ -1154,7 +1154,7 @@ function startVisualizer() {
     let x = 0;
     buf.forEach(val => {
       const h = (val / 255) * H;
-      const r = 0, g = Math.floor(100 + val * 0.6), b = Math.floor(80 + val * 0.4);
+      const r = Math.floor(200 + val * 0.22), g = Math.floor(20 + val * 0.08), b = Math.floor(50 + val * 0.1);
       ctx.fillStyle = `rgb(${r},${g},${b})`;
       ctx.fillRect(x, H - h, barW - 1, h);
       x += barW + 1;
