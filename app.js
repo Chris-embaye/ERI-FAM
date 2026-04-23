@@ -81,16 +81,6 @@ function initAudioCtx() {
   analyserNode.connect(audioCtx.destination);
 }
 
-// Pre-unlock AudioContext on first user gesture so it's already "running"
-// before the first track tap — required on iOS Safari and Chrome Android.
-function _unlockAudioCtx() {
-  try { initAudioCtx(); } catch(e) {}
-  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
-}
-document.addEventListener('touchstart', _unlockAudioCtx, { once: true, passive: true });
-document.addEventListener('touchend',   _unlockAudioCtx, { once: true, passive: true });
-document.addEventListener('click',      _unlockAudioCtx, { once: true });
-
 // ── IndexedDB ──────────────────────────────────────────────────
 const DB_NAME = 'erifam', DB_VER = 1;
 let idb;
@@ -244,9 +234,9 @@ function getBlobUrl(track) {
 async function playTrack(track, queueTracks) {
   if (!track) return;
 
-  // Resume audio context without awaiting — keeping the user-gesture chain
-  // unbroken so audio.play() below is still treated as a gesture-triggered call.
-  try { initAudioCtx(); } catch(e) { console.warn('[AudioCtx init]', e); }
+  // If AudioContext is already wired up (EQ/Visualizer opened before),
+  // just resume it — don't call initAudioCtx here so that plain MP3
+  // playback never goes through the AudioContext and can't be silenced.
   if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
 
   S.currentTrack = track;
@@ -731,7 +721,11 @@ volSlider.addEventListener('input', () => {
 });
 
 // ── Equalizer ─────────────────────────────────────────────────
-document.getElementById('eqBtn').addEventListener('click',   () => openPanel('eqPanel'));
+document.getElementById('eqBtn').addEventListener('click', () => {
+  try { initAudioCtx(); } catch(e) { console.warn('[AudioCtx]', e); }
+  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
+  openPanel('eqPanel');
+});
 document.getElementById('eqClose').addEventListener('click', () => closePanel('eqPanel'));
 document.getElementById('queueBtn').addEventListener('click',   () => { updateQueueUI(); openPanel('queuePanel'); });
 document.getElementById('queueClose').addEventListener('click', () => closePanel('queuePanel'));
@@ -1187,6 +1181,8 @@ function stopVisualizer() {
 }
 
 document.getElementById('vizToggleBtn').addEventListener('click', () => {
+  try { initAudioCtx(); } catch(e) { console.warn('[AudioCtx]', e); }
+  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
   vizActive = !vizActive;
   const canvas = document.getElementById('vizCanvas');
   const btn = document.getElementById('vizToggleBtn');
