@@ -770,6 +770,45 @@ document.getElementById('searchInput').addEventListener('input', e => {
   document.getElementById('view-search').classList.add('active');
 });
 
+// ── Home Search ────────────────────────────────────────────────
+document.getElementById('homeSearchInput').addEventListener('input', e => {
+  renderTracks(e.target.value.trim());
+});
+
+// ── Promotions ─────────────────────────────────────────────────
+async function loadPromos() {
+  const ready = await FB_READY;
+  if (!ready) return;
+  try {
+    const snap = await db.getDocs(db.query(db.collection(db._db, 'promotions'), db.orderBy('createdAt', 'desc')));
+    const promos = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.active !== false);
+    renderPromos(promos);
+  } catch(e) { console.warn('[Promos]', e); }
+}
+
+function renderPromos(promos) {
+  const section = document.getElementById('promoSection');
+  const scroll  = document.getElementById('promoScroll');
+  if (!promos || !promos.length) { section.style.display = 'none'; return; }
+  scroll.innerHTML = promos.map(p => `
+    <div class="promo-card" data-url="${esc(p.website || '')}">
+      <div class="promo-card-img">
+        ${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" />` : `<span class="promo-card-ph">${(p.name||'?')[0].toUpperCase()}</span>`}
+      </div>
+      <div class="promo-card-body">
+        ${p.category ? `<span class="promo-badge">${esc(p.category)}</span>` : ''}
+        <div class="promo-name">${esc(p.name)}</div>
+        ${p.description ? `<div class="promo-desc">${esc(p.description)}</div>` : ''}
+        ${p.website ? `<a class="promo-visit-btn" href="${esc(p.website)}" target="_blank" rel="noopener noreferrer">Visit →</a>` : ''}
+      </div>
+    </div>`).join('');
+  section.style.display = '';
+}
+
+document.getElementById('advertiseBtn').addEventListener('click',  () => openModal('advertiseModal'));
+document.getElementById('advertiseClose').addEventListener('click',() => closeModal('advertiseModal'));
+document.getElementById('advertiseModal').addEventListener('click', e => { if (e.target.id === 'advertiseModal') closeModal('advertiseModal'); });
+
 // ── Upload / Drag & Drop ───────────────────────────────────────
 const uploadZone    = document.getElementById('uploadZone');
 const fileInput     = document.getElementById('fileInput');
@@ -1453,8 +1492,8 @@ async function init() {
   initNotificationListener();
   handlePlayParam();
 
-  // Cloud sync if online
-  if (navigator.onLine) syncCloud();
+  // Cloud sync + promos if online
+  if (navigator.onLine) { syncCloud(); loadPromos(); }
 }
 
 init();

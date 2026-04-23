@@ -74,6 +74,23 @@
       </div>
     </div>
 
+    <!-- Home Search -->
+    <div class="home-search-wrap">
+      <div class="home-search-inner">
+        <svg class="hs-ico" viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="search" id="homeSearchInput" placeholder="Search songs, artists…" autocomplete="off" spellcheck="false" />
+      </div>
+    </div>
+
+    <!-- Promotions / Advertise -->
+    <div class="promo-section" id="promoSection" style="display:none">
+      <div class="section-hdr">
+        <h2 class="section-title">📢 Promoted</h2>
+        <button class="promo-adv-btn" id="advertiseBtn">Advertise →</button>
+      </div>
+      <div class="promo-scroll" id="promoScroll"></div>
+    </div>
+
     <!-- Top Charts -->
     <div class="top-charts-section" id="topChartsSection" style="display:none">
       <div class="section-hdr"><h2 class="section-title">🔥 Top Charts</h2><span class="charts-sub">Most played this week</span></div>
@@ -138,14 +155,29 @@
 
     <!-- Library tab bar -->
     <div class="lib-tabs">
-      <button class="lib-tab active" data-libtab="playlists">Playlists</button>
+      <button class="lib-tab active" data-libtab="songs">Songs</button>
+      <button class="lib-tab" data-libtab="playlists">Playlists</button>
       <button class="lib-tab" data-libtab="artists">Artists</button>
       <button class="lib-tab" data-libtab="albums">Albums</button>
-      <button class="lib-tab" data-libtab="songs">Songs</button>
+    </div>
+
+    <!-- Songs tab (default) -->
+    <div class="lib-panel active" id="libtab-songs">
+      <div class="songs-actions">
+        <button class="songs-play-btn" id="songsPlayBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Play
+        </button>
+        <button class="songs-shuffle-btn" id="songsShuffleBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+          Shuffle
+        </button>
+      </div>
+      <div class="lib-song-list" id="songList"></div>
     </div>
 
     <!-- Playlists tab -->
-    <div class="lib-panel active" id="libtab-playlists">
+    <div class="lib-panel" id="libtab-playlists">
       <div class="section-hdr" style="margin-top:4px">
         <h2 class="section-title">Playlists</h2>
         <button class="btn-sm" id="newPlaylistBtn">+ New</button>
@@ -163,21 +195,6 @@
     <!-- Albums tab -->
     <div class="lib-panel" id="libtab-albums">
       <div class="lib-grid" id="albumGrid"></div>
-    </div>
-
-    <!-- Songs tab -->
-    <div class="lib-panel" id="libtab-songs">
-      <div class="songs-actions">
-        <button class="songs-play-btn" id="songsPlayBtn">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Play
-        </button>
-        <button class="songs-shuffle-btn" id="songsShuffleBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
-          Shuffle
-        </button>
-      </div>
-      <div class="lib-song-list" id="songList"></div>
     </div>
 
   </div>
@@ -573,6 +590,36 @@
     <div class="modal-actions" style="margin-top:12px">
       <button class="btn-primary" id="feedbackSubmitBtn">Send Feedback</button>
       <button class="btn-secondary" id="feedbackCloseBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADVERTISE MODAL -->
+<div class="modal-overlay" id="advertiseModal">
+  <div class="modal-box">
+    <h3>📢 Advertise on ERI-FAM</h3>
+    <p class="modal-sub">Reach thousands of Eritrean music lovers worldwide</p>
+    <div class="adv-perks">
+      <div class="adv-perk">
+        <span class="adv-perk-icon">🎯</span>
+        <div><strong>Targeted Audience</strong><p>Connect with Eritrean diaspora globally</p></div>
+      </div>
+      <div class="adv-perk">
+        <span class="adv-perk-icon">💰</span>
+        <div><strong>Affordable Rates</strong><p>Flexible packages for every budget</p></div>
+      </div>
+      <div class="adv-perk">
+        <span class="adv-perk-icon">📱</span>
+        <div><strong>Mobile First</strong><p>Users on mobile, tablet &amp; desktop</p></div>
+      </div>
+      <div class="adv-perk">
+        <span class="adv-perk-icon">🚀</span>
+        <div><strong>Easy to Start</strong><p>Contact admin to get your business listed</p></div>
+      </div>
+    </div>
+    <p style="font-size:0.78rem;color:var(--text-sub);margin:14px 0 4px">To get your business featured here, contact the app admin via the Feedback button.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="advertiseClose">Close</button>
     </div>
   </div>
 </div>

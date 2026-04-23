@@ -69,6 +69,7 @@ document.getElementById('signOutBtn').addEventListener('click', async () => {
 document.querySelectorAll('.sb-item').forEach(btn => {
   btn.addEventListener('click', () => showPage(btn.getAttribute('data-page')));
 });
+
 document.getElementById('menuBtn').addEventListener('click', () => {
   document.getElementById('sidebar').classList.toggle('open');
 });
@@ -80,6 +81,7 @@ function showPage(name) {
   if (name === 'tracks')   loadTracks();
   if (name === 'dashboard') loadDashboard();
   if (name === 'feedback') loadFeedback();
+  if (name === 'promote')  loadAdminPromos();
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -515,3 +517,130 @@ function renderFeedback() {
 }
 
 document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
+
+// ── Promote Business ───────────────────────────────────────────
+let allPromos = [];
+let editingPromoId = null;
+
+async function loadAdminPromos() {
+  if (!_db) { toast('⚠ Firebase not connected'); return; }
+  const list = document.getElementById('promoList');
+  list.innerHTML = '<p style="padding:20px;color:var(--text-dim);font-size:0.85rem">Loading…</p>';
+  try {
+    const snap = await fbFunctions.getDocs(fbFunctions.query(fbFunctions.collection(_db, 'promotions'), fbFunctions.orderBy('createdAt', 'desc')));
+    allPromos = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    renderAdminPromos();
+  } catch(e) {
+    list.innerHTML = `<p style="color:var(--red);padding:20px">${e.message}</p>`;
+  }
+}
+
+function renderAdminPromos() {
+  const list = document.getElementById('promoList');
+  if (!allPromos.length) {
+    list.innerHTML = '<p style="color:var(--text-dim);padding:20px;font-size:0.85rem">No promotions yet. Click "+ Add Promo" to create one.</p>';
+    return;
+  }
+  list.innerHTML = allPromos.map(p => `
+    <div class="adm-track-row">
+      <div class="atr-art" style="background:var(--card);border-radius:8px;overflow:hidden">
+        ${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" />` : `<span style="font-size:1.4rem;display:flex;align-items:center;justify-content:center;height:100%">${(p.name||'?')[0].toUpperCase()}</span>`}
+      </div>
+      <div class="atr-info">
+        <div class="atr-title">${esc(p.name)}</div>
+        <div class="atr-artist">${p.category ? esc(p.category) + ' · ' : ''}${p.website ? `<a href="${esc(p.website)}" target="_blank" style="color:var(--blue)">${esc(p.website.replace(/^https?:\/\//,'').split('/')[0])}</a>` : 'No link'}</div>
+      </div>
+      <span class="atr-dur" style="font-size:0.72rem;padding:3px 8px;border-radius:8px;background:${p.active !== false ? 'rgba(50,215,75,0.12)' : 'rgba(255,255,255,0.06)'};color:${p.active !== false ? 'var(--green)' : 'var(--text-dim)'}">
+        ${p.active !== false ? 'Active' : 'Off'}
+      </span>
+      <div class="atr-btns">
+        <button class="atr-btn edit-btn" data-docid="${p.docId}">✏ Edit</button>
+        <button class="atr-btn delete delete-btn" data-docid="${p.docId}">🗑</button>
+      </div>
+    </div>`).join('');
+
+  list.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => openPromoForm(btn.getAttribute('data-docid')));
+  });
+  list.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => deletePromo(btn.getAttribute('data-docid')));
+  });
+}
+
+function openPromoForm(docId) {
+  editingPromoId = docId || null;
+  const form = document.getElementById('promoForm');
+  document.getElementById('promoFormTitle').textContent = docId ? 'Edit Promotion' : 'New Promotion';
+  if (docId) {
+    const p = allPromos.find(p => p.docId === docId);
+    if (!p) return;
+    document.getElementById('promoDocId').value   = docId;
+    document.getElementById('promoName').value    = p.name || '';
+    document.getElementById('promoCategory').value = p.category || '';
+    document.getElementById('promoDesc').value    = p.description || '';
+    document.getElementById('promoWebsite').value = p.website || '';
+    document.getElementById('promoImage').value   = p.image || '';
+    document.getElementById('promoActive').checked = p.active !== false;
+  } else {
+    document.getElementById('promoDocId').value   = '';
+    document.getElementById('promoName').value    = '';
+    document.getElementById('promoCategory').value = '';
+    document.getElementById('promoDesc').value    = '';
+    document.getElementById('promoWebsite').value = '';
+    document.getElementById('promoImage').value   = '';
+    document.getElementById('promoActive').checked = true;
+  }
+  form.style.display = '';
+  document.getElementById('promoName').focus();
+}
+
+document.getElementById('addPromoBtn').addEventListener('click', () => openPromoForm(null));
+document.getElementById('cancelPromoBtn').addEventListener('click', () => {
+  document.getElementById('promoForm').style.display = 'none';
+  editingPromoId = null;
+});
+
+document.getElementById('savePromoBtn').addEventListener('click', async () => {
+  if (!_db) { toast('⚠ Firebase not connected'); return; }
+  const name    = document.getElementById('promoName').value.trim();
+  const website = document.getElementById('promoWebsite').value.trim();
+  if (!name)    { toast('⚠ Business name is required'); document.getElementById('promoName').focus(); return; }
+  if (!website) { toast('⚠ Website / link is required'); document.getElementById('promoWebsite').value.focus(); return; }
+
+  const data = {
+    name,
+    category:    document.getElementById('promoCategory').value,
+    description: document.getElementById('promoDesc').value.trim(),
+    website,
+    image:       document.getElementById('promoImage').value.trim(),
+    active:      document.getElementById('promoActive').checked,
+    updatedAt:   Date.now(),
+  };
+
+  const btn = document.getElementById('savePromoBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    if (editingPromoId) {
+      await fbFunctions.updateDoc(fbFunctions.doc(_db, 'promotions', editingPromoId), data);
+      toast('✅ Promotion updated');
+    } else {
+      data.createdAt = Date.now();
+      await fbFunctions.addDoc(fbFunctions.collection(_db, 'promotions'), data);
+      toast('✅ Promotion added');
+    }
+    document.getElementById('promoForm').style.display = 'none';
+    editingPromoId = null;
+    loadAdminPromos();
+  } catch(e) { toast('⚠ Save failed: ' + e.message); }
+  finally { btn.textContent = 'Save Promotion'; btn.disabled = false; }
+});
+
+async function deletePromo(docId) {
+  if (!confirm('Delete this promotion?')) return;
+  try {
+    await fbFunctions.deleteDoc(fbFunctions.doc(_db, 'promotions', docId));
+    allPromos = allPromos.filter(p => p.docId !== docId);
+    renderAdminPromos();
+    toast('🗑 Promotion deleted');
+  } catch(e) { toast('⚠ ' + e.message); }
+}
