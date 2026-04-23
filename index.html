@@ -68,8 +68,9 @@
       <div class="upload-inner">
         <svg viewBox="0 0 24 24" class="upload-svg" stroke-width="1.5" fill="none" stroke="currentColor"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
         <p><strong>Add Music</strong></p>
-        <p class="upload-sub">Drag & drop MP3 · M4A · FLAC · WAV<br>or <span class="upload-link">tap to browse</span></p>
+        <p class="upload-sub">Drag & drop MP3 · M4A · FLAC · WAV<br>or <span class="upload-link" id="browseFilesLink">browse files</span> · <span class="upload-link" id="browseFolderLink">browse folder</span></p>
         <input type="file" id="fileInput" accept=".mp3,.m4a,.flac,.wav,.ogg,.aac" multiple hidden />
+        <input type="file" id="folderInput" webkitdirectory multiple hidden />
       </div>
     </div>
 
