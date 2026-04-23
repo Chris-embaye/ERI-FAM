@@ -1528,12 +1528,13 @@ document.head.appendChild(notifStyle);
    ════════════════════════════════════════════════════════════════ */
 const TV_STATIONS = [
   {
-    id:    'eritv',
-    name:  'ERi-TV',
-    desc:  'Eritrean State Television — News, Culture & Entertainment',
-    lang:  'Tigrinya · Arabic · English',
-    icon:  '📺',
-    ytUrl: 'https://www.youtube.com/@EritvEritrea/live',
+    id:       'eritv',
+    name:     'ERi-TV',
+    desc:     'Eritrean State Television — News, Culture & Entertainment',
+    lang:     'Tigrinya · Arabic · English',
+    icon:     '📺',
+    embedUrl: 'https://famelack.com/tv/er/YRWHSN7GJpzMLf',
+    ytUrl:    'https://famelack.com/tv/er/YRWHSN7GJpzMLf',
   },
   {
     id:    'eritv2',
@@ -1587,17 +1588,25 @@ function renderTVGrid() {
 function openTVPlayer(id) {
   const station = TV_STATIONS.find(s => s.id === id);
   if (!station) return;
-  // Pause music while watching TV
   if (S.playing) { audio.pause(); S.playing = false; updatePlayIcons(); }
   if (radioAudio) stopRadio();
-  // YouTube iframes block live embeds — open directly in browser
-  window.open(station.ytUrl, '_blank', 'noopener,noreferrer');
-  toast(`📺 Opening ${station.name} on YouTube…`);
+
+  if (station.embedUrl) {
+    // Use the in-app fullscreen overlay
+    document.getElementById('tvOverlayName').textContent = station.name;
+    document.getElementById('tvOverlayDesc').textContent = `${station.name} — ${station.desc} · ${station.lang}`;
+    document.getElementById('tvYTLink').href = station.ytUrl;
+    document.getElementById('tvIframe').src = station.embedUrl;
+    document.getElementById('tvOverlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  } else {
+    window.open(station.ytUrl, '_blank', 'noopener,noreferrer');
+    toast(`📺 Opening ${station.name} on YouTube…`);
+  }
 }
 
 function closeTVPlayer() {
-  const iframe = document.getElementById('tvIframe');
-  iframe.src = '';
+  document.getElementById('tvIframe').src = 'about:blank';
   document.getElementById('tvOverlay').style.display = 'none';
   document.body.style.overflow = '';
 }
