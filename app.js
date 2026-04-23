@@ -484,6 +484,16 @@ function bindTrackCardEvents(container, tracks) {
     if (el.classList.contains('tc-more') || el.classList.contains('tr-more')) {
       el.addEventListener('click', e => { e.stopPropagation(); if (!S.selectMode) openTrackSheet(el.getAttribute('data-id')); });
     } else {
+      let pressTimer;
+      el.addEventListener('pointerdown', () => {
+        pressTimer = setTimeout(() => {
+          S.selectMode = true;
+          document.body.classList.add('select-mode');
+          toggleSelectTrack(el.getAttribute('data-id'));
+        }, 500);
+      });
+      el.addEventListener('pointerup',     () => clearTimeout(pressTimer));
+      el.addEventListener('pointermove',   () => clearTimeout(pressTimer));
       el.addEventListener('click', () => {
         const id = el.getAttribute('data-id');
         if (S.selectMode) { toggleSelectTrack(id); return; }
@@ -495,58 +505,50 @@ function bindTrackCardEvents(container, tracks) {
   });
 }
 
-// ── Selection mode ─────────────────────────────────────────────
-S.selectedIds  = new Set();
-S.selectMode   = false;
-
-function enterSelectMode() {
-  S.selectMode = true;
-  document.body.classList.add('select-mode');
-  document.getElementById('selBar').style.display    = '';
-  document.getElementById('statsBar').style.display  = 'none';
-  updateSelBar();
-  renderTracks();
-}
-
-function exitSelectMode() {
-  S.selectMode = false;
-  S.selectedIds.clear();
-  document.body.classList.remove('select-mode');
-  document.getElementById('selBar').style.display    = 'none';
-  document.getElementById('statsBar').style.display  = '';
-  renderTracks();
-}
+// ── Selection ──────────────────────────────────────────────────
+S.selectedIds = new Set();
+S.selectMode  = false;
 
 function toggleSelectTrack(id) {
   if (S.selectedIds.has(id)) S.selectedIds.delete(id);
   else S.selectedIds.add(id);
-  updateSelBar();
-  // Flip just the one card/row class without full re-render
+  if (S.selectedIds.size === 0) exitSelectMode();
+  else updateSelectionUI();
   document.querySelectorAll(`[data-id="${id}"]`).forEach(el => {
     if (!el.classList.contains('tc-more') && !el.classList.contains('tr-more'))
       el.classList.toggle('selected', S.selectedIds.has(id));
   });
 }
 
-function updateSelBar() {
-  const n = S.selectedIds.size;
-  document.getElementById('selCount').textContent = n === 0 ? 'Tap to select' : `${n} selected`;
-  document.getElementById('deleteSelBtn').disabled = n === 0;
+function exitSelectMode() {
+  S.selectMode = false;
+  S.selectedIds.clear();
+  document.body.classList.remove('select-mode');
+  updateSelectionUI();
+  renderTracks();
 }
 
-document.getElementById('enterSelectBtn').addEventListener('click', enterSelectMode);
-document.getElementById('cancelSelBtn').addEventListener('click',   exitSelectMode);
+function updateSelectionUI() {
+  const n       = S.selectedIds.size;
+  const allVis  = getAllTracks();
+  const allSel  = allVis.length > 0 && allVis.every(t => S.selectedIds.has(t.id));
+  document.getElementById('selectAllBtn').textContent = allSel ? 'Deselect All' : 'Select All';
+  const delBtn = document.getElementById('deleteSelBtn');
+  delBtn.style.display   = n > 0 ? '' : 'none';
+  delBtn.textContent     = `🗑 Delete ${n}`;
+}
 
 document.getElementById('selectAllBtn').addEventListener('click', () => {
   const visible = getAllTracks();
-  if (S.selectedIds.size === visible.length) {
-    S.selectedIds.clear();
-  } else {
-    visible.forEach(t => S.selectedIds.add(t.id));
+  const allSel  = visible.every(t => S.selectedIds.has(t.id));
+  if (allSel) {
+    exitSelectMode();
+    return;
   }
-  document.getElementById('selectAllBtn').textContent =
-    S.selectedIds.size === visible.length ? 'Deselect All' : 'Select All';
-  updateSelBar();
+  S.selectMode = true;
+  document.body.classList.add('select-mode');
+  visible.forEach(t => S.selectedIds.add(t.id));
+  updateSelectionUI();
   renderTracks();
 });
 

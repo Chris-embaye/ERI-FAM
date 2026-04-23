@@ -148,6 +148,10 @@ svg { display: block; }
 .stat-divider { color: var(--text-dim); }
 .stat-sync-btn { color: var(--accent); font-size: 0.76rem; font-weight: 600; }
 .stat-select-btn { margin-left: auto; color: var(--accent); font-size: 0.76rem; font-weight: 600; }
+.stat-delete-btn {
+  font-size: 0.76rem; font-weight: 600; color: #fff;
+  background: var(--accent); border-radius: 20px; padding: 4px 12px;
+}
 
 /* ── SELECTION BAR ──────────────────────────────────────── */
 .sel-bar {
