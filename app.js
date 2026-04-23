@@ -157,16 +157,30 @@ function openPanel(id) { document.getElementById(id).classList.add('open'); }
 function closePanel(id) { document.getElementById(id).classList.remove('open'); }
 
 // ── Read file metadata ─────────────────────────────────────────
+// Uses seek-to-end so the browser scans the full file — fixes VBR MP3 duration overestimates.
 async function readTrackMeta(file) {
   return new Promise(resolve => {
     const url = URL.createObjectURL(file);
-    const a = new Audio(url);
-    a.onloadedmetadata = () => {
-      resolve({ duration: a.duration, url });
-      // Don't revoke yet — caller handles it
+    const a = new Audio();
+    a.preload = 'metadata';
+
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      const dur = isFinite(a.duration) && a.duration > 0 ? a.duration : 0;
+      URL.revokeObjectURL(url);
+      resolve({ duration: dur });
     };
-    a.onerror = () => resolve({ duration: 0, url });
-    setTimeout(() => resolve({ duration: 0, url }), 3000);
+
+    a.addEventListener('loadedmetadata', () => {
+      try { a.currentTime = 1e10; } catch(e) { finish(); }
+    }, { once: true });
+
+    a.addEventListener('seeked', finish, { once: true });
+    a.addEventListener('error', finish);
+    setTimeout(finish, 5000);
+    a.src = url;
   });
 }
 
@@ -179,12 +193,12 @@ async function importFiles(files) {
   let added = 0;
   for (const file of arr) {
     if (!file.type.match(/audio/)) continue;
-    const { duration, url } = await readTrackMeta(file);
+    const { duration } = await readTrackMeta(file);
     const buf = await file.arrayBuffer();
     const hashKey = file.name.toLowerCase().trim() + '_' + Math.round(duration);
 
     const existing = S.tracks.find(t => t.hashKey === hashKey);
-    if (existing) { URL.revokeObjectURL(url); continue; }
+    if (existing) continue;
 
     // Smart metadata extraction from filename
     const { title, artist } = parseFilename(file.name);
@@ -197,7 +211,8 @@ async function importFiles(files) {
       data: buf,
     };
     await idbPut('tracks', track);
-    track._blobUrl = url;
+    // _blobUrl intentionally NOT set here — getBlobUrl creates a fresh Blob URL from
+    // the stored ArrayBuffer, giving the browser full data for accurate VBR duration.
     S.tracks.push(track);
     added++;
   }
