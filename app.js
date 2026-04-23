@@ -354,8 +354,14 @@ audio.addEventListener('ended', () => {
 });
 
 audio.addEventListener('timeupdate', updateProgress);
-audio.addEventListener('play',  () => { S.playing = true;  updatePlayIcons(); });
-audio.addEventListener('pause', () => { S.playing = false; updatePlayIcons(); });
+audio.addEventListener('play',  () => {
+  S.playing = true; updatePlayIcons();
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+});
+audio.addEventListener('pause', () => {
+  S.playing = false; updatePlayIcons();
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+});
 audio.addEventListener('error', () => toast('⚠ Could not play this track'));
 
 // ── Media Session API (lock screen / background) ───────────────
@@ -389,12 +395,16 @@ function updateProgress() {
 }
 
 function updatePlayIcons() {
-  const pause = `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
-  const play  = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
-  document.getElementById('playIco').parentElement.innerHTML = S.playing ? pause : play;
-  document.getElementById('miniPlayIco').parentElement.innerHTML = S.playing
-    ? `<svg id="miniPlayIco" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-    : `<svg id="miniPlayIco" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+  const pauseSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+  const playSvg  = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+  document.getElementById('playBtn').innerHTML  = S.playing ? pauseSvg : playSvg;
+  document.getElementById('miniPlay').innerHTML = S.playing ? pauseSvg : playSvg;
+  // Refresh any visible list-row play buttons for the current track
+  document.querySelectorAll('.tr-play-btn').forEach(btn => {
+    if (!S.currentTrack) return;
+    if (btn.dataset.id === S.currentTrack.id)
+      btn.innerHTML = S.playing ? pauseSvg : playSvg;
+  });
 }
 
 function updatePlayerUI() {
@@ -502,29 +512,49 @@ function renderGrid(tracks) {
 function renderList(tracks) {
   const list = document.getElementById('trackList');
   if (!tracks.length) { list.innerHTML = ''; return; }
-  list.innerHTML = tracks.map((t, i) => {
-    const playing   = S.currentTrack && S.currentTrack.id === t.id;
-    const selected  = S.selectedIds.has(t.id);
-    return `<div class="track-row${playing?' playing':''}${selected?' selected':''}" data-id="${t.id}" data-idx="${i}">
+  const sorted = [...tracks].sort((a, b) => a.title.localeCompare(b.title));
+  const pauseSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+  const playSvg  = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+  let html = '', lastLetter = '';
+  sorted.forEach((t, i) => {
+    const first  = (t.title[0] || '').toUpperCase();
+    const letter = /[A-Z]/.test(first) ? first : '#';
+    if (letter !== lastLetter) {
+      html += `<div class="alpha-header">${letter}</div>`;
+      lastLetter = letter;
+    }
+    const playing  = S.currentTrack && S.currentTrack.id === t.id;
+    const selected = S.selectedIds.has(t.id);
+    html += `<div class="track-row${playing?' playing':''}${selected?' selected':''}" data-id="${t.id}" data-idx="${i}">
       <div class="tr-sel-check"></div>
       <div class="tr-art">${artEl(t,'list')}</div>
       <div class="tr-info">
         <div class="tr-title">${esc(t.title)}</div>
         <div class="tr-artist">${esc(t.artist)}</div>
       </div>
+      <button class="tr-play-btn${playing?' tr-playing':''}" data-id="${t.id}">${playing && S.playing ? pauseSvg : playSvg}</button>
       <span class="tr-dur">${fmtTime(t.duration)}</span>
-      <button class="tr-more" data-id="${t.id}">⋯</button>
     </div>`;
-  }).join('');
+  });
+  list.innerHTML = html;
   list.style.display = '';
   document.getElementById('trackGrid').style.display = 'none';
-  bindTrackCardEvents(list, tracks);
+  bindTrackCardEvents(list, sorted);
 }
 
 function bindTrackCardEvents(container, tracks) {
   container.querySelectorAll('[data-id]').forEach(el => {
     if (el.classList.contains('tc-more') || el.classList.contains('tr-more')) {
       el.addEventListener('click', e => { e.stopPropagation(); if (!S.selectMode) openTrackSheet(el.getAttribute('data-id')); });
+    } else if (el.classList.contains('tr-play-btn')) {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const id    = el.getAttribute('data-id');
+        const track = tracks.find(t => t.id === id);
+        if (!track) return;
+        if (S.currentTrack && S.currentTrack.id === id) togglePlay();
+        else playTrack(track, tracks);
+      });
     } else {
       let pressTimer;
       el.addEventListener('pointerdown', () => {
@@ -1149,15 +1179,24 @@ function renderSongs() {
   const tracks = [...S.tracks, ...S.cloudTracks].sort((a, b) => a.title.localeCompare(b.title));
   const el = document.getElementById('songList');
   if (!tracks.length) { el.innerHTML = '<p class="empty-msg">No songs yet.</p>'; return; }
-  el.innerHTML = tracks.map((t, i) => `
-    <div class="lib-song-row${S.currentTrack?.id === t.id ? ' playing' : ''}" data-idx="${i}">
-      <span class="lib-song-num">${i + 1}</span>
+  let html = '', lastLetter = '';
+  tracks.forEach((t, i) => {
+    const first  = (t.title[0] || '').toUpperCase();
+    const letter = /[A-Z]/.test(first) ? first : '#';
+    if (letter !== lastLetter) {
+      html += `<div class="alpha-header">${letter}</div>`;
+      lastLetter = letter;
+    }
+    html += `<div class="lib-song-row${S.currentTrack?.id === t.id ? ' playing' : ''}" data-idx="${i}">
+      <span class="lib-song-num">${S.currentTrack?.id === t.id ? '▶' : i + 1}</span>
       <div class="lib-song-info">
         <div class="lib-song-title">${esc(t.title)}</div>
         <div class="lib-song-artist">${esc(t.artist)}</div>
       </div>
       <span class="lib-song-dur">${fmtTime(t.duration)}</span>
-    </div>`).join('');
+    </div>`;
+  });
+  el.innerHTML = html;
   el.querySelectorAll('.lib-song-row').forEach(row => {
     row.addEventListener('click', () => playTrack(tracks[parseInt(row.dataset.idx)], tracks));
   });

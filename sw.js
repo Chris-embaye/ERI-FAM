@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE = 'erifam-v5.3';
+const CACHE = 'erifam-v5.4';
 const STATIC = [
   './',
   './index.html',
