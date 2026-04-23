@@ -128,10 +128,17 @@ document.getElementById('refreshBtn').addEventListener('click', loadDashboard);
 // ── Upload ─────────────────────────────────────────────────────
 const adminUploadZone  = document.getElementById('adminUploadZone');
 const adminFileInput   = document.getElementById('adminFileInput');
+const adminFolderInput = document.getElementById('adminFolderInput');
 let uploadQueue = [];
 
-adminUploadZone.addEventListener('click', () => adminFileInput.click());
-adminFileInput.addEventListener('change', e => addToQueue(e.target.files));
+adminUploadZone.addEventListener('click', e => {
+  if (e.target.closest('#adminBrowseFiles') || e.target.closest('#adminBrowseFolder')) return;
+  adminFileInput.click();
+});
+document.getElementById('adminBrowseFiles').addEventListener('click',  e => { e.stopPropagation(); adminFileInput.click(); });
+document.getElementById('adminBrowseFolder').addEventListener('click', e => { e.stopPropagation(); adminFolderInput.click(); });
+adminFileInput.addEventListener('change',   e => { addToQueue(e.target.files);   adminFileInput.value   = ''; });
+adminFolderInput.addEventListener('change', e => { addToQueue(e.target.files);   adminFolderInput.value = ''; });
 adminUploadZone.addEventListener('dragover', e => { e.preventDefault(); adminUploadZone.classList.add('drag-over'); });
 adminUploadZone.addEventListener('dragleave', () => adminUploadZone.classList.remove('drag-over'));
 adminUploadZone.addEventListener('drop', e => { e.preventDefault(); adminUploadZone.classList.remove('drag-over'); addToQueue(e.dataTransfer.files); });
