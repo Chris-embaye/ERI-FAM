@@ -704,14 +704,11 @@ const fileInput     = document.getElementById('fileInput');
 const folderInput   = document.getElementById('folderInput');
 
 uploadZone.addEventListener('click', e => {
-  if (e.target.closest('#browseFilesLink') || e.target.closest('#browseFolderLink')) return;
+  if (e.target.closest('label')) return; // labels trigger their inputs natively
   fileInput.click();
 });
-document.getElementById('browseFilesLink').addEventListener('click',  e => { e.stopPropagation(); fileInput.click(); });
-document.getElementById('browseFolderLink').addEventListener('click', e => { e.stopPropagation(); folderInput.click(); });
-
-fileInput.addEventListener('change',   e => { importFiles(e.target.files);   fileInput.value   = ''; });
-folderInput.addEventListener('change', e => { importFiles(e.target.files);   folderInput.value = ''; });
+fileInput.addEventListener('change',   e => { importFiles(e.target.files); fileInput.value   = ''; });
+folderInput.addEventListener('change', e => { importFiles(e.target.files); folderInput.value = ''; });
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
 uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); importFiles(e.dataTransfer.files); });
