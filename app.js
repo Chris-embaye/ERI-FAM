@@ -553,10 +553,10 @@ document.getElementById('selectAllBtn').addEventListener('click', () => {
 document.getElementById('deleteSelBtn').addEventListener('click', async () => {
   const ids = [...S.selectedIds];
   if (!ids.length) return;
-  if (!confirm(`Delete ${ids.length} track${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+  const n = ids.length;
   for (const id of ids) await deleteTrack(id);
   exitSelectMode();
-  toast(`🗑 Deleted ${ids.length} track${ids.length > 1 ? 's' : ''}`);
+  toast(`🗑 Deleted ${n} track${n > 1 ? 's' : ''}`);
 });
 
 function renderSearchResults(tracks, q) {
