@@ -303,10 +303,11 @@ function renderAdminTracks(tracks) {
     btn.addEventListener('click', () => deleteCloudTrack(btn.getAttribute('data-docid')));
   });
   list.querySelectorAll('.atr-check').forEach(cb => {
+    cb.checked = selectedIds.has(cb.getAttribute('data-docid'));
     cb.addEventListener('change', () => {
       const id = cb.getAttribute('data-docid');
       if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
-      document.getElementById('deleteSelectedBtn').style.display = selectedIds.size ? '' : 'none';
+      updateSelectionUI();
     });
   });
 }
@@ -315,14 +316,37 @@ document.getElementById('trackSearch').addEventListener('input', e => {
   const q = e.target.value.toLowerCase();
   const filtered = q ? allTracks.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)) : allTracks;
   renderAdminTracks(filtered);
+  selectedIds.clear();
+  updateSelectionUI();
+});
+
+function updateSelectionUI() {
+  const visibleIds = [...document.querySelectorAll('.atr-check')].map(cb => cb.getAttribute('data-docid'));
+  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
+  document.getElementById('selectAllBtn').textContent = allSelected ? 'Deselect All' : 'Select All';
+  document.getElementById('deleteSelectedBtn').style.display = selectedIds.size ? '' : 'none';
+  document.getElementById('deleteSelectedBtn').textContent = `🗑 Delete ${selectedIds.size} Track${selectedIds.size !== 1 ? 's' : ''}`;
+}
+
+document.getElementById('selectAllBtn').addEventListener('click', () => {
+  const checkboxes = [...document.querySelectorAll('.atr-check')];
+  const allSelected = checkboxes.every(cb => selectedIds.has(cb.getAttribute('data-docid')));
+  checkboxes.forEach(cb => {
+    const id = cb.getAttribute('data-docid');
+    if (allSelected) { selectedIds.delete(id); cb.checked = false; }
+    else             { selectedIds.add(id);    cb.checked = true;  }
+  });
+  updateSelectionUI();
 });
 
 document.getElementById('deleteSelectedBtn').addEventListener('click', async () => {
   if (!selectedIds.size) return;
-  if (!confirm(`Delete ${selectedIds.size} selected track${selectedIds.size>1?'s':''}?`)) return;
-  for (const id of selectedIds) await deleteCloudTrack(id);
+  const ids = [...selectedIds];
+  const n = ids.length;
+  for (const id of ids) await deleteCloudTrack(id);
   selectedIds.clear();
-  document.getElementById('deleteSelectedBtn').style.display = 'none';
+  updateSelectionUI();
+  toast(`🗑 Deleted ${n} track${n > 1 ? 's' : ''}`);
 });
 
 async function deleteCloudTrack(docId) {
