@@ -147,6 +147,51 @@ svg { display: block; }
 }
 .stat-divider { color: var(--text-dim); }
 .stat-sync-btn { color: var(--accent); font-size: 0.76rem; font-weight: 600; }
+.stat-select-btn { margin-left: auto; color: var(--accent); font-size: 0.76rem; font-weight: 600; }
+
+/* ── SELECTION BAR ──────────────────────────────────────── */
+.sel-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border-radius: var(--radius);
+  padding: 10px 14px; margin-bottom: 10px;
+}
+.sel-cancel { font-size: 0.82rem; color: var(--text-sub); font-weight: 500; }
+.sel-count  { font-size: 0.82rem; color: var(--text); font-weight: 600; flex: 1; text-align: center; }
+.sel-actions { display: flex; gap: 8px; }
+.sel-action {
+  font-size: 0.78rem; font-weight: 600; padding: 5px 12px;
+  border-radius: 20px; background: var(--card); color: var(--text);
+  transition: background 0.15s;
+}
+.sel-action:active { background: var(--card-hover); }
+.sel-action.sel-delete { background: rgba(250,45,72,0.18); color: var(--accent); }
+.sel-action.sel-delete:disabled { opacity: 0.35; pointer-events: none; }
+
+/* ── SELECTION MODE TRACK STATES ────────────────────────── */
+.track-card .tc-sel-check, .track-row .tr-sel-check {
+  display: none;
+}
+body.select-mode .track-card .tc-sel-check {
+  display: flex; position: absolute; top: 7px; left: 7px; z-index: 4;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(0,0,0,0.55); border: 2px solid rgba(255,255,255,0.55);
+  align-items: center; justify-content: center; font-size: 0.7rem;
+}
+body.select-mode .track-card.selected .tc-sel-check {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+body.select-mode .track-card.selected .tc-sel-check::after { content: '✓'; }
+body.select-mode .track-row .tr-sel-check {
+  display: flex; width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.3);
+  align-items: center; justify-content: center; font-size: 0.7rem;
+}
+body.select-mode .track-row.selected .tr-sel-check {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+body.select-mode .track-row.selected .tr-sel-check::after { content: '✓'; }
+body.select-mode .track-card { cursor: default; }
+body.select-mode .track-card:active { transform: none; opacity: 1; }
 
 .sync-banner {
   background: rgba(250,45,72,0.08); border: 1px solid rgba(250,45,72,0.22);
