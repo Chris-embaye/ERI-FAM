@@ -81,6 +81,16 @@ function initAudioCtx() {
   analyserNode.connect(audioCtx.destination);
 }
 
+// Pre-unlock AudioContext on first user gesture so it's already "running"
+// before the first track tap — required on iOS Safari and Chrome Android.
+function _unlockAudioCtx() {
+  try { initAudioCtx(); } catch(e) {}
+  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
+}
+document.addEventListener('touchstart', _unlockAudioCtx, { once: true, passive: true });
+document.addEventListener('touchend',   _unlockAudioCtx, { once: true, passive: true });
+document.addEventListener('click',      _unlockAudioCtx, { once: true });
+
 // ── IndexedDB ──────────────────────────────────────────────────
 const DB_NAME = 'erifam', DB_VER = 1;
 let idb;
@@ -233,8 +243,11 @@ function getBlobUrl(track) {
 // ── Play a track ───────────────────────────────────────────────
 async function playTrack(track, queueTracks) {
   if (!track) return;
-  initAudioCtx();
-  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  // Resume audio context without awaiting — keeping the user-gesture chain
+  // unbroken so audio.play() below is still treated as a gesture-triggered call.
+  try { initAudioCtx(); } catch(e) { console.warn('[AudioCtx init]', e); }
+  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
 
   S.currentTrack = track;
   if (queueTracks) {
@@ -252,7 +265,7 @@ async function playTrack(track, queueTracks) {
     S.playing = true;
   } catch(e) {
     console.warn(e);
-    if (e.name === 'NotAllowedError') toast('⚠ Tap again to start audio');
+    if (e.name === 'NotAllowedError') toast('⚠ Tap the track again to play');
     else if (e.name !== 'AbortError') toast('⚠ Could not play — ' + (e.message || e.name));
   }
 
