@@ -765,7 +765,7 @@ document.getElementById('listViewBtn').addEventListener('click', () => {
 });
 
 // ── Mini Player ────────────────────────────────────────────────
-document.getElementById('miniPlayerExpand').addEventListener('click', () => openPanel('fullPlayer'));
+document.getElementById('miniPlayerExpand').addEventListener('click', e => { if (!e.target.closest('.mini-btn')) openPanel('fullPlayer'); });
 document.getElementById('miniPlay').addEventListener('click', e => { e.stopPropagation(); togglePlay(); });
 document.getElementById('miniPrev').addEventListener('click', e => { e.stopPropagation(); prevTrack(); });
 document.getElementById('miniNext').addEventListener('click', e => { e.stopPropagation(); nextTrack(); });
