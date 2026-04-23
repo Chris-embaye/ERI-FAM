@@ -41,6 +41,8 @@ const S = {
   normalize: false,
   gapless: true,
   likedIds: new Set(),
+  shuffleQueue: [],    // pre-shuffled play order
+  shuffleIndex: 0,
 };
 
 // ── Audio ──────────────────────────────────────────────────────
@@ -243,6 +245,7 @@ async function playTrack(track, queueTracks) {
   if (queueTracks) {
     S.queue = queueTracks;
     S.queueIndex = queueTracks.indexOf(track);
+    if (S.shuffle) buildShuffleQueue(track);
   }
 
   let src = track.type === 'cloud' ? track.url : getBlobUrl(track);
@@ -282,8 +285,26 @@ function togglePlay() {
   updatePlayerUI();
 }
 
+// Fisher-Yates shuffle of the queue, current track always plays first
+function buildShuffleQueue(currentTrack) {
+  const rest = S.queue.filter(t => t !== currentTrack);
+  for (let i = rest.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rest[i], rest[j]] = [rest[j], rest[i]];
+  }
+  S.shuffleQueue  = currentTrack ? [currentTrack, ...rest] : rest;
+  S.shuffleIndex  = 0;
+}
+
 function prevTrack() {
   if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+  if (S.shuffle) {
+    S.shuffleIndex = Math.max(0, S.shuffleIndex - 1);
+    const track = S.shuffleQueue[S.shuffleIndex];
+    S.queueIndex = S.queue.indexOf(track);
+    playTrack(track);
+    return;
+  }
   let idx = S.queueIndex - 1;
   if (idx < 0) idx = S.repeat === 'all' ? S.queue.length - 1 : 0;
   S.queueIndex = idx;
@@ -292,9 +313,15 @@ function prevTrack() {
 
 function nextTrack() {
   if (S.shuffle) {
-    const idx = Math.floor(Math.random() * S.queue.length);
-    S.queueIndex = idx;
-    playTrack(S.queue[idx]);
+    S.shuffleIndex++;
+    if (S.shuffleIndex >= S.shuffleQueue.length) {
+      // All songs played — reshuffle and loop
+      buildShuffleQueue(null);
+    }
+    const track = S.shuffleQueue[S.shuffleIndex] || S.shuffleQueue[0];
+    S.shuffleIndex = S.shuffleQueue.indexOf(track);
+    S.queueIndex   = S.queue.indexOf(track);
+    playTrack(track);
     return;
   }
   let idx = S.queueIndex + 1;
@@ -751,6 +778,7 @@ document.getElementById('nextBtn').addEventListener('click', nextTrack);
 
 document.getElementById('shuffleBtn').addEventListener('click', () => {
   S.shuffle = !S.shuffle;
+  if (S.shuffle && S.queue.length) buildShuffleQueue(S.currentTrack);
   document.getElementById('shuffleBtn').classList.toggle('active', S.shuffle);
   toast(S.shuffle ? '🔀 Shuffle on' : '🔀 Shuffle off');
 });

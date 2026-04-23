@@ -519,15 +519,15 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 .mini-info { flex: 1; min-width: 0; }
 .mini-title { font-size: 0.86rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-artist { font-size: 0.71rem; color: var(--text-sub); margin-top: 1px; }
-.mini-btns { display: flex; align-items: center; gap: 2px; }
+.mini-btns { display: flex; align-items: center; gap: 4px; }
 .mini-btn {
   width: 38px; height: 38px; border-radius: 50%; display: flex;
-  align-items: center; justify-content: center; color: var(--text-sub);
+  align-items: center; justify-content: center; color: var(--text);
 }
-.mini-btn svg { width: 19px; height: 19px; }
-.mini-btn:hover { color: var(--text); }
+.mini-btn svg { width: 20px; height: 20px; }
+.mini-btn:active { opacity: 0.6; }
 .mini-play { color: white; }
-.mini-play svg { width: 24px; height: 24px; fill: white; }
+.mini-play svg { width: 26px; height: 26px; fill: white; }
 .mini-prog { height: 2px; background: rgba(255,255,255,0.12); border-radius: 1px; margin: 0 10px 0; }
 .mini-prog-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s linear; border-radius: 1px; }
 
