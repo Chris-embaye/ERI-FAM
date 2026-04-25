@@ -1,382 +1,477 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ERI-FAM Admin</title>
-  <link rel="icon" href="../icons/icon-512.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="admin.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HUB — App Control Center</title>
+  <link rel="icon" href="../icons/icon-512.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="admin.css"/>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div class="login-screen" id="loginScreen">
-  <div class="login-card">
-    <img src="../icons/icon-512.png" class="login-logo" alt="ERI-FAM" onerror="this.style.display='none'" />
-    <h1>ERI-FAM <span>Admin</span></h1>
-    <p class="login-sub">Sign in to manage your music app</p>
-    <div id="loginError" class="login-error" style="display:none"></div>
-    <input type="email"    id="loginEmail" class="login-input" placeholder="Email address" autocomplete="email" />
-    <input type="password" id="loginPass"  class="login-input" placeholder="Password" autocomplete="current-password" />
-    <button class="btn-login" id="loginBtn">Sign In</button>
-  </div>
-</div>
+<!-- ══════════════════════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════════════════════ -->
+<div id="authScreen">
 
-<!-- ADMIN APP -->
-<div class="admin-app" id="adminApp" style="display:none">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sb-header">
-      <img src="../icons/icon-512.png" class="sb-logo" alt="ERI-FAM" onerror="this.style.display='none'" />
-      <div class="sb-title">ERI-FAM <span>Admin</span></div>
+  <!-- Login -->
+  <div id="loginView" class="auth-view">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-hex">⬡</div>
+        <h1>HUB</h1>
+        <p>Your Personal App Control Center</p>
+      </div>
+      <div id="loginError" class="auth-error" hidden></div>
+      <input type="email"    id="loginEmail" class="auth-input" placeholder="Email address" autocomplete="email"/>
+      <input type="password" id="loginPass"  class="auth-input" placeholder="Password"      autocomplete="current-password"/>
+      <button class="auth-btn" id="loginBtn">Sign In</button>
+      <p class="auth-switch">No account? <button class="link-btn" id="toRegister">Request Access</button></p>
     </div>
+  </div>
+
+  <!-- Register -->
+  <div id="registerView" class="auth-view" hidden>
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-hex">⬡</div>
+        <h1>Request Access</h1>
+        <p>Admin approval required to enter</p>
+      </div>
+      <div id="regError" class="auth-error" hidden></div>
+      <input type="text"     id="regName"  class="auth-input" placeholder="Your full name"     autocomplete="name"/>
+      <input type="email"    id="regEmail" class="auth-input" placeholder="Email address"       autocomplete="email"/>
+      <input type="password" id="regPass"  class="auth-input" placeholder="Password (min 6 chars)" autocomplete="new-password"/>
+      <button class="auth-btn" id="registerBtn">Request Access</button>
+      <p class="auth-switch">Already approved? <button class="link-btn" id="toLogin">Sign In</button></p>
+    </div>
+  </div>
+
+  <!-- Pending Approval -->
+  <div id="pendingView" class="auth-view" hidden>
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-hex" style="background:linear-gradient(135deg,#f59e0b,#d97706)">⏳</div>
+        <h1>Pending Approval</h1>
+        <p>Your request is under review</p>
+      </div>
+      <p class="pending-msg">You're registered! The admin will review your request and grant access shortly. Check back soon.</p>
+      <button class="auth-btn" id="pendingSignOut">Sign Out</button>
+    </div>
+  </div>
+
+</div><!-- /authScreen -->
+
+
+<!-- ══════════════════════════════════════════════════════════
+     HUB APP
+══════════════════════════════════════════════════════════ -->
+<div id="hubApp" hidden>
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────── -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sb-top">
+      <div class="sb-brand">
+        <div class="sb-hex">⬡</div>
+        <span class="sb-label">HUB</span>
+      </div>
+      <button class="sb-toggle" id="sidebarToggle" title="Collapse sidebar">‹</button>
+    </div>
+
     <nav class="sb-nav">
       <button class="sb-item active" data-page="dashboard">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        Dashboard
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>Dashboard</span>
       </button>
-      <button class="sb-item" data-page="upload">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-        Upload Music
-      </button>
-      <button class="sb-item" data-page="tracks">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        Manage Tracks
+      <button class="sb-item" data-page="apps">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <span>My Apps</span>
       </button>
       <button class="sb-item" data-page="users">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Users
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Users <span class="sb-badge" id="pendingBadge" hidden>0</span></span>
+      </button>
+      <button class="sb-item" data-page="assets">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>Assets</span>
       </button>
       <button class="sb-item" data-page="notify">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        Push Notify
-      </button>
-      <button class="sb-item" data-page="feedback">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Feedback
-      </button>
-      <button class="sb-item" data-page="promote">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
-        Promote Business
+        <span>Notifications</span>
       </button>
       <button class="sb-item" data-page="settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        App Settings
+        <span>Settings</span>
       </button>
     </nav>
-    <div class="sb-footer">
-      <a href="../" target="_blank" class="sb-app-link">← Open App</a>
-      <button class="sb-signout" id="signOutBtn">Sign Out</button>
+
+    <div class="sb-user">
+      <div class="sb-avatar" id="sbAvatar">?</div>
+      <div class="sb-user-info">
+        <div class="sb-user-name" id="sbUserName">—</div>
+        <div class="sb-user-role" id="sbUserRole">—</div>
+      </div>
+      <button class="sb-signout" id="signOutBtn" title="Sign Out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </div>
   </aside>
 
-  <!-- MAIN -->
-  <main class="admin-main" id="adminMain">
+  <!-- ── MAIN ─────────────────────────────────────────────── -->
+  <main id="hubMain">
 
-    <!-- Mobile header -->
-    <div class="mobile-header">
-      <button class="menu-btn" id="menuBtn">☰</button>
-      <span>ERI-FAM Admin</span>
+    <!-- Mobile top bar -->
+    <div class="mob-bar">
+      <button class="mob-menu" id="mobMenu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span id="mobTitle">Dashboard</span>
       <span></span>
     </div>
 
-    <!-- DASHBOARD PAGE -->
+    <!-- ══ DASHBOARD ══ -->
     <div class="page active" id="page-dashboard">
-      <div class="page-header">
-        <h1>Dashboard</h1>
-        <span id="dashDate" class="page-date"></span>
+      <div class="page-hd">
+        <div>
+          <h1 id="dashGreeting">Welcome back</h1>
+          <p class="page-sub" id="dashDate"></p>
+        </div>
+        <button class="btn-primary" id="dashAddApp">+ New App</button>
       </div>
-      <div class="stat-cards" id="statCards">
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(0,179,86,0.15);color:#00B356">🎵</div>
-          <div class="stat-info"><div class="stat-num" id="dashTracks">—</div><div class="stat-label">Total Tracks</div></div>
+
+      <div class="stat-row">
+        <div class="stat-card" style="--accent:#6366f1">
+          <div class="stat-ico">📱</div>
+          <div class="stat-body">
+            <div class="stat-num" id="statApps">—</div>
+            <div class="stat-lbl">Connected Apps</div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(74,144,226,0.15);color:#4A90E2">▶️</div>
-          <div class="stat-info"><div class="stat-num" id="dashPlays">—</div><div class="stat-label">Total Plays</div></div>
+        <div class="stat-card" style="--accent:#10b981">
+          <div class="stat-ico">👥</div>
+          <div class="stat-body">
+            <div class="stat-num" id="statUsers">—</div>
+            <div class="stat-lbl">Team Members</div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(245,197,66,0.15);color:#F5C542">💾</div>
-          <div class="stat-info"><div class="stat-num" id="dashSize">—</div><div class="stat-label">Storage Used</div></div>
+        <div class="stat-card" style="--accent:#f59e0b">
+          <div class="stat-ico">🗂</div>
+          <div class="stat-body">
+            <div class="stat-num" id="statAssets">—</div>
+            <div class="stat-lbl">Assets Uploaded</div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(226,58,68,0.15);color:#E23A44">❤️</div>
-          <div class="stat-info"><div class="stat-num" id="dashLiked">—</div><div class="stat-label">Most Liked</div></div>
+        <div class="stat-card" style="--accent:#ef4444">
+          <div class="stat-ico">🔔</div>
+          <div class="stat-body">
+            <div class="stat-num" id="statNotifs">—</div>
+            <div class="stat-lbl">Notifications Sent</div>
+          </div>
         </div>
       </div>
-      <div class="dash-row">
-        <div class="dash-panel">
-          <h3>Recent Uploads</h3>
-          <div id="recentUploads" class="admin-track-list"></div>
+
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-hd"><h3>Your Apps</h3><button class="btn-sm" onclick="showPage('apps')">View All →</button></div>
+          <div id="dashAppList" class="app-mini-list">
+            <p class="empty-msg">No apps yet. <button class="link-btn" onclick="showPage('apps')">Add one →</button></p>
+          </div>
         </div>
-        <div class="dash-panel">
-          <h3>Quick Actions</h3>
-          <div class="quick-actions">
-            <button class="qa-btn" onclick="showPage('upload')">⬆ Upload Music</button>
-            <button class="qa-btn" onclick="showPage('notify')">🔔 Push Notification</button>
-            <button class="qa-btn" id="refreshBtn">🔄 Refresh Data</button>
-            <a class="qa-btn" href="../" target="_blank">👁 View App</a>
+        <div class="card">
+          <div class="card-hd"><h3>Recent Activity</h3></div>
+          <div id="dashActivity" class="activity-list">
+            <p class="empty-msg">No recent activity.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- UPLOAD PAGE -->
-    <div class="page" id="page-upload">
-      <div class="page-header"><h1>Upload Music</h1></div>
-
-      <!-- Dropzone -->
-      <div class="upload-zone" id="adminUploadZone">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="uz-ico"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-        <p><strong>Drop MP3 / M4A / FLAC files here</strong></p>
-        <p class="uz-sub">or <label class="uz-link" for="adminFileInput">browse files</label> · <label class="uz-link" for="adminFolderInput">browse folder</label></p>
-        <input type="file" id="adminFileInput" accept=".mp3,.m4a,.flac,.wav,.ogg,.aac" multiple hidden />
-        <input type="file" id="adminFolderInput" webkitdirectory multiple hidden />
+    <!-- ══ MY APPS ══ -->
+    <div class="page" id="page-apps">
+      <div class="page-hd">
+        <div>
+          <h1>My Apps</h1>
+          <p class="page-sub">Build, manage, and launch all your applications</p>
+        </div>
+        <button class="btn-primary" id="addAppBtn">+ New App</button>
       </div>
+      <div id="appGrid" class="app-grid">
+        <p class="empty-msg" style="grid-column:1/-1">No apps yet. Click + New App to get started.</p>
+      </div>
+    </div>
 
-      <!-- Upload queue -->
-      <div id="uploadQueue" class="upload-queue"></div>
-
-      <!-- Metadata form (shown when file selected) -->
-      <div class="meta-form" id="metaForm" style="display:none">
-        <h3>Track Details</h3>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Title *</label>
-            <input type="text" id="metaTitle" class="form-input" placeholder="Track title" />
-          </div>
-          <div class="form-group">
-            <label>Artist *</label>
-            <input type="text" id="metaArtist" class="form-input" placeholder="Artist name" />
+    <!-- ══ APP EDITOR ══ -->
+    <div class="page" id="page-editor">
+      <div class="page-hd">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn-sm" id="editorBack">← Back</button>
+          <div>
+            <h1 id="editorTitle">App Editor</h1>
+            <p class="page-sub" id="editorSubtitle"></p>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Album</label>
-            <input type="text" id="metaAlbum" class="form-input" placeholder="Album name" />
-          </div>
-          <div class="form-group">
-            <label>Genre</label>
-            <input type="text" id="metaGenre" class="form-input" placeholder="Genre" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Artwork URL (optional)</label>
-          <input type="url" id="metaArtwork" class="form-input" placeholder="https://…" />
-        </div>
-        <div class="form-group">
-          <label>Tags (comma separated)</label>
-          <input type="text" id="metaTags" class="form-input" placeholder="eritrean, tigrinya, traditional" />
-        </div>
-        <div class="form-group">
-          <label>Lyrics (optional)</label>
-          <textarea id="metaLyrics" class="form-textarea" placeholder="Paste song lyrics here…" rows="6"></textarea>
-        </div>
-        <div class="upload-actions">
-          <button class="btn-primary" id="uploadAllBtn">⬆ Upload All to Cloud</button>
-          <button class="btn-secondary" id="clearQueueBtn">Clear Queue</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm" id="editorRefresh">⟳ Refresh</button>
+          <button class="btn-primary" id="editorSave">Save Changes</button>
         </div>
       </div>
 
-      <!-- Progress -->
-      <div id="uploadProgress" class="upload-progress" style="display:none">
+      <div class="editor-wrap">
+        <!-- Settings panel -->
+        <div class="editor-panel" id="editorPanel">
+          <div class="ep-sect">
+            <div class="ep-sect-hd">App Info</div>
+            <div class="form-group"><label>Name</label><input type="text" id="epName" class="form-input"/></div>
+            <div class="form-group"><label>Description</label><input type="text" id="epDesc" class="form-input"/></div>
+            <div class="form-group"><label>URL</label><input type="url" id="epUrl" class="form-input"/></div>
+            <div class="form-row2">
+              <div class="form-group"><label>Icon (emoji)</label><input type="text" id="epIcon" class="form-input" maxlength="4" style="font-size:1.5rem;text-align:center"/></div>
+              <div class="form-group"><label>Color</label><input type="color" id="epColor" class="form-input color-input"/></div>
+            </div>
+          </div>
+          <div class="ep-sect">
+            <div class="ep-sect-hd">Status</div>
+            <select id="epStatus" class="form-input">
+              <option value="active">🟢 Active</option>
+              <option value="maintenance">🟡 Maintenance</option>
+              <option value="draft">⚫ Draft</option>
+            </select>
+          </div>
+          <div class="ep-sect">
+            <div class="ep-sect-hd">Content Sections <span style="font-size:.7rem;color:var(--text-dim);font-weight:400">(drag to reorder)</span></div>
+            <div id="sectionsEditor" class="sections-list"></div>
+            <button class="btn-sm" id="addSectionBtn" style="width:100%;margin-top:8px">+ Add Section</button>
+          </div>
+        </div>
+
+        <!-- Preview iframe -->
+        <div class="editor-preview">
+          <div class="preview-chrome">
+            <div class="chrome-dots"><span></span><span></span><span></span></div>
+            <div class="chrome-url" id="chromeUrl">about:blank</div>
+            <div style="width:52px"></div>
+          </div>
+          <iframe id="editorFrame" class="editor-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ USERS ══ -->
+    <div class="page" id="page-users">
+      <div class="page-hd">
+        <div>
+          <h1>Team &amp; Users</h1>
+          <p class="page-sub">Manage who has access to your Hub</p>
+        </div>
+        <button class="btn-primary" id="inviteBtn">+ Invite User</button>
+      </div>
+      <div class="user-tabs">
+        <button class="utab active" data-utab="all">All</button>
+        <button class="utab" data-utab="pending">Pending <span class="utab-badge" id="pendingTabCount">0</span></button>
+        <button class="utab" data-utab="approved">Approved</button>
+        <button class="utab" data-utab="rejected">Rejected</button>
+      </div>
+      <div id="userList" class="user-list">
+        <p class="empty-msg">No users found.</p>
+      </div>
+    </div>
+
+    <!-- ══ ASSETS ══ -->
+    <div class="page" id="page-assets">
+      <div class="page-hd">
+        <div>
+          <h1>Asset Library</h1>
+          <p class="page-sub">Images, audio and files across all your apps</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="assetAppFilter" class="form-input" style="width:160px">
+            <option value="">All Apps</option>
+          </select>
+        </div>
+      </div>
+      <div class="drop-zone" id="assetDropZone">
+        <div class="dz-content">
+          <div class="dz-icon">📂</div>
+          <p>Drop files here or <label class="link-btn" for="assetFileInput">browse</label></p>
+          <p class="dz-sub">Images · Audio · Video · Documents</p>
+        </div>
+        <input type="file" id="assetFileInput" multiple hidden/>
+      </div>
+      <div id="uploadProgress" class="upload-progress" hidden>
         <div class="up-bar-wrap"><div class="up-bar" id="upBar"></div></div>
         <p id="upStatus">Uploading…</p>
       </div>
-    </div>
-
-    <!-- MANAGE TRACKS PAGE -->
-    <div class="page" id="page-tracks">
-      <div class="page-header">
-        <h1>Manage Tracks</h1>
-        <input type="search" id="trackSearch" class="search-input" placeholder="Search tracks…" />
-      </div>
-      <div class="tracks-toolbar">
-        <span id="trackCount">0 tracks</span>
-        <button class="btn-sm" id="selectAllBtn">Select All</button>
-        <button class="btn-sm-danger" id="deleteSelectedBtn" style="display:none">🗑 Delete Selected</button>
-      </div>
-      <div class="admin-track-list" id="adminTrackList"></div>
-    </div>
-
-    <!-- USERS PAGE -->
-    <div class="page" id="page-users">
-      <div class="page-header"><h1>Users</h1></div>
-      <div class="info-box">
-        <p>👥 User tracking requires Firebase Analytics to be enabled in your project. Anonymous play counts are tracked per track in Firestore.</p>
-        <p style="margin-top:8px">Configure <strong>Firebase Authentication</strong> → <strong>Anonymous</strong> in your Firebase console to enable user tracking.</p>
-        <a href="https://console.firebase.google.com" target="_blank" class="btn-primary" style="display:inline-block;margin-top:12px">Open Firebase Console</a>
+      <div id="assetGrid" class="asset-grid">
+        <p class="empty-msg" style="grid-column:1/-1">No assets yet. Drop files above to upload.</p>
       </div>
     </div>
 
-    <!-- PUSH NOTIFICATIONS PAGE -->
+    <!-- ══ NOTIFICATIONS ══ -->
     <div class="page" id="page-notify">
-      <div class="page-header"><h1>Push Notification</h1></div>
-      <div class="notify-form">
-        <div class="form-group">
-          <label>Notification Title</label>
-          <input type="text" id="notifyTitle" class="form-input" placeholder="New music added!" maxlength="100" />
-        </div>
-        <div class="form-group">
-          <label>Message</label>
-          <textarea id="notifyBody" class="form-textarea" placeholder="Check out the latest Eritrean music on ERI-FAM…" rows="4" maxlength="300"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Link (optional)</label>
-          <input type="url" id="notifyUrl" class="form-input" placeholder="https://…" />
-        </div>
-        <div class="form-group">
-          <label>Schedule (optional)</label>
-          <input type="datetime-local" id="notifySchedule" class="form-input" />
-        </div>
-        <button class="btn-primary" id="sendNotifyBtn">Send Notification</button>
-        <p class="form-note">Requires Firebase Cloud Messaging (FCM) to be configured. Saves to Firestore /notifications collection which your service worker can listen to.</p>
+      <div class="page-hd">
+        <h1>Push Notifications</h1>
       </div>
-    </div>
-
-    <!-- FEEDBACK PAGE -->
-    <div class="page" id="page-feedback">
-      <div class="page-header">
-        <h1>💬 User Feedback</h1>
-        <button class="btn-sm" id="refreshFeedbackBtn" style="padding:8px 16px">🔄 Refresh</button>
-      </div>
-      <div class="feedback-stats-row" id="feedbackStatsRow">
-        <div class="fb-stat"><div class="fb-stat-num" id="fbTotal">—</div><div class="fb-stat-label">Total Reviews</div></div>
-        <div class="fb-stat"><div class="fb-stat-num" id="fbAvgRating">—</div><div class="fb-stat-label">Avg Rating</div></div>
-        <div class="fb-stat"><div class="fb-stat-num" id="fbFiveStars">—</div><div class="fb-stat-label">5-Star Reviews</div></div>
-      </div>
-      <div class="feedback-list" id="feedbackList">
-        <p style="color:var(--text-dim);padding:20px;font-size:0.85rem">Loading feedback…</p>
-      </div>
-    </div>
-
-    <!-- PROMOTE BUSINESS PAGE -->
-    <div class="page" id="page-promote">
-      <div class="page-header">
-        <h1>📢 Promote Business</h1>
-        <button class="btn-sm" id="addPromoBtn" style="padding:8px 18px">+ Add Promo</button>
-      </div>
-      <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:20px">Manage business promotions shown on the home screen. Add websites, shops, and services to help the community.</p>
-
-      <!-- Add/Edit Promo Form -->
-      <div class="promo-form" id="promoForm" style="display:none">
-        <h3 id="promoFormTitle">New Promotion</h3>
-        <input type="hidden" id="promoDocId" />
-        <div class="form-row">
+      <div class="notify-layout">
+        <div class="card" style="flex:0 0 380px">
+          <h3 style="margin-bottom:20px">Compose</h3>
           <div class="form-group">
-            <label>Business Name *</label>
-            <input type="text" id="promoName" class="form-input" placeholder="e.g. Habesha Café" maxlength="60" />
-          </div>
-          <div class="form-group">
-            <label>Category</label>
-            <select id="promoCategory" class="form-input">
-              <option value="">Select category…</option>
-              <option value="Restaurant">Restaurant</option>
-              <option value="Music">Music</option>
-              <option value="Events">Events</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Services">Services</option>
-              <option value="Education">Education</option>
-              <option value="Media">Media</option>
-              <option value="Community">Community</option>
-              <option value="Other">Other</option>
+            <label>Target App</label>
+            <select id="notifyTarget" class="form-input">
+              <option value="all">📡 All Apps</option>
             </select>
           </div>
+          <div class="form-group"><label>Title *</label><input type="text" id="notifyTitle" class="form-input" placeholder="New songs added!" maxlength="100"/></div>
+          <div class="form-group"><label>Message *</label><textarea id="notifyBody" class="form-textarea" placeholder="Check out the latest…" rows="4" maxlength="300"></textarea></div>
+          <div class="form-group"><label>Link (optional)</label><input type="url" id="notifyUrl" class="form-input" placeholder="https://…"/></div>
+          <div class="form-group"><label>Schedule (optional)</label><input type="datetime-local" id="notifySchedule" class="form-input"/></div>
+          <button class="btn-primary" id="sendNotifyBtn" style="width:100%">Send Notification</button>
+          <p class="form-note">Requires Firebase Cloud Messaging (FCM) configured on each app.</p>
         </div>
-        <div class="form-group">
-          <label>Short Description</label>
-          <input type="text" id="promoDesc" class="form-input" placeholder="One-line description shown under the name" maxlength="100" />
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Website / Link *</label>
-            <input type="url" id="promoWebsite" class="form-input" placeholder="https://yourbusiness.com" />
+        <div style="flex:1;min-width:0">
+          <div class="card-hd" style="margin-bottom:16px">
+            <h3>History</h3>
+            <button class="btn-sm" id="refreshNotifBtn">⟳ Refresh</button>
           </div>
-          <div class="form-group">
-            <label>Banner Image URL</label>
-            <input type="url" id="promoImage" class="form-input" placeholder="https://… (logo or banner image)" />
+          <div id="notifHistory" class="notif-list">
+            <p class="empty-msg">No notifications sent yet.</p>
           </div>
-        </div>
-        <div class="form-group">
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-            <input type="checkbox" id="promoActive" checked style="width:16px;height:16px" />
-            Active (visible on home screen)
-          </label>
-        </div>
-        <div class="upload-actions">
-          <button class="btn-primary" id="savePromoBtn">Save Promotion</button>
-          <button class="btn-secondary" id="cancelPromoBtn">Cancel</button>
         </div>
       </div>
-
-      <!-- Promo list -->
-      <div id="promoList" class="admin-track-list" style="margin-top:8px"></div>
     </div>
 
-    <!-- APP SETTINGS PAGE -->
+    <!-- ══ SETTINGS ══ -->
     <div class="page" id="page-settings">
-      <div class="page-header"><h1>App Settings</h1></div>
-      <div class="settings-form">
-        <div class="settings-group">
-          <h3>App Info</h3>
-          <div class="form-group">
-            <label>App Name</label>
-            <input type="text" id="setAppName" class="form-input" value="ERI-FAM" />
-          </div>
-          <div class="form-group">
-            <label>Tagline</label>
-            <input type="text" id="setTagline" class="form-input" placeholder="Eritrean Music, Everywhere" />
-          </div>
+      <div class="page-hd"><h1>Hub Settings</h1></div>
+      <div class="settings-grid">
+        <div class="card">
+          <h3>General</h3>
+          <div class="form-group"><label>Hub Name</label><input type="text" id="setHubName" class="form-input" value="HUB"/></div>
+          <div class="form-group"><label>Your Display Name</label><input type="text" id="setDisplayName" class="form-input"/></div>
+          <div class="form-group"><label>Description</label><input type="text" id="setHubDesc" class="form-input" placeholder="My App Control Center"/></div>
+          <button class="btn-primary" id="saveGeneralBtn">Save General</button>
         </div>
-        <div class="settings-group">
-          <h3>Featured Track</h3>
-          <div class="form-group">
-            <label>Featured Track ID</label>
-            <input type="text" id="setFeatured" class="form-input" placeholder="Track ID from Firestore" />
-          </div>
-        </div>
-        <div class="settings-group">
-          <h3>Maintenance</h3>
+        <div class="card">
+          <h3>Access Control</h3>
           <label class="toggle-row">
-            <span>Maintenance Mode</span>
-            <input type="checkbox" id="setMaintenance" class="toggle" />
+            <span>Allow new user registrations</span>
+            <label class="switch"><input type="checkbox" id="setAllowReg" checked/><span class="slider"></span></label>
           </label>
           <label class="toggle-row">
-            <span>Allow New User Registrations</span>
-            <input type="checkbox" id="setAllowReg" class="toggle" checked />
+            <span>Global maintenance mode</span>
+            <label class="switch"><input type="checkbox" id="setMaintenance"/><span class="slider"></span></label>
           </label>
+          <button class="btn-primary" id="saveAccessBtn" style="margin-top:20px">Save Access</button>
         </div>
-        <button class="btn-primary" id="saveSettingsBtn">Save Settings</button>
+        <div class="card">
+          <h3>Danger Zone</h3>
+          <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Export all your Hub data as JSON for backup.</p>
+          <button class="btn-danger" id="exportDataBtn">📥 Export All Data</button>
+        </div>
       </div>
     </div>
 
   </main>
-</div>
+</div><!-- /hubApp -->
 
-<!-- EDIT TRACK MODAL -->
-<div class="modal-overlay" id="editModal">
-  <div class="modal-box">
-    <h3>Edit Track</h3>
-    <input type="hidden" id="editId" />
-    <div class="form-group"><label>Title</label><input type="text" id="editTitle" class="form-input" /></div>
-    <div class="form-group"><label>Artist</label><input type="text" id="editArtist" class="form-input" /></div>
-    <div class="form-group"><label>Album</label><input type="text" id="editAlbum" class="form-input" /></div>
-    <div class="form-group"><label>Genre</label><input type="text" id="editGenre" class="form-input" /></div>
-    <div class="form-group"><label>Artwork URL</label><input type="url" id="editArtwork" class="form-input" /></div>
-    <div class="form-group"><label>Lyrics</label><textarea id="editLyrics" class="form-textarea" rows="5" placeholder="Song lyrics…"></textarea></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════════ -->
+
+<!-- Add / Edit App -->
+<div class="modal-overlay" id="appModal" hidden>
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="appModalTitle">New App</h3>
+      <button class="modal-x" id="appModalClose">✕</button>
+    </div>
+    <input type="hidden" id="appModalId"/>
+    <div class="form-row2">
+      <div class="form-group"><label>App Name *</label><input type="text" id="appModalName" class="form-input" placeholder="ERI-FAM"/></div>
+      <div class="form-group"><label>Icon (emoji)</label><input type="text" id="appModalIcon" class="form-input" placeholder="🎵" maxlength="4" style="font-size:1.4rem;text-align:center"/></div>
+    </div>
+    <div class="form-group"><label>Description</label><input type="text" id="appModalDesc" class="form-input" placeholder="What does this app do?"/></div>
+    <div class="form-row2">
+      <div class="form-group"><label>URL *</label><input type="url" id="appModalUrl" class="form-input" placeholder="https://yourapp.com"/></div>
+      <div class="form-group"><label>Accent Color</label><input type="color" id="appModalColor" class="form-input color-input" value="#6366f1"/></div>
+    </div>
+    <div class="form-row2">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="appModalCategory" class="form-input">
+          <option value="Music">🎵 Music</option>
+          <option value="Productivity">⚡ Productivity</option>
+          <option value="Social">💬 Social</option>
+          <option value="Education">📚 Education</option>
+          <option value="Business">💼 Business</option>
+          <option value="Entertainment">🎮 Entertainment</option>
+          <option value="Other">📦 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="appModalStatus" class="form-input">
+          <option value="active">🟢 Active</option>
+          <option value="maintenance">🟡 Maintenance</option>
+          <option value="draft">⚫ Draft</option>
+        </select>
+      </div>
+    </div>
     <div class="modal-actions">
-      <button class="btn-primary" id="editSaveBtn">Save Changes</button>
-      <button class="btn-secondary" id="editCancelBtn">Cancel</button>
+      <button class="btn-secondary" id="appModalCancel">Cancel</button>
+      <button class="btn-primary"   id="appModalSave">Save App</button>
     </div>
   </div>
 </div>
 
+<!-- Invite User -->
+<div class="modal-overlay" id="inviteModal" hidden>
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Invite User</h3>
+      <button class="modal-x" id="inviteModalClose">✕</button>
+    </div>
+    <div class="form-group"><label>Email Address *</label><input type="email" id="inviteEmail" class="form-input" placeholder="friend@example.com"/></div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="inviteRole" class="form-input">
+        <option value="viewer">👁 Viewer — Can view apps</option>
+        <option value="editor">✏️ Editor — Can edit content</option>
+        <option value="admin">🛡 Admin — Full access</option>
+      </select>
+    </div>
+    <p class="form-note">The user must sign up with this exact email. Their account will be pre-approved with the selected role.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="inviteModalCancel">Cancel</button>
+      <button class="btn-primary"   id="inviteModalSave">Send Invite</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Section (in Editor) -->
+<div class="modal-overlay" id="sectionModal" hidden>
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd">
+      <h3>Add Content Section</h3>
+      <button class="modal-x" id="sectionModalClose">✕</button>
+    </div>
+    <div class="form-group"><label>Section ID <span style="color:var(--text-dim);font-weight:400">(no spaces)</span></label><input type="text" id="sectionId" class="form-input" placeholder="hero"/></div>
+    <div class="form-group"><label>Display Name</label><input type="text" id="sectionName" class="form-input" placeholder="Hero Section"/></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="sectionModalCancel">Cancel</button>
+      <button class="btn-primary"   id="sectionModalSave">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar overlay for mobile -->
+<div id="sidebarOverlay" class="sidebar-overlay" hidden></div>
+
 <!-- TOAST -->
-<div class="a-toast" id="aToast"></div>
+<div id="toast" class="toast" hidden></div>
 
 <script src="../firebase-config.js"></script>
 <script type="module" src="admin.js"></script>

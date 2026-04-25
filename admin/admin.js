@@ -1,646 +1,970 @@
 /* ================================================================
-   ERI-FAM Admin Panel
+   HUB — App Control Center
+   Firebase 10.12.2 · ES Modules
    ================================================================ */
 'use strict';
 
-// ── Firebase ───────────────────────────────────────────────────
-let _db, _st, _auth;
-let fbFunctions = {};
+// ── Firebase state ────────────────────────────────────────
+let _db, _st, _auth, fb = {};
+let _fbPromise      = null; // singleton — prevents double-init
+let currentUser     = null;
+let currentUserData = null;
+let currentEditApp  = null;
+let allUsers        = [];
+let allApps         = [];
+let activeUserTab   = 'all';
 
-async function initFirebase() {
+const SUPER_ADMIN = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'embayechris@gmail.com';
+const FB_VER      = '10.12.2';
+
+// ── Firebase init (singleton promise) ────────────────────
+function initFB() {
+  if (_fbPromise) return _fbPromise; // return same promise if already started
+  _fbPromise = _loadFB();
+  return _fbPromise;
+}
+
+async function _loadFB() {
   if (typeof FIREBASE_CONFIG === 'undefined' || FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') {
-    showLoginError('Firebase not configured. Fill in firebase-config.js first.');
+    showAuthError('loginError', 'Firebase not configured. Update firebase-config.js first.');
     return false;
   }
   try {
-    const { initializeApp }  = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
-    const fs = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-    const st = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js');
-    const au = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-    const app = initializeApp(FIREBASE_CONFIG);
+    const appMod = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`);
+    const fs     = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-firestore.js`);
+    const st     = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-storage.js`);
+    const au     = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-auth.js`);
+    // Use existing app if already initialized (avoids duplicate-app error)
+    const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
     _db   = fs.getFirestore(app);
     _st   = st.getStorage(app);
     _auth = au.getAuth(app);
-    fbFunctions = { ...fs, ...st, ...au };
+    fb    = { ...appMod, ...fs, ...st, ...au };
     return true;
-  } catch(e) { showLoginError('Firebase failed to load: ' + e.message); return false; }
-}
-
-// ── Auth ───────────────────────────────────────────────────────
-// Pre-fill admin email if configured
-if (typeof ADMIN_EMAIL !== 'undefined') document.getElementById('loginEmail').value = ADMIN_EMAIL;
-
-document.getElementById('loginBtn').addEventListener('click', signIn);
-document.getElementById('loginEmail').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
-document.getElementById('loginPass').addEventListener('keydown',  e => { if (e.key === 'Enter') signIn(); });
-
-async function signIn() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPass').value;
-  if (!email || !pass) { showLoginError('Enter email and password.'); return; }
-  const btn = document.getElementById('loginBtn');
-  btn.textContent = 'Signing in…'; btn.disabled = true;
-  const ready = await initFirebase();
-  if (!ready) { btn.textContent = 'Sign In'; btn.disabled = false; return; }
-  try {
-    await fbFunctions.signInWithEmailAndPassword(_auth, email, pass);
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminApp').style.display = 'flex';
-    loadDashboard();
   } catch(e) {
-    showLoginError(e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found'
-      ? 'Invalid email or password.' : e.message);
-    btn.textContent = 'Sign In'; btn.disabled = false;
+    console.error('[HUB] Firebase init error:', e);
+    showAuthError('loginError', 'Firebase failed: ' + e.message);
+    _fbPromise = null; // allow retry
+    return false;
   }
 }
 
-function showLoginError(msg) {
-  const el = document.getElementById('loginError');
-  el.textContent = msg; el.style.display = '';
+// ── Auth UI ───────────────────────────────────────────────
+document.getElementById('toRegister').addEventListener('click', () => switchAuthView('register'));
+document.getElementById('toLogin').addEventListener('click',    () => switchAuthView('login'));
+document.getElementById('loginBtn').addEventListener('click',   doLogin);
+document.getElementById('registerBtn').addEventListener('click',doRegister);
+document.getElementById('pendingSignOut').addEventListener('click', doSignOut);
+document.getElementById('signOutBtn').addEventListener('click',     doSignOut);
+
+document.getElementById('loginEmail').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+document.getElementById('loginPass').addEventListener('keydown',  e => { if (e.key==='Enter') doLogin(); });
+
+if (typeof ADMIN_EMAIL !== 'undefined') document.getElementById('loginEmail').value = ADMIN_EMAIL;
+
+function switchAuthView(view) {
+  document.getElementById('loginView').hidden    = view !== 'login';
+  document.getElementById('registerView').hidden = view !== 'register';
+  document.getElementById('pendingView').hidden  = view !== 'pending';
 }
 
-document.getElementById('signOutBtn').addEventListener('click', async () => {
-  await fbFunctions.signOut(_auth);
-  document.getElementById('adminApp').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
-});
+function showAuthError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.hidden = false;
+}
+function hideAuthError(id) { document.getElementById(id).hidden = true; }
 
-// ── Navigation ─────────────────────────────────────────────────
-document.querySelectorAll('.sb-item').forEach(btn => {
-  btn.addEventListener('click', () => showPage(btn.getAttribute('data-page')));
-});
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  if (!email || !pass) { showAuthError('loginError', 'Enter email and password.'); return; }
+  hideAuthError('loginError');
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  const ready = await initFB();
+  if (!ready) { btn.textContent = 'Sign In'; btn.disabled = false; return; }
+  try {
+    await fb.signInWithEmailAndPassword(_auth, email, pass);
+    // onAuthStateChanged handles the rest
+  } catch(e) {
+    showAuthError('loginError', friendlyAuthError(e.code));
+  }
+  btn.textContent = 'Sign In'; btn.disabled = false;
+}
 
-document.getElementById('menuBtn').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.toggle('open');
+async function doRegister() {
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  if (!name || !email || !pass) { showAuthError('regError', 'Fill in all fields.'); return; }
+  if (pass.length < 6) { showAuthError('regError', 'Password must be at least 6 characters.'); return; }
+  hideAuthError('regError');
+  const btn = document.getElementById('registerBtn');
+  btn.textContent = 'Creating account…'; btn.disabled = true;
+  const ready = await initFB();
+  if (!ready) { btn.textContent = 'Request Access'; btn.disabled = false; return; }
+  try {
+    const cred = await fb.createUserWithEmailAndPassword(_auth, email, pass);
+    await fb.updateProfile(cred.user, { displayName: name });
+    // Check for pre-approved invite
+    const invRef  = fb.doc(_db, 'hub_invitations', email.toLowerCase());
+    const invSnap = await fb.getDoc(invRef);
+    const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN.toLowerCase();
+    const role   = isSuperAdmin ? 'super_admin' : (invSnap.exists() ? invSnap.data().role : 'viewer');
+    const status = isSuperAdmin ? 'approved'    : (invSnap.exists() ? 'approved' : 'pending');
+    await fb.setDoc(fb.doc(_db, 'hub_users', cred.user.uid), {
+      email, name, role, status,
+      createdAt: fb.serverTimestamp(),
+      approvedAt: status === 'approved' ? fb.serverTimestamp() : null
+    });
+    if (invSnap.exists()) await fb.deleteDoc(invRef);
+    // onAuthStateChanged handles navigation
+  } catch(e) {
+    showAuthError('regError', friendlyAuthError(e.code));
+  }
+  btn.textContent = 'Request Access'; btn.disabled = false;
+}
+
+async function doSignOut() {
+  if (_auth) await fb.signOut(_auth);
+  document.getElementById('hubApp').hidden  = true;
+  document.getElementById('authScreen').hidden = false;
+  switchAuthView('login');
+  currentUser = null; currentUserData = null;
+}
+
+function friendlyAuthError(code) {
+  const map = {
+    'auth/user-not-found':       'No account found with this email.',
+    'auth/wrong-password':       'Incorrect password.',
+    'auth/invalid-credential':   'Incorrect email or password.',
+    'auth/email-already-in-use': 'An account already exists with this email.',
+    'auth/weak-password':        'Password must be at least 6 characters.',
+    'auth/invalid-email':        'Please enter a valid email address.',
+    'auth/too-many-requests':    'Too many attempts. Try again later.',
+  };
+  return map[code] || 'Authentication error. Please try again.';
+}
+
+// ── Auth state observer ───────────────────────────────────
+async function bootAuth() {
+  const ready = await initFB();
+  if (!ready) return;
+  fb.onAuthStateChanged(_auth, async user => {
+    if (!user) {
+      document.getElementById('authScreen').hidden = false;
+      document.getElementById('hubApp').hidden     = true;
+      return;
+    }
+    currentUser = user;
+    // Ensure super admin record exists
+    if (user.email.toLowerCase() === SUPER_ADMIN.toLowerCase()) {
+      await fb.setDoc(fb.doc(_db, 'hub_users', user.uid), {
+        email: user.email,
+        name:  user.displayName || 'Admin',
+        role:  'super_admin',
+        status:'approved',
+        createdAt: fb.serverTimestamp(),
+        approvedAt: fb.serverTimestamp()
+      }, { merge: true });
+    }
+    const snap = await fb.getDoc(fb.doc(_db, 'hub_users', user.uid));
+    if (!snap.exists()) {
+      // No record — create pending
+      await fb.setDoc(fb.doc(_db, 'hub_users', user.uid), {
+        email: user.email,
+        name:  user.displayName || user.email,
+        role:  'viewer',
+        status:'pending',
+        createdAt: fb.serverTimestamp(),
+        approvedAt: null
+      });
+      currentUserData = { role: 'viewer', status: 'pending' };
+    } else {
+      currentUserData = snap.data();
+    }
+    if (currentUserData.status !== 'approved') {
+      document.getElementById('authScreen').hidden = false;
+      document.getElementById('hubApp').hidden     = true;
+      switchAuthView('pending');
+      return;
+    }
+    // Approved — show hub
+    document.getElementById('authScreen').hidden = true;
+    document.getElementById('hubApp').hidden     = false;
+    setupUserDisplay();
+    loadDashboard();
+    loadPendingBadge();
+  });
+}
+
+function setupUserDisplay() {
+  const name = currentUserData.name || currentUser.displayName || currentUser.email;
+  document.getElementById('sbUserName').textContent = name;
+  document.getElementById('sbUserRole').textContent = currentUserData.role.replace('_', ' ');
+  document.getElementById('sbAvatar').textContent   = name.charAt(0).toUpperCase();
+}
+
+// ── Navigation ────────────────────────────────────────────
+document.querySelectorAll('.sb-item[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    showPage(btn.dataset.page);
+    document.getElementById('mobTitle').textContent = btn.querySelector('span').textContent.trim();
+    // Close mobile sidebar
+    document.getElementById('sidebar').classList.remove('mob-open');
+    document.getElementById('sidebarOverlay').hidden = true;
+  });
 });
 
 function showPage(name) {
-  document.querySelectorAll('.sb-item').forEach(b => b.classList.toggle('active', b.getAttribute('data-page') === name));
-  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
-  document.getElementById('sidebar').classList.remove('open');
-  if (name === 'tracks')   loadTracks();
-  if (name === 'dashboard') loadDashboard();
-  if (name === 'feedback') loadFeedback();
-  if (name === 'promote')  loadAdminPromos();
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+  const page = document.getElementById('page-' + name);
+  const btn  = document.querySelector(`.sb-item[data-page="${name}"]`);
+  if (page) page.classList.add('active');
+  if (btn)  btn.classList.add('active');
+  // Lazy-load page data
+  if (name === 'apps')     loadApps();
+  if (name === 'users')    loadUsers();
+  if (name === 'assets')   loadAssets();
+  if (name === 'notify')   loadNotifications();
+  if (name === 'settings') loadSettings();
 }
 
-// ── Helpers ────────────────────────────────────────────────────
-function fmtTime(s) { if (!s || isNaN(s)) return '0:00'; return Math.floor(s/60)+':'+Math.floor(s%60).toString().padStart(2,'0'); }
-function fmtSize(b) { if (!b) return '0 B'; if (b < 1e6) return (b/1e3).toFixed(0)+' KB'; return (b/1e6).toFixed(1)+' MB'; }
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// Sidebar toggle
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+});
+// Mobile menu
+document.getElementById('mobMenu').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.add('mob-open');
+  document.getElementById('sidebarOverlay').hidden = false;
+});
+document.getElementById('sidebarOverlay').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('mob-open');
+  document.getElementById('sidebarOverlay').hidden = true;
+});
 
-let toastT;
-function toast(msg) {
-  const el = document.getElementById('aToast');
-  el.textContent = msg; el.classList.add('show');
-  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2800);
-}
+// Dashboard quick add
+document.getElementById('dashAddApp').addEventListener('click', () => { showPage('apps'); openAppModal(); });
 
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-// ── Dashboard ──────────────────────────────────────────────────
+// ── DASHBOARD ─────────────────────────────────────────────
 async function loadDashboard() {
-  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  if (!_db) return;
+  const now  = new Date();
+  const hour = now.getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const name  = (currentUserData.name || currentUser.displayName || '').split(' ')[0];
+  document.getElementById('dashGreeting').textContent = `${greet}, ${name} 👋`;
+  document.getElementById('dashDate').textContent     = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
   try {
-    const snap = await fbFunctions.getDocs(fbFunctions.collection(_db, 'tracks'));
-    const tracks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    document.getElementById('dashTracks').textContent = tracks.length;
-    const plays = tracks.reduce((a, t) => a + (t.playCount || 0), 0);
-    document.getElementById('dashPlays').textContent = plays.toLocaleString();
-    const size = tracks.reduce((a, t) => a + (t.size || 0), 0);
-    document.getElementById('dashSize').textContent = fmtSize(size);
-    const mostLiked = tracks.sort((a,b) => (b.likes||0) - (a.likes||0))[0];
-    document.getElementById('dashLiked').textContent = mostLiked ? mostLiked.title.slice(0,18) : '—';
-    // Recent uploads
-    const recent = [...tracks].sort((a,b) => (b.addedAt||0) - (a.addedAt||0)).slice(0,5);
-    document.getElementById('recentUploads').innerHTML = recent.length
-      ? recent.map(t => `<div class="adm-track-row">
-          <div class="atr-art">${t.artwork ? `<img src="${t.artwork}" alt="" />` : '🎵'}</div>
-          <div class="atr-info"><div class="atr-title">${esc(t.title)}</div><div class="atr-artist">${esc(t.artist)}</div></div>
-          <span class="atr-dur">${fmtTime(t.duration)}</span>
-        </div>`).join('')
-      : '<p style="color:var(--text-dim);padding:12px;font-size:0.82rem">No tracks yet.</p>';
-  } catch(e) { console.warn('Dashboard load error', e); }
-}
+    const [appsSnap, usersSnap, assetsSnap, notifsSnap] = await Promise.all([
+      fb.getDocs(fb.collection(_db, 'hub_apps')),
+      fb.getDocs(fb.collection(_db, 'hub_users')),
+      fb.getDocs(fb.collection(_db, 'hub_assets')),
+      fb.getDocs(fb.collection(_db, 'hub_notifications')),
+    ]);
+    document.getElementById('statApps').textContent   = appsSnap.size;
+    document.getElementById('statUsers').textContent  = usersSnap.docs.filter(d => d.data().status === 'approved').length;
+    document.getElementById('statAssets').textContent = assetsSnap.size;
+    document.getElementById('statNotifs').textContent = notifsSnap.size;
 
-document.getElementById('refreshBtn').addEventListener('click', loadDashboard);
-
-// ── Upload ─────────────────────────────────────────────────────
-const adminUploadZone  = document.getElementById('adminUploadZone');
-const adminFileInput   = document.getElementById('adminFileInput');
-const adminFolderInput = document.getElementById('adminFolderInput');
-let uploadQueue = [];
-
-adminUploadZone.addEventListener('click', e => {
-  if (e.target.closest('label')) return; // labels trigger their inputs natively
-  adminFileInput.click();
-});
-adminFileInput.addEventListener('change',   e => { addToQueue(e.target.files); adminFileInput.value   = ''; });
-adminFolderInput.addEventListener('change', e => { addToQueue(e.target.files); adminFolderInput.value = ''; });
-adminUploadZone.addEventListener('dragover', e => { e.preventDefault(); adminUploadZone.classList.add('drag-over'); });
-adminUploadZone.addEventListener('dragleave', () => adminUploadZone.classList.remove('drag-over'));
-adminUploadZone.addEventListener('drop', e => { e.preventDefault(); adminUploadZone.classList.remove('drag-over'); addToQueue(e.dataTransfer.files); });
-
-function addToQueue(files) {
-  Array.from(files).forEach(f => {
-    if (!f.type.match(/audio/)) return;
-    uploadQueue.push({ file: f, status: 'pending' });
-  });
-  renderQueue();
-  if (uploadQueue.length) {
-    document.getElementById('metaForm').style.display = '';
-    // Pre-fill title/artist from first file
-    let name = uploadQueue[0].file.name.replace(/\.[^.]+$/, '');
-    let artist = 'Unknown Artist', title = name;
-    if (name.includes(' - ')) [artist, title] = name.split(' - ', 2);
-    document.getElementById('metaTitle').value  = title.trim();
-    document.getElementById('metaArtist').value = artist.trim();
-  }
-}
-
-function renderQueue() {
-  const el = document.getElementById('uploadQueue');
-  if (!uploadQueue.length) { el.innerHTML = ''; return; }
-  el.innerHTML = uploadQueue.map((item, i) => `
-    <div class="uq-item">
-      <span class="uq-icon">🎵</span>
-      <div class="uq-info">
-        <div class="uq-name">${esc(item.file.name)}</div>
-        <div class="uq-size">${fmtSize(item.file.size)}</div>
-      </div>
-      <span class="uq-status ${item.status}">${item.status === 'done' ? '✅ Done' : item.status === 'error' ? '❌ Error' : '⏳ Pending'}</span>
-      ${item.status === 'pending' ? `<button class="uq-remove" data-idx="${i}">✕</button>` : ''}
-    </div>`).join('');
-  el.querySelectorAll('.uq-remove').forEach(btn => {
-    btn.addEventListener('click', () => {
-      uploadQueue.splice(parseInt(btn.getAttribute('data-idx')), 1);
-      renderQueue();
-      if (!uploadQueue.length) document.getElementById('metaForm').style.display = 'none';
-    });
-  });
-}
-
-document.getElementById('clearQueueBtn').addEventListener('click', () => {
-  uploadQueue = []; renderQueue();
-  document.getElementById('metaForm').style.display = 'none';
-});
-
-document.getElementById('uploadAllBtn').addEventListener('click', uploadAll);
-
-async function uploadAll() {
-  if (!uploadQueue.length) { toast('No files in queue'); return; }
-  if (!_db) { toast('⚠ Firebase not connected'); return; }
-  const cloudName  = typeof CLOUDINARY_CLOUD  !== 'undefined' ? CLOUDINARY_CLOUD  : '';
-  const preset     = typeof CLOUDINARY_PRESET !== 'undefined' ? CLOUDINARY_PRESET : '';
-  if (!cloudName || !preset) { toast('⚠ Set CLOUDINARY_CLOUD and CLOUDINARY_PRESET in firebase-config.js'); return; }
-  const title   = document.getElementById('metaTitle').value.trim();
-  const artist  = document.getElementById('metaArtist').value.trim();
-  const album   = document.getElementById('metaAlbum').value.trim();
-  const genre   = document.getElementById('metaGenre').value.trim();
-  const artwork = document.getElementById('metaArtwork').value.trim();
-  const lyrics  = document.getElementById('metaLyrics').value.trim();
-  const tags    = document.getElementById('metaTags').value.split(',').map(t => t.trim()).filter(Boolean);
-  if (!title || !artist) { toast('⚠ Title and Artist are required'); return; }
-  const progDiv  = document.getElementById('uploadProgress');
-  const upBar    = document.getElementById('upBar');
-  const upStatus = document.getElementById('upStatus');
-  progDiv.style.display = '';
-  let done = 0;
-  for (let i = 0; i < uploadQueue.length; i++) {
-    const item = uploadQueue[i];
-    if (item.status === 'done') { done++; continue; }
-    upStatus.textContent = `Uploading ${i+1} of ${uploadQueue.length}: ${item.file.name}`;
-    try {
-      // Upload to Cloudinary (free, no server needed)
-      const form = new FormData();
-      form.append('file', item.file);
-      form.append('upload_preset', preset);
-      form.append('resource_type', 'auto');
-      const xhr = new XMLHttpRequest();
-      const url = await new Promise((res, rej) => {
-        xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`);
-        xhr.upload.onprogress = e => {
-          if (e.lengthComputable) upBar.style.width = (((i + e.loaded/e.total) / uploadQueue.length) * 100) + '%';
-        };
-        xhr.onload = () => {
-          const data = JSON.parse(xhr.responseText);
-          if (data.secure_url) res(data.secure_url);
-          else rej(new Error(data.error?.message || 'Upload failed'));
-        };
-        xhr.onerror = () => rej(new Error('Network error'));
-        xhr.send(form);
-      });
-      // Get duration
-      const dur = await getFileDuration(item.file);
-      // Auto-parse title from filename if multiple files
-      const trackTitle = uploadQueue.length > 1
-        ? (item.file.name.replace(/\.[^.]+$/,'').includes(' - ')
-          ? item.file.name.replace(/\.[^.]+$/,'').split(' - ')[1]
-          : item.file.name.replace(/\.[^.]+$/,''))
-        : title;
-      const trackId = Date.now().toString(36) + Math.random().toString(36).slice(2);
-      // Save metadata to Firestore
-      await fbFunctions.addDoc(fbFunctions.collection(_db, 'tracks'), {
-        id: trackId, title: trackTitle.trim(), artist, album, genre, tags,
-        artwork: artwork || '', lyrics: lyrics || '', url, duration: dur, size: item.file.size,
-        addedAt: Date.now(), playCount: 0, likes: 0, type: 'cloud'
-      });
-      item.status = 'done'; done++;
-    } catch(e) { item.status = 'error'; console.error('Upload error', e); toast('⚠ ' + e.message); }
-    renderQueue();
-  }
-  upBar.style.width = '100%';
-  upStatus.textContent = `✅ Uploaded ${done} of ${uploadQueue.length} tracks`;
-  toast(`✅ ${done} track${done>1?'s':''} uploaded to cloud`);
-  setTimeout(() => { progDiv.style.display = 'none'; upBar.style.width = '0%'; }, 3000);
-  loadDashboard();
-}
-
-function getFileDuration(file) {
-  return new Promise(res => {
-    const a = new Audio(URL.createObjectURL(file));
-    a.onloadedmetadata = () => { URL.revokeObjectURL(a.src); res(a.duration); };
-    a.onerror = () => res(0);
-    setTimeout(() => res(0), 4000);
-  });
-}
-
-// ── Manage Tracks ──────────────────────────────────────────────
-let allTracks = [];
-let selectedIds = new Set();
-
-async function loadTracks() {
-  if (!_db) { toast('⚠ Firebase not connected'); return; }
-  const list = document.getElementById('adminTrackList');
-  list.innerHTML = '<p style="padding:20px;color:var(--text-dim)">Loading…</p>';
-  try {
-    const snap = await fbFunctions.getDocs(fbFunctions.query(fbFunctions.collection(_db, 'tracks'), fbFunctions.orderBy('addedAt','desc')));
-    allTracks = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
-    document.getElementById('trackCount').textContent = allTracks.length + ' tracks';
-    renderAdminTracks(allTracks);
-  } catch(e) { list.innerHTML = `<p style="color:var(--red);padding:20px">${e.message}</p>`; }
-}
-
-function renderAdminTracks(tracks) {
-  const list = document.getElementById('adminTrackList');
-  if (!tracks.length) { list.innerHTML = '<p style="padding:20px;color:var(--text-dim)">No tracks found.</p>'; return; }
-  list.innerHTML = tracks.map((t, i) => `
-    <div class="adm-track-row" data-docid="${t.docId}">
-      <input type="checkbox" class="atr-check" data-docid="${t.docId}" />
-      <span class="atr-num">${i+1}</span>
-      <div class="atr-art">${t.artwork ? `<img src="${t.artwork}" alt="" loading="lazy" />` : '🎵'}</div>
-      <div class="atr-info">
-        <div class="atr-title">${esc(t.title)}</div>
-        <div class="atr-artist">${esc(t.artist)}${t.album ? ' · ' + esc(t.album) : ''}</div>
-      </div>
-      <span class="atr-dur">${fmtTime(t.duration)}</span>
-      <span class="atr-plays">▶ ${t.playCount || 0}</span>
-      <div class="atr-btns">
-        <button class="atr-btn edit-btn" data-docid="${t.docId}">✏ Edit</button>
-        <button class="atr-btn delete delete-btn" data-docid="${t.docId}">🗑</button>
-      </div>
-    </div>`).join('');
-
-  list.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => openEditModal(btn.getAttribute('data-docid')));
-  });
-  list.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', () => deleteCloudTrack(btn.getAttribute('data-docid')));
-  });
-  list.querySelectorAll('.atr-check').forEach(cb => {
-    cb.checked = selectedIds.has(cb.getAttribute('data-docid'));
-    cb.addEventListener('change', () => {
-      const id = cb.getAttribute('data-docid');
-      if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
-      updateSelectionUI();
-    });
-  });
-}
-
-document.getElementById('trackSearch').addEventListener('input', e => {
-  const q = e.target.value.toLowerCase();
-  const filtered = q ? allTracks.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)) : allTracks;
-  renderAdminTracks(filtered);
-  selectedIds.clear();
-  updateSelectionUI();
-});
-
-function updateSelectionUI() {
-  const visibleIds = [...document.querySelectorAll('.atr-check')].map(cb => cb.getAttribute('data-docid'));
-  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
-  document.getElementById('selectAllBtn').textContent = allSelected ? 'Deselect All' : 'Select All';
-  document.getElementById('deleteSelectedBtn').style.display = selectedIds.size ? '' : 'none';
-  document.getElementById('deleteSelectedBtn').textContent = `🗑 Delete ${selectedIds.size} Track${selectedIds.size !== 1 ? 's' : ''}`;
-}
-
-document.getElementById('selectAllBtn').addEventListener('click', () => {
-  const checkboxes = [...document.querySelectorAll('.atr-check')];
-  const allSelected = checkboxes.every(cb => selectedIds.has(cb.getAttribute('data-docid')));
-  checkboxes.forEach(cb => {
-    const id = cb.getAttribute('data-docid');
-    if (allSelected) { selectedIds.delete(id); cb.checked = false; }
-    else             { selectedIds.add(id);    cb.checked = true;  }
-  });
-  updateSelectionUI();
-});
-
-document.getElementById('deleteSelectedBtn').addEventListener('click', async () => {
-  if (!selectedIds.size) return;
-  const ids = [...selectedIds];
-  const n = ids.length;
-  for (const id of ids) await deleteCloudTrack(id);
-  selectedIds.clear();
-  updateSelectionUI();
-  toast(`🗑 Deleted ${n} track${n > 1 ? 's' : ''}`);
-});
-
-async function deleteCloudTrack(docId) {
-  if (!_db) return;
-  try {
-    const track = allTracks.find(t => t.docId === docId);
-    await fbFunctions.deleteDoc(fbFunctions.doc(_db, 'tracks', docId));
-    // Also delete from storage if url is Firebase Storage
-    if (track?.url && track.url.includes('firebasestorage')) {
-      try {
-        const path = decodeURIComponent(track.url.split('/o/')[1].split('?')[0]);
-        await fbFunctions.deleteObject(fbFunctions.ref(_st, path));
-      } catch(e) { console.warn('Storage delete failed', e); }
+    // Mini app list
+    const apps = appsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allApps = apps;
+    const miniList = document.getElementById('dashAppList');
+    if (!apps.length) { miniList.innerHTML = '<p class="empty-msg">No apps yet. <button class="link-btn" onclick="showPage(\'apps\')">Add one →</button></p>'; }
+    else {
+      miniList.innerHTML = apps.slice(0,5).map(a => `
+        <div class="app-mini-item" onclick="openEditor('${a.id}')">
+          <div class="app-mini-ico" style="background:${a.color || '#6366f1'}22">${a.icon || '📱'}</div>
+          <div><div class="app-mini-name">${esc(a.name)}</div><div class="app-mini-url">${esc(a.url || '')}</div></div>
+          <div class="app-mini-dot dot-${a.status || 'active'}"></div>
+        </div>`).join('');
     }
-    allTracks = allTracks.filter(t => t.docId !== docId);
-    renderAdminTracks(allTracks);
-    document.getElementById('trackCount').textContent = allTracks.length + ' tracks';
-    toast('🗑 Track deleted');
-  } catch(e) { toast('⚠ Delete failed: ' + e.message); }
+
+    // Activity
+    const actEl = document.getElementById('dashActivity');
+    const recent = [...appsSnap.docs, ...assetsSnap.docs]
+      .filter(d => d.data().createdAt)
+      .sort((a,b) => (b.data().createdAt?.toMillis?.() || 0) - (a.data().createdAt?.toMillis?.() || 0))
+      .slice(0, 6);
+    if (!recent.length) { actEl.innerHTML = '<p class="empty-msg">No recent activity.</p>'; }
+    else {
+      actEl.innerHTML = recent.map(d => {
+        const data = d.data();
+        const isApp = !!data.url;
+        const text  = isApp ? `App <strong>${esc(data.name)}</strong> added` : `Asset <strong>${esc(data.name)}</strong> uploaded`;
+        const time  = data.createdAt?.toDate ? timeAgo(data.createdAt.toDate()) : '';
+        return `<div class="activity-item"><div class="act-dot"></div><div><div class="act-text">${text}</div><div class="act-time">${time}</div></div></div>`;
+      }).join('');
+    }
+  } catch(e) { console.warn('[Dashboard]', e); }
 }
 
-// Edit modal
-function openEditModal(docId) {
-  const t = allTracks.find(t => t.docId === docId);
-  if (!t) return;
-  document.getElementById('editId').value      = docId;
-  document.getElementById('editTitle').value   = t.title || '';
-  document.getElementById('editArtist').value  = t.artist || '';
-  document.getElementById('editAlbum').value   = t.album || '';
-  document.getElementById('editGenre').value   = t.genre || '';
-  document.getElementById('editArtwork').value = t.artwork || '';
-  document.getElementById('editLyrics').value  = t.lyrics || '';
-  openModal('editModal');
-}
-document.getElementById('editCancelBtn').addEventListener('click', () => closeModal('editModal'));
-document.getElementById('editModal').addEventListener('click',     e => { if (e.target.id === 'editModal') closeModal('editModal'); });
-document.getElementById('editSaveBtn').addEventListener('click', async () => {
-  const docId = document.getElementById('editId').value;
-  const updates = {
-    title:   document.getElementById('editTitle').value.trim(),
-    artist:  document.getElementById('editArtist').value.trim(),
-    album:   document.getElementById('editAlbum').value.trim(),
-    genre:   document.getElementById('editGenre').value.trim(),
-    artwork: document.getElementById('editArtwork').value.trim(),
-    lyrics:  document.getElementById('editLyrics').value.trim(),
-  };
-  if (!updates.title || !updates.artist) { toast('Title and Artist required'); return; }
-  try {
-    await fbFunctions.updateDoc(fbFunctions.doc(_db, 'tracks', docId), updates);
-    const idx = allTracks.findIndex(t => t.docId === docId);
-    if (idx > -1) allTracks[idx] = { ...allTracks[idx], ...updates };
-    renderAdminTracks(allTracks);
-    closeModal('editModal');
-    toast('✅ Track updated');
-  } catch(e) { toast('⚠ Update failed: ' + e.message); }
-});
+// ── APPS ──────────────────────────────────────────────────
+document.getElementById('addAppBtn').addEventListener('click', () => openAppModal());
 
-// ── Push Notifications ─────────────────────────────────────────
-document.getElementById('sendNotifyBtn').addEventListener('click', async () => {
-  if (!_db) { toast('⚠ Firebase not connected'); return; }
-  const title    = document.getElementById('notifyTitle').value.trim();
-  const body     = document.getElementById('notifyBody').value.trim();
-  const url      = document.getElementById('notifyUrl').value.trim();
-  const schedule = document.getElementById('notifySchedule').value;
-  if (!title || !body) { toast('Title and message are required'); return; }
+async function loadApps() {
+  const grid = document.getElementById('appGrid');
+  grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Loading…</p>';
   try {
-    await fbFunctions.addDoc(fbFunctions.collection(_db, 'notifications'), {
-      title, body, url: url || '',
-      scheduledAt: schedule ? new Date(schedule).getTime() : Date.now(),
-      sentAt: schedule ? null : Date.now(),
-      createdAt: Date.now()
-    });
-    document.getElementById('notifyTitle').value = '';
-    document.getElementById('notifyBody').value  = '';
-    document.getElementById('notifyUrl').value   = '';
-    document.getElementById('notifySchedule').value = '';
-    toast('✅ Notification saved' + (schedule ? ' (scheduled)' : ' and sent'));
-  } catch(e) { toast('⚠ Failed: ' + e.message); }
-});
-
-// ── App Settings ───────────────────────────────────────────────
-document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-  if (!_db) { toast('⚠ Firebase not connected'); return; }
-  const settings = {
-    appName:       document.getElementById('setAppName').value.trim(),
-    tagline:       document.getElementById('setTagline').value.trim(),
-    featuredTrack: document.getElementById('setFeatured').value.trim(),
-    maintenance:   document.getElementById('setMaintenance').checked,
-    allowReg:      document.getElementById('setAllowReg').checked,
-    updatedAt:     Date.now()
-  };
-  try {
-    const docRef = fbFunctions.doc(_db, 'appSettings', 'config');
-    await fbFunctions.updateDoc(docRef, settings).catch(async () => {
-      await fbFunctions.addDoc(fbFunctions.collection(_db, 'appSettings'), { ...settings });
-    });
-    toast('✅ Settings saved');
-  } catch(e) { toast('⚠ Save failed: ' + e.message); }
-});
-
-// ── Feedback ───────────────────────────────────────────────────
-let allFeedback = [];
-
-async function loadFeedback() {
-  if (!_db) { toast('⚠ Firebase not connected'); return; }
-  const list = document.getElementById('feedbackList');
-  list.innerHTML = '<p style="padding:20px;color:var(--text-dim);font-size:0.85rem">Loading…</p>';
-  try {
-    const snap = await fbFunctions.getDocs(fbFunctions.query(fbFunctions.collection(_db, 'feedback'), fbFunctions.orderBy('createdAt', 'desc')));
-    allFeedback = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
-    renderFeedback();
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_apps'), fb.orderBy('createdAt','desc')));
+    allApps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderApps(allApps);
+    // Populate notify/asset app filter
+    populateAppSelects(allApps);
   } catch(e) {
-    list.innerHTML = `<p style="color:var(--red);padding:20px">${e.message}</p>`;
+    grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error loading apps: ${e.message}</p>`;
   }
 }
 
-function renderFeedback() {
-  const list = document.getElementById('feedbackList');
-  if (!allFeedback.length) {
-    list.innerHTML = '<p style="color:var(--text-dim);padding:20px;font-size:0.85rem">No feedback yet. Share the app with users!</p>';
-    document.getElementById('fbTotal').textContent = '0';
-    document.getElementById('fbAvgRating').textContent = '—';
-    document.getElementById('fbFiveStars').textContent = '0';
-    return;
-  }
-  const total     = allFeedback.length;
-  const avg       = (allFeedback.reduce((a, f) => a + (f.rating || 0), 0) / total).toFixed(1);
-  const fiveStars = allFeedback.filter(f => f.rating === 5).length;
-  document.getElementById('fbTotal').textContent     = total;
-  document.getElementById('fbAvgRating').textContent = avg + ' ★';
-  document.getElementById('fbFiveStars').textContent = fiveStars;
-
-  list.innerHTML = allFeedback.map(f => {
-    const stars = '★'.repeat(f.rating || 0) + '☆'.repeat(5 - (f.rating || 0));
-    const date  = f.createdAt ? new Date(f.createdAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
-    return `<div class="feedback-card" data-docid="${f.docId}">
-      <div class="feedback-card-header">
-        <span class="feedback-stars">${stars}</span>
-        <span class="feedback-meta">${date}</span>
+function renderApps(apps) {
+  const grid = document.getElementById('appGrid');
+  if (!apps.length) { grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">No apps yet. Click + New App to get started.</p>'; return; }
+  grid.innerHTML = apps.map(a => `
+    <div class="app-card">
+      <div class="app-card-top" style="background:linear-gradient(135deg,${a.color||'#6366f1'}33,${a.color||'#6366f1'}11)">
+        <div class="app-card-ico">${a.icon || '📱'}</div>
+        <span class="app-status-pill status-${a.status||'active'}">${a.status||'active'}</span>
       </div>
-      ${f.name ? `<div class="feedback-name">${esc(f.name)}</div>` : ''}
-      <div class="feedback-text">${esc(f.message || '')}</div>
-      <div style="text-align:right;margin-top:8px">
-        <button class="feedback-del" data-docid="${f.docId}">🗑 Delete</button>
+      <div class="app-card-body">
+        <div class="app-card-name">${esc(a.name)}</div>
+        <div class="app-card-desc">${esc(a.description||'')}</div>
+        <div class="app-card-url">${esc(a.url||'')}</div>
+        <div style="font-size:.72rem;color:var(--text-mute)">${esc(a.category||'')}</div>
       </div>
-    </div>`;
-  }).join('');
-
-  list.querySelectorAll('.feedback-del').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const docId = btn.getAttribute('data-docid');
-      if (!confirm('Delete this feedback?')) return;
-      try {
-        await fbFunctions.deleteDoc(fbFunctions.doc(_db, 'feedback', docId));
-        allFeedback = allFeedback.filter(f => f.docId !== docId);
-        renderFeedback();
-        toast('🗑 Deleted');
-      } catch(e) { toast('⚠ ' + e.message); }
-    });
-  });
-}
-
-document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-
-// ── Promote Business ───────────────────────────────────────────
-let allPromos = [];
-let editingPromoId = null;
-
-async function loadAdminPromos() {
-  if (!_db) { toast('⚠ Firebase not connected'); return; }
-  const list = document.getElementById('promoList');
-  list.innerHTML = '<p style="padding:20px;color:var(--text-dim);font-size:0.85rem">Loading…</p>';
-  try {
-    const snap = await fbFunctions.getDocs(fbFunctions.query(fbFunctions.collection(_db, 'promotions'), fbFunctions.orderBy('createdAt', 'desc')));
-    allPromos = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
-    renderAdminPromos();
-  } catch(e) {
-    list.innerHTML = `<p style="color:var(--red);padding:20px">${e.message}</p>`;
-  }
-}
-
-function renderAdminPromos() {
-  const list = document.getElementById('promoList');
-  if (!allPromos.length) {
-    list.innerHTML = '<p style="color:var(--text-dim);padding:20px;font-size:0.85rem">No promotions yet. Click "+ Add Promo" to create one.</p>';
-    return;
-  }
-  list.innerHTML = allPromos.map(p => `
-    <div class="adm-track-row">
-      <div class="atr-art" style="background:var(--card);border-radius:8px;overflow:hidden">
-        ${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover" />` : `<span style="font-size:1.4rem;display:flex;align-items:center;justify-content:center;height:100%">${(p.name||'?')[0].toUpperCase()}</span>`}
-      </div>
-      <div class="atr-info">
-        <div class="atr-title">${esc(p.name)}</div>
-        <div class="atr-artist">${p.category ? esc(p.category) + ' · ' : ''}${p.website ? `<a href="${esc(p.website)}" target="_blank" style="color:var(--blue)">${esc(p.website.replace(/^https?:\/\//,'').split('/')[0])}</a>` : 'No link'}</div>
-      </div>
-      <span class="atr-dur" style="font-size:0.72rem;padding:3px 8px;border-radius:8px;background:${p.active !== false ? 'rgba(50,215,75,0.12)' : 'rgba(255,255,255,0.06)'};color:${p.active !== false ? 'var(--green)' : 'var(--text-dim)'}">
-        ${p.active !== false ? 'Active' : 'Off'}
-      </span>
-      <div class="atr-btns">
-        <button class="atr-btn edit-btn" data-docid="${p.docId}">✏ Edit</button>
-        <button class="atr-btn delete delete-btn" data-docid="${p.docId}">🗑</button>
+      <div class="app-card-actions">
+        <button class="app-act-edit"   onclick="openAppModal('${a.id}')">✏ Edit</button>
+        <button class="app-act-edit"   onclick="openEditor('${a.id}')">🖊 Builder</button>
+        <button class="app-act-open"   onclick="window.open('${esc(a.url||'')}','_blank')">↗ Open</button>
+        <button class="app-act-delete" onclick="deleteApp('${a.id}')">🗑</button>
       </div>
     </div>`).join('');
+}
 
-  list.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => openPromoForm(btn.getAttribute('data-docid')));
-  });
-  list.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', () => deletePromo(btn.getAttribute('data-docid')));
+function populateAppSelects(apps) {
+  ['notifyTarget','assetAppFilter'].forEach(id => {
+    const sel = document.getElementById(id);
+    const first = id === 'notifyTarget' ? '<option value="all">📡 All Apps</option>' : '<option value="">All Apps</option>';
+    sel.innerHTML = first + apps.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
   });
 }
 
-function openPromoForm(docId) {
-  editingPromoId = docId || null;
-  const form = document.getElementById('promoForm');
-  document.getElementById('promoFormTitle').textContent = docId ? 'Edit Promotion' : 'New Promotion';
-  if (docId) {
-    const p = allPromos.find(p => p.docId === docId);
-    if (!p) return;
-    document.getElementById('promoDocId').value   = docId;
-    document.getElementById('promoName').value    = p.name || '';
-    document.getElementById('promoCategory').value = p.category || '';
-    document.getElementById('promoDesc').value    = p.description || '';
-    document.getElementById('promoWebsite').value = p.website || '';
-    document.getElementById('promoImage').value   = p.image || '';
-    document.getElementById('promoActive').checked = p.active !== false;
-  } else {
-    document.getElementById('promoDocId').value   = '';
-    document.getElementById('promoName').value    = '';
-    document.getElementById('promoCategory').value = '';
-    document.getElementById('promoDesc').value    = '';
-    document.getElementById('promoWebsite').value = '';
-    document.getElementById('promoImage').value   = '';
-    document.getElementById('promoActive').checked = true;
-  }
-  form.style.display = '';
-  document.getElementById('promoName').focus();
+// App modal
+const appModal = document.getElementById('appModal');
+document.getElementById('appModalClose').addEventListener('click',  () => appModal.hidden = true);
+document.getElementById('appModalCancel').addEventListener('click', () => appModal.hidden = true);
+document.getElementById('appModalSave').addEventListener('click',   saveApp);
+appModal.addEventListener('click', e => { if (e.target === appModal) appModal.hidden = true; });
+
+function openAppModal(id) {
+  const app = id ? allApps.find(a => a.id === id) : null;
+  document.getElementById('appModalTitle').textContent = app ? 'Edit App' : 'New App';
+  document.getElementById('appModalId').value       = app?.id       || '';
+  document.getElementById('appModalName').value     = app?.name     || '';
+  document.getElementById('appModalDesc').value     = app?.description || '';
+  document.getElementById('appModalUrl').value      = app?.url      || '';
+  document.getElementById('appModalIcon').value     = app?.icon     || '';
+  document.getElementById('appModalColor').value    = app?.color    || '#6366f1';
+  document.getElementById('appModalCategory').value = app?.category || 'Other';
+  document.getElementById('appModalStatus').value   = app?.status   || 'active';
+  appModal.hidden = false;
+  document.getElementById('appModalName').focus();
 }
 
-document.getElementById('addPromoBtn').addEventListener('click', () => openPromoForm(null));
-document.getElementById('cancelPromoBtn').addEventListener('click', () => {
-  document.getElementById('promoForm').style.display = 'none';
-  editingPromoId = null;
-});
-
-document.getElementById('savePromoBtn').addEventListener('click', async () => {
-  if (!_db) { toast('⚠ Firebase not connected'); return; }
-  const name    = document.getElementById('promoName').value.trim();
-  const website = document.getElementById('promoWebsite').value.trim();
-  if (!name)    { toast('⚠ Business name is required'); document.getElementById('promoName').focus(); return; }
-  if (!website) { toast('⚠ Website / link is required'); document.getElementById('promoWebsite').value.focus(); return; }
-
+async function saveApp() {
+  const id   = document.getElementById('appModalId').value;
+  const name = document.getElementById('appModalName').value.trim();
+  const url  = document.getElementById('appModalUrl').value.trim();
+  if (!name) { toast('App name is required.', 'error'); return; }
+  const btn = document.getElementById('appModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
   const data = {
     name,
-    category:    document.getElementById('promoCategory').value,
-    description: document.getElementById('promoDesc').value.trim(),
-    website,
-    image:       document.getElementById('promoImage').value.trim(),
-    active:      document.getElementById('promoActive').checked,
-    updatedAt:   Date.now(),
+    description: document.getElementById('appModalDesc').value.trim(),
+    url,
+    icon:        document.getElementById('appModalIcon').value.trim() || '📱',
+    color:       document.getElementById('appModalColor').value,
+    category:    document.getElementById('appModalCategory').value,
+    status:      document.getElementById('appModalStatus').value,
+    updatedAt:   fb.serverTimestamp(),
   };
-
-  const btn = document.getElementById('savePromoBtn');
-  btn.textContent = 'Saving…'; btn.disabled = true;
   try {
-    if (editingPromoId) {
-      await fbFunctions.updateDoc(fbFunctions.doc(_db, 'promotions', editingPromoId), data);
-      toast('✅ Promotion updated');
+    if (id) {
+      await fb.updateDoc(fb.doc(_db, 'hub_apps', id), data);
     } else {
-      data.createdAt = Date.now();
-      await fbFunctions.addDoc(fbFunctions.collection(_db, 'promotions'), data);
-      toast('✅ Promotion added');
+      data.createdAt = fb.serverTimestamp();
+      data.sections  = [];
+      await fb.addDoc(fb.collection(_db, 'hub_apps'), data);
+      logActivity(`App "${name}" added`);
     }
-    document.getElementById('promoForm').style.display = 'none';
-    editingPromoId = null;
-    loadAdminPromos();
-  } catch(e) { toast('⚠ Save failed: ' + e.message); }
-  finally { btn.textContent = 'Save Promotion'; btn.disabled = false; }
+    appModal.hidden = true;
+    toast(id ? 'App updated!' : 'App added!', 'success');
+    loadApps();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+  btn.textContent = 'Save App'; btn.disabled = false;
+}
+
+async function deleteApp(id) {
+  const app = allApps.find(a => a.id === id);
+  if (!confirm(`Delete "${app?.name}"? This cannot be undone.`)) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'hub_apps', id));
+    toast('App deleted.', 'warn');
+    loadApps();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+// ── EDITOR ────────────────────────────────────────────────
+document.getElementById('editorBack').addEventListener('click', () => showPage('apps'));
+document.getElementById('editorSave').addEventListener('click', saveEditorChanges);
+document.getElementById('editorRefresh').addEventListener('click', () => {
+  const frame = document.getElementById('editorFrame');
+  frame.src = frame.src;
+});
+document.getElementById('addSectionBtn').addEventListener('click', () => {
+  document.getElementById('sectionId').value   = '';
+  document.getElementById('sectionName').value = '';
+  document.getElementById('sectionModal').hidden = false;
 });
 
-async function deletePromo(docId) {
-  if (!confirm('Delete this promotion?')) return;
-  try {
-    await fbFunctions.deleteDoc(fbFunctions.doc(_db, 'promotions', docId));
-    allPromos = allPromos.filter(p => p.docId !== docId);
-    renderAdminPromos();
-    toast('🗑 Promotion deleted');
-  } catch(e) { toast('⚠ ' + e.message); }
+function openEditor(appId) {
+  const app = allApps.find(a => a.id === appId);
+  if (!app) return;
+  currentEditApp = { ...app };
+  document.getElementById('editorTitle').textContent    = app.name;
+  document.getElementById('editorSubtitle').textContent = app.url || '';
+  document.getElementById('epName').value   = app.name || '';
+  document.getElementById('epDesc').value   = app.description || '';
+  document.getElementById('epUrl').value    = app.url || '';
+  document.getElementById('epIcon').value   = app.icon || '';
+  document.getElementById('epColor').value  = app.color || '#6366f1';
+  document.getElementById('epStatus').value = app.status || 'active';
+  const frame = document.getElementById('editorFrame');
+  document.getElementById('chromeUrl').textContent = app.url || 'about:blank';
+  frame.src = app.url || 'about:blank';
+  renderSections(app.sections || []);
+  showPage('editor');
 }
+
+function renderSections(sections) {
+  const list = document.getElementById('sectionsEditor');
+  if (!sections.length) { list.innerHTML = '<p style="font-size:.78rem;color:var(--text-mute);text-align:center;padding:12px 0">No sections yet.</p>'; return; }
+  list.innerHTML = sections.map((s,i) => `
+    <div class="section-item" draggable="true" data-idx="${i}">
+      <span class="section-drag">⠿</span>
+      <span class="section-name">${esc(s.name)}</span>
+      <span class="section-vis ${s.visible!==false?'on':''}" onclick="toggleSection(${i})">${s.visible!==false?'👁':'🚫'}</span>
+      <span class="section-del" onclick="deleteSection(${i})">✕</span>
+    </div>`).join('');
+  // Drag to reorder
+  setupSectionDrag(sections);
+}
+
+function setupSectionDrag(sections) {
+  const items = document.querySelectorAll('.section-item');
+  let dragIdx = null;
+  items.forEach(item => {
+    item.addEventListener('dragstart', () => { dragIdx = +item.dataset.idx; item.style.opacity = '.5'; });
+    item.addEventListener('dragend',   () => { item.style.opacity = '1'; dragIdx = null; });
+    item.addEventListener('dragover',  e => { e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', () => {
+      item.classList.remove('drag-over');
+      const targetIdx = +item.dataset.idx;
+      if (dragIdx === null || dragIdx === targetIdx) return;
+      const reordered = [...sections];
+      const [moved]   = reordered.splice(dragIdx, 1);
+      reordered.splice(targetIdx, 0, moved);
+      currentEditApp.sections = reordered;
+      renderSections(reordered);
+    });
+  });
+}
+
+window.toggleSection = function(idx) {
+  if (!currentEditApp) return;
+  const sects = [...(currentEditApp.sections || [])];
+  sects[idx] = { ...sects[idx], visible: sects[idx].visible === false };
+  currentEditApp.sections = sects;
+  renderSections(sects);
+};
+window.deleteSection = function(idx) {
+  if (!currentEditApp) return;
+  const sects = [...(currentEditApp.sections || [])];
+  sects.splice(idx, 1);
+  currentEditApp.sections = sects;
+  renderSections(sects);
+};
+
+// Section modal
+document.getElementById('sectionModalClose').addEventListener('click',  () => document.getElementById('sectionModal').hidden = true);
+document.getElementById('sectionModalCancel').addEventListener('click', () => document.getElementById('sectionModal').hidden = true);
+document.getElementById('sectionModalSave').addEventListener('click', () => {
+  const id   = document.getElementById('sectionId').value.trim().replace(/\s+/g,'_');
+  const name = document.getElementById('sectionName').value.trim();
+  if (!id || !name) { toast('Fill in section ID and name.', 'error'); return; }
+  const sects = [...(currentEditApp?.sections || [])];
+  sects.push({ id, name, visible: true, order: sects.length });
+  if (currentEditApp) currentEditApp.sections = sects;
+  renderSections(sects);
+  document.getElementById('sectionModal').hidden = true;
+});
+
+async function saveEditorChanges() {
+  if (!currentEditApp) return;
+  const btn = document.getElementById('editorSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const data = {
+    name:        document.getElementById('epName').value.trim()  || currentEditApp.name,
+    description: document.getElementById('epDesc').value.trim(),
+    url:         document.getElementById('epUrl').value.trim(),
+    icon:        document.getElementById('epIcon').value.trim()  || '📱',
+    color:       document.getElementById('epColor').value,
+    status:      document.getElementById('epStatus').value,
+    sections:    currentEditApp.sections || [],
+    updatedAt:   fb.serverTimestamp(),
+  };
+  try {
+    await fb.updateDoc(fb.doc(_db, 'hub_apps', currentEditApp.id), data);
+    toast('Changes saved!', 'success');
+    document.getElementById('editorTitle').textContent = data.name;
+    // Refresh iframe
+    const frame = document.getElementById('editorFrame');
+    document.getElementById('chromeUrl').textContent = data.url;
+    if (data.url !== currentEditApp.url) frame.src = data.url;
+    currentEditApp = { ...currentEditApp, ...data };
+    const idx = allApps.findIndex(a => a.id === currentEditApp.id);
+    if (idx !== -1) allApps[idx] = { ...allApps[idx], ...data };
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+  btn.textContent = 'Save Changes'; btn.disabled = false;
+}
+
+// ── USERS ─────────────────────────────────────────────────
+document.getElementById('inviteBtn').addEventListener('click', () => {
+  document.getElementById('inviteEmail').value = '';
+  document.getElementById('inviteRole').value  = 'editor';
+  document.getElementById('inviteModal').hidden = false;
+});
+document.getElementById('inviteModalClose').addEventListener('click',  () => document.getElementById('inviteModal').hidden = true);
+document.getElementById('inviteModalCancel').addEventListener('click', () => document.getElementById('inviteModal').hidden = true);
+document.getElementById('inviteModalSave').addEventListener('click',   doInviteUser);
+document.getElementById('inviteModal').addEventListener('click', e => { if (e.target === document.getElementById('inviteModal')) document.getElementById('inviteModal').hidden = true; });
+
+document.querySelectorAll('.utab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.utab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeUserTab = btn.dataset.utab;
+    renderUsers(allUsers, activeUserTab);
+  });
+});
+
+async function loadUsers() {
+  const list = document.getElementById('userList');
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_users'), fb.orderBy('createdAt','desc')));
+    allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderUsers(allUsers, activeUserTab);
+    // Update pending count
+    const pending = allUsers.filter(u => u.status === 'pending').length;
+    const badge  = document.getElementById('pendingBadge');
+    const tabCnt = document.getElementById('pendingTabCount');
+    badge.textContent  = pending;
+    badge.hidden       = pending === 0;
+    tabCnt.textContent = pending;
+  } catch(e) {
+    list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`;
+  }
+}
+
+function renderUsers(users, tab) {
+  const filtered = tab === 'all' ? users : users.filter(u => u.status === tab);
+  const list = document.getElementById('userList');
+  if (!filtered.length) { list.innerHTML = '<p class="empty-msg">No users in this category.</p>'; return; }
+  list.innerHTML = filtered.map(u => {
+    const initial = (u.name || u.email || '?').charAt(0).toUpperCase();
+    const isSelf  = u.id === currentUser?.uid;
+    const isSuper = u.role === 'super_admin';
+    const actions = u.status === 'pending'
+      ? `<button class="btn-approve" onclick="approveUser('${u.id}')">✓ Approve</button>
+         <button class="btn-reject"  onclick="rejectUser('${u.id}')">✕ Reject</button>`
+      : u.status === 'approved' && !isSelf && !isSuper
+      ? `<button class="btn-remove" onclick="removeUser('${u.id}')">Remove</button>`
+      : '';
+    const roleSelect = !isSuper && !isSelf && u.status === 'approved'
+      ? `<select class="user-role-select" onchange="updateRole('${u.id}',this.value)">
+           <option value="viewer"  ${u.role==='viewer' ?'selected':''}>Viewer</option>
+           <option value="editor"  ${u.role==='editor' ?'selected':''}>Editor</option>
+           <option value="admin"   ${u.role==='admin'  ?'selected':''}>Admin</option>
+         </select>`
+      : '';
+    return `
+      <div class="user-row">
+        <div class="user-ava">${initial}</div>
+        <div class="user-info">
+          <div class="user-name">${esc(u.name||u.email||'Unknown')}${isSelf?' <span style="font-size:.7rem;color:var(--text-mute)">(you)</span>':''}</div>
+          <div class="user-email">${esc(u.email||'')}</div>
+        </div>
+        ${roleSelect}
+        <span class="user-badge badge-${u.status}">${u.status}</span>
+        <div class="user-actions">${actions}</div>
+      </div>`;
+  }).join('');
+}
+
+window.approveUser = async function(uid) {
+  try {
+    await fb.updateDoc(fb.doc(_db, 'hub_users', uid), { status: 'approved', approvedAt: fb.serverTimestamp() });
+    toast('User approved!', 'success');
+    logActivity('User approved');
+    loadUsers();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+window.rejectUser = async function(uid) {
+  try {
+    await fb.updateDoc(fb.doc(_db, 'hub_users', uid), { status: 'rejected' });
+    toast('User rejected.', 'warn');
+    loadUsers();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+window.removeUser = async function(uid) {
+  if (!confirm('Remove this user from Hub?')) return;
+  try {
+    await fb.updateDoc(fb.doc(_db, 'hub_users', uid), { status: 'rejected' });
+    toast('User removed.', 'warn');
+    loadUsers();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+window.updateRole = async function(uid, role) {
+  try {
+    await fb.updateDoc(fb.doc(_db, 'hub_users', uid), { role });
+    toast('Role updated.', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+async function doInviteUser() {
+  const email = document.getElementById('inviteEmail').value.trim().toLowerCase();
+  const role  = document.getElementById('inviteRole').value;
+  if (!email) { toast('Enter an email address.', 'error'); return; }
+  const btn = document.getElementById('inviteModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await fb.setDoc(fb.doc(_db, 'hub_invitations', email), {
+      email, role,
+      invitedBy: currentUser.uid,
+      createdAt: fb.serverTimestamp(),
+      status: 'pending'
+    });
+    toast(`Invite saved for ${email}. They can now sign up and will get ${role} access.`, 'success');
+    document.getElementById('inviteModal').hidden = true;
+    logActivity(`Invited ${email} as ${role}`);
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Send Invite'; btn.disabled = false;
+}
+
+async function loadPendingBadge() {
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_users'), fb.where('status','==','pending')));
+    const count = snap.size;
+    const badge = document.getElementById('pendingBadge');
+    badge.textContent = count;
+    badge.hidden = count === 0;
+  } catch(e) {}
+}
+
+// ── ASSETS ────────────────────────────────────────────────
+const dropZone       = document.getElementById('assetDropZone');
+const assetFileInput = document.getElementById('assetFileInput');
+
+dropZone.addEventListener('click', () => assetFileInput.click());
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-active');
+  handleAssetFiles([...e.dataTransfer.files]);
+});
+assetFileInput.addEventListener('change', () => handleAssetFiles([...assetFileInput.files]));
+document.getElementById('assetAppFilter').addEventListener('change', () => loadAssets());
+
+async function loadAssets() {
+  const grid      = document.getElementById('assetGrid');
+  const appFilter = document.getElementById('assetAppFilter').value;
+  grid.innerHTML  = '<p class="empty-msg" style="grid-column:1/-1">Loading…</p>';
+  try {
+    let q = fb.collection(_db, 'hub_assets');
+    if (appFilter) q = fb.query(q, fb.where('appId','==',appFilter));
+    else q = fb.query(q, fb.orderBy('createdAt','desc'));
+    const snap = await fb.getDocs(q);
+    const assets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!assets.length) { grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">No assets yet. Drop files above to upload.</p>'; return; }
+    grid.innerHTML = assets.map(a => {
+      const isImg = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.name);
+      const thumb = isImg ? `<img src="${a.url}" alt="${esc(a.name)}" loading="lazy"/>` : fileIcon(a.type);
+      return `
+        <div class="asset-card">
+          <div class="asset-thumb">${thumb}</div>
+          <div class="asset-info">
+            <div class="asset-name" title="${esc(a.name)}">${esc(a.name)}</div>
+            <div class="asset-size">${fmtBytes(a.size||0)}</div>
+          </div>
+          <div class="asset-actions">
+            <button class="asset-copy" onclick="copyUrl('${a.url}')">Copy URL</button>
+            <button class="asset-del"  onclick="deleteAsset('${a.id}','${a.storagePath||''}')">Delete</button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error: ${e.message}</p>`;
+  }
+}
+
+async function handleAssetFiles(files) {
+  if (!files.length) return;
+  const progWrap = document.getElementById('uploadProgress');
+  const bar      = document.getElementById('upBar');
+  const status   = document.getElementById('upStatus');
+  const appId    = document.getElementById('assetAppFilter').value || 'global';
+  progWrap.hidden = false;
+  dropZone.hidden = true;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    status.textContent = `Uploading ${i+1}/${files.length}: ${file.name}`;
+    bar.style.width = ((i / files.length) * 100) + '%';
+    try {
+      const path    = `hub_assets/${appId}/${Date.now()}_${file.name}`;
+      const ref     = fb.ref(_st, path);
+      const task    = fb.uploadBytesResumable(ref, file);
+      await new Promise((res, rej) => {
+        task.on('state_changed',
+          snap => { bar.style.width = ((i / files.length + snap.bytesTransferred / snap.totalBytes / files.length) * 100) + '%'; },
+          rej, res
+        );
+      });
+      const url = await fb.getDownloadURL(ref);
+      await fb.addDoc(fb.collection(_db, 'hub_assets'), {
+        name: file.name, url, storagePath: path, type: file.type,
+        size: file.size, appId,
+        uploadedBy: currentUser.uid,
+        createdAt: fb.serverTimestamp()
+      });
+    } catch(e) { toast('Failed: ' + file.name, 'error'); }
+  }
+  bar.style.width = '100%';
+  status.textContent = 'Done!';
+  setTimeout(() => { progWrap.hidden = true; dropZone.hidden = false; bar.style.width = '0%'; }, 1200);
+  loadAssets();
+  logActivity(`${files.length} asset(s) uploaded`);
+}
+
+window.copyUrl = function(url) {
+  navigator.clipboard.writeText(url).then(() => toast('URL copied!', 'success'));
+};
+window.deleteAsset = async function(id, path) {
+  if (!confirm('Delete this asset? This cannot be undone.')) return;
+  try {
+    if (path) await fb.deleteObject(fb.ref(_st, path));
+    await fb.deleteDoc(fb.doc(_db, 'hub_assets', id));
+    toast('Asset deleted.', 'warn');
+    loadAssets();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+// ── NOTIFICATIONS ──────────────────────────────────────────
+document.getElementById('sendNotifyBtn').addEventListener('click',    doSendNotification);
+document.getElementById('refreshNotifBtn').addEventListener('click',  loadNotifications);
+
+async function loadNotifications() {
+  const list = document.getElementById('notifHistory');
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_notifications'), fb.orderBy('createdAt','desc'), fb.limit(30)));
+    if (!snap.size) { list.innerHTML = '<p class="empty-msg">No notifications sent yet.</p>'; return; }
+    list.innerHTML = snap.docs.map(d => {
+      const n = d.data();
+      const time = n.createdAt?.toDate ? timeAgo(n.createdAt.toDate()) : '';
+      return `
+        <div class="notif-item">
+          <div class="notif-title">${esc(n.title)}</div>
+          <div class="notif-body">${esc(n.body)}</div>
+          <div class="notif-meta">
+            <span class="notif-target">${esc(n.targetApp === 'all' ? 'All Apps' : (allApps.find(a=>a.id===n.targetApp)?.name||n.targetApp))}</span>
+            <span>${time}</span>
+            <span style="color:var(--${n.status==='sent'?'success':n.status==='scheduled'?'warn':'text-mute'})">${n.status||'sent'}</span>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`;
+  }
+}
+
+async function doSendNotification() {
+  const title  = document.getElementById('notifyTitle').value.trim();
+  const body   = document.getElementById('notifyBody').value.trim();
+  const target = document.getElementById('notifyTarget').value;
+  const url    = document.getElementById('notifyUrl').value.trim();
+  const sched  = document.getElementById('notifySchedule').value;
+  if (!title || !body) { toast('Title and message are required.', 'error'); return; }
+  const btn = document.getElementById('sendNotifyBtn');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  try {
+    const data = {
+      title, body, targetApp: target, url: url || '',
+      status: sched ? 'scheduled' : 'sent',
+      scheduledAt: sched ? new Date(sched) : null,
+      sentAt: sched ? null : fb.serverTimestamp(),
+      createdBy: currentUser.uid,
+      createdAt: fb.serverTimestamp()
+    };
+    await fb.addDoc(fb.collection(_db, 'hub_notifications'), data);
+    toast(sched ? 'Notification scheduled!' : 'Notification saved!', 'success');
+    document.getElementById('notifyTitle').value    = '';
+    document.getElementById('notifyBody').value     = '';
+    document.getElementById('notifyUrl').value      = '';
+    document.getElementById('notifySchedule').value = '';
+    loadNotifications();
+    logActivity(`Notification sent: "${title}"`);
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Send Notification'; btn.disabled = false;
+}
+
+// ── SETTINGS ──────────────────────────────────────────────
+document.getElementById('saveGeneralBtn').addEventListener('click', saveGeneralSettings);
+document.getElementById('saveAccessBtn').addEventListener('click',  saveAccessSettings);
+document.getElementById('exportDataBtn').addEventListener('click',  exportData);
+
+async function loadSettings() {
+  try {
+    const snap = await fb.getDoc(fb.doc(_db, 'hub_settings', 'global'));
+    if (snap.exists()) {
+      const s = snap.data();
+      document.getElementById('setHubName').value        = s.hubName     || 'HUB';
+      document.getElementById('setHubDesc').value        = s.description || '';
+      document.getElementById('setAllowReg').checked     = s.allowReg    !== false;
+      document.getElementById('setMaintenance').checked  = s.maintenance || false;
+    }
+    const userSnap = await fb.getDoc(fb.doc(_db, 'hub_users', currentUser.uid));
+    if (userSnap.exists()) document.getElementById('setDisplayName').value = userSnap.data().name || '';
+  } catch(e) {}
+}
+
+async function saveGeneralSettings() {
+  const btn = document.getElementById('saveGeneralBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await fb.setDoc(fb.doc(_db, 'hub_settings', 'global'), {
+      hubName:     document.getElementById('setHubName').value.trim() || 'HUB',
+      description: document.getElementById('setHubDesc').value.trim(),
+      updatedAt:   fb.serverTimestamp()
+    }, { merge: true });
+    const name = document.getElementById('setDisplayName').value.trim();
+    if (name) {
+      await fb.updateDoc(fb.doc(_db, 'hub_users', currentUser.uid), { name });
+      currentUserData.name = name;
+      setupUserDisplay();
+    }
+    toast('Settings saved!', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save General'; btn.disabled = false;
+}
+
+async function saveAccessSettings() {
+  const btn = document.getElementById('saveAccessBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await fb.setDoc(fb.doc(_db, 'hub_settings', 'global'), {
+      allowReg:    document.getElementById('setAllowReg').checked,
+      maintenance: document.getElementById('setMaintenance').checked,
+      updatedAt:   fb.serverTimestamp()
+    }, { merge: true });
+    toast('Access settings saved!', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Access'; btn.disabled = false;
+}
+
+async function exportData() {
+  try {
+    const [apps, users, assets, notifs] = await Promise.all([
+      fb.getDocs(fb.collection(_db, 'hub_apps')),
+      fb.getDocs(fb.collection(_db, 'hub_users')),
+      fb.getDocs(fb.collection(_db, 'hub_assets')),
+      fb.getDocs(fb.collection(_db, 'hub_notifications')),
+    ]);
+    const data = {
+      exportedAt: new Date().toISOString(),
+      apps:    apps.docs.map(d=>({id:d.id,...d.data()})),
+      users:   users.docs.map(d=>({id:d.id,...d.data()})),
+      assets:  assets.docs.map(d=>({id:d.id,...d.data()})),
+      notifications: notifs.docs.map(d=>({id:d.id,...d.data()}))
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a    = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `hub-export-${Date.now()}.json` });
+    a.click();
+    toast('Data exported!', 'success');
+  } catch(e) { toast('Export failed: ' + e.message, 'error'); }
+}
+
+// ── ACTIVITY LOG ──────────────────────────────────────────
+async function logActivity(text) {
+  try {
+    await fb.addDoc(fb.collection(_db, 'hub_activity'), {
+      text, userId: currentUser?.uid,
+      createdAt: fb.serverTimestamp()
+    });
+  } catch(e) {}
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtBytes(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024, sizes = ['B','KB','MB','GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (bytes / Math.pow(k,i)).toFixed(1) + ' ' + sizes[i];
+}
+
+function timeAgo(date) {
+  const diff = (Date.now() - date.getTime()) / 1000;
+  if (diff < 60)   return 'just now';
+  if (diff < 3600) return Math.floor(diff/60)   + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+function fileIcon(type='') {
+  if (type.startsWith('image/')) return '🖼';
+  if (type.startsWith('audio/')) return '🎵';
+  if (type.startsWith('video/')) return '🎬';
+  if (type.includes('pdf'))      return '📄';
+  return '📁';
+}
+
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'toast' + (type ? ' ' + type : '');
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+}
+
+// window-level so onclick="" in HTML can call them
+window.showPage   = showPage;
+window.openEditor = openEditor;
+window.openAppModal = openAppModal;
+
+// ── BOOT ──────────────────────────────────────────────────
+bootAuth();
