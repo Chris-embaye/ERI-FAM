@@ -12,6 +12,7 @@ let currentUserData = null;
 let currentEditApp  = null;
 let allUsers        = [];
 let allApps         = [];
+let allPromos       = [];
 let activeUserTab   = 'all';
 
 const SUPER_ADMIN = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'embayechris@gmail.com';
@@ -215,10 +216,17 @@ async function bootAuth() {
 }
 
 function setupUserDisplay() {
-  const name = currentUserData.name || currentUser.displayName || currentUser.email;
+  const name     = currentUserData.name || currentUser.displayName || currentUser.email;
+  const photoURL = currentUserData.photoURL || currentUser.photoURL || '';
   document.getElementById('sbUserName').textContent = name;
   document.getElementById('sbUserRole').textContent = currentUserData.role.replace('_', ' ');
-  document.getElementById('sbAvatar').textContent   = name.charAt(0).toUpperCase();
+  const avatarEl = document.getElementById('sbAvatar');
+  if (photoURL) {
+    avatarEl.innerHTML = `<img src="${photoURL}" alt="${esc(name)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>`;
+  } else {
+    avatarEl.innerHTML = '';
+    avatarEl.textContent = name.charAt(0).toUpperCase();
+  }
 }
 
 // ── Navigation ────────────────────────────────────────────
@@ -240,11 +248,12 @@ function showPage(name) {
   if (page) page.classList.add('active');
   if (btn)  btn.classList.add('active');
   // Lazy-load page data
-  if (name === 'apps')     loadApps();
-  if (name === 'users')    loadUsers();
-  if (name === 'assets')   loadAssets();
-  if (name === 'notify')   loadNotifications();
-  if (name === 'settings') loadSettings();
+  if (name === 'apps')        loadApps();
+  if (name === 'users')       loadUsers();
+  if (name === 'assets')      loadAssets();
+  if (name === 'notify')      loadNotifications();
+  if (name === 'promotions')  loadPromotions();
+  if (name === 'settings')    loadSettings();
 }
 
 // Sidebar toggle
@@ -360,9 +369,12 @@ function renderApps(apps) {
 }
 
 function populateAppSelects(apps) {
-  ['notifyTarget','assetAppFilter'].forEach(id => {
+  ['notifyTarget','assetAppFilter','promoTarget'].forEach(id => {
     const sel = document.getElementById(id);
-    const first = id === 'notifyTarget' ? '<option value="all">📡 All Apps</option>' : '<option value="">All Apps</option>';
+    if (!sel) return;
+    const first = (id === 'notifyTarget' || id === 'promoTarget')
+      ? '<option value="all">📡 All Apps</option>'
+      : '<option value="">All Apps</option>';
     sel.innerHTML = first + apps.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
   });
 }
@@ -852,6 +864,193 @@ async function doSendNotification() {
   btn.textContent = 'Send Notification'; btn.disabled = false;
 }
 
+// ── PROMOTIONS ────────────────────────────────────────────
+document.getElementById('addPromoBtn').addEventListener('click', () => openPromoModal());
+
+const promoModal = document.getElementById('promoModal');
+document.getElementById('promoModalClose').addEventListener('click',  () => promoModal.hidden = true);
+document.getElementById('promoModalCancel').addEventListener('click', () => promoModal.hidden = true);
+document.getElementById('promoModalSave').addEventListener('click',   savePromotion);
+promoModal.addEventListener('click', e => { if (e.target === promoModal) promoModal.hidden = true; });
+
+async function loadPromotions() {
+  const grid = document.getElementById('promoGrid');
+  grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_promotions'), fb.orderBy('createdAt','desc')));
+    allPromos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const now       = new Date();
+    const active    = allPromos.filter(p => p.status === 'active').length;
+    const scheduled = allPromos.filter(p => p.status === 'scheduled').length;
+    const draft     = allPromos.filter(p => p.status === 'draft').length;
+    document.getElementById('promoStatActive').textContent    = active;
+    document.getElementById('promoStatScheduled').textContent = scheduled;
+    document.getElementById('promoStatDraft').textContent     = draft;
+    document.getElementById('promoStatTotal').textContent     = allPromos.length;
+
+    if (!allPromos.length) {
+      grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">No promotions yet. Click + New Promotion to get started.</p>';
+      return;
+    }
+
+    grid.innerHTML = allPromos.map(p => {
+      const typeIco   = { banner:'🎯', popup:'💬', card:'🃏', ribbon:'🎀', announcement:'📢' }[p.type] || '📢';
+      const statusCls = { active:'status-active', scheduled:'status-maintenance', draft:'status-draft' }[p.status] || 'status-draft';
+      const target    = p.targetApp === 'all' ? 'All Apps' : (allApps.find(a => a.id === p.targetApp)?.name || p.targetApp);
+      const endStr    = p.endDate?.toDate ? `Ends ${timeAgo(p.endDate.toDate())}` : '';
+      return `
+        <div class="promo-card">
+          ${p.image
+            ? `<div class="promo-img" style="background-image:url('${esc(p.image)}')"></div>`
+            : `<div class="promo-img-placeholder">${typeIco}</div>`}
+          <div class="promo-card-body">
+            <div class="promo-card-top">
+              <span class="promo-type-badge">${typeIco} ${esc(p.type||'banner')}</span>
+              <span class="app-status-pill ${statusCls}">${esc(p.status||'draft')}</span>
+            </div>
+            <div class="promo-card-title">${esc(p.title)}</div>
+            <div class="promo-card-msg">${esc(p.message||'')}</div>
+            <div class="promo-card-meta">
+              <span class="promo-target">📱 ${esc(target)}</span>
+              ${endStr ? `<span>${endStr}</span>` : ''}
+              ${p.ctaText ? `<span class="promo-cta-badge">${esc(p.ctaText)}</span>` : ''}
+            </div>
+          </div>
+          <div class="promo-card-actions">
+            <button class="app-act-edit"   onclick="openPromoModal('${p.id}')">✏ Edit</button>
+            ${p.link ? `<button class="app-act-open" onclick="window.open('${esc(p.link)}','_blank')">↗ Link</button>` : ''}
+            <button class="app-act-delete" onclick="deletePromo('${p.id}')">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error: ${e.message}</p>`;
+  }
+}
+
+window.openPromoModal = function(id) {
+  const p = id ? allPromos.find(x => x.id === id) : null;
+  document.getElementById('promoModalTitle').textContent = p ? 'Edit Promotion' : 'New Promotion';
+  document.getElementById('promoModalId').value    = p?.id       || '';
+  document.getElementById('promoTitle').value      = p?.title    || '';
+  document.getElementById('promoType').value       = p?.type     || 'banner';
+  document.getElementById('promoMessage').value    = p?.message  || '';
+  document.getElementById('promoImage').value      = p?.image    || '';
+  document.getElementById('promoCta').value        = p?.ctaText  || '';
+  document.getElementById('promoLink').value       = p?.link     || '';
+  document.getElementById('promoTarget').value     = p?.targetApp|| 'all';
+  document.getElementById('promoStatus').value     = p?.status   || 'active';
+  const fmt = ts => ts?.toDate ? ts.toDate().toISOString().slice(0,16) : '';
+  document.getElementById('promoStart').value = fmt(p?.startDate);
+  document.getElementById('promoEnd').value   = fmt(p?.endDate);
+  promoModal.hidden = false;
+  document.getElementById('promoTitle').focus();
+};
+
+function openPromoModal(id) { window.openPromoModal(id); }
+
+async function savePromotion() {
+  const id    = document.getElementById('promoModalId').value;
+  const title = document.getElementById('promoTitle').value.trim();
+  if (!title) { toast('Title is required.', 'error'); return; }
+  const btn = document.getElementById('promoModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const startVal = document.getElementById('promoStart').value;
+  const endVal   = document.getElementById('promoEnd').value;
+  const data = {
+    title,
+    type:      document.getElementById('promoType').value,
+    message:   document.getElementById('promoMessage').value.trim(),
+    image:     document.getElementById('promoImage').value.trim(),
+    ctaText:   document.getElementById('promoCta').value.trim(),
+    link:      document.getElementById('promoLink').value.trim(),
+    targetApp: document.getElementById('promoTarget').value,
+    status:    document.getElementById('promoStatus').value,
+    startDate: startVal ? new Date(startVal) : null,
+    endDate:   endVal   ? new Date(endVal)   : null,
+    updatedAt: fb.serverTimestamp(),
+  };
+  try {
+    if (id) {
+      await fb.updateDoc(fb.doc(_db, 'hub_promotions', id), data);
+    } else {
+      data.createdAt = fb.serverTimestamp();
+      data.createdBy = currentUser.uid;
+      await fb.addDoc(fb.collection(_db, 'hub_promotions'), data);
+      logActivity(`Promotion "${title}" created`);
+    }
+    promoModal.hidden = true;
+    toast(id ? 'Promotion updated!' : 'Promotion created!', 'success');
+    loadPromotions();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Promotion'; btn.disabled = false;
+}
+
+window.deletePromo = async function(id) {
+  const p = allPromos.find(x => x.id === id);
+  if (!confirm(`Delete "${p?.title}"? This cannot be undone.`)) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'hub_promotions', id));
+    toast('Promotion deleted.', 'warn');
+    logActivity(`Promotion "${p?.title}" deleted`);
+    loadPromotions();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+// ── PROFILE PICTURE ───────────────────────────────────────
+document.getElementById('profilePicInput').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { toast('Please select an image file.', 'error'); return; }
+  if (file.size > 5 * 1024 * 1024)    { toast('Image must be under 5 MB.', 'error');    return; }
+
+  const progWrap = document.getElementById('profileUploadProgress');
+  const bar      = document.getElementById('profileUpBar');
+  const status   = document.getElementById('profileUpStatus');
+  progWrap.hidden   = false;
+  bar.style.width   = '0%';
+  status.textContent = 'Uploading…';
+
+  try {
+    const path = `hub_avatars/${currentUser.uid}/avatar`;
+    const ref  = fb.ref(_st, path);
+    const task = fb.uploadBytesResumable(ref, file);
+    await new Promise((res, rej) => {
+      task.on('state_changed',
+        snap => { bar.style.width = (snap.bytesTransferred / snap.totalBytes * 100) + '%'; },
+        rej, res
+      );
+    });
+    const photoURL = await fb.getDownloadURL(ref);
+    await fb.updateDoc(fb.doc(_db, 'hub_users', currentUser.uid), { photoURL });
+    await fb.updateProfile(currentUser, { photoURL });
+    currentUserData.photoURL = photoURL;
+    bar.style.width    = '100%';
+    status.textContent = 'Done!';
+    setTimeout(() => { progWrap.hidden = true; }, 1500);
+    setupUserDisplay();
+    updateProfilePicPreview(photoURL);
+    toast('Profile picture updated!', 'success');
+  } catch(e) {
+    toast('Upload failed: ' + e.message, 'error');
+    progWrap.hidden = true;
+  }
+  this.value = '';
+});
+
+function updateProfilePicPreview(photoURL) {
+  const el = document.getElementById('profilePicAvatar');
+  if (!el) return;
+  if (photoURL) {
+    el.innerHTML = `<img src="${photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>`;
+  } else {
+    el.innerHTML = '';
+    const name = currentUserData?.name || currentUser?.displayName || '';
+    el.textContent = name.charAt(0).toUpperCase() || '?';
+  }
+}
+
 // ── SETTINGS ──────────────────────────────────────────────
 document.getElementById('saveGeneralBtn').addEventListener('click', saveGeneralSettings);
 document.getElementById('saveAccessBtn').addEventListener('click',  saveAccessSettings);
@@ -870,6 +1069,8 @@ async function loadSettings() {
     const userSnap = await fb.getDoc(fb.doc(_db, 'hub_users', currentUser.uid));
     if (userSnap.exists()) document.getElementById('setDisplayName').value = userSnap.data().name || '';
   } catch(e) {}
+  // Sync profile pic preview
+  updateProfilePicPreview(currentUserData?.photoURL || currentUser?.photoURL || '');
 }
 
 async function saveGeneralSettings() {
