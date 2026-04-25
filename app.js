@@ -51,6 +51,8 @@ audio.volume = S.volume;
 audio.preload = 'metadata';
 
 let audioCtx, gainNode, analyserNode, eqBands = [];
+let pendingEqRestore = null; // EQ band values to apply once AudioContext is ready
+let eqSaveTimer;
 const EQ_FREQS = [60, 170, 310, 600, 1000, 3000, 6000,12000, 14000, 16000];
 const EQ_PRESETS = {
   flat:       [0,0,0,0,0,0,0,0,0,0],
@@ -156,6 +158,26 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function openPanel(id) { document.getElementById(id).classList.add('open'); }
 function closePanel(id) { document.getElementById(id).classList.remove('open'); }
 
+// ── Persistence helpers ────────────────────────────────────────
+async function saveSettings() {
+  const eqVals = eqBands.length ? eqBands.map(b => b.gain.value) : (pendingEqRestore || []);
+  await Promise.all([
+    idbPut('settings', { key: 'volume',    value: S.volume }),
+    idbPut('settings', { key: 'shuffle',   value: S.shuffle }),
+    idbPut('settings', { key: 'repeat',    value: S.repeat }),
+    idbPut('settings', { key: 'crossfade', value: S.crossfade }),
+    idbPut('settings', { key: 'normalize', value: S.normalize }),
+    idbPut('settings', { key: 'gapless',   value: S.gapless }),
+    idbPut('settings', { key: 'eqValues',  value: eqVals }),
+  ]).catch(() => {});
+}
+
+function savePlaybackState() {
+  if (!S.currentTrack) return;
+  localStorage.setItem('erifam_last_track', S.currentTrack.id);
+  localStorage.setItem('erifam_last_pos',   audio.currentTime.toFixed(2));
+}
+
 // ── Read file metadata ─────────────────────────────────────────
 // Uses seek-to-end so the browser scans the full file — fixes VBR MP3 duration overestimates.
 async function readTrackMeta(file) {
@@ -251,10 +273,8 @@ function getBlobUrl(track) {
 async function playTrack(track, queueTracks) {
   if (!track) return;
 
-  // If AudioContext is already wired up (EQ/Visualizer opened before),
-  // just resume it — don't call initAudioCtx here so that plain MP3
-  // playback never goes through the AudioContext and can't be silenced.
-  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
+  // Resume AudioContext if EQ/Visualizer was opened previously.
+  if (audioCtx && audioCtx.state !== 'running') await audioCtx.resume().catch(() => {});
 
   S.currentTrack = track;
   if (queueTracks) {
@@ -361,7 +381,10 @@ audio.addEventListener('play',  () => {
 audio.addEventListener('pause', () => {
   S.playing = false; updatePlayIcons();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+  savePlaybackState();
 });
+window.addEventListener('beforeunload', savePlaybackState);
+setInterval(() => { if (S.playing && !audio.paused) savePlaybackState(); }, 5000);
 audio.addEventListener('error', () => toast('⚠ Could not play this track'));
 
 // ── Media Session API (lock screen / background) ───────────────
@@ -878,6 +901,7 @@ document.getElementById('shuffleBtn').addEventListener('click', () => {
   if (S.shuffle && S.queue.length) buildShuffleQueue(S.currentTrack);
   document.getElementById('shuffleBtn').classList.toggle('active', S.shuffle);
   toast(S.shuffle ? '🔀 Shuffle on' : '🔀 Shuffle off');
+  idbPut('settings', { key: 'shuffle', value: S.shuffle }).catch(() => {});
 });
 
 document.getElementById('repeatBtn').addEventListener('click', () => {
@@ -888,6 +912,7 @@ document.getElementById('repeatBtn').addEventListener('click', () => {
   btn.title = S.repeat === 'one' ? 'Repeat one' : S.repeat === 'all' ? 'Repeat all' : 'Repeat off';
   if (S.repeat === 'one') btn.innerHTML += '<span style="position:absolute;font-size:0.5rem">1</span>';
   toast(S.repeat === 'off' ? 'Repeat off' : S.repeat === 'all' ? '🔁 Repeat all' : '🔂 Repeat one');
+  idbPut('settings', { key: 'repeat', value: S.repeat }).catch(() => {});
 });
 
 document.getElementById('likeBtn').addEventListener('click', () => {
@@ -920,6 +945,7 @@ const volSlider = document.getElementById('volSlider');
 volSlider.addEventListener('input', () => {
   S.volume = volSlider.value / 100;
   audio.volume = S.volume;
+  idbPut('settings', { key: 'volume', value: S.volume }).catch(() => {});
 });
 
 // Skip back 15 s
@@ -951,9 +977,23 @@ document.getElementById('fpRingContainer').addEventListener('click', e => {
 });
 
 // ── Equalizer ─────────────────────────────────────────────────
-document.getElementById('eqBtn').addEventListener('click', () => {
-  try { initAudioCtx(); } catch(e) { console.warn('[AudioCtx]', e); }
-  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
+document.getElementById('eqBtn').addEventListener('click', async () => {
+  const wasPlaying = !audio.paused;
+  const savedTime  = audio.currentTime;
+  try {
+    initAudioCtx();
+    // Apply any pending EQ restore now that AudioContext exists
+    if (pendingEqRestore) {
+      pendingEqRestore.forEach((v, i) => { if (eqBands[i]) eqBands[i].gain.value = v; });
+      pendingEqRestore = null;
+    }
+    if (audioCtx.state !== 'running') await audioCtx.resume();
+  } catch(e) { console.warn('[AudioCtx]', e); }
+  // Restore playback if routing through AudioCtx paused the audio
+  if (wasPlaying && audio.paused) {
+    audio.currentTime = savedTime;
+    audio.play().catch(() => {});
+  }
   openPanel('eqPanel');
 });
 document.getElementById('eqClose').addEventListener('click', () => closePanel('eqPanel'));
@@ -971,6 +1011,8 @@ function buildEqSliders() {
     inp.addEventListener('input', () => {
       const idx = parseInt(inp.getAttribute('data-band'));
       if (eqBands[idx]) eqBands[idx].gain.value = parseFloat(inp.value);
+      clearTimeout(eqSaveTimer);
+      eqSaveTimer = setTimeout(saveSettings, 1000);
     });
   });
 }
@@ -986,6 +1028,7 @@ document.querySelectorAll('.eq-pre').forEach(btn => {
       const inp = document.querySelector(`[data-band="${i}"]`);
       if (inp) inp.value = v;
     });
+    saveSettings();
   });
 });
 
@@ -1315,6 +1358,15 @@ document.getElementById('goAdminBtn').addEventListener('click',   () => { window
 document.getElementById('crossfadeSlider').addEventListener('input', e => {
   S.crossfade = parseInt(e.target.value);
   document.getElementById('crossfadeVal').textContent = S.crossfade + 's';
+  idbPut('settings', { key: 'crossfade', value: S.crossfade }).catch(() => {});
+});
+document.getElementById('normalizeCheck').addEventListener('change', e => {
+  S.normalize = e.target.checked;
+  idbPut('settings', { key: 'normalize', value: S.normalize }).catch(() => {});
+});
+document.getElementById('gaplessCheck').addEventListener('change', e => {
+  S.gapless = e.target.checked;
+  idbPut('settings', { key: 'gapless', value: S.gapless }).catch(() => {});
 });
 
 // ── Music Identification ───────────────────────────────────────
@@ -1516,24 +1568,74 @@ if ('serviceWorker' in navigator) {
 async function init() {
   await openIDB();
 
-  // Load liked from localStorage
+  // Liked tracks
   const liked = JSON.parse(localStorage.getItem('erifam_liked') || '[]');
   S.likedIds = new Set(liked);
 
-  // Load settings
-  const vol = await idbGet('settings', 'volume');
-  if (vol) { S.volume = vol.value; audio.volume = S.volume; document.getElementById('volSlider').value = S.volume * 100; }
+  // Restore all settings from IDB
+  const [volS, shufS, repS, cfS, normS, gapS, eqS] = await Promise.all([
+    idbGet('settings', 'volume'),
+    idbGet('settings', 'shuffle'),
+    idbGet('settings', 'repeat'),
+    idbGet('settings', 'crossfade'),
+    idbGet('settings', 'normalize'),
+    idbGet('settings', 'gapless'),
+    idbGet('settings', 'eqValues'),
+  ]);
+  if (volS)  { S.volume = volS.value; audio.volume = S.volume; document.getElementById('volSlider').value = S.volume * 100; }
+  if (shufS) { S.shuffle = shufS.value; document.getElementById('shuffleBtn').classList.toggle('active', S.shuffle); }
+  if (repS && repS.value !== 'off') {
+    S.repeat = repS.value;
+    const rBtn = document.getElementById('repeatBtn');
+    rBtn.classList.add('active');
+    rBtn.title = S.repeat === 'one' ? 'Repeat one' : 'Repeat all';
+  }
+  if (cfS)   { S.crossfade = cfS.value; document.getElementById('crossfadeSlider').value = cfS.value; document.getElementById('crossfadeVal').textContent = cfS.value + 's'; }
+  if (normS) { S.normalize = normS.value; document.getElementById('normalizeCheck').checked = normS.value; }
+  if (gapS != null) { S.gapless = gapS.value; document.getElementById('gaplessCheck').checked = gapS.value; }
+  if (eqS?.value?.length) pendingEqRestore = eqS.value; // applied when AudioCtx opens
 
   await loadLocalTracks();
-  renderTopCharts();
   buildEqSliders();
+
+  // Apply saved EQ values to sliders visually (AudioCtx not needed for that)
+  if (pendingEqRestore) {
+    pendingEqRestore.forEach((v, i) => {
+      const inp = document.querySelector(`[data-band="${i}"]`);
+      if (inp) inp.value = v;
+    });
+  }
+
+  // Restore last played track (paused at saved position, no auto-play)
+  const lastId  = localStorage.getItem('erifam_last_track');
+  const lastPos = parseFloat(localStorage.getItem('erifam_last_pos') || '0');
+  if (lastId) {
+    const track = S.tracks.find(t => t.id === lastId);
+    if (track) {
+      S.currentTrack = track;
+      const src = getBlobUrl(track);
+      if (src) {
+        audio.src = src;
+        audio.volume = S.volume;
+        audio.addEventListener('loadedmetadata', () => {
+          if (lastPos > 1 && lastPos < (audio.duration || 0) - 2) {
+            audio.currentTime = lastPos;
+          }
+        }, { once: true });
+        updatePlayerUI();
+        showMiniPlayer();
+        updateMediaSession();
+      }
+    }
+  }
+
+  renderTopCharts();
   renderPlaylists();
   renderRadioGrid();
   initSwipeGestures();
   initNotificationListener();
   handlePlayParam();
 
-  // Cloud sync + promos if online
   if (navigator.onLine) { syncCloud(); loadPromos(); }
 }
 
@@ -1617,9 +1719,14 @@ function stopVisualizer() {
   }
 }
 
-document.getElementById('vizToggleBtn').addEventListener('click', () => {
-  try { initAudioCtx(); } catch(e) { console.warn('[AudioCtx]', e); }
-  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
+document.getElementById('vizToggleBtn').addEventListener('click', async () => {
+  const wasPlaying = !audio.paused;
+  const savedTime  = audio.currentTime;
+  try {
+    initAudioCtx();
+    if (audioCtx.state !== 'running') await audioCtx.resume();
+  } catch(e) { console.warn('[AudioCtx]', e); }
+  if (wasPlaying && audio.paused) { audio.currentTime = savedTime; audio.play().catch(() => {}); }
   vizActive = !vizActive;
   const canvas = document.getElementById('vizCanvas');
   const btn = document.getElementById('vizToggleBtn');
