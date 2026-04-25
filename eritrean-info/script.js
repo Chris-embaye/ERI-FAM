@@ -793,16 +793,42 @@ const wsNewSearch  = document.getElementById('wsNewSearch');
 
 const WS_SEARCH_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
 
+function wsShowKeyPrompt(pendingQuery) {
+  wsResultQ.textContent = 'Enter your Gemini API key to search';
+  wsResultBody.innerHTML = `
+    <p style="color:rgba(255,255,255,0.6);margin-bottom:14px;font-size:0.9rem">
+      Get a free key at <strong style="color:#4189DD">aistudio.google.com</strong> → "Get API key"
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input id="wsApiKeyInput" type="password" placeholder="Paste your Gemini API key…"
+        style="flex:1;min-width:200px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);
+               border-radius:10px;padding:10px 14px;color:#fff;font-size:0.9rem;outline:none;font-family:inherit"/>
+      <button id="wsApiKeySave"
+        style="background:#4189DD;color:#fff;border:none;border-radius:10px;padding:10px 20px;
+               font-weight:700;font-size:0.9rem;cursor:pointer;white-space:nowrap">Save & Search</button>
+    </div>`;
+  wsResult.removeAttribute('hidden');
+  wsResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  const inp = document.getElementById('wsApiKeyInput');
+  const sav = document.getElementById('wsApiKeySave');
+  inp.focus();
+  const save = () => {
+    const key = inp.value.trim();
+    if (!key) { inp.style.borderColor = '#f87171'; return; }
+    localStorage.setItem('gemini-api-key', key);
+    doWorldSearch(pendingQuery);
+  };
+  sav.addEventListener('click', save);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
+}
+
 async function doWorldSearch(query) {
   query = query.trim();
   if (!query) return;
 
   const apiKey = localStorage.getItem('gemini-api-key');
   if (!apiKey) {
-    wsResultQ.textContent = query;
-    wsResultBody.innerHTML = `<p style="color:#f87171">⚠️ No Gemini API key found. Please set your key in the chat widget first (tap the 💬 button and enter your key).</p>`;
-    wsResult.removeAttribute('hidden');
-    wsResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    wsShowKeyPrompt(query);
     return;
   }
 
