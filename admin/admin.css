@@ -115,6 +115,7 @@ svg { display: block; flex-shrink: 0; }
 .pending-msg { text-align: center; color: var(--text-dim); font-size: .875rem; line-height: 1.7; margin-bottom: 24px; }
 
 /* ── LAYOUT ──────────────────────────────────────────────── */
+#authScreen[hidden] { display: none !important; }
 #hubApp[hidden] { display: none !important; }
 #hubApp { display: flex; height: 100vh; overflow: hidden; }
 
