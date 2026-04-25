@@ -9,14 +9,14 @@
   --card:       #2C2C2E;
   --card-hover: #3A3A3C;
   --border:     rgba(255,255,255,0.08);
-  --accent:     #FA2D48;
-  --accent-dk:  #C42035;
-  --accent-glow:rgba(250,45,72,0.30);
+  --accent:     #C8914A;
+  --accent-dk:  #A0703A;
+  --accent-glow:rgba(200,145,74,0.30);
   --green:      #32D74B;
   --green-dk:   #248A35;
   --blue:       #0A84FF;
   --red:        #FF453A;
-  --gold:       #FF9F0A;
+  --gold:       #C8914A;
   --text:       #FFFFFF;
   --text-sub:   rgba(255,255,255,0.55);
   --text-dim:   rgba(255,255,255,0.28);
@@ -27,6 +27,7 @@
   --radius-sm:  10px;
   --radius-lg:  20px;
   --glass:      rgba(28,28,30,0.88);
+  --fp-ring-c:  867.08;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -564,110 +565,147 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 .full-player.open { transform: translateY(0); }
 .fp-bg {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, #1a0a10 0%, #0d0006 50%, #000000 100%);
-  transition: background 0.6s;
+  background: linear-gradient(160deg, #1e1408 0%, #100a02 45%, #000000 100%);
+  transition: background 0.7s ease;
 }
-.fp-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+.fp-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.38); }
 .fp-content {
   position: relative; z-index: 1; flex: 1; display: flex;
-  flex-direction: column; padding: 0 24px 24px; overflow-y: auto;
+  flex-direction: column; align-items: center;
+  padding: 0 24px 20px; overflow-y: auto;
   max-width: 500px; margin: 0 auto; width: 100%;
 }
 
+/* Header */
 .fp-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 0 6px;
+  padding: 14px 0 8px; width: 100%;
 }
 .fp-header-label {
-  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.8px; color: var(--text-sub);
+  font-size: 0.78rem; font-weight: 600; letter-spacing: 0.3px;
+  color: var(--text-sub); text-align: center; flex: 1;
 }
 
-/* Artwork */
-.fp-art-wrap { position: relative; margin: 14px 0 24px; }
-.fp-art {
-  width: 88%; max-width: 320px; margin: 0 auto;
+/* Song info — centered, above art */
+.fp-info {
+  text-align: center; width: 100%; margin-bottom: 6px; margin-top: 4px;
+}
+.fp-title {
+  font-size: 1.35rem; font-weight: 700; letter-spacing: -0.4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: #fff;
+}
+.fp-artist {
+  font-size: 0.88rem; color: var(--text-sub); margin-top: 4px; font-weight: 500;
+}
+
+/* Time display */
+.fp-time-display {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; font-size: 0.78rem; font-weight: 500;
+  color: var(--accent); margin-bottom: 12px; letter-spacing: 0.5px;
+}
+.fp-time-sep { color: var(--text-dim); font-weight: 300; }
+
+/* Circular art + ring */
+.fp-ring-container {
+  position: relative;
+  width: min(260px, 70vw);
   aspect-ratio: 1;
-  border-radius: 18px;
+  margin-bottom: 24px; flex-shrink: 0;
+}
+.fp-ring-svg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; overflow: visible;
+}
+.fp-ring-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.12);
+  stroke-width: 3;
+}
+.fp-ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 867.08;
+  stroke-dashoffset: 867.08;
+  transition: stroke-dashoffset 0.4s linear;
+}
+.fp-ring-dot {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 3px var(--accent));
+}
+.fp-art {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
   background: linear-gradient(145deg, #2C2C2E, #1C1C1E);
   display: flex; align-items: center; justify-content: center;
-  font-size: 5rem; overflow: hidden;
-  box-shadow: 0 28px 72px rgba(0,0,0,0.75), 0 8px 24px rgba(0,0,0,0.4);
-  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s;
+  font-size: 3.5rem; overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.7);
 }
-.full-player.open .fp-art { transform: scale(1); }
 .fp-art img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
-.fp-art-ph { font-size: 4rem; }
+.fp-art-ph { font-size: 3rem; }
 
-.id-btn {
-  position: absolute; bottom: -2px; right: calc(6% + 4px);
-  background: rgba(255,255,255,0.12); color: white; border-radius: 20px;
-  padding: 5px 12px; font-size: 0.7rem; font-weight: 600;
-  display: flex; align-items: center; gap: 5px;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-}
-.id-btn svg { width: 13px; height: 13px; }
+/* Hidden art-wrap for JS-referenced elements */
+.fp-art-wrap { display: none !important; }
+.id-btn { display: none !important; }
+.viz-toggle-btn { display: none !important; }
 
-/* Song info */
-.fp-info { margin-bottom: 14px; }
-.fp-title-row { display: flex; align-items: flex-start; gap: 10px; }
-.fp-titles { flex: 1; min-width: 0; }
-.fp-title {
-  font-size: 1.25rem; font-weight: 700; letter-spacing: -0.3px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.fp-artist { font-size: 0.95rem; color: var(--accent); margin-top: 3px; font-weight: 500; }
-.like-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); flex-shrink: 0; transition: color 0.2s; margin-top: 2px; }
-.like-btn svg { width: 22px; height: 22px; }
-.like-btn.liked { color: var(--accent); }
-.like-btn.liked svg { fill: var(--accent); stroke: var(--accent); }
+/* Hidden progress track (JS compat) */
+.fp-progress-wrap { display: none !important; }
 
-/* Progress */
-.fp-progress-wrap { margin-bottom: 20px; }
-.fp-progress-track {
-  height: 4px; background: rgba(255,255,255,0.18); border-radius: 2px;
-  position: relative; cursor: pointer;
-}
-.fp-progress-fill {
-  height: 100%; background: white; border-radius: 2px; width: 0%; pointer-events: none;
-}
-.fp-progress-thumb {
-  position: absolute; top: 50%; right: -7px; transform: translateY(-50%);
-  width: 14px; height: 14px; border-radius: 50%; background: white;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4); pointer-events: none;
-}
-.fp-times { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.72rem; color: var(--text-dim); font-weight: 500; }
-
-/* Controls */
+/* Main controls: skip-back · prev · play · next · like */
 .fp-controls {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 28px; padding: 0 4px;
+  width: 100%; padding: 0 4px; margin-bottom: 16px;
 }
 .ctrl-btn {
-  width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
   border-radius: 50%; transition: opacity 0.15s;
 }
-.ctrl-btn:active { opacity: 0.5; }
+.ctrl-btn:active { opacity: 0.45; }
 .ctrl-secondary { color: rgba(255,255,255,0.45); }
 .ctrl-secondary svg { width: 22px; height: 22px; }
 .ctrl-secondary.active { color: var(--accent); }
 .ctrl-prev, .ctrl-next { color: #fff; }
-.ctrl-prev svg, .ctrl-next svg { width: 32px; height: 32px; }
+.ctrl-prev svg, .ctrl-next svg { width: 30px; height: 30px; }
 .ctrl-play {
-  width: 72px; height: 72px;
+  width: 68px; height: 68px;
   background: white; color: #000;
   border-radius: 50%;
-  box-shadow: 0 4px 24px rgba(255,255,255,0.25);
+  box-shadow: 0 4px 24px rgba(255,255,255,0.2);
   transition: transform 0.15s;
 }
-.ctrl-play:active { transform: scale(0.93); }
-.ctrl-play svg { width: 28px; height: 28px; fill: #000; margin-left: 3px; }
+.ctrl-play:active { transform: scale(0.92); }
+.ctrl-play svg { width: 26px; height: 26px; fill: #000; margin-left: 3px; }
+.like-btn {
+  width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); flex-shrink: 0; transition: color 0.2s;
+}
+.like-btn svg { width: 22px; height: 22px; }
+.like-btn.liked { color: var(--accent); }
+.like-btn.liked svg { fill: var(--accent); stroke: var(--accent); }
 
-/* Volume */
-.fp-volume { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+/* Secondary controls: shuffle · queue · volume · repeat */
+.fp-controls-secondary {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 0 8px; margin-bottom: 12px;
+}
+.fp-controls-secondary .ctrl-btn {
+  width: 44px; height: 44px;
+}
+.fp-controls-secondary .ctrl-secondary svg { width: 20px; height: 20px; }
+
+/* Volume row (toggled) */
+.fp-volume {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; margin-bottom: 12px;
+}
 .vol-ico { width: 16px; height: 16px; color: var(--text-dim); flex-shrink: 0; }
 .vol-range {
-  flex: 1; -webkit-appearance: none; height: 4px;
+  flex: 1; -webkit-appearance: none; height: 3px;
   background: rgba(255,255,255,0.18); border-radius: 2px; outline: none;
 }
 .vol-range::-webkit-slider-thumb {
@@ -675,22 +713,25 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
   background: white; cursor: pointer;
 }
 
-/* Extras */
+/* Extras row */
 .fp-extras {
   display: flex; align-items: center;
-  border-top: 0.5px solid var(--border); padding-top: 16px;
+  border-top: 0.5px solid var(--border); padding-top: 12px;
   overflow-x: auto; scrollbar-width: none; gap: 0;
-  justify-content: flex-start;
+  justify-content: flex-start; width: 100%;
 }
 .fp-extras::-webkit-scrollbar { display: none; }
 .extra-btn {
   display: flex; flex-direction: column; align-items: center; gap: 5px;
-  font-size: 0.63rem; font-weight: 600; color: var(--text-sub);
+  font-size: 0.62rem; font-weight: 600; color: var(--text-sub);
   padding: 6px 10px; border-radius: var(--radius-sm); transition: all 0.18s;
-  flex-shrink: 0; min-width: 52px;
+  flex-shrink: 0; min-width: 50px;
 }
-.extra-btn svg { width: 19px; height: 19px; }
-.extra-btn:hover { color: var(--accent); background: rgba(250,45,72,0.08); }
+.extra-btn svg { width: 18px; height: 18px; }
+.extra-btn:hover { color: var(--accent); background: rgba(200,145,74,0.1); }
+
+/* fp-times hidden (kept for JS compat) */
+.fp-times { display: none; }
 
 /* ── SIDE PANELS ────────────────────────────────────────── */
 .side-panel {

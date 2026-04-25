@@ -382,15 +382,28 @@ function updateMediaSession() {
 }
 
 // ── UI Updates ─────────────────────────────────────────────────
+const RING_C = 867.08; // 2π × 138 (SVG ring circumference)
+
 function updateProgress() {
-  const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
-  document.getElementById('miniProgFill').style.width  = pct + '%';
-  document.getElementById('fpProgFill').style.width    = pct + '%';
-  document.getElementById('fpProgThumb').style.left    = pct + '%';
-  document.getElementById('fpCurTime').textContent     = fmtTime(audio.currentTime);
-  document.getElementById('fpDuration').textContent    = fmtTime(audio.duration);
-  if ('mediaSession' in navigator && audio.duration) {
-    navigator.mediaSession.setPositionState({ duration: audio.duration, position: audio.currentTime, playbackRate: 1 });
+  const dur = audio.duration || 0;
+  const cur = audio.currentTime || 0;
+  const ratio = dur ? cur / dur : 0;
+  const pct = ratio * 100;
+
+  document.getElementById('miniProgFill').style.width = pct + '%';
+  document.getElementById('fpProgFill').style.width   = pct + '%';
+  document.getElementById('fpProgThumb').style.left   = pct + '%';
+  document.getElementById('fpCurTime').textContent    = fmtTime(cur);
+  document.getElementById('fpDuration').textContent   = fmtTime(dur);
+
+  // Drive circular progress ring
+  const ringFill = document.getElementById('fpRingFill');
+  const ringDot  = document.getElementById('fpRingDot');
+  if (ringFill) ringFill.style.strokeDashoffset = RING_C * (1 - ratio);
+  if (ringDot)  ringDot.setAttribute('transform', `rotate(${ratio * 360} 150 150)`);
+
+  if ('mediaSession' in navigator && dur) {
+    navigator.mediaSession.setPositionState({ duration: dur, position: cur, playbackRate: 1 });
   }
 }
 
@@ -907,6 +920,34 @@ const volSlider = document.getElementById('volSlider');
 volSlider.addEventListener('input', () => {
   S.volume = volSlider.value / 100;
   audio.volume = S.volume;
+});
+
+// Skip back 15 s
+document.getElementById('skipBackBtn').addEventListener('click', () => {
+  audio.currentTime = Math.max(0, audio.currentTime - 15);
+});
+
+// Volume icon toggles slider row
+document.getElementById('volIconBtn').addEventListener('click', () => {
+  const row = document.getElementById('fpVolumeRow');
+  row.style.display = row.style.display === 'none' ? 'flex' : 'none';
+});
+
+// Ring click-to-seek
+document.getElementById('fpRingContainer').addEventListener('click', e => {
+  if (!audio.duration) return;
+  const ring = e.currentTarget;
+  const rect = ring.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top  + rect.height / 2;
+  const dx = e.clientX - cx;
+  const dy = e.clientY - cy;
+  const dist = Math.hypot(dx, dy);
+  const ringPx = rect.width * (138 / 300);
+  if (Math.abs(dist - ringPx) > 22) return; // only near the ring edge
+  let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+  if (angle < 0) angle += 360;
+  audio.currentTime = (angle / 360) * audio.duration;
 });
 
 // ── Equalizer ─────────────────────────────────────────────────

@@ -314,17 +314,47 @@
   <div class="fp-overlay"></div>
   <div class="fp-content">
 
+    <!-- Header: chevron · label · dots -->
     <div class="fp-header">
-      <button class="icon-btn" id="fpClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+      <button class="icon-btn" id="fpClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
       <span class="fp-header-label" id="fpLabel">Now Playing</span>
-      <button class="icon-btn" id="fpMenu"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+      <button class="icon-btn" id="fpMenu">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
     </div>
 
-    <div class="fp-art-wrap">
+    <!-- Song info (centered, above art) -->
+    <div class="fp-info">
+      <h2 class="fp-title" id="fpTitle">Select a track</h2>
+      <p class="fp-artist fp-artist-clickable" id="fpArtist">—</p>
+    </div>
+
+    <!-- Time display -->
+    <div class="fp-time-display">
+      <span id="fpCurTime">0:00</span>
+      <span class="fp-time-sep">|</span>
+      <span id="fpDuration">0:00</span>
+    </div>
+
+    <!-- Circular art with SVG progress ring -->
+    <div class="fp-ring-container" id="fpRingContainer">
+      <svg class="fp-ring-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="150" cy="150" r="138" class="fp-ring-track"/>
+        <circle cx="150" cy="150" r="138" class="fp-ring-fill" id="fpRingFill" transform="rotate(-90 150 150)"/>
+        <circle cx="150" cy="12" r="7" class="fp-ring-dot" id="fpRingDot"/>
+      </svg>
       <div class="fp-art" id="fpArt">
         <span class="fp-art-ph">🎵</span>
         <img id="fpArtImg" src="" alt="" style="display:none" />
       </div>
+    </div>
+
+    <canvas id="vizCanvas" class="viz-canvas" style="display:none"></canvas>
+
+    <!-- Hidden elements kept for JS compatibility -->
+    <div class="fp-art-wrap">
       <button class="id-btn" id="identifyBtn" title="Identify song">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         ID Song
@@ -333,31 +363,20 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       </button>
     </div>
-    <canvas id="vizCanvas" class="viz-canvas" style="display:none"></canvas>
-
-    <div class="fp-info">
-      <div class="fp-title-row">
-        <div class="fp-titles">
-          <h2 class="fp-title" id="fpTitle">Select a track</h2>
-          <p class="fp-artist fp-artist-clickable" id="fpArtist">—</p>
-        </div>
-        <button class="like-btn" id="likeBtn" title="Like">
-          <svg id="likeIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </button>
-      </div>
-    </div>
-
     <div class="fp-progress-wrap">
       <div class="fp-progress-track" id="fpProgressTrack">
         <div class="fp-progress-fill" id="fpProgFill"></div>
         <div class="fp-progress-thumb" id="fpProgThumb"></div>
       </div>
-      <div class="fp-times"><span id="fpCurTime">0:00</span><span id="fpDuration">0:00</span></div>
+      <div class="fp-times"><span id="fpCurTime2">0:00</span><span id="fpDuration2">0:00</span></div>
     </div>
 
+    <!-- Main controls: skip-back · prev · play · next · like -->
     <div class="fp-controls">
-      <button class="ctrl-btn ctrl-secondary" id="shuffleBtn" title="Shuffle">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+      <button class="ctrl-btn ctrl-secondary" id="skipBackBtn" title="Back 15s">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"/><line x1="9" y1="12" x2="15" y2="12"/>
+        </svg>
       </button>
       <button class="ctrl-btn ctrl-prev" id="prevBtn" title="Previous">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM18 18L9 12l9-6z"/></svg>
@@ -368,19 +387,36 @@
       <button class="ctrl-btn ctrl-next" id="nextBtn" title="Next">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6l9 6-9 6V6zM16 6h2v12h-2z"/></svg>
       </button>
+      <button class="like-btn" id="likeBtn" title="Like">
+        <svg id="likeIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+    </div>
+
+    <!-- Secondary controls: shuffle · queue · volume · repeat -->
+    <div class="fp-controls-secondary">
+      <button class="ctrl-btn ctrl-secondary" id="shuffleBtn" title="Shuffle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+      </button>
+      <button class="ctrl-btn ctrl-secondary" id="queueBtn" title="Queue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="ctrl-btn ctrl-secondary" id="volIconBtn" title="Volume">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
       <button class="ctrl-btn ctrl-secondary" id="repeatBtn" title="Repeat">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
       </button>
     </div>
 
-    <div class="fp-volume">
+    <!-- Volume slider (toggled by volume icon) -->
+    <div class="fp-volume" id="fpVolumeRow" style="display:none">
       <svg viewBox="0 0 24 24" class="vol-ico" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
       <input type="range" id="volSlider" min="0" max="100" value="80" class="vol-range" />
       <svg viewBox="0 0 24 24" class="vol-ico" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
     </div>
 
+    <!-- Extras row -->
     <div class="fp-extras">
-      <button class="extra-btn" id="queueBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Queue</button>
       <button class="extra-btn" id="eqBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>EQ</button>
       <button class="extra-btn" id="sleepBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Sleep</button>
       <button class="extra-btn" id="addToPlBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Playlist</button>
