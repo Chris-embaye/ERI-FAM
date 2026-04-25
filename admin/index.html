@@ -82,6 +82,45 @@
     </div>
 
     <nav class="sb-nav">
+      <!-- ── Feature Dropdowns ── -->
+      <div class="sb-feat-group" id="grpLibrary">
+        <button class="sb-feat-hd" data-grp="grpLibrary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>Library</span>
+          <svg class="sb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sb-feat-body">
+          <button class="sb-feat-item" data-page="library" data-libtab="music">🎵 Music</button>
+          <button class="sb-feat-item" data-page="library" data-libtab="videos">🎬 Videos</button>
+          <button class="sb-feat-item" data-page="library" data-libtab="docs">📄 Documents</button>
+        </div>
+      </div>
+      <div class="sb-feat-group" id="grpTranslate">
+        <button class="sb-feat-hd" data-grp="grpTranslate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+          <span>Translate</span>
+          <svg class="sb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sb-feat-body">
+          <button class="sb-feat-item" data-page="translate">🌐 Translator</button>
+          <button class="sb-feat-item" data-page="translate" data-trans="ti">🇪🇷 Tigrinya</button>
+          <button class="sb-feat-item" data-page="translate" data-trans="ar">🇸🇦 Arabic</button>
+        </div>
+      </div>
+      <div class="sb-feat-group" id="grpRadio">
+        <button class="sb-feat-hd" data-grp="grpRadio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>
+          <span>Radio</span>
+          <svg class="sb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sb-feat-body">
+          <button class="sb-feat-item" data-page="radio">📺 Eri-TV</button>
+          <button class="sb-feat-item" data-page="radio">🎙️ Voice of Eritrea</button>
+          <button class="sb-feat-item" data-page="radio">📡 Live Streams</button>
+        </div>
+      </div>
+      <div class="sb-divider"></div>
+
       <button class="sb-item active" data-page="dashboard">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         <span>Dashboard</span>
@@ -191,6 +230,44 @@
           </div>
         </div>
       </div>
+
+      <!-- ── YouTube Player ── -->
+      <div class="yt-section" style="margin-top:20px">
+        <div class="yt-top">
+          <div class="yt-top-left">
+            <svg viewBox="0 0 24 24" fill="#ef4444" width="22" height="22"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon fill="white" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
+            <h3>YouTube</h3>
+            <span class="yt-tag">Ad-Free</span>
+          </div>
+          <div class="yt-search-row">
+            <input type="text" id="ytInput" class="yt-input" placeholder="Paste YouTube URL or video ID…"/>
+            <button id="ytPlayBtn" class="btn-primary">▶ Play</button>
+          </div>
+        </div>
+        <div class="yt-presets">
+          <button class="yt-preset" data-vid="jfKfPfyJRdk">☕ Lo-Fi</button>
+          <button class="yt-preset" data-vid="5qap5aO4i9A">🌙 Chill</button>
+          <button class="yt-preset" data-vid="DWcJFNfaw9c">🇪🇷 Eritrean</button>
+          <button class="yt-preset" data-vid="tNkZsRW7h2c">🎵 African</button>
+          <button class="yt-preset" data-vid="36YnV9STBqc">📡 News</button>
+        </div>
+        <div class="yt-player-wrap" id="ytPlayerWrap">
+          <div class="yt-empty" id="ytEmpty">
+            <div class="yt-empty-ico">▶</div>
+            <p>Paste a YouTube URL above or pick a preset to start watching</p>
+            <p class="yt-empty-hint">No ads · No recommended videos · No distractions</p>
+          </div>
+          <iframe id="ytFrame" class="yt-frame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" hidden></iframe>
+        </div>
+        <div class="yt-bar" id="ytBar" hidden>
+          <span class="yt-bar-label">▶ Now Playing</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sm" id="ytPiP">⧉ PiP</button>
+            <button class="btn-sm" id="ytClose">✕ Close</button>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ══ MY APPS ══ -->
@@ -368,6 +445,122 @@
       </div>
     </div>
 
+    <!-- ══ LIBRARY ══ -->
+    <div class="page" id="page-library">
+      <div class="page-hd">
+        <div><h1>Library</h1><p class="page-sub">Your media collection</p></div>
+      </div>
+      <div class="lib-tabs">
+        <button class="lib-tab active" data-libtab="all">All</button>
+        <button class="lib-tab" data-libtab="music">🎵 Music</button>
+        <button class="lib-tab" data-libtab="videos">🎬 Videos</button>
+        <button class="lib-tab" data-libtab="docs">📄 Documents</button>
+      </div>
+      <div id="libGrid" class="asset-grid" style="margin-top:20px">
+        <p class="empty-msg" style="grid-column:1/-1">No files yet. Go to <button class="link-btn" onclick="showPage('assets')">Assets →</button> to upload.</p>
+      </div>
+    </div>
+
+    <!-- ══ TRANSLATE ══ -->
+    <div class="page" id="page-translate">
+      <div class="page-hd">
+        <div><h1>Translate</h1><p class="page-sub">Tigrinya · Arabic · English · and more</p></div>
+      </div>
+      <div class="translate-layout">
+        <div class="card translate-card">
+          <div class="trans-lang-row">
+            <select id="transSrc" class="form-input">
+              <option value="en">🇺🇸 English</option>
+              <option value="ti">🇪🇷 Tigrinya</option>
+              <option value="ar">🇸🇦 Arabic</option>
+              <option value="it">🇮🇹 Italian</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="de">🇩🇪 German</option>
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="am">🇪🇹 Amharic</option>
+              <option value="sw">🇰🇪 Swahili</option>
+            </select>
+            <button class="trans-swap-btn" id="transSwapBtn">⇄</button>
+            <select id="transDest" class="form-input">
+              <option value="ti">🇪🇷 Tigrinya</option>
+              <option value="en">🇺🇸 English</option>
+              <option value="ar">🇸🇦 Arabic</option>
+              <option value="it">🇮🇹 Italian</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="de">🇩🇪 German</option>
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="am">🇪🇹 Amharic</option>
+              <option value="sw">🇰🇪 Swahili</option>
+            </select>
+          </div>
+          <textarea id="transInput" class="form-textarea trans-input" rows="5" placeholder="Type text to translate…" maxlength="500"></textarea>
+          <div class="trans-row">
+            <span id="transCharCount" class="form-note" style="margin:0">0 / 500</span>
+            <button class="btn-primary" id="transBtn">Translate</button>
+          </div>
+          <div class="trans-output" id="transOutput"><p class="trans-placeholder">Translation appears here…</p></div>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px" id="transCopyWrap" hidden>
+            <button class="btn-sm" id="transCopyBtn">Copy</button>
+          </div>
+        </div>
+        <div class="card trans-phrases">
+          <h3>Quick Phrases</h3>
+          <div class="phrase-list" id="phraseList">
+            <div class="phrase-item" data-en="Hello" data-ti="ሰላም">Hello / ሰላም</div>
+            <div class="phrase-item" data-en="Thank you" data-ti="የቐንየለይ">Thank you / የቐንየለይ</div>
+            <div class="phrase-item" data-en="How are you?" data-ti="ከመይ ኣለኻ?">How are you? / ከመይ ኣለኻ?</div>
+            <div class="phrase-item" data-en="Good morning" data-ti="ደሓን ሓዲርካ">Good morning / ደሓን ሓዲርካ</div>
+            <div class="phrase-item" data-en="I love Eritrea" data-ti="ኤርትራ ይፈቱ">I love Eritrea / ኤርትራ ይፈቱ</div>
+            <div class="phrase-item" data-en="God bless you" data-ti="ኣምላኽ ይባርኸካ">God bless you / ኣምላኽ ይባርኸካ</div>
+            <div class="phrase-item" data-en="Welcome" data-ti="ሰላም መጺእኻ">Welcome / ሰላም መጺእኻ</div>
+            <div class="phrase-item" data-en="Goodbye" data-ti="ሰላም ኩን">Goodbye / ሰላም ኩን</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RADIO ══ -->
+    <div class="page" id="page-radio">
+      <div class="page-hd">
+        <div><h1>Radio</h1><p class="page-sub">Live Eritrean radio &amp; TV</p></div>
+      </div>
+      <div class="radio-player-bar" id="radioPlayerBar" hidden>
+        <div class="radio-now">
+          <span class="radio-pulse"></span>
+          <span class="radio-now-ico" id="radioNowIco">📻</span>
+          <span class="radio-now-name" id="radioNowName">—</span>
+          <span class="radio-live-badge">LIVE</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <audio id="radioAudio" controls style="height:32px;min-width:180px"></audio>
+          <button class="btn-sm" id="radioClose">✕</button>
+        </div>
+      </div>
+      <div class="radio-grid">
+        <div class="radio-card" data-type="audio" data-stream="" data-name="Voice of Eritrea" data-ico="📻">
+          <div class="radio-card-ico" style="background:linear-gradient(135deg,#007A3D,#4189DD)">📻</div>
+          <div class="radio-card-info"><div class="radio-name">Voice of Eritrea</div><div class="radio-desc">Government Radio — Live</div></div>
+          <button class="radio-play-btn">▶ Play</button>
+        </div>
+        <div class="radio-card" data-type="audio" data-stream="https://stream.radioerena.com/stream" data-name="Radio Erena" data-ico="🎙️">
+          <div class="radio-card-ico" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">🎙️</div>
+          <div class="radio-card-info"><div class="radio-name">Radio Erena</div><div class="radio-desc">Independent Eritrean Radio</div></div>
+          <button class="radio-play-btn">▶ Play</button>
+        </div>
+        <div class="radio-card" data-type="yt" data-vid="UCXRleY6O9lGTTzTGVbGxmvw" data-name="Eri-TV" data-ico="📺">
+          <div class="radio-card-ico" style="background:linear-gradient(135deg,#CE1126,#4189DD)">📺</div>
+          <div class="radio-card-info"><div class="radio-name">Eri-TV</div><div class="radio-desc">Official Eritrean Television</div></div>
+          <button class="radio-play-btn">▶ Watch</button>
+        </div>
+        <div class="radio-card" data-type="yt" data-vid="UCF9IOB2TExg3QIBupFtBDxg" data-name="Eritrean Music Live" data-ico="🎵">
+          <div class="radio-card-ico" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">🎵</div>
+          <div class="radio-card-info"><div class="radio-name">Eritrean Music Live</div><div class="radio-desc">Music &amp; Cultural Shows</div></div>
+          <button class="radio-play-btn">▶ Watch</button>
+        </div>
+      </div>
+      <iframe id="radioFrame" class="radio-frame" hidden allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </div>
+
     <!-- ══ SETTINGS ══ -->
     <div class="page" id="page-settings">
       <div class="page-hd"><h1>Hub Settings</h1></div>
@@ -407,6 +600,54 @@
             <label class="switch"><input type="checkbox" id="setMaintenance"/><span class="slider"></span></label>
           </label>
           <button class="btn-primary" id="saveAccessBtn" style="margin-top:20px">Save Access</button>
+        </div>
+        <div class="card">
+          <h3>Language</h3>
+          <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Choose your preferred display language.</p>
+          <select id="setLang" class="form-input">
+            <option value="en">🇺🇸 English</option>
+            <option value="ti">🇪🇷 Tigrinya (ትግርኛ)</option>
+            <option value="ar">🇸🇦 Arabic (العربية)</option>
+            <option value="it">🇮🇹 Italian</option>
+            <option value="fr">🇫🇷 French</option>
+            <option value="de">🇩🇪 German</option>
+            <option value="es">🇪🇸 Spanish</option>
+            <option value="am">🇪🇹 Amharic (አማርኛ)</option>
+          </select>
+          <button class="btn-primary" id="saveLangBtn" style="margin-top:16px;width:100%">Apply Language</button>
+        </div>
+        <div class="card">
+          <h3>Accent Color</h3>
+          <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Customize your HUB accent color.</p>
+          <div class="color-swatches">
+            <button class="color-swatch active" data-color="#6366f1" style="background:#6366f1" title="Indigo"></button>
+            <button class="color-swatch" data-color="#8b5cf6" style="background:#8b5cf6" title="Purple"></button>
+            <button class="color-swatch" data-color="#ec4899" style="background:#ec4899" title="Pink"></button>
+            <button class="color-swatch" data-color="#ef4444" style="background:#ef4444" title="Red"></button>
+            <button class="color-swatch" data-color="#f59e0b" style="background:#f59e0b" title="Amber"></button>
+            <button class="color-swatch" data-color="#10b981" style="background:#10b981" title="Green"></button>
+            <button class="color-swatch" data-color="#06b6d4" style="background:#06b6d4" title="Cyan"></button>
+            <button class="color-swatch" data-color="#007A3D" style="background:#007A3D" title="Eritrean Green"></button>
+          </div>
+          <div class="form-group" style="margin-top:16px">
+            <label>Custom Color</label>
+            <input type="color" id="setAccentColor" class="form-input color-input" value="#6366f1"/>
+          </div>
+          <button class="btn-primary" id="saveColorBtn" style="width:100%">Apply Color</button>
+        </div>
+        <div class="card">
+          <h3>Theme</h3>
+          <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Choose how your HUB looks.</p>
+          <div class="theme-options">
+            <button class="theme-opt active" data-theme="dark">
+              <div class="theme-preview dark-prev"></div>
+              <span>Dark</span>
+            </button>
+            <button class="theme-opt" data-theme="glass">
+              <div class="theme-preview glass-prev"></div>
+              <span>Glass</span>
+            </button>
+          </div>
         </div>
         <div class="card">
           <h3>Danger Zone</h3>
