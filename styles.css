@@ -1409,6 +1409,256 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 }
 .theme-opt-btn.active, .theme-opt-btn:hover { background: var(--card-hover); border-color: var(--accent); color: var(--text); }
 
+/* ════════════════════════════════════════════════════════════
+   PREMIUM REDESIGN — HD Music Player Style
+   ════════════════════════════════════════════════════════════ */
+
+/* New color tokens */
+:root {
+  --bg:         #0d0d1a;
+  --surface:    #16162a;
+  --card:       #1e1e35;
+  --card-hover: #26263f;
+  --border:     rgba(255,255,255,0.07);
+  --accent:     #a855f7;
+  --accent-dk:  #7c3aed;
+  --accent-glow:rgba(168,85,247,0.35);
+  --gold:       #a855f7;
+  --green:      #34d399;
+  --red:        #f87171;
+  --text:       #f1f0ff;
+  --text-sub:   rgba(241,240,255,0.55);
+  --text-dim:   rgba(241,240,255,0.28);
+}
+
+body {
+  background: radial-gradient(ellipse at 30% 0%, rgba(124,58,237,0.18) 0%, transparent 55%),
+              radial-gradient(ellipse at 80% 100%, rgba(56,189,248,0.10) 0%, transparent 50%),
+              #0d0d1a;
+  background-attachment: fixed;
+}
+
+/* ── HEADER redesign ──────────────────────────────────────── */
+.app-header {
+  background: rgba(13,13,26,0.80);
+  border-bottom: 1px solid var(--border);
+}
+.header-title { font-weight: 800; letter-spacing: -0.5px; }
+
+/* ── BOTTOM NAV redesign ──────────────────────────────────── */
+.bottom-nav {
+  background: rgba(16,16,30,0.94);
+  border-top: 1px solid rgba(168,85,247,0.15);
+  padding: 6px 8px 0;
+  gap: 4px;
+}
+.nav-item {
+  border-radius: 14px;
+  padding: 6px 12px 8px;
+  transition: background 0.2s, color 0.2s;
+  position: relative;
+}
+.nav-item svg { width: 20px; height: 20px; }
+.nav-item span { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2px; }
+.nav-item.active {
+  background: rgba(168,85,247,0.15);
+  color: #c084fc;
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute; top: 0; left: 25%; right: 25%;
+  height: 2px; border-radius: 0 0 3px 3px;
+  background: var(--accent);
+}
+
+/* ── MINI PLAYER redesign ─────────────────────────────────── */
+.mini-player-card {
+  background: rgba(22,22,42,0.97);
+  border: 1px solid rgba(168,85,247,0.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(168,85,247,0.05);
+  border-radius: 20px;
+}
+.mini-play-btn { background: var(--accent); color: #fff; }
+.mini-play-btn svg { fill: #fff; }
+.mini-prog-fill { background: var(--accent); opacity: 1; }
+
+/* ── TRACK GRID cards redesign ──────────────────────────────  */
+.track-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.track-card {
+  background: var(--card);
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.track-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(168,85,247,0.2); }
+.track-card.playing { background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.35); }
+.track-card.playing::after { background: var(--accent); height: 3px; border-radius: 0; }
+.tc-art {
+  background: linear-gradient(145deg, #2a1f4e, #1a1a35);
+  border-radius: 18px 18px 0 0;
+}
+.tc-play-ico { background: var(--accent); }
+.tc-play-ico svg { fill: #fff; }
+.tc-info { padding: 10px 12px 13px; }
+.tc-title { font-size: 0.84rem; font-weight: 700; }
+.tc-artist { font-size: 0.72rem; color: var(--text-sub); }
+.tc-more { background: rgba(168,85,247,0.25); }
+
+/* ── TRACK ROW redesign ───────────────────────────────────── */
+.track-row {
+  border-radius: 14px;
+  padding: 10px 12px;
+  gap: 12px;
+}
+.track-row:hover { background: var(--card); }
+.track-row.playing {
+  background: rgba(168,85,247,0.1);
+  border-left: 3px solid var(--accent);
+  padding-left: 9px;
+}
+.tr-art {
+  width: 50px; height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #2a1f4e, #1a1a35);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.tr-title { font-size: 0.88rem; font-weight: 700; }
+.tr-play-btn.tr-playing { background: rgba(168,85,247,0.2); color: var(--accent); }
+
+/* ── FULL PLAYER redesign ─────────────────────────────────── */
+.full-player { overflow: hidden; }
+.fp-bg {
+  background: linear-gradient(160deg, #1e0a3c 0%, #0d0d1a 50%, #030518 100%);
+}
+.fp-overlay { background: rgba(0,0,0,0.28); }
+.fp-content { padding: 0 28px 24px; }
+
+/* Song title / artist */
+.fp-title { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.5px; }
+.fp-artist { font-size: 0.9rem; color: rgba(200,170,255,0.75); font-weight: 500; }
+.fp-time-display { color: rgba(200,170,255,0.7); }
+
+/* Ring / art */
+.fp-ring-container { width: min(270px, 72vw); margin-bottom: 20px; }
+.fp-ring-track { stroke: rgba(168,85,247,0.18); stroke-width: 3.5; }
+.fp-ring-fill { stroke: var(--accent); stroke-width: 3.5; filter: drop-shadow(0 0 6px rgba(168,85,247,0.6)); }
+.fp-ring-dot { fill: #fff; filter: drop-shadow(0 0 4px var(--accent)); }
+.fp-art {
+  background: linear-gradient(145deg, #2a1240, #0d0d1a);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(168,85,247,0.2);
+}
+
+/* Play button */
+.ctrl-play {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dk));
+  box-shadow: 0 4px 24px rgba(168,85,247,0.5), 0 0 0 8px rgba(168,85,247,0.1);
+}
+.ctrl-play svg { fill: #fff; width: 28px; height: 28px; }
+.ctrl-prev svg, .ctrl-next svg { width: 32px; height: 32px; }
+.ctrl-secondary { color: rgba(200,170,255,0.45); }
+.like-btn { color: rgba(200,170,255,0.4); }
+.like-btn.liked { color: var(--accent); }
+.like-btn.liked svg { fill: var(--accent); stroke: var(--accent); }
+
+/* Extras row */
+.extra-btn { color: rgba(200,170,255,0.6); font-size: 0.7rem; }
+.extra-btn:hover { color: #fff; }
+
+/* ── FILTER CHIPS redesign ────────────────────────────────── */
+.filter-chip {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  font-size: 0.78rem; font-weight: 600;
+  padding: 7px 18px;
+}
+.filter-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(168,85,247,0.4);
+}
+
+/* ── LIBRARY TABS redesign ────────────────────────────────── */
+.lib-tabs {
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 4px;
+  gap: 4px;
+  border-bottom: none;
+  margin-bottom: 20px;
+}
+.lib-tab {
+  border-radius: 10px;
+  border-bottom: none;
+  margin-bottom: 0;
+  transition: background 0.18s, color 0.18s;
+  font-size: 0.78rem;
+}
+.lib-tab.active { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(168,85,247,0.35); }
+
+/* ── SIDE PANELS redesign ─────────────────────────────────── */
+.side-panel {
+  background: #14142a;
+  border-left: 1px solid rgba(168,85,247,0.15);
+}
+.panel-hdr {
+  border-bottom: 1px solid rgba(168,85,247,0.12);
+}
+
+/* ── SETTINGS panel ───────────────────────────────────────── */
+.settings-body { background: transparent; }
+.settings-section { border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 18px; margin-bottom: 18px; }
+.settings-section h4 { color: rgba(168,85,247,0.9); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+.btn-setting {
+  background: rgba(168,85,247,0.1);
+  border: 1px solid rgba(168,85,247,0.2);
+  color: var(--text);
+  border-radius: 12px;
+}
+.btn-setting:hover { background: rgba(168,85,247,0.2); }
+.btn-admin-go { background: rgba(168,85,247,0.18); color: #c084fc; }
+
+/* ── UPLOAD ZONE ──────────────────────────────────────────── */
+.upload-zone {
+  border-color: rgba(168,85,247,0.25);
+  background: rgba(168,85,247,0.04);
+  border-radius: 20px;
+}
+.upload-zone.drag-over { border-color: var(--accent); background: rgba(168,85,247,0.1); }
+
+/* ── MODAL / SHEETS ───────────────────────────────────────── */
+.modal-box {
+  background: #16162a;
+  border: 1px solid rgba(168,85,247,0.15);
+  border-radius: 24px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  border-radius: 14px;
+}
+.btn-secondary { border-radius: 14px; }
+
+/* ── SIDEBAR DRAWER redesign ──────────────────────────────── */
+.app-sidebar {
+  background: #12122a;
+  border-right: 1px solid rgba(168,85,247,0.12);
+}
+.sb-grp-hd:hover, .sb-nav-item:hover, .sb-nav-item.active { background: rgba(168,85,247,0.1); }
+.sb-sub-item:hover { background: rgba(168,85,247,0.08); color: #c084fc; }
+
+/* ── YT WATCH SECTION ─────────────────────────────────────── */
+.yt-watch-section { background: var(--card); border: 1px solid var(--border); border-radius: 20px; }
+.yt-play-btn { background: linear-gradient(135deg, #a855f7, #7c3aed); color: #fff; }
+.yt-pre { background: rgba(168,85,247,0.08); border-color: rgba(168,85,247,0.15); }
+.yt-pre:hover { border-color: var(--accent); background: rgba(168,85,247,0.2); color: #fff; }
+
 /* ── GLASS THEME ─────────────────────────────────────────── */
 body.theme-glass {
   background: radial-gradient(ellipse at 20% 20%, rgba(99,102,241,0.18) 0%, transparent 50%),
