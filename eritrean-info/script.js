@@ -793,77 +793,82 @@ const wsNewSearch  = document.getElementById('wsNewSearch');
 
 const WS_SEARCH_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
 
-function wsShowKeyPrompt(pendingQuery) {
-  wsResultQ.textContent = 'Enter your Gemini API key to search';
-  wsResultBody.innerHTML = `
-    <p style="color:rgba(255,255,255,0.6);margin-bottom:14px;font-size:0.9rem">
-      Get a free key at <strong style="color:#4189DD">aistudio.google.com</strong> → "Get API key"
-    </p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <input id="wsApiKeyInput" type="password" placeholder="Paste your Gemini API key…"
-        style="flex:1;min-width:200px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);
-               border-radius:10px;padding:10px 14px;color:#fff;font-size:0.9rem;outline:none;font-family:inherit"/>
-      <button id="wsApiKeySave"
-        style="background:#4189DD;color:#fff;border:none;border-radius:10px;padding:10px 20px;
-               font-weight:700;font-size:0.9rem;cursor:pointer;white-space:nowrap">Save & Search</button>
-    </div>`;
-  wsResult.removeAttribute('hidden');
-  wsResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  const inp = document.getElementById('wsApiKeyInput');
-  const sav = document.getElementById('wsApiKeySave');
-  inp.focus();
-  const save = () => {
-    const key = inp.value.trim();
-    if (!key) { inp.style.borderColor = '#f87171'; return; }
-    localStorage.setItem('gemini-api-key', key);
-    doWorldSearch(pendingQuery);
-  };
-  sav.addEventListener('click', save);
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
-}
-
 async function doWorldSearch(query) {
   query = query.trim();
   if (!query) return;
 
-  const apiKey = localStorage.getItem('gemini-api-key');
-  if (!apiKey) {
-    wsShowKeyPrompt(query);
-    return;
-  }
-
   wsResultQ.textContent = query;
-  wsResultBody.innerHTML = `<div class="ws-loading"><span class="spinner" style="width:18px;height:18px;border-width:2px;border-color:rgba(255,255,255,0.15);border-top-color:#4189DD"></span> Searching with Gemini AI…</div>`;
+  wsResultBody.innerHTML = `<div class="ws-loading"><span class="spinner" style="width:18px;height:18px;border-width:2px;border-color:rgba(255,255,255,0.15);border-top-color:#4189DD"></span> Searching…</div>`;
   wsResult.removeAttribute('hidden');
   wsBtn.disabled = true;
   wsBtn.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px;border-color:rgba(255,255,255,0.2);border-top-color:#fff"></span> Searching…`;
   wsResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
+  // Update footer source label
+  const poweredEl = document.querySelector('.ws-powered');
+
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `Answer this question clearly and informatively in 3-5 paragraphs using simple, engaging language. Question: ${query}` }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
-        })
-      }
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    const geminiKey = localStorage.getItem('gemini-api-key');
+
+    if (geminiKey) {
+      // ── Gemini path (if key saved) ──
+      if (poweredEl) poweredEl.textContent = 'Powered by Gemini AI';
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Answer this question clearly and informatively in 3-5 paragraphs using simple, engaging language. Question: ${query}` }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+          })
+        }
+      );
+      if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text) throw new Error('empty');
+      wsResultBody.innerHTML = text
+        .split(/\n\n+/).filter(p => p.trim())
+        .map(p => `<p>${p.trim().replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>')}</p>`)
+        .join('');
+      return;
     }
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No answer returned.';
-    wsResultBody.innerHTML = text
-      .split(/\n\n+/)
-      .filter(p => p.trim())
-      .map(p => `<p>${p.trim().replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>')}</p>`)
-      .join('');
+
+    // ── Wikipedia path (no key needed) ──
+    if (poweredEl) poweredEl.textContent = 'Powered by Wikipedia — free, no account needed';
+
+    const searchRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=3`
+    );
+    const searchData = await searchRes.json();
+    const hits = searchData.query?.search;
+    if (!hits || hits.length === 0) {
+      wsResultBody.innerHTML = `<p style="color:rgba(255,255,255,0.55)">No results found for "<em>${query}</em>". Try rephrasing your question.</p>`;
+      return;
+    }
+
+    const title = hits[0].title;
+    const extractRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=true&explaintext=true&titles=${encodeURIComponent(title)}&format=json&origin=*`
+    );
+    const extractData = await extractRes.json();
+    const pages = extractData.query?.pages;
+    const page  = pages ? Object.values(pages)[0] : null;
+    const extract = page?.extract || '';
+
+    if (!extract) {
+      wsResultBody.innerHTML = `<p style="color:rgba(255,255,255,0.55)">Couldn't load article content. Try a more specific search.</p>`;
+      return;
+    }
+
+    const paras = extract.split('\n').filter(p => p.trim().length > 40).slice(0, 5);
+    wsResultBody.innerHTML =
+      paras.map(p => `<p>${p.trim()}</p>`).join('') +
+      `<p style="margin-top:16px"><a href="https://en.wikipedia.org/wiki/${encodeURIComponent(title)}" target="_blank" rel="noopener" style="color:#4189DD;text-decoration:underline;font-size:0.875rem">Read full article on Wikipedia →</a></p>`;
+
   } catch (err) {
-    wsResultBody.innerHTML = `<p style="color:#f87171">⚠️ Search failed: ${err.message}.</p>`;
+    wsResultBody.innerHTML = `<p style="color:#f87171">⚠️ Search failed: ${err.message}. Please try again.</p>`;
   } finally {
     wsBtn.disabled = false;
     wsBtn.innerHTML = `${WS_SEARCH_ICON} Search`;
