@@ -797,7 +797,7 @@ async function doWorldSearch(query) {
   query = query.trim();
   if (!query) return;
 
-  const apiKey = localStorage.getItem('gemini_api_key');
+  const apiKey = localStorage.getItem('gemini-api-key');
   if (!apiKey) {
     wsResultQ.textContent = query;
     wsResultBody.innerHTML = `<p style="color:#f87171">⚠️ No Gemini API key found. Please set your key in the chat widget first (tap the 💬 button and enter your key).</p>`;
