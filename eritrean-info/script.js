@@ -705,3 +705,164 @@ anthemBarToggle.addEventListener('click', () => {
   anthemPanelEl.classList.toggle('open', anthemExpanded);
   anthemBarToggle.innerHTML = anthemExpanded ? '&#9650;' : '&#9660;';
 });
+
+// ── DARK MODE ─────────────────────────────────
+const darkToggleBtn = document.getElementById('darkToggle');
+
+function applyDarkMode(dark) {
+  document.documentElement.classList.toggle('dark', dark);
+  darkToggleBtn.textContent = dark ? '☀️' : '🌙';
+  darkToggleBtn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+}
+
+applyDarkMode(localStorage.getItem('eri_dark') === 'true');
+
+darkToggleBtn.addEventListener('click', () => {
+  const nowDark = !document.documentElement.classList.contains('dark');
+  applyDarkMode(nowDark);
+  localStorage.setItem('eri_dark', nowDark);
+});
+
+// ── LANGUAGE PICKER ───────────────────────────
+const langPickerBtn    = document.getElementById('langPickerBtn');
+const langPickerWrap   = document.getElementById('langPickerWrap');
+const langDropdown     = document.getElementById('langDropdown');
+const currentLangLabel = document.getElementById('currentLangLabel');
+
+langPickerBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (langDropdown.hasAttribute('hidden')) {
+    langDropdown.removeAttribute('hidden');
+  } else {
+    langDropdown.setAttribute('hidden', '');
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!langPickerWrap.contains(e.target)) langDropdown.setAttribute('hidden', '');
+});
+
+function triggerGoogleTranslate(langCode) {
+  const sel = document.querySelector('.goog-te-combo');
+  if (!sel) return;
+  sel.value = langCode;
+  sel.dispatchEvent(new Event('change'));
+}
+
+document.querySelectorAll('.lang-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const lang  = btn.getAttribute('data-lang');
+    const label = btn.getAttribute('data-label');
+    document.querySelectorAll('.lang-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentLangLabel.textContent = label;
+    langDropdown.setAttribute('hidden', '');
+    localStorage.setItem('eri_lang', lang);
+    localStorage.setItem('eri_lang_label', label);
+    if (lang === 'en') {
+      const iframe = document.querySelector('.goog-te-banner-frame');
+      const closeBtn = iframe?.contentDocument?.querySelector('.goog-close-link');
+      if (closeBtn) closeBtn.click();
+      else triggerGoogleTranslate('');
+    } else {
+      triggerGoogleTranslate(lang);
+    }
+  });
+});
+
+window.addEventListener('load', () => {
+  const savedLang  = localStorage.getItem('eri_lang');
+  const savedLabel = localStorage.getItem('eri_lang_label');
+  if (savedLang && savedLang !== 'en') {
+    currentLangLabel.textContent = savedLabel || savedLang.toUpperCase();
+    document.querySelectorAll('.lang-opt').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-lang') === savedLang);
+    });
+    setTimeout(() => triggerGoogleTranslate(savedLang), 1800);
+  }
+});
+
+// ── WORLD SEARCH ──────────────────────────────
+const wsInput      = document.getElementById('wsInput');
+const wsBtn        = document.getElementById('wsBtn');
+const wsResult     = document.getElementById('wsResult');
+const wsResultQ    = document.getElementById('wsResultQ');
+const wsResultBody = document.getElementById('wsResultBody');
+const wsClose      = document.getElementById('wsClose');
+const wsNewSearch  = document.getElementById('wsNewSearch');
+
+const WS_SEARCH_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
+
+async function doWorldSearch(query) {
+  query = query.trim();
+  if (!query) return;
+
+  const apiKey = localStorage.getItem('gemini_api_key');
+  if (!apiKey) {
+    wsResultQ.textContent = query;
+    wsResultBody.innerHTML = `<p style="color:#f87171">⚠️ No Gemini API key found. Please set your key in the chat widget first (tap the 💬 button and enter your key).</p>`;
+    wsResult.removeAttribute('hidden');
+    wsResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+
+  wsResultQ.textContent = query;
+  wsResultBody.innerHTML = `<div class="ws-loading"><span class="spinner" style="width:18px;height:18px;border-width:2px;border-color:rgba(255,255,255,0.15);border-top-color:#4189DD"></span> Searching with Gemini AI…</div>`;
+  wsResult.removeAttribute('hidden');
+  wsBtn.disabled = true;
+  wsBtn.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px;border-color:rgba(255,255,255,0.2);border-top-color:#fff"></span> Searching…`;
+  wsResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `Answer this question clearly and informatively in 3-5 paragraphs using simple, engaging language. Question: ${query}` }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+        })
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No answer returned.';
+    wsResultBody.innerHTML = text
+      .split(/\n\n+/)
+      .filter(p => p.trim())
+      .map(p => `<p>${p.trim().replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>')}</p>`)
+      .join('');
+  } catch (err) {
+    wsResultBody.innerHTML = `<p style="color:#f87171">⚠️ Search failed: ${err.message}.</p>`;
+  } finally {
+    wsBtn.disabled = false;
+    wsBtn.innerHTML = `${WS_SEARCH_ICON} Search`;
+  }
+}
+
+wsBtn.addEventListener('click', () => doWorldSearch(wsInput.value));
+wsInput.addEventListener('keydown', e => { if (e.key === 'Enter') doWorldSearch(wsInput.value); });
+
+document.querySelectorAll('.ws-topic').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const q = btn.getAttribute('data-q');
+    wsInput.value = q;
+    doWorldSearch(q);
+  });
+});
+
+wsClose.addEventListener('click', () => {
+  wsResult.setAttribute('hidden', '');
+  wsInput.value = '';
+});
+
+wsNewSearch.addEventListener('click', () => {
+  wsResult.setAttribute('hidden', '');
+  wsInput.value = '';
+  wsInput.focus();
+  document.getElementById('world-search').scrollIntoView({ behavior: 'smooth' });
+});

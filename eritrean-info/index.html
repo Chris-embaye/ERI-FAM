@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="htmlRoot">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,11 +20,26 @@
   <meta name="keywords" content="Eritrea, Eritrean, Tigrinya, Asmara, Horn of Africa, translator" />
 
   <link rel="stylesheet" href="styles.css" />
+  <!-- Google Translate -->
+  <script>
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'ti,ar,it,fr,de,es,pt,zh-CN,ru,sw,am,ja,ko,hi,tr,nl,pl,uk',
+        autoDisplay: false,
+        multilanguagePage: true
+      }, 'google_translate_element');
+    }
+  </script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Noto+Serif+Ethiopic:wght@400;600&display=swap" rel="stylesheet" />
 </head>
 <body>
+
+  <!-- Google Translate hidden element -->
+  <div id="google_translate_element" style="position:absolute;top:-9999px;left:-9999px;overflow:hidden;height:0"></div>
 
   <!-- PWA INSTALL BANNER -->
   <div id="installBanner" class="install-banner" style="display:none">
@@ -48,16 +63,41 @@
       </a>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
       <ul class="nav-links" id="navLinks">
+        <li><a href="#world-search">🌍 World Search</a></li>
         <li><a href="#overview">Overview</a></li>
         <li><a href="#history">History</a></li>
-        <li><a href="#geography">Geography</a></li>
         <li><a href="#people">People</a></li>
         <li><a href="#culture">Culture</a></li>
-        <li><a href="#economy">Economy</a></li>
+        <li><a href="#famous">Famous</a></li>
         <li><a href="#gallery">Gallery</a></li>
         <li><a href="#translator" class="nav-cta">Translator</a></li>
         <li><button class="nav-download-btn" id="navDownloadBtn">&#11015; Get App</button></li>
       </ul>
+      <div class="nav-extras">
+        <button class="dark-toggle" id="darkToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+        <div class="lang-picker-wrap" id="langPickerWrap">
+          <button class="lang-picker-btn" id="langPickerBtn" title="Choose language">🌐 <span id="currentLangLabel">EN</span></button>
+          <div class="lang-dropdown" id="langDropdown" hidden>
+            <div class="lang-dropdown-header">Choose Language</div>
+            <button class="lang-opt active" data-lang="en"   data-label="EN">🇺🇸 English</button>
+            <button class="lang-opt" data-lang="ti"          data-label="TI">🇪🇷 ትግርኛ (Tigrinya)</button>
+            <button class="lang-opt" data-lang="ar"          data-label="AR">🇸🇦 العربية (Arabic)</button>
+            <button class="lang-opt" data-lang="it"          data-label="IT">🇮🇹 Italiano</button>
+            <button class="lang-opt" data-lang="fr"          data-label="FR">🇫🇷 Français</button>
+            <button class="lang-opt" data-lang="de"          data-label="DE">🇩🇪 Deutsch</button>
+            <button class="lang-opt" data-lang="es"          data-label="ES">🇪🇸 Español</button>
+            <button class="lang-opt" data-lang="pt"          data-label="PT">🇧🇷 Português</button>
+            <button class="lang-opt" data-lang="zh-CN"       data-label="ZH">🇨🇳 中文 (Chinese)</button>
+            <button class="lang-opt" data-lang="ru"          data-label="RU">🇷🇺 Русский</button>
+            <button class="lang-opt" data-lang="am"          data-label="AM">🇪🇹 አማርኛ (Amharic)</button>
+            <button class="lang-opt" data-lang="sw"          data-label="SW">🇰🇪 Kiswahili</button>
+            <button class="lang-opt" data-lang="hi"          data-label="HI">🇮🇳 हिन्दी (Hindi)</button>
+            <button class="lang-opt" data-lang="tr"          data-label="TR">🇹🇷 Türkçe</button>
+            <button class="lang-opt" data-lang="ja"          data-label="JA">🇯🇵 日本語</button>
+            <button class="lang-opt" data-lang="ko"          data-label="KO">🇰🇷 한국어</button>
+          </div>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -130,6 +170,51 @@
           <div class="fact-icon">🗺️</div>
           <div class="fact-label">Calling Code</div>
           <div class="fact-value">+291</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORLD SEARCH -->
+  <section id="world-search">
+    <div class="container">
+      <div class="ws-header">
+        <span class="section-tag" style="background:rgba(255,255,255,0.12);color:#fff">🌍 World Explorer</span>
+        <h2>Search Anything in the World</h2>
+        <p>Ask any question — history, science, geography, technology, culture — get an AI-powered answer instantly</p>
+      </div>
+      <div class="ws-search-bar">
+        <input type="text" id="wsInput" class="ws-input" placeholder="e.g. What is the Great Wall of China? Who was Nelson Mandela? How do black holes form?" maxlength="400" autocomplete="off"/>
+        <button class="ws-btn" id="wsBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Search
+        </button>
+      </div>
+      <div class="ws-topics">
+        <button class="ws-topic" data-q="What are the 7 wonders of the modern world?">🏛️ World Wonders</button>
+        <button class="ws-topic" data-q="Tell me about the solar system and its planets">🚀 Space & Planets</button>
+        <button class="ws-topic" data-q="What are the largest countries in the world by area and population?">🗺️ World Geography</button>
+        <button class="ws-topic" data-q="Who are the greatest scientists in history and what did they discover?">🔬 Science</button>
+        <button class="ws-topic" data-q="What are the major world religions and their beliefs?">☯️ World Religions</button>
+        <button class="ws-topic" data-q="Tell me about the most important ancient civilizations">🏺 Ancient History</button>
+        <button class="ws-topic" data-q="What are the most spoken languages in the world?">🗣️ World Languages</button>
+        <button class="ws-topic" data-q="What are the world's largest economies and how do they compare?">💹 World Economy</button>
+        <button class="ws-topic" data-q="What were the causes and effects of World War II?">⚔️ World Wars</button>
+        <button class="ws-topic" data-q="How does artificial intelligence work?">🤖 Technology & AI</button>
+        <button class="ws-topic" data-q="What are the most famous paintings and artists in history?">🎨 Art & Culture</button>
+        <button class="ws-topic" data-q="What are the most popular sports in the world?">⚽ World Sports</button>
+      </div>
+      <div class="ws-result" id="wsResult" hidden>
+        <div class="ws-result-inner">
+          <div class="ws-result-header">
+            <div class="ws-result-q" id="wsResultQ"></div>
+            <button class="ws-close" id="wsClose">✕</button>
+          </div>
+          <div class="ws-result-body" id="wsResultBody"></div>
+          <div class="ws-result-footer">
+            <span class="ws-powered">Powered by Gemini AI — requires API key (same as chat widget)</span>
+            <button class="ws-new-search" id="wsNewSearch">🔍 New Search</button>
+          </div>
         </div>
       </div>
     </div>
@@ -610,6 +695,100 @@
     </div>
   </section>
 
+  <!-- FAMOUS ERITREANS -->
+  <section id="famous">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Inspiring People</span>
+        <h2>Famous Eritreans</h2>
+        <p>Athletes, artists, intellectuals and heroes who put Eritrea on the world stage</p>
+      </div>
+      <div class="famous-grid">
+
+        <div class="famous-card">
+          <div class="famous-avatar" style="background:linear-gradient(135deg,#007A3D,#4189DD)">🎵</div>
+          <div class="famous-info">
+            <div class="famous-name">Abraham Afewerki</div>
+            <div class="famous-title">Musician · "Voice of Eritrea"</div>
+            <div class="famous-years">1966 – 2006</div>
+            <p>One of the most beloved Eritrean artists of all time, Abraham Afewerki blended traditional Tigrinya music with modern sounds. His songs — including <em>Hamid</em> and <em>Hagerey</em> — remain anthems of Eritrean identity worldwide. He performed internationally and left a lasting musical legacy that transcends generations.</p>
+          </div>
+        </div>
+
+        <div class="famous-card">
+          <div class="famous-avatar" style="background:linear-gradient(135deg,#CE1126,#f59e0b)">🏃</div>
+          <div class="famous-info">
+            <div class="famous-name">Zersenay Tadese</div>
+            <div class="famous-title">Athlete · World Half-Marathon Champion</div>
+            <div class="famous-years">Born 1982</div>
+            <p>One of Africa's greatest long-distance runners, Zersenay Tadese won multiple World Half Marathon Championship titles and held the world record for the half marathon (58:23). He competed at the Beijing and London Olympics, placing Eritrea firmly on the map of global athletics.</p>
+          </div>
+        </div>
+
+        <div class="famous-card">
+          <div class="famous-avatar" style="background:linear-gradient(135deg,#4189DD,#007A3D)">🚴</div>
+          <div class="famous-info">
+            <div class="famous-name">Daniel Teklehaimanot</div>
+            <div class="famous-title">Cyclist · First African in Tour de France Polka Dot Jersey</div>
+            <div class="famous-years">Born 1988</div>
+            <p>In 2015, Daniel Teklehaimanot became the first African rider to wear the iconic <strong>polka-dot jersey</strong> (King of the Mountains) at the Tour de France — a historic milestone for African cycling. He competed for MTN-Qhubeka and inspired a generation of African cyclists.</p>
+          </div>
+        </div>
+
+        <div class="famous-card">
+          <div class="famous-avatar" style="background:linear-gradient(135deg,#7c3aed,#007A3D)">🎶</div>
+          <div class="famous-info">
+            <div class="famous-name">Yemane Barya</div>
+            <div class="famous-title">Musician & Poet · "King of Tigrinya Music"</div>
+            <div class="famous-years">1954 – 1997</div>
+            <p>Known as the "King" (ንጉስ) of Tigrinya music, Yemane Barya was a revolutionary poet, singer and fighter. He composed timeless songs celebrating Eritrean identity, the liberation struggle, and the beauty of his homeland. His music remains a cornerstone of Eritrean cultural heritage.</p>
+          </div>
+        </div>
+
+        <div class="famous-card">
+          <div class="famous-avatar" style="background:linear-gradient(135deg,#CE1126,#4189DD)">✍️</div>
+          <div class="famous-info">
+            <div class="famous-name">Dawit Isaak</div>
+            <div class="famous-title">Journalist · Press Freedom Icon</div>
+            <div class="famous-years">Born 1964 · Imprisoned 2001</div>
+            <p>A Swedish-Eritrean journalist and co-founder of the independent newspaper <em>Setit</em>, Dawit Isaak has been held without trial in Eritrea since September 2001. His case has become a global symbol of press freedom. He has received numerous human rights awards including the UNESCO/Guillermo Cano Press Freedom Prize.</p>
+          </div>
+        </div>
+
+        <div class="famous-card">
+          <div class="famous-avatar" style="background:linear-gradient(135deg,#f59e0b,#CE1126)">🎤</div>
+          <div class="famous-info">
+            <div class="famous-name">Helen Meles</div>
+            <div class="famous-title">Singer · Eritrea's Golden Voice</div>
+            <div class="famous-years">Born 1974</div>
+            <p>Considered one of Eritrea's greatest female vocalists, Helen Meles has a powerful voice that spans traditional Tigrinya music and modern ballads. Her songs — including <em>Lbi Haway</em> and <em>Gereger</em> — have made her a beloved icon across the Eritrean diaspora worldwide.</p>
+          </div>
+        </div>
+
+        <div class="famous-card">
+          <div class="famous-avatar" style="background:linear-gradient(135deg,#007A3D,#f59e0b)">🏆</div>
+          <div class="famous-info">
+            <div class="famous-name">Ghirmay Ghebreslassie</div>
+            <div class="famous-title">Marathon Runner · Olympic & World Champion</div>
+            <div class="famous-years">Born 1995</div>
+            <p>At just 20 years old, Ghirmay Ghebreslassie won the <strong>2015 World Marathon Majors</strong> and the <strong>2016 Rio Olympics marathon</strong> — becoming one of the youngest marathon champions in Olympic history. His victory was a proud moment for Eritrea and all of Africa.</p>
+          </div>
+        </div>
+
+        <div class="famous-card">
+          <div class="famous-avatar" style="background:linear-gradient(135deg,#4189DD,#CE1126)">🎤</div>
+          <div class="famous-info">
+            <div class="famous-name">Dehab Faytinga</div>
+            <div class="famous-title">Singer · Cultural Ambassador</div>
+            <div class="famous-years">Born 1965</div>
+            <p>A legendary Tigrinya singer who blends traditional Eritrean rhythms with pan-African influences. Dehab Faytinga performed at major international festivals and collaborated with global artists. She is celebrated for keeping Eritrean musical traditions alive while bridging cultures.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- GOVERNMENT -->
   <section id="government">
     <div class="container">
@@ -802,10 +981,10 @@
         </div>
 
         <div class="gallery-item" data-category="culture">
-          <img src="images/rashaida-face-veil.jpg" alt="Two Rashaida women in traditional embroidered face coverings" loading="lazy" />
+          <img src="images/rashaida-woman-portrait.jpg" alt="Rashaida woman with traditional gold jewelry and red headscarf" loading="lazy" />
           <div class="gallery-caption">
             <h4>Rashaida Traditional Dress</h4>
-            <p>Two Rashaida women in hand-embroidered silver face veils and robes</p>
+            <p>Rashaida woman in traditional gold jewelry and embroidered attire</p>
           </div>
         </div>
 
@@ -996,6 +1175,8 @@
           <li><a href="#economy">Economy</a></li>
           <li><a href="#gallery">Photo Gallery</a></li>
           <li><a href="#translator">Tigrinya Translator</a></li>
+          <li><a href="#famous">Famous Eritreans</a></li>
+          <li><a href="#world-search">World Search</a></li>
         </ul>
       </div>
       <div class="footer-facts">
