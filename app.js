@@ -2256,3 +2256,154 @@ document.getElementById('feedbackSubmitBtn').addEventListener('click', async () 
   }
 });
 
+// ── SIDEBAR ────────────────────────────────────────────────────
+const appSidebar     = document.getElementById('appSidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+function openSidebar()  { appSidebar.classList.add('open'); sidebarOverlay.hidden = false; }
+function closeSidebar() { appSidebar.classList.remove('open'); sidebarOverlay.hidden = true; }
+
+document.getElementById('sidebarOpenBtn').addEventListener('click', openSidebar);
+document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+sidebarOverlay.addEventListener('click', closeSidebar);
+
+function switchView(viewName) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const viewEl = document.getElementById('view-' + viewName);
+  if (viewEl) viewEl.classList.add('active');
+  const navBtn = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+  if (navBtn) navBtn.classList.add('active');
+}
+
+document.querySelectorAll('.sb-nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    switchView(btn.dataset.view);
+    closeSidebar();
+  });
+});
+
+document.querySelectorAll('.sb-sub-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    switchView(btn.dataset.view);
+    if (btn.dataset.libtab) {
+      document.querySelectorAll('.lib-tab').forEach(t => t.classList.toggle('active', t.dataset.libtab === btn.dataset.libtab));
+      document.querySelectorAll('.lib-panel').forEach(p => p.classList.toggle('active', p.id === 'libtab-' + btn.dataset.libtab));
+    }
+    closeSidebar();
+  });
+});
+
+document.querySelectorAll('.sb-grp-hd').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const grp = document.getElementById(btn.dataset.grp);
+    const isOpen = grp.classList.contains('open');
+    document.querySelectorAll('.sb-grp.open').forEach(g => g.classList.remove('open'));
+    if (!isOpen) grp.classList.add('open');
+  });
+});
+
+// ── YOUTUBE WATCH PLAYER ───────────────────────────────────────
+function parseYtId(input) {
+  input = input.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return { type: 'video', id: input };
+  const listM = input.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+  if (listM) return { type: 'list', id: listM[1] };
+  const vidM = input.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (vidM) return { type: 'video', id: vidM[1] };
+  return null;
+}
+
+function ytWatchPlay(input) {
+  const parsed = parseYtId(input);
+  if (!parsed) { toast('Paste a valid YouTube URL or video ID'); return; }
+  const frame = document.getElementById('ytWatchFrame');
+  const empty = document.getElementById('ytWatchEmpty');
+  const bar   = document.getElementById('ytWatchBar');
+  const src = parsed.type === 'list'
+    ? `https://www.youtube.com/embed/videoseries?list=${parsed.id}&autoplay=1&rel=0`
+    : `https://www.youtube.com/embed/${parsed.id}?autoplay=1&rel=0&playsinline=1`;
+  frame.src = src;
+  frame.hidden = false;
+  empty.style.display = 'none';
+  bar.hidden = false;
+}
+
+document.getElementById('ytWatchPlayBtn').addEventListener('click', () => ytWatchPlay(document.getElementById('ytWatchInput').value));
+document.getElementById('ytWatchInput').addEventListener('keydown', e => { if (e.key === 'Enter') ytWatchPlay(document.getElementById('ytWatchInput').value); });
+
+document.querySelectorAll('.yt-pre').forEach(btn => {
+  btn.addEventListener('click', () => ytWatchPlay(btn.dataset.vid));
+});
+
+document.getElementById('ytWatchStop').addEventListener('click', () => {
+  const frame = document.getElementById('ytWatchFrame');
+  frame.src = ''; frame.hidden = true;
+  document.getElementById('ytWatchEmpty').style.display = '';
+  document.getElementById('ytWatchBar').hidden = true;
+});
+
+document.getElementById('ytCollapseBtn').addEventListener('click', () => {
+  document.getElementById('ytWatchSection').classList.toggle('collapsed');
+});
+
+// ── SETTINGS: ACCENT COLOR ─────────────────────────────────────
+function applyAccent(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  document.documentElement.style.setProperty('--accent', hex);
+  const dk = '#' + [r,g,b].map(v => Math.max(0,v-30).toString(16).padStart(2,'0')).join('');
+  document.documentElement.style.setProperty('--accent-dk', dk);
+  document.documentElement.style.setProperty('--accent-glow', `rgba(${r},${g},${b},0.30)`);
+  document.documentElement.style.setProperty('--gold', hex);
+  localStorage.setItem('eri_accent', hex);
+}
+
+const savedAccent = localStorage.getItem('eri_accent');
+if (savedAccent) applyAccent(savedAccent);
+
+document.querySelectorAll('.setting-swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    document.querySelectorAll('.setting-swatch').forEach(s => s.classList.remove('active'));
+    sw.classList.add('active');
+    document.getElementById('settingAccentColor').value = sw.dataset.color;
+  });
+  if (savedAccent && sw.dataset.color === savedAccent) sw.classList.add('active');
+});
+
+document.getElementById('applyColorBtn').addEventListener('click', () => {
+  applyAccent(document.getElementById('settingAccentColor').value);
+  toast('🎨 Color applied!');
+});
+
+document.getElementById('settingAccentColor').addEventListener('input', function() {
+  document.querySelectorAll('.setting-swatch').forEach(s => s.classList.remove('active'));
+});
+
+// ── SETTINGS: THEME ────────────────────────────────────────────
+function applyTheme(theme) {
+  document.body.classList.toggle('theme-glass', theme === 'glass');
+  document.querySelectorAll('.theme-opt-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+  localStorage.setItem('eri_theme', theme);
+}
+
+applyTheme(localStorage.getItem('eri_theme') || 'dark');
+
+document.querySelectorAll('.theme-opt-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+});
+
+// ── SETTINGS: LANGUAGE ─────────────────────────────────────────
+const savedLang = localStorage.getItem('eri_lang');
+if (savedLang) {
+  const sel = document.getElementById('settingLang');
+  if (sel) sel.value = savedLang;
+}
+
+document.getElementById('applyLangBtn').addEventListener('click', () => {
+  const lang = document.getElementById('settingLang').value;
+  localStorage.setItem('eri_lang', lang);
+  const combo = document.querySelector('.goog-te-combo');
+  if (combo && lang !== 'en') { combo.value = lang; combo.dispatchEvent(new Event('change')); }
+  toast('Language applied!');
+});
+
