@@ -1,0 +1,57 @@
+{
+  "name": "Eritrean Info",
+  "short_name": "EritreanInfo",
+  "description": "Your complete guide to Eritrea — history, culture, geography, and AI Tigrinya translator",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#007A3D",
+  "background_color": "#1a1a2e",
+  "lang": "en",
+  "categories": ["education", "reference", "travel"],
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Tigrinya Translator",
+      "short_name": "Translate",
+      "description": "Open the Tigrinya ↔ English AI translator",
+      "url": "./index.html#translator",
+      "icons": [{ "src": "./icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "History of Eritrea",
+      "short_name": "History",
+      "description": "Explore Eritrea's rich history",
+      "url": "./index.html#history",
+      "icons": [{ "src": "./icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Photo Gallery",
+      "short_name": "Gallery",
+      "description": "Browse photos of Eritrea",
+      "url": "./index.html#gallery",
+      "icons": [{ "src": "./icons/icon.svg", "sizes": "any" }]
+    }
+  ]
+}

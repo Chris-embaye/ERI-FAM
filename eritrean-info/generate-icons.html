@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator — run once then close</title></head>
+<body style="background:#1a1a2e;color:white;font-family:sans-serif;padding:32px;text-align:center;">
+<h2>Generating App Icons...</h2>
+<canvas id="c512" width="512" height="512" style="display:none"></canvas>
+<canvas id="c192" width="192" height="192" style="display:none"></canvas>
+<p id="status">Drawing icons...</p>
+<div id="downloads" style="margin-top:24px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;"></div>
+<p style="margin-top:24px;color:rgba(255,255,255,0.5);font-size:14px;">
+  Save both images into the <strong>icons/</strong> folder as <code>icon-512.png</code> and <code>icon-192.png</code>.
+</p>
+<script>
+function drawIcon(canvas, size) {
+  const ctx = canvas.getContext('2d');
+  const cx = size / 2, cy = size / 2, r = size / 2;
+
+  // Background circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fill();
+
+  // Clip to circle
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 2, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Green top stripe
+  ctx.fillStyle = '#007A3D';
+  ctx.fillRect(0, 0, size, size / 3);
+
+  // Blue middle stripe
+  ctx.fillStyle = '#4189DD';
+  ctx.fillRect(0, size / 3, size, size / 3);
+
+  // Red bottom stripe
+  ctx.fillStyle = '#CE1126';
+  ctx.fillRect(0, (size / 3) * 2, size, size / 3);
+
+  ctx.restore();
+
+  // Border ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = size * 0.015;
+  ctx.stroke();
+
+  // White circle overlay for text
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(26,26,46,0.85)';
+  ctx.fill();
+
+  // Flag emoji-style "ER" text
+  ctx.fillStyle = 'white';
+  ctx.font = `900 ${size * 0.28}px Montserrat, Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('ER', cx, cy);
+
+  // Gold olive wreath arc
+  const leafCount = 12;
+  const wrR = r * 0.68;
+  for (let i = 0; i < leafCount; i++) {
+    const angle = (i / leafCount) * Math.PI * 2 - Math.PI / 2;
+    const lx = cx + Math.cos(angle) * wrR;
+    const ly = cy + Math.sin(angle) * wrR;
+    ctx.beginPath();
+    ctx.ellipse(lx, ly, size * 0.04, size * 0.016, angle + Math.PI / 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#D4A017';
+    ctx.fill();
+  }
+}
+
+const c512 = document.getElementById('c512');
+const c192 = document.getElementById('c192');
+drawIcon(c512, 512);
+drawIcon(c192, 192);
+
+const div = document.getElementById('downloads');
+
+// 512 download
+const a512 = document.createElement('a');
+a512.href = c512.toDataURL('image/png');
+a512.download = 'icon-512.png';
+a512.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;color:white;text-decoration:none;';
+a512.innerHTML = `<img src="${c512.toDataURL()}" width="128" height="128" style="border-radius:16px;"/>
+  <button style="background:#007A3D;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">⬇ Save icon-512.png</button>`;
+div.appendChild(a512);
+
+// 192 download
+const a192 = document.createElement('a');
+a192.href = c192.toDataURL('image/png');
+a192.download = 'icon-192.png';
+a192.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;color:white;text-decoration:none;';
+a192.innerHTML = `<img src="${c192.toDataURL()}" width="96" height="96" style="border-radius:12px;"/>
+  <button style="background:#4189DD;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">⬇ Save icon-192.png</button>`;
+div.appendChild(a192);
+
+document.getElementById('status').textContent = '✓ Icons ready — click to download and save to the icons/ folder.';
+</script>
+</body>
+</html>

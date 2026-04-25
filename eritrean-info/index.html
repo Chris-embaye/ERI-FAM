@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eritrean Info — Your Complete Guide to Eritrea</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#007A3D" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EritreanInfo" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+
+  <!-- SEO -->
+  <meta name="description" content="Complete public information about Eritrea — history, culture, geography, people, and AI Tigrinya-English translator." />
+  <meta name="keywords" content="Eritrea, Eritrean, Tigrinya, Asmara, Horn of Africa, translator" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Noto+Serif+Ethiopic:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- PWA INSTALL BANNER -->
+  <div id="installBanner" class="install-banner" style="display:none">
+    <div class="install-banner-inner">
+      <span class="install-icon">🇪🇷</span>
+      <div class="install-text">
+        <strong>Install Eritrean Info App</strong>
+        <span>Add to your device — works offline too!</span>
+      </div>
+      <button id="installBtn" class="install-confirm-btn">Install</button>
+      <button id="installDismiss" class="install-dismiss-btn">✕</button>
+    </div>
+  </div>
+
+  <!-- NAVIGATION -->
+  <nav id="navbar">
+    <div class="nav-container">
+      <a href="#hero" class="nav-logo">
+        <span class="logo-flag">🇪🇷</span>
+        <span>Eritrean<strong>Info</strong></span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#history">History</a></li>
+        <li><a href="#geography">Geography</a></li>
+        <li><a href="#people">People</a></li>
+        <li><a href="#culture">Culture</a></li>
+        <li><a href="#economy">Economy</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#translator" class="nav-cta">Translator</a></li>
+        <li><button class="nav-download-btn" id="navDownloadBtn">&#11015; Get App</button></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-flag-stripe green"></div>
+      <div class="hero-flag-stripe blue"></div>
+      <div class="hero-flag-stripe red"></div>
+      <div class="hero-text">
+        <h1>Eritrea</h1>
+        <p class="hero-subtitle">ኤርትራ &nbsp;|&nbsp; إريتريا</p>
+        <p class="hero-desc">The State of Eritrea — a land of ancient civilizations, stunning landscapes, and a people forged by one of Africa's longest independence struggles.</p>
+        <div class="hero-badges">
+          <span>🌍 East Africa</span>
+          <span>🏙️ Capital: Asmara</span>
+          <span>📅 Independence: 1993</span>
+          <span>🌊 Red Sea Coast</span>
+        </div>
+        <div class="hero-btn-group">
+          <a href="#overview" class="hero-btn">Explore Eritrea</a>
+          <button class="hero-btn hero-install-btn" id="heroInstallBtn">&#11015; Download App</button>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll-hint">↓ Scroll to explore</div>
+  </section>
+
+  <!-- QUICK FACTS -->
+  <section id="quick-facts">
+    <div class="container">
+      <div class="facts-grid">
+        <div class="fact-card">
+          <div class="fact-icon">🏛️</div>
+          <div class="fact-label">Capital</div>
+          <div class="fact-value">Asmara</div>
+        </div>
+        <div class="fact-card">
+          <div class="fact-icon">👥</div>
+          <div class="fact-label">Population</div>
+          <div class="fact-value">~3.5 Million</div>
+        </div>
+        <div class="fact-card">
+          <div class="fact-icon">📐</div>
+          <div class="fact-label">Area</div>
+          <div class="fact-value">117,600 km²</div>
+        </div>
+        <div class="fact-card">
+          <div class="fact-icon">💰</div>
+          <div class="fact-label">Currency</div>
+          <div class="fact-value">Nakfa (ERN)</div>
+        </div>
+        <div class="fact-card">
+          <div class="fact-icon">🗣️</div>
+          <div class="fact-label">Languages</div>
+          <div class="fact-value">Tigrinya, Arabic, English</div>
+        </div>
+        <div class="fact-card">
+          <div class="fact-icon">🕌</div>
+          <div class="fact-label">Religions</div>
+          <div class="fact-value">Christianity & Islam</div>
+        </div>
+        <div class="fact-card">
+          <div class="fact-icon">🌡️</div>
+          <div class="fact-label">Climate</div>
+          <div class="fact-value">Semi-arid to Highland</div>
+        </div>
+        <div class="fact-card">
+          <div class="fact-icon">🗺️</div>
+          <div class="fact-label">Calling Code</div>
+          <div class="fact-value">+291</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OVERVIEW -->
+  <section id="overview">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">About</span>
+        <h2>Overview of Eritrea</h2>
+        <p>Officially the State of Eritrea (ሃገረ ኤርትራ), located in the Horn of Africa along the Red Sea</p>
+      </div>
+      <div class="overview-grid">
+        <div class="overview-text">
+          <p>Eritrea is a country in the northeastern region of Africa, also known as the <strong>Horn of Africa</strong>. It is bordered by Ethiopia to the south, Sudan to the west and north, Djibouti to the southeast, and has a long coastline along the Red Sea to the east — stretching over <strong>2,234 km</strong>.</p>
+          <p>The country includes the <strong>Dahlak Archipelago</strong> and several of the Hanish Islands in the Red Sea. The name "Eritrea" derives from the ancient Greek name <em>Erythraia</em> (Ἐρυθραία), meaning "Red Land," after the Red Sea.</p>
+          <p>Eritrea is a multi-ethnic, multilingual, and multi-religious nation home to <strong>nine recognized ethnic groups</strong>. Its capital and largest city, <strong>Asmara</strong>, is renowned for its remarkable collection of Modernist architecture — a UNESCO World Heritage Site since 2017.</p>
+          <blockquote>"Eritrea: Where the Red Sea meets ancient highland civilization."</blockquote>
+        </div>
+        <div class="overview-map">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Eritrea_in_its_region.svg/500px-Eritrea_in_its_region.svg.png"
+            alt="Map showing Eritrea's location in Africa"
+            onerror="this.src='https://picsum.photos/seed/map-eritrea/500/400'"
+          />
+          <p class="map-caption">Eritrea's location in the Horn of Africa</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="history">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">History</span>
+        <h2>A Rich Historical Journey</h2>
+        <p>From ancient kingdoms to a hard-won independence — Eritrea's story spans thousands of years</p>
+      </div>
+      <div class="timeline">
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">Ancient Times</div>
+          <div class="timeline-card">
+            <h3>Ancient Civilizations</h3>
+            <p>The area now known as Eritrea was home to some of the earliest human settlements. The region was part of the ancient land of <strong>Punt</strong>, known to the ancient Egyptians for its trade in incense, ebony, and gold. The Kingdom of <strong>D'mt</strong> flourished here around 900–400 BC.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">100 AD – 940 AD</div>
+          <div class="timeline-card">
+            <h3>Kingdom of Aksum</h3>
+            <p>Eritrea was the heartland of the powerful <strong>Aksumite Empire</strong> (also spelled Axum), one of the great civilizations of the ancient world. Aksum was a major trading empire connecting Rome, India, and Arabia. The city of Adulis (near modern Massawa) was one of the most important ports in antiquity. Aksum was one of the first states to adopt <strong>Christianity</strong> in the 4th century AD.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">1517 – 1865</div>
+          <div class="timeline-card">
+            <h3>Ottoman & Egyptian Control</h3>
+            <p>Following the decline of Aksum, the coastal regions came under <strong>Ottoman Empire</strong> control beginning in 1517. The Ottomans held Massawa and the coastal lowlands. In the 19th century, Ottoman influence was replaced by <strong>Egyptian rule</strong> under the Khedivate of Egypt, which expanded into the hinterland.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">1890 – 1941</div>
+          <div class="timeline-card">
+            <h3>Italian Colonization</h3>
+            <p>Italy formally established the <strong>Colony of Eritrea</strong> on January 1, 1890. Italian colonizers developed infrastructure including roads, railways, and the remarkable Modernist architecture of Asmara. The name "Eritrea" was officially used for the first time by the Italians. Italy used Eritrea as a base for its failed attempt to colonize Ethiopia (Battle of Adwa, 1896) and the successful conquest of Ethiopia in 1935–36.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">1941 – 1952</div>
+          <div class="timeline-card">
+            <h3>British Administration</h3>
+            <p>During World War II, British forces defeated Italy in East Africa. <strong>British Military Administration</strong> governed Eritrea from 1941 to 1952. The British period saw rising political activity and debate about Eritrea's future — independence, union with Ethiopia, or union with Sudan.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">1952 – 1961</div>
+          <div class="timeline-card">
+            <h3>Federation with Ethiopia</h3>
+            <p>Under UN resolution, Eritrea was federated with Ethiopia as an <strong>autonomous unit</strong> in 1952. The federation guaranteed Eritrea its own government, flag, and official languages. However, Ethiopia systematically dismantled Eritrean autonomy — dissolving its parliament, banning political parties, and suppressing Tigrinya and Arabic languages.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">1961 – 1991</div>
+          <div class="timeline-card">
+            <h3>The 30-Year War of Independence</h3>
+            <p>In 1962, Ethiopian Emperor Haile Selassie illegally <strong>annexed Eritrea</strong>, dissolving the federation. This triggered one of Africa's longest independence wars. The <strong>Eritrean Liberation Front (ELF)</strong> began armed resistance in 1961. Later, the <strong>Eritrean People's Liberation Front (EPLF)</strong> became the dominant liberation movement. After 30 years of brutal war, EPLF forces <strong>liberated Eritrea in May 1991</strong>.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">April 23–25, 1993</div>
+          <div class="timeline-card">
+            <h3>Independence Referendum</h3>
+            <p>Eritreans voted in a <strong>UN-supervised independence referendum</strong>. An overwhelming <strong>99.83%</strong> voted for independence. On May 24, 1993, Eritrea was officially proclaimed an independent sovereign state and was admitted to the United Nations. <strong>May 24th</strong> is celebrated as Eritrea's Independence Day.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">1998 – 2000</div>
+          <div class="timeline-card">
+            <h3>Eritrea-Ethiopia War</h3>
+            <p>A devastating <strong>border war</strong> with Ethiopia erupted in 1998 over disputed territories, particularly the town of Badme. The conflict resulted in tens of thousands of casualties on both sides. A <strong>peace agreement</strong> was signed in Algiers in December 2000. A UN boundary commission later awarded Badme to Eritrea, but Ethiopia refused to implement the ruling until 2018.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">2018 – Present</div>
+          <div class="timeline-card">
+            <h3>Peace with Ethiopia</h3>
+            <p>In July 2018, Eritrean President Isaias Afwerki and Ethiopian Prime Minister Abiy Ahmed signed a <strong>landmark peace declaration</strong> ending the state of war between the two nations. Borders were reopened, flights resumed, and diplomatic relations restored. Ethiopia's PM Abiy Ahmed was awarded the <strong>Nobel Peace Prize</strong> in 2019 partly for this achievement. The peace opened a new chapter for both nations.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- GEOGRAPHY -->
+  <section id="geography">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Geography</span>
+        <h2>Land & Landscape</h2>
+        <p>From highland plateaus to Red Sea shores — Eritrea's diverse terrain spans three ecological zones</p>
+      </div>
+      <div class="geo-grid">
+        <div class="geo-card">
+          <div class="geo-icon">⛰️</div>
+          <h3>Central Highlands</h3>
+          <p>The <strong>Kebessa</strong> (highlands) run north-south through the center of Eritrea, with elevations between 1,800–3,000 meters. This cool, fertile plateau is home to the capital Asmara. The highest peak is <strong>Emba Soira</strong> at 3,018 m above sea level.</p>
+        </div>
+        <div class="geo-card">
+          <div class="geo-icon">🌊</div>
+          <h3>Red Sea Coast</h3>
+          <p>Eritrea has one of the longest coastlines in Africa — over <strong>2,234 km</strong> along the Red Sea. The coast features the historic port city of <strong>Massawa</strong>, coral reefs, white sand beaches, and the <strong>Dahlak Archipelago</strong> with over 200 islands.</p>
+        </div>
+        <div class="geo-card">
+          <div class="geo-icon">🌾</div>
+          <h3>Western Lowlands</h3>
+          <p>The western lowlands border Sudan and are significantly lower and hotter than the highlands. This semi-arid region is home to the <strong>Gash-Barka</strong> and <strong>Anseba</strong> river valleys, with scattered acacia forests and the Kunama, Nara, and Beja peoples.</p>
+        </div>
+        <div class="geo-card">
+          <div class="geo-icon">🏜️</div>
+          <h3>Southern & Eastern Lowlands</h3>
+          <p>The southeastern region bordering Djibouti is largely arid, featuring the <strong>Danakil Depression</strong> (one of the hottest places on Earth), the Afar Triangle, and salt lakes. The <strong>Afar people</strong> are the traditional inhabitants of this extreme environment.</p>
+        </div>
+        <div class="geo-card">
+          <div class="geo-icon">🌡️</div>
+          <h3>Climate Zones</h3>
+          <p>Eritrea has three main climate zones: <strong>highland</strong> (cool, 16–22°C), <strong>coastal/eastern</strong> (hot and arid, 25–40°C), and <strong>western lowland</strong> (hot with seasonal rains, 22–35°C). The rainy season in the highlands is June–September.</p>
+        </div>
+        <div class="geo-card">
+          <div class="geo-icon">🐘</div>
+          <h3>Wildlife & Nature</h3>
+          <p>Eritrea is home to diverse wildlife including African elephants, lions, leopards, ostriches, and baboons. The <strong>Dahlak Marine National Park</strong> protects exceptional marine biodiversity including dugongs, turtles, and hundreds of fish species along pristine coral reefs.</p>
+        </div>
+      </div>
+      <div class="geo-borders">
+        <h3>Borders & Location</h3>
+        <div class="borders-list">
+          <div class="border-item"><span class="dir">North/West</span><span>🇸🇩 Sudan</span></div>
+          <div class="border-item"><span class="dir">South</span><span>🇪🇹 Ethiopia</span></div>
+          <div class="border-item"><span class="dir">Southeast</span><span>🇩🇯 Djibouti</span></div>
+          <div class="border-item"><span class="dir">East</span><span>🌊 Red Sea</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PEOPLE & DEMOGRAPHICS -->
+  <section id="people">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">People</span>
+        <h2>Demographics & Ethnic Groups</h2>
+        <p>Eritrea is home to nine officially recognized ethnic groups, each with a distinct language and cultural heritage</p>
+      </div>
+      <div class="ethnic-grid">
+        <div class="ethnic-card">
+          <div class="ethnic-pct" style="--pct:55">55%</div>
+          <h3>Tigrinya</h3>
+          <p>The largest ethnic group, living primarily in the central highlands (Kebessa). They speak <strong>Tigrinya</strong> (ትግርኛ), a Semitic language. Predominantly <strong>Orthodox Christian</strong>. They form the core of Eritrean cultural, political, and economic life. </p>
+        </div>
+        <div class="ethnic-card">
+          <div class="ethnic-pct" style="--pct:30">30%</div>
+          <h3>Tigre</h3>
+          <p>The second-largest group, living in the northern highlands, western lowlands, and coastal areas. They speak <strong>Tigre</strong> (ትግረ), a related Semitic language. Predominantly <strong>Muslim</strong>. Tigre society is traditionally pastoralist and semi-nomadic.</p>
+        </div>
+        <div class="ethnic-card">
+          <div class="ethnic-pct" style="--pct:5">5%</div>
+          <h3>Saho</h3>
+          <p>Inhabiting the southeastern highlands and coastal areas, the Saho speak a <strong>Cushitic language</strong>. They have a mix of Muslim and Christian communities. Traditionally pastoral, they are known for their distinctive oral poetry and music traditions.</p>
+        </div>
+        <div class="ethnic-card">
+          <div class="ethnic-pct" style="--pct:3">3%</div>
+          <h3>Kunama</h3>
+          <p>Living in the southwestern Gash-Barka region near Sudan, the Kunama speak a <strong>Nilo-Saharan language</strong> — unique among Eritrean ethnic groups. They are predominantly <strong>animist</strong> with some Christian and Muslim minorities. They have a matrilineal social structure.</p>
+        </div>
+        <div class="ethnic-card">
+          <div class="ethnic-pct" style="--pct:2">2%</div>
+          <h3>Rashaida</h3>
+          <p>A relatively recent community, the Rashaida migrated from the Arabian Peninsula in the 19th century. They live in the northern coastal lowlands and speak <strong>Hejazi Arabic</strong>. Strictly <strong>Muslim</strong>, the Rashaida are known for their beautiful silver jewelry and embroidered face masks worn by women.</p>
+        </div>
+        <div class="ethnic-card">
+          <div class="ethnic-pct" style="--pct:2">2%</div>
+          <h3>Bilen</h3>
+          <p>Centered around the town of <strong>Keren</strong> in northern Eritrea, the Bilen speak a Cushitic language. About half are <strong>Catholic</strong> and half are <strong>Muslim</strong>. Keren, their main town, is famous for its vibrant market and camel fair.</p>
+        </div>
+        <div class="ethnic-card">
+          <div class="ethnic-pct" style="--pct:2">2%</div>
+          <h3>Afar</h3>
+          <p>Inhabiting the extreme southeastern region and Djibouti border areas, the Afar speak an <strong>Afroasiatic (Cushitic) language</strong>. Predominantly <strong>Muslim</strong>, they are adapted to the extremely harsh climate of the Danakil Depression — one of the hottest and lowest places on Earth.</p>
+        </div>
+        <div class="ethnic-card">
+          <div class="ethnic-pct" style="--pct:1">1%</div>
+          <h3>Beja (Hedareb)</h3>
+          <p>Living in the northwestern lowlands near Sudan, the Beja (also called Hedareb in Eritrea) speak <strong>Beja</strong>, a Cushitic language. They are <strong>Muslim</strong> and traditionally camel-herding nomads. They are known for their distinctive hair styles and silver ornaments.</p>
+        </div>
+        <div class="ethnic-card">
+          <div class="ethnic-pct" style="--pct:1">1%</div>
+          <h3>Nara</h3>
+          <p>One of the smallest groups, living in the southwestern lowlands. They speak <strong>Nara</strong>, a Nilo-Saharan language. Like the Kunama, the Nara have a matrilineal social structure and practice a mix of animism, Christianity, and Islam.</p>
+        </div>
+      </div>
+      <div class="religion-section">
+        <h3>Religions</h3>
+        <div class="religion-grid">
+          <div class="religion-card">
+            <div class="rel-icon">✝️</div>
+            <h4>Eritrean Orthodox Tewahedo</h4>
+            <p>The largest Christian denomination, the <strong>Eritrean Orthodox Tewahedo Church</strong> became autocephalous in 1993. It follows ancient Ge'ez liturgical traditions and is one of the Oriental Orthodox churches. Major holidays include Timkat (Epiphany) and Meskel (Finding of the True Cross).</p>
+          </div>
+          <div class="religion-card">
+            <div class="rel-icon">☪️</div>
+            <h4>Islam (Sunni)</h4>
+            <p>Islam was introduced to Eritrea very early — some of the first Muslim refugees fled to Eritrea from Mecca in 615 AD. Today, roughly 48–50% of Eritreans are <strong>Sunni Muslim</strong>, predominantly in the lowland regions, western areas, and coastal zones.</p>
+          </div>
+          <div class="religion-card">
+            <div class="rel-icon">⛪</div>
+            <h4>Roman Catholic</h4>
+            <p>Introduced during Italian colonization, <strong>Catholicism</strong> has a significant presence particularly among the Bilen and some Tigrinya communities. The Cathedral of Our Lady of the Rosary in Asmara is one of the finest examples of Italian Romanesque architecture in Africa.</p>
+          </div>
+          <div class="religion-card">
+            <div class="rel-icon">🕊️</div>
+            <h4>Evangelical (Lutheran)</h4>
+            <p>The <strong>Evangelical Church of Eritrea</strong> (Lutheran) has roots in 19th-century Swedish and Swedish-American missionary work. It has a significant following, particularly in certain highland communities and urban areas.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CULTURE -->
+  <section id="culture">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Culture</span>
+        <h2>Culture, Food & Traditions</h2>
+        <p>A vibrant cultural mosaic shaped by ancient traditions, diverse ethnicities, and centuries of history</p>
+      </div>
+      <div class="culture-tabs">
+        <button class="tab-btn active" data-tab="food">Food</button>
+        <button class="tab-btn" data-tab="music">Music</button>
+        <button class="tab-btn" data-tab="traditions">Traditions</button>
+        <button class="tab-btn" data-tab="asmara">Asmara</button>
+        <button class="tab-btn" data-tab="sports">Sports</button>
+      </div>
+      <div class="tab-content active" id="tab-food">
+        <div class="culture-grid">
+          <div class="culture-card">
+            <div class="culture-img">🫓</div>
+            <h3>Injera (ኢንጀራ)</h3>
+            <p>The staple food of Eritrea — a large, spongy, sourdough flatbread made from <strong>teff</strong> flour (a tiny grain unique to the Horn of Africa). Injera serves as both plate and utensil. Food is placed on top and eaten by tearing pieces of injera and using them to scoop up stews.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🍲</div>
+            <h3>Tsebhi (ጽብሒ)</h3>
+            <p>Rich, spiced stews served on injera. <strong>Tsebhi derho</strong> (chicken stew with berbere spice), <strong>Tsebhi sga</strong> (meat stew), and <strong>Tsebhi birsen</strong> (lentil stew) are staples. Berbere — a complex spice blend of chili, fenugreek, coriander, and more — is central to Eritrean cooking.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">☕</div>
+            <h3>Coffee Ceremony (ቡን)</h3>
+            <p>The <strong>Eritrean coffee ceremony</strong> (Bun or Jebena) is a central social ritual. Green coffee beans are roasted over charcoal, ground by hand, and brewed in a traditional clay pot (jebena). Three rounds of coffee are served: <em>Abol</em>, <em>Tona</em>, and <em>Baraka</em> (blessing). Refusing coffee is considered rude.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🫘</div>
+            <h3>Ful Medames (ፉል)</h3>
+            <p>Fava beans slow-cooked with olive oil, garlic, and lemon juice — a popular breakfast dish especially in urban areas, reflecting Eritrea's connections to Middle Eastern cuisine through centuries of Red Sea trade.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🧀</div>
+            <h3>Zigni & Pasta</h3>
+            <p>A legacy of Italian colonization — pasta with <strong>Zigni</strong> (spiced lamb/beef in tomato-berbere sauce) is uniquely Eritrean. Italian influence blended with local ingredients created a distinctive Eritrean-Italian fusion cuisine still enjoyed today, especially in Asmara's cafes and restaurants.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🍯</div>
+            <h3>Mes (Honey Wine)</h3>
+            <p><strong>Mes</strong> is Eritrean honey wine (mead), similar to Ethiopian tej. It is made by fermenting honey with water and gesho (buckthorn). A traditional drink served at celebrations, weddings, and cultural ceremonies. Swa (sorghum beer) and Suwa are also traditional beverages.</p>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-music">
+        <div class="culture-grid">
+          <div class="culture-card">
+            <div class="culture-img">🎵</div>
+            <h3>Kirar (ክራር)</h3>
+            <p>A traditional <strong>five- or six-stringed lyre</strong> central to Tigrinya music. The kirar is used in traditional music, celebrations, and ceremonies. Its bright, plucked sound is instantly recognizable. Famous artists like <strong>Abraham Afewerki</strong> elevated traditional Eritrean music to international audiences.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🪘</div>
+            <h3>Kebero (ከበሮ)</h3>
+            <p>A double-headed <strong>drum</strong> used in religious ceremonies, weddings, and cultural events. The kebero is beaten with bare hands and its deep resonant sound is fundamental to Eritrean and Ethiopian traditional music. It is particularly important in Orthodox Christian liturgical music.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🎺</div>
+            <h3>Embilta (እምቢልታ)</h3>
+            <p>Traditional end-blown <strong>flutes</strong> made from bamboo or metal, used in various ethnic music traditions across Eritrea. Different sizes and pitches create rich harmonic combinations in ensemble playing.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🎶</div>
+            <h3>Modern Eritrean Music</h3>
+            <p>Contemporary Eritrean music blends traditional elements with modern influences. Artists like <strong>Dehab Faytinga</strong>, <strong>Yohannes Tikabo</strong>, and the late <strong>Abraham Afewerki</strong> achieved pan-African fame. Music plays a critical role in Eritrean national identity and pride.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">💃</div>
+            <h3>Traditional Dance</h3>
+            <p>Each ethnic group has its own distinctive dances. <strong>Guayla</strong> is the popular Tigrinya line dance performed at celebrations, characterized by rhythmic shoulder movements. The <strong>Tigre</strong> and <strong>Rashaida</strong> peoples have their own distinct dance traditions performed at weddings and seasonal festivals.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">📜</div>
+            <h3>Poetry & Oral Literature</h3>
+            <p>Eritrea has a rich tradition of oral poetry. <strong>Tigrinya poetry</strong> (Ruba'i-style compositions) and <strong>Saho oral tradition</strong> are particularly celebrated. Poetry recitation, oral history, and storytelling are vital cultural practices maintained across generations.</p>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-traditions">
+        <div class="culture-grid">
+          <div class="culture-card">
+            <div class="culture-img">💒</div>
+            <h3>Weddings</h3>
+            <p>Eritrean weddings are multi-day community events. Celebrations include <strong>zeffet</strong> (bridal procession), traditional music, communal feasting, and days-long celebration. Traditional brides wear elaborate headdresses and gold jewelry. The groom's family traditionally provides gifts including cattle.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🌟</div>
+            <h3>Timkat (ጥምቀት)</h3>
+            <p>The Eritrean Orthodox celebration of <strong>Epiphany</strong> (January 19/20) is among the most spectacular festivals. The <em>tabot</em> (replica of the Ark of the Covenant) is carried in colorful processions with singing, dancing, and prayers. Asmara's Timkat celebration draws thousands of participants and observers.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🔥</div>
+            <h3>Meskel (መስቀል)</h3>
+            <p>The <strong>Finding of the True Cross</strong> festival (September) is marked by massive bonfires called <em>Demera</em>. Communities gather to light communal fires, sing, and celebrate. It is one of the largest public gatherings in Eritrea and a UNESCO-listed intangible cultural heritage.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">☪️</div>
+            <h3>Eid Celebrations</h3>
+            <p><strong>Eid al-Fitr</strong> (end of Ramadan) and <strong>Eid al-Adha</strong> are major national holidays with public celebrations. Muslims fast during the month of Ramadan, and the breaking of the fast is a community-wide celebration. Christian and Muslim communities in Eritrea traditionally exchange visits and share food during each other's holidays.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🤝</div>
+            <h3>Community (Hade Hzbi)</h3>
+            <p>"<strong>Hade Hzbi, Hade Libbi</strong>" (One People, One Heart) is a core national motto. The Eritrean concept of community and collective responsibility is deeply rooted. Traditional practices like <em>Warsay</em> (working together on community projects) and communal harvesting remain important social bonds.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">👘</div>
+            <h3>Traditional Dress</h3>
+            <p>The <strong>Zuria</strong> is the traditional white cotton dress worn by Tigrinya women, decorated with colorful embroidered borders. Men wear white <strong>Zuría</strong> and <strong>Kuta</strong> (toga-like shawl). Each ethnic group has distinct traditional dress — the Rashaida women's black velvet gowns with silver embroidery are particularly striking.</p>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-asmara">
+        <div class="asmara-content">
+          <div class="asmara-text">
+            <h3>Asmara — Africa's Modernist City</h3>
+            <p>The capital city <strong>Asmara</strong> (ኣስመራ — meaning "They [women] made them unite" in Tigrinya) sits at 2,325 meters above sea level, giving it a cool, pleasant climate year-round — earning it the nickname <em>"La Piccola Roma"</em> (Little Rome) during Italian rule.</p>
+            <p>In 2017, UNESCO inscribed Asmara as a <strong>World Heritage Site</strong> for its exceptional collection of 20th-century Modernist architecture — including Futurist, Rationalist, Art Deco, and Expressionist buildings built during the Italian colonial period.</p>
+            <h4>Notable Landmarks</h4>
+            <ul>
+              <li><strong>Fiat Tagliero Building (1938)</strong> — A masterpiece of Futurist architecture shaped like an airplane, built without any supporting columns — its engineer reportedly pulled a gun on the construction workers to force them to remove the scaffolding</li>
+              <li><strong>Cathedral of Our Lady of the Rosary</strong> — Italian Romanesque Catholic cathedral (1922), one of the most beautiful churches in Africa</li>
+              <li><strong>Asmara Opera House</strong> — Art Deco theater from the colonial era</li>
+              <li><strong>Cinema Impero</strong> — Stunning 1937 Rationalist cinema</li>
+              <li><strong>Bar Zilli & Bar Royal</strong> — Historic Art Deco cafés where locals sip macchiato</li>
+              <li><strong>Medebar Market</strong> — Where craftsmen repurpose metal into goods</li>
+              <li><strong>Central Market</strong> — Bustling market with fresh produce, spices, and goods</li>
+            </ul>
+          </div>
+          <div class="asmara-img-box">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Asmara_Fiat_Tagliero_Building.jpg/640px-Asmara_Fiat_Tagliero_Building.jpg"
+              alt="Fiat Tagliero Building, Asmara — a Futurist masterpiece"
+              onerror="this.src='https://picsum.photos/seed/asmara-arch/640/400'"
+            />
+            <p>Fiat Tagliero Building — Asmara's iconic Futurist structure (1938)</p>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-sports">
+        <div class="culture-grid">
+          <div class="culture-card">
+            <div class="culture-img">🚴</div>
+            <h3>Cycling</h3>
+            <p>Eritrea is one of Africa's premier cycling nations. The country produces world-class cyclists who compete internationally. <strong>Daniel Teklehaimanot</strong> became the first African to wear the polka-dot jersey (King of the Mountains) at the <strong>Tour de France</strong> in 2015. The <strong>Tour of Eritrea</strong> is one of Africa's oldest cycling races.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">🏃</div>
+            <h3>Long-Distance Running</h3>
+            <p>Eritrean athletes excel in long-distance running at international competitions. <strong>Zersenay Tadese</strong> won multiple World Half Marathon Championships and holds the world record for the half marathon. Running at high altitude in the Eritrean highlands develops exceptional aerobic capacity.</p>
+          </div>
+          <div class="culture-card">
+            <div class="culture-img">⚽</div>
+            <h3>Football</h3>
+            <p>Football (soccer) is the most popular team sport in Eritrea. The <strong>Eritrea national football team</strong> competes in CECAFA (Council for East and Central Africa Football Associations) and African Cup competitions. The sport is played in every village and neighborhood across the country.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ECONOMY -->
+  <section id="economy">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Economy</span>
+        <h2>Economy & Resources</h2>
+        <p>A developing economy with rich mineral resources, agriculture, and strategic Red Sea access</p>
+      </div>
+      <div class="economy-grid">
+        <div class="economy-card">
+          <div class="eco-icon">⛏️</div>
+          <h3>Mining</h3>
+          <p>Eritrea has significant mineral resources. The <strong>Bisha Mine</strong> (gold, silver, copper, zinc) is one of the largest mines in East Africa. Gold, potash, copper, and zinc are major exports. Mining contributes substantially to government revenue.</p>
+        </div>
+        <div class="economy-card">
+          <div class="eco-icon">🌾</div>
+          <h3>Agriculture</h3>
+          <p>About 80% of the population depends on subsistence farming and herding. Main crops include <strong>teff, sorghum, millet, barley, wheat, lentils</strong>, and vegetables. Droughts and food insecurity have been recurring challenges, partly due to limited arable land and unpredictable rainfall.</p>
+        </div>
+        <div class="economy-card">
+          <div class="eco-icon">🎣</div>
+          <h3>Fishing</h3>
+          <p>The Red Sea offers vast fishing potential — the waters off Eritrea are among the most productive in the world. The <strong>Dahlak Archipelago</strong> has rich fisheries. However, the sector remains underdeveloped relative to its potential, with artisanal fishing dominating.</p>
+        </div>
+        <div class="economy-card">
+          <div class="eco-icon">🏗️</div>
+          <h3>Construction & Industry</h3>
+          <p>Infrastructure development is a government priority. Cement production, food processing, textiles, and construction materials are key industries. <strong>Massawa</strong> and <strong>Assab</strong> are important port cities whose potential is growing with regional peace.</p>
+        </div>
+        <div class="economy-card">
+          <div class="eco-icon">🌍</div>
+          <h3>Diaspora Remittances</h3>
+          <p>The Eritrean diaspora — estimated at 500,000–1 million people worldwide — sends significant remittances home. The government collects a <strong>2% diaspora tax</strong> from overseas Eritreans, which is a notable source of government revenue and subject of international debate.</p>
+        </div>
+        <div class="economy-card">
+          <div class="eco-icon">🚢</div>
+          <h3>Strategic Location</h3>
+          <p>Eritrea's <strong>Red Sea ports</strong> (Massawa, Assab) have enormous strategic potential. The Bab el-Mandeb strait is one of the world's most important shipping lanes. Renewed regional peace with Ethiopia has opened new possibilities for Eritrea's ports to serve landlocked Ethiopia's trade.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GOVERNMENT -->
+  <section id="government">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Government</span>
+        <h2>Government & Politics</h2>
+        <p>A single-party presidential republic governed by the People's Front for Democracy and Justice</p>
+      </div>
+      <div class="gov-grid">
+        <div class="gov-card">
+          <h3>🏛️ Government System</h3>
+          <p>Eritrea is officially a <strong>Presidential Republic</strong>. The <strong>People's Front for Democracy and Justice (PFDJ)</strong> is the sole legal political party, formerly known as the EPLF (liberation movement). No multi-party elections have been held since independence.</p>
+        </div>
+        <div class="gov-card">
+          <h3>👤 President</h3>
+          <p><strong>Isaias Afwerki</strong> has been president since Eritrea's independence in 1993. He led the EPLF during the independence war and transitioned to become the head of state. He holds both executive and legislative power.</p>
+        </div>
+        <div class="gov-card">
+          <h3>📜 Constitution</h3>
+          <p>A constitution was <strong>ratified in 1997</strong> but has never been implemented. It provides for a transitional government period. The National Assembly exists but meets infrequently. Implementation of the constitution has been repeatedly delayed by the government.</p>
+        </div>
+        <div class="gov-card">
+          <h3>🗺️ Administrative Divisions</h3>
+          <p>Eritrea is divided into <strong>6 regions (zobas)</strong>: Anseba, Debub, Debubawi Keyih Bahri (Southern Red Sea), Gash-Barka, Maekel (Central, including Asmara), and Semenawi Keyih Bahri (Northern Red Sea).</p>
+        </div>
+        <div class="gov-card">
+          <h3>⚔️ Military</h3>
+          <p>The <strong>Eritrean Defense Forces (EDF)</strong> include the Army, Navy, and Air Force. Eritrea maintains a large military relative to its population. <strong>National service</strong> is compulsory for all citizens — men and women — and has been a subject of international concern due to its indefinite duration.</p>
+        </div>
+        <div class="gov-card">
+          <h3>🌐 Foreign Relations</h3>
+          <p>Eritrea is a member of the <strong>African Union, Arab League, and United Nations</strong>. Relations with Ethiopia normalized dramatically in 2018. Eritrea has close ties with Gulf states. Relations with Sudan, Djibouti, and some Western nations have been complex and varying.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LANGUAGES -->
+  <section id="languages">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Languages</span>
+        <h2>Languages of Eritrea</h2>
+        <p>Nine ethnic languages, three official working languages, and a remarkable linguistic diversity</p>
+      </div>
+      <div class="lang-grid">
+        <div class="lang-card featured">
+          <div class="lang-script tigrinya">ትግርኛ</div>
+          <h3>Tigrinya</h3>
+          <p>The most widely spoken language, used by ~55% of the population. A <strong>Semitic language</strong> written in the ancient <strong>Ge'ez script</strong> (Fidel/Ethiopic). One of three official working languages. Closely related to Ge'ez (the liturgical language of the Orthodox Church) and more distantly to Amharic.</p>
+          <div class="lang-family">Semitic → South Semitic → Ethiopic</div>
+        </div>
+        <div class="lang-card featured">
+          <div class="lang-script arabic">عربي</div>
+          <h3>Arabic</h3>
+          <p>Used widely in commerce, Islamic education, and media. <strong>Standard Arabic</strong> is an official working language. Many Muslim Eritreans speak <strong>Sudanese Arabic</strong> as a vernacular in border regions. Arabic reflects Eritrea's centuries-long trade and cultural connections with the Arabian Peninsula.</p>
+          <div class="lang-family">Semitic → Central Semitic → Arabic</div>
+        </div>
+        <div class="lang-card">
+          <div class="lang-script english">EN</div>
+          <h3>English</h3>
+          <p>The <strong>third official working language</strong>, used in higher education, business, and international relations. A legacy of the British Administration period (1941–1952) and continued colonial-era education systems.</p>
+          <div class="lang-family">Indo-European → Germanic → West Germanic</div>
+        </div>
+        <div class="lang-card">
+          <div class="lang-script tigre">ትግረ</div>
+          <h3>Tigre</h3>
+          <p>Spoken by the Tigre people (~30%), also written in Ge'ez script. A Semitic language closely related to Tigrinya but mutually unintelligible. The second most spoken indigenous language of Eritrea.</p>
+          <div class="lang-family">Semitic → Ethiopic Branch</div>
+        </div>
+        <div class="lang-card">
+          <div class="lang-script">ሳሆ</div>
+          <h3>Saho</h3>
+          <p>A Cushitic (Afro-Asiatic) language spoken by the Saho people in the southeastern highland and coastal regions.</p>
+          <div class="lang-family">Afroasiatic → Cushitic</div>
+        </div>
+        <div class="lang-card">
+          <div class="lang-script">ቢለን</div>
+          <h3>Bilen</h3>
+          <p>Spoken around Keren by the Bilen people. A Central Cushitic (Agaw) language, related to other Agaw languages of the Ethiopian highlands.</p>
+          <div class="lang-family">Afroasiatic → Cushitic → Agaw</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHOTO GALLERY -->
+  <section id="gallery">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Gallery</span>
+        <h2>Photo Gallery</h2>
+        <p>Explore Eritrea's landscapes, cities, culture, and natural beauty</p>
+      </div>
+      <div class="gallery-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="people">People</button>
+        <button class="filter-btn" data-filter="culture">Culture</button>
+        <button class="filter-btn" data-filter="history">History</button>
+        <button class="filter-btn" data-filter="nature">Maps</button>
+      </div>
+      <div class="gallery-grid" id="galleryGrid">
+
+        <div class="gallery-item gallery-item--large" data-category="people">
+          <img src="images/eritrean-man-traditional.jpg" alt="Young Eritrean man in traditional white garment with decorative staff" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Traditional Eritrean Dress</h4>
+            <p>Young man in traditional white thobe with a decorated staff</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="culture">
+          <img src="images/tribal-women-ceremony.jpg" alt="Eritrean tribal women in traditional striped dress with spears" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Traditional Tribal Ceremony</h4>
+            <p>Eritrean women in colorful striped traditional dress</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="culture">
+          <img src="images/bilen-festival.jpg" alt="Young women in colorful festival dresses" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Festival Celebration</h4>
+            <p>Young Eritrean women in vibrant traditional festival attire</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="history">
+          <img src="images/madre-del-sarae-1928.jpg" alt="Madre del Sarae 1928 — historical photo of Eritrean mother and child" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Madre del Sarae — 1928</h4>
+            <p>Historic photograph of an Eritrean mother and child, Italian colonial era</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="culture">
+          <img src="images/rashaida-woman-portrait.jpg" alt="Rashaida woman with red headscarf and gold jewelry" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Rashaida Woman</h4>
+            <p>Traditional gold jewelry and headscarf of the Rashaida ethnic group</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="people">
+          <img src="images/tigrinya-women-smiling.jpg" alt="Three smiling Eritrean women" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Eritrean Women</h4>
+            <p>Three generations of smiling Eritrean women</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="people">
+          <img src="images/eritrean-tribes-collage.jpg" alt="Eritrean Tribes — all 9 ethnic groups" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Eritrean Tribes — 9 Ethnic Groups</h4>
+            <p>Hedareab, Bilen, Kunama, Tigre, Tigrinya, Saho, Nara, Rashaida, Afar</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="people">
+          <img src="images/girls-carrying-water.jpg" alt="Eritrean girls carrying water in rocky highland" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Highland Life</h4>
+            <p>Girls carrying water through the rocky Eritrean highlands</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="people">
+          <img src="images/eritrean-elder-woman.jpg" alt="Elderly Eritrean woman smiling with white shawl" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Eritrean Elder</h4>
+            <p>A wise and warm smile — the face of Eritrean resilience</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="nature">
+          <img src="images/tigrinya-language-map.jpg" alt="Map of Tigrinya language spanning Ethiopia and Eritrea" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Tigrinya Language Map</h4>
+            <p>Tigrinya spans across the Eritrean/Ethiopian border region</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="culture">
+          <img src="images/eritrea-9-tribes-poster.jpg" alt="ኤርትራን 9 ብሄራትን — Eritrea's 9 ethnic groups poster" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>ኤርትራን 9 ብሄራትን</h4>
+            <p>Eritrea's 9 Ethnic Groups — ብጋይም ዝተሰነየ ኣኒመሽን ንህጻናት</p>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-category="culture">
+          <img src="images/rashaida-face-veil.jpg" alt="Two Rashaida women in traditional embroidered face coverings" loading="lazy" />
+          <div class="gallery-caption">
+            <h4>Rashaida Traditional Dress</h4>
+            <p>Two Rashaida women in hand-embroidered silver face veils and robes</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">&times;</button>
+    <button class="lightbox-prev" id="lightboxPrev">&#8592;</button>
+    <button class="lightbox-next" id="lightboxNext">&#8594;</button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" src="" alt="" />
+      <div id="lightboxCaption"></div>
+    </div>
+  </div>
+
+  <!-- AI TRANSLATOR -->
+  <section id="translator">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Translator</span>
+        <h2>AI Tigrinya ↔ English Translator</h2>
+        <p>Translate between Tigrinya (ትግርኛ) and English using AI-powered machine translation</p>
+      </div>
+      <div class="translator-wrapper">
+        <div class="translator-box">
+          <div class="translator-header">
+            <div class="lang-selector">
+              <select id="sourceLang">
+                <option value="ti">Tigrinya (ትግርኛ)</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <button class="swap-btn" id="swapBtn" title="Swap languages">⇄</button>
+            <div class="lang-selector">
+              <select id="targetLang" disabled>
+                <option value="en">English</option>
+                <option value="ti">Tigrinya (ትግርኛ)</option>
+              </select>
+            </div>
+          </div>
+          <div class="translator-panels">
+            <div class="panel">
+              <textarea
+                id="sourceText"
+                placeholder="Type Tigrinya (ትግርኛ) here...&#10;&#10;Example: ሰላም! ከመይ ኣለካ?"
+                rows="8"
+                class="tigrinya-text"
+                spellcheck="false"
+              ></textarea>
+              <div class="panel-footer">
+                <span id="charCount">0 / 500</span>
+                <button class="clear-btn" id="clearBtn">Clear</button>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="translation-output" id="translationOutput">
+                <p class="output-placeholder">Translation will appear here...</p>
+              </div>
+              <div class="panel-footer">
+                <span id="translationStatus"></span>
+                <button class="copy-btn" id="copyBtn">Copy</button>
+              </div>
+            </div>
+          </div>
+          <div class="translator-actions">
+            <button class="translate-btn" id="translateBtn">
+              <span class="btn-icon">🌐</span>
+              Translate
+            </button>
+          </div>
+          <div class="translator-info">
+            <p>Powered by AI machine translation. Tigrinya uses the Ge'ez script (ፊደል).</p>
+          </div>
+        </div>
+
+        <!-- PHRASEBOOK -->
+        <div class="phrasebook">
+          <h3>Common Tigrinya Phrases</h3>
+          <p class="phrasebook-sub">Click a phrase to load it for translation</p>
+          <div class="phrase-list" id="phraseList">
+            <div class="phrase-item" data-ti="ሰላም" data-en="Hello / Peace">
+              <span class="ti">ሰላም</span>
+              <span class="en">Hello / Peace (Selam)</span>
+            </div>
+            <div class="phrase-item" data-ti="የቐንየለይ" data-en="Thank you">
+              <span class="ti">የቐንየለይ</span>
+              <span class="en">Thank you (Yekenyeley)</span>
+            </div>
+            <div class="phrase-item" data-ti="ከመይ ኣለካ?" data-en="How are you? (to male)">
+              <span class="ti">ከመይ ኣለካ?</span>
+              <span class="en">How are you? (Kemey aleka?)</span>
+            </div>
+            <div class="phrase-item" data-ti="ርሑስ ጽባሕ" data-en="Good morning">
+              <span class="ti">ርሑስ ጽባሕ</span>
+              <span class="en">Good morning (Rhus tsbah)</span>
+            </div>
+            <div class="phrase-item" data-ti="ሰናይ ምሸት" data-en="Good evening">
+              <span class="ti">ሰናይ ምሸት</span>
+              <span class="en">Good evening (Senay mshet)</span>
+            </div>
+            <div class="phrase-item" data-ti="ስምካ ማን ኢዩ?" data-en="What is your name?">
+              <span class="ti">ስምካ ማን ኢዩ?</span>
+              <span class="en">What is your name?</span>
+            </div>
+            <div class="phrase-item" data-ti="ኤርትራ ሃገረይ ኢያ" data-en="Eritrea is my country">
+              <span class="ti">ኤርትራ ሃገረይ ኢያ</span>
+              <span class="en">Eritrea is my country</span>
+            </div>
+            <div class="phrase-item" data-ti="ማይ ሃበኒ" data-en="Give me water">
+              <span class="ti">ማይ ሃበኒ</span>
+              <span class="en">Give me water (May habeni)</span>
+            </div>
+            <div class="phrase-item" data-ti="ቋንቋ ትግርኛ ይፈቱ" data-en="I love the Tigrinya language">
+              <span class="ti">ቋንቋ ትግርኛ ይፈቱ</span>
+              <span class="en">I love the Tigrinya language</span>
+            </div>
+            <div class="phrase-item" data-ti="ሓደ ህዝቢ ሓደ ልቢ" data-en="One people, one heart">
+              <span class="ti">ሓደ ህዝቢ ሓደ ልቢ</span>
+              <span class="en">One people, one heart (national motto)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOURISM -->
+  <section id="tourism">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Tourism</span>
+        <h2>Must-Visit Places</h2>
+        <p>From UNESCO World Heritage sites to pristine Red Sea beaches — Eritrea is Africa's hidden gem</p>
+      </div>
+      <div class="tourism-grid">
+        <div class="tourism-card">
+          <div class="tourism-badge">🏛️ UNESCO Heritage</div>
+          <h3>Asmara</h3>
+          <p>The capital city with an extraordinary collection of Art Deco, Futurist, Rationalist, and Expressionist architecture. Walk Harnet Avenue, visit Cinema Impero, and explore the vibrant Central Market.</p>
+        </div>
+        <div class="tourism-card">
+          <div class="tourism-badge">⚓ Historic Port</div>
+          <h3>Massawa (Mitsiwa)</h3>
+          <p>A 3,000-year-old port city on the Red Sea. Features Ottoman, Egyptian, and Italian architecture, the historic Sheikh Hanafi Mosque, and dramatic ruins from the 1990 liberation battle. Gateway to the Dahlak Archipelago.</p>
+        </div>
+        <div class="tourism-card">
+          <div class="tourism-badge">🏝️ Marine Paradise</div>
+          <h3>Dahlak Archipelago</h3>
+          <p>Over 200 islands in the Red Sea with crystal-clear waters, untouched coral reefs, sea turtles, dolphins, and dugongs. One of the least-visited and most pristine marine environments in the world.</p>
+        </div>
+        <div class="tourism-card">
+          <div class="tourism-badge">🐪 Cultural Hub</div>
+          <h3>Keren</h3>
+          <p>Eritrea's second city, nestled in a mountain valley. Famous for the weekly camel market, the Shrine of Our Lady of Keren, and historical sites from World War II battles between British and Italian forces.</p>
+        </div>
+        <div class="tourism-card">
+          <div class="tourism-badge">🚂 Railway</div>
+          <h3>Asmara–Massawa Railway</h3>
+          <p>One of the world's most spectacular railways, built by the Italians, descending 2,400 meters in just 120 km through tunnels, bridges, and switchbacks. Eritreans lovingly maintain this historic marvel, partly with steam engines.</p>
+        </div>
+        <div class="tourism-card">
+          <div class="tourism-badge">🔱 Ancient</div>
+          <h3>Qohaito Archaeological Site</h3>
+          <p>Ancient ruins of the Aksumite period including the Temple of Mariam Wakiro, the Saphira Dam, and mysterious rock engravings. One of the most significant archaeological sites in the Horn of Africa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer id="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo">🇪🇷 EritreanInfo</div>
+        <p>A comprehensive public information resource about the State of Eritrea. Built to share knowledge about Eritrea's rich history, culture, and people with the world.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Sections</h4>
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#history">History</a></li>
+          <li><a href="#geography">Geography</a></li>
+          <li><a href="#people">People & Demographics</a></li>
+          <li><a href="#culture">Culture & Traditions</a></li>
+          <li><a href="#economy">Economy</a></li>
+          <li><a href="#gallery">Photo Gallery</a></li>
+          <li><a href="#translator">Tigrinya Translator</a></li>
+        </ul>
+      </div>
+      <div class="footer-facts">
+        <h4>Quick Facts</h4>
+        <ul>
+          <li>🏙️ Capital: Asmara (UNESCO Heritage)</li>
+          <li>📅 Independence: May 24, 1993</li>
+          <li>👥 9 Ethnic Groups</li>
+          <li>🌊 2,234 km Red Sea Coastline</li>
+          <li>🏔️ Highest Peak: Emba Soira (3,018m)</li>
+          <li>📐 Area: 117,600 km²</li>
+          <li>💰 Currency: Nakfa (ERN)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Information compiled from public sources. All images from Wikimedia Commons (public domain / CC licensed) or placeholder imagery. &copy; 2025 EritreanInfo. Made with ❤️ for the Eritrean people.</p>
+      <p class="footer-slogan">ሓደ ህዝቢ ሓደ ልቢ — One People, One Heart 🇪🇷</p>
+      <p class="footer-signature">Designed &amp; Built by <span>Chris Embaye</span></p>
+    </div>
+  </footer>
+
+  <a href="#hero" class="back-to-top" id="backToTop" title="Back to top">↑</a>
+
+  <!-- Offline toast -->
+  <div class="offline-toast" id="offlineToast">📡 You're offline — app still works!</div>
+
+  <!-- NATIONAL ANTHEM PLAYER (top-left) -->
+  <div class="anthem-player" id="anthemPlayer">
+    <div class="anthem-bar">
+      <div class="anthem-bar-left">
+        <span class="anthem-bar-icon">🎖</span>
+        <span class="anthem-bar-title">National Anthem</span>
+      </div>
+      <div class="anthem-bar-right">
+        <button class="anthem-bar-btn" id="anthemBarPlay" title="Play / Pause">&#9654;</button>
+        <button class="anthem-bar-btn" id="anthemBarToggle" title="Expand">&#9660;</button>
+      </div>
+    </div>
+    <div class="anthem-panel" id="anthemPanel">
+      <div class="anthem-img-wrap">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Eitrea_Martyrs%27_Day_Remembrance_%26_Celebration_2023_Asmara%2C_Eritrea.jpg/400px-Eitrea_Martyrs%27_Day_Remembrance_%26_Celebration_2023_Asmara%2C_Eritrea.jpg"
+          alt="Eritrean Defence Forces — Martyrs' Day Asmara 2023"
+          loading="lazy"
+        />
+        <div class="anthem-img-overlay">Eritrean Defence Forces</div>
+      </div>
+      <div class="anthem-meta">
+        <div class="anthem-tigrinya">ኤርትራ ኤርትራ ኤርትራ</div>
+        <div class="anthem-subtitle">Ertra, Ertra, Ertra &mdash; National Anthem</div>
+      </div>
+      <div class="anthem-progress-row">
+        <span class="anthem-time" id="anthemCur">0:00</span>
+        <div class="anthem-track" id="anthemTrack">
+          <div class="anthem-fill" id="anthemFill"></div>
+        </div>
+        <span class="anthem-time" id="anthemDur">0:00</span>
+      </div>
+      <div class="anthem-controls-row">
+        <button class="anthem-play-btn" id="anthemPlay">&#9654;</button>
+        <span class="anthem-credit">Performed by US Navy Band &mdash; Public Domain</span>
+      </div>
+      <audio
+        id="anthemAudio"
+        src="https://upload.wikimedia.org/wikipedia/commons/4/4f/National_Anthem_of_Eritrea_by_US_Navy_Band.ogg"
+        preload="none"
+      ></audio>
+    </div>
+  </div>
+
+  <!-- AI CHAT WIDGET -->
+  <div class="chat-widget" id="chatWidget">
+    <button class="chat-toggle" id="chatToggle" aria-label="Open AI Assistant">
+      <span class="chat-icon">💬</span>
+      <span class="chat-close-icon" style="display:none">✕</span>
+    </button>
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="chat-avatar">🇪🇷</div>
+          <div>
+            <div class="chat-name">Eritrea AI Guide</div>
+            <div class="chat-status" id="chatStatus">Ask me anything</div>
+          </div>
+        </div>
+        <div class="chat-header-actions">
+          <button class="chat-header-btn" id="chatKeyBtn" title="Change API key">🔑</button>
+          <button class="chat-header-btn" id="chatClear" title="Clear chat">🗑</button>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-message bot">
+          <div class="chat-bubble">Selam! 👋 I'm your Eritrea AI Guide. Ask me anything — history, culture, Tigrinya language, geography, food, or any other topic!</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Ask about Eritrea…" maxlength="500" autocomplete="off" />
+        <button class="chat-send" id="chatSend" aria-label="Send">&#10148;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API KEY MODAL -->
+  <div class="api-modal" id="apiModal">
+    <div class="api-modal-box">
+      <h3>🔑 Connect Free AI</h3>
+      <p>This chat uses Google's <strong>Gemini 1.5 Flash</strong> — free with no credit card needed.<br>
+        Get your free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com</a>, then paste it below.</p>
+      <input class="api-modal-input" type="text" id="apiKeyInput" placeholder="AIza…" spellcheck="false" />
+      <div class="api-modal-btns">
+        <button class="api-btn-save" id="apiKeySave">Save &amp; Chat</button>
+        <button class="api-btn-cancel" id="apiKeyCancel">Cancel</button>
+      </div>
+      <p class="api-note">Your key is saved only in this browser and only used to call Google's API.</p>
+    </div>
+  </div>
+
+  <!-- INSTALL APP MODAL -->
+  <div class="install-modal" id="installModal">
+    <div class="install-modal-box">
+      <button class="install-modal-close" id="installModalClose">&times;</button>
+
+      <div class="install-modal-header">
+        <div class="install-modal-icon">🇪🇷</div>
+        <div>
+          <div class="install-modal-name">Eritrean Info</div>
+          <div class="install-modal-meta">Free &nbsp;·&nbsp; Works Offline &nbsp;·&nbsp; No App Store Needed</div>
+        </div>
+      </div>
+
+      <!-- Direct install button (shown when browser supports PWA) -->
+      <div id="installNowWrap" style="display:none">
+        <button class="install-now-btn" id="installNowBtn">&#11015; Install App Now</button>
+        <p class="install-now-sub">One click &mdash; installs like a native app</p>
+        <div class="install-divider"><span>or install manually below</span></div>
+      </div>
+
+      <p class="install-modal-intro">Choose your device to see how to install:</p>
+
+      <div class="install-platforms">
+
+        <div class="install-platform">
+          <div class="install-platform-icon">🤖</div>
+          <div class="install-platform-body">
+            <div class="install-platform-name">Android &mdash; Chrome</div>
+            <ol class="install-steps">
+              <li>Open this site in <strong>Chrome</strong></li>
+              <li>Tap the <strong>⋮ menu</strong> (top-right)</li>
+              <li>Tap <strong>"Add to Home Screen"</strong></li>
+              <li>Tap <strong>Add</strong> &mdash; done!</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="install-platform">
+          <div class="install-platform-icon">🍎</div>
+          <div class="install-platform-body">
+            <div class="install-platform-name">iPhone &amp; iPad &mdash; Safari</div>
+            <ol class="install-steps">
+              <li>Open this site in <strong>Safari</strong></li>
+              <li>Tap the <strong>Share</strong> button <span class="install-inline-icon">&#9633;&#8593;</span></li>
+              <li>Scroll down, tap <strong>"Add to Home Screen"</strong></li>
+              <li>Tap <strong>Add</strong> &mdash; done!</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="install-platform">
+          <div class="install-platform-icon">🖥️</div>
+          <div class="install-platform-body">
+            <div class="install-platform-name">Windows &amp; Mac &mdash; Chrome / Edge</div>
+            <ol class="install-steps">
+              <li>Open this site in <strong>Chrome</strong> or <strong>Edge</strong></li>
+              <li>Click the <strong>install icon ⊕</strong> in the address bar</li>
+              <li>Click <strong>"Install"</strong> in the popup</li>
+              <li>App opens in its own window &mdash; done!</li>
+            </ol>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="install-features">
+        <div class="install-feature"><span>⚡</span> Instant load</div>
+        <div class="install-feature"><span>📶</span> Works offline</div>
+        <div class="install-feature"><span>🔔</span> No App Store</div>
+        <div class="install-feature"><span>💾</span> ~2 MB size</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
