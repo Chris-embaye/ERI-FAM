@@ -1161,6 +1161,82 @@ communityModalSubmit.addEventListener('click', async () => {
   } catch(e) { console.warn('[About footer]', e); }
 })();
 
+// ── MONETIZE (sponsors, donation, bio links) ──────────────
+(async function loadEriMonetize() {
+  try {
+    const [appMod, fsMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    ]);
+    const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
+    const db  = fsMod.getFirestore(app);
+
+    const monSnap = await fsMod.getDoc(fsMod.doc(db, 'hub_settings', 'monetize'));
+    if (monSnap.exists()) {
+      const m   = monSnap.data();
+      const don = m.donation || {};
+
+      // Donation bar
+      if (don.enabled !== false) {
+        const bar = document.getElementById('eriDonateBar');
+        if (bar) bar.style.display = '';
+        const msgEl = document.getElementById('eriDonateMsg');
+        if (msgEl && don.message) msgEl.textContent = don.message;
+        const linksEl = document.getElementById('eriDonateLinks');
+        if (linksEl) {
+          const defs = [
+            [don.paypal,   '💳', 'PayPal',   don.paypal],
+            [don.cashapp,  '💵', 'Cash App', don.cashapp ? `https://cash.app/${don.cashapp.replace(/^\$/,'')}` : ''],
+            [don.venmo,    '🏦', 'Venmo',    don.venmo   ? `https://venmo.com/${don.venmo.replace(/^@/,'')}` : ''],
+            [don.kofi,     '☕', 'Ko-fi',    don.kofi],
+            [don.patreon,  '🎨', 'Patreon',  don.patreon],
+            [don.gofundme, '❤️', 'GoFundMe', don.gofundme],
+          ].filter(([val]) => val);
+          linksEl.innerHTML = defs.map(([, ico, label, url]) =>
+            `<a href="${url}" target="_blank" rel="noopener" class="eri-donate-btn">${ico} ${label}</a>`
+          ).join('');
+        }
+      }
+
+      // Bio links
+      const links = m.links || [];
+      if (links.length) {
+        const col = document.getElementById('aboutFooterLinksCol');
+        if (col) col.style.display = '';
+        const bioEl = document.getElementById('aboutFooterBioLinks');
+        if (bioEl) {
+          bioEl.innerHTML = links.map(l =>
+            `<a href="${l.url}" target="_blank" rel="noopener" class="eri-bio-link">
+               <span>${l.emoji || '🔗'}</span> ${l.title}
+             </a>`
+          ).join('');
+        }
+      }
+    }
+
+    // Sponsors
+    const spSnap = await fsMod.getDocs(
+      fsMod.query(fsMod.collection(db, 'hub_sponsors'),
+        fsMod.where('status', '==', 'active'),
+        fsMod.where('targetApp', 'in', ['all', 'eritreaninfo'])
+      )
+    );
+    if (!spSnap.empty) {
+      const strip = document.getElementById('eriSponsorStrip');
+      if (strip) {
+        strip.style.display = '';
+        const sponsors = spSnap.docs.map(d => d.data());
+        strip.innerHTML = `<div class="eri-sponsor-label">Our Sponsors</div>` +
+          sponsors.map(s => `
+            <a href="${s.link}" target="_blank" rel="noopener" class="eri-sponsor-item">
+              ${s.logo ? `<img src="${s.logo}" alt="${s.name}" class="eri-sp-logo"/>` : ''}
+              <div class="eri-sp-name">${s.name}</div>
+            </a>`).join('');
+      }
+    }
+  } catch(e) { console.warn('[EriMonetize]', e); }
+})();
+
 // ── READING PROGRESS BAR ─────────────────────────────────
 const readingBar = document.getElementById('readingProgress');
 if (readingBar) {

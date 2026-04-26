@@ -2451,6 +2451,60 @@ option { background: #1C1C1E; color: #fff; }
 .about-social-btn:hover { background: var(--accent); color: #fff; }
 .about-empty-text { font-size: .82rem; color: var(--text-sub); margin: 0; }
 
+/* ── PREMIUM LOCK BADGE ───────────────────────────────────── */
+.tc-premium-lock {
+  font-size: .75em; vertical-align: middle; margin-left: 3px; opacity: .7;
+}
+
+/* ── SPONSOR BANNER ───────────────────────────────────────── */
+.sponsor-banner {
+  margin: 0 0 14px; border-radius: 14px; overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border: 1px solid rgba(255,255,255,.08);
+}
+.sponsor-banner-link {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  color: var(--text); text-decoration: none;
+  transition: background .15s;
+}
+.sponsor-banner-link:hover { background: rgba(255,255,255,.05); }
+.sp-logo { width: 40px; height: 40px; border-radius: 8px; object-fit: contain; flex-shrink: 0; }
+.sp-emoji { font-size: 1.6rem; flex-shrink: 0; }
+.sp-info { flex: 1; min-width: 0; }
+.sp-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .8px; color: var(--accent); font-weight: 700; }
+.sp-name { font-size: .88rem; font-weight: 700; margin-top: 1px; }
+.sp-desc { font-size: .75rem; color: var(--text-sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-arrow { font-size: .9rem; color: var(--text-sub); flex-shrink: 0; }
+
+/* ── DONATE LINKS (settings) ──────────────────────────────── */
+.donate-links-row {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+}
+.donate-link-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 16px; border-radius: 99px;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+  color: var(--text); font-size: .82rem; font-weight: 600;
+  text-decoration: none; transition: background .15s, border-color .15s;
+}
+.donate-link-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── BIO LINKS (settings) ────────────────────────────────── */
+.settings-bio-links { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.settings-bio-link {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 12px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
+  color: var(--text); text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.settings-bio-link:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.15); }
+.sbl-emoji { font-size: 1.2rem; flex-shrink: 0; width: 28px; text-align: center; }
+.sbl-info { flex: 1; min-width: 0; }
+.sbl-title { font-size: .875rem; font-weight: 600; }
+.sbl-desc { font-size: .72rem; color: var(--text-sub); margin-top: 1px; }
+.sbl-arrow { font-size: .8rem; color: var(--text-sub); flex-shrink: 0; }
+
 /* ── FULL PLAYER META ROW (position + up-next) ───────────── */
 .fp-meta-row {
   display: flex; align-items: center; justify-content: center;

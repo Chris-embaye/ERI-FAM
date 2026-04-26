@@ -304,6 +304,17 @@ async function getBlobUrl(track) {
 async function playTrack(track, queueTracks) {
   if (!track) return;
 
+  // Premium gating
+  if (track.premium) {
+    showToast('🔒 This is Members Only content. Support us to unlock premium tracks!', 3500);
+    const sec = document.getElementById('settingsSupportSection');
+    if (sec && sec.style.display !== 'none') {
+      document.getElementById('settingsPanel')?.classList.add('open');
+      sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return;
+  }
+
   // Resume AudioContext if EQ/Visualizer was opened previously.
   if (audioCtx && audioCtx.state !== 'running') await audioCtx.resume().catch(() => {});
 
@@ -603,7 +614,7 @@ function renderGrid(tracks) {
         ${playing ? `<div class="tc-eq-bars"><span style="height:8px"></span><span style="height:14px"></span><span style="height:6px"></span></div>` : ''}
       </div>
       <div class="tc-info">
-        <div class="tc-title">${esc(t.title)}</div>
+        <div class="tc-title">${esc(t.title)}${t.premium ? ' <span class="tc-premium-lock">🔒</span>' : ''}</div>
         <div class="tc-artist">${esc(t.artist)}</div>
       </div>
       <button class="tc-more" data-id="${t.id}">⋯</button>
@@ -3407,4 +3418,83 @@ document.getElementById('kbdHelpBtn')?.addEventListener('click', _toggleKeyboard
     const empty = document.getElementById('settingsAboutEmpty');
     if (empty) empty.textContent = 'Contact info coming soon.';
   }
+})();
+
+// ── MONETIZE LOADER (donation, sponsors, bio links) ────────
+(async function loadMonetize() {
+  try {
+    const [appMod, fsMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    ]);
+    const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
+    const db  = fsMod.getFirestore(app);
+
+    // Donation / support
+    const monSnap = await fsMod.getDoc(fsMod.doc(db, 'hub_settings', 'monetize'));
+    if (monSnap.exists()) {
+      const m   = monSnap.data();
+      const don = m.donation || {};
+      if (don.enabled !== false) {
+        const sec = document.getElementById('settingsSupportSection');
+        if (sec) sec.style.display = '';
+        const msgEl = document.getElementById('settingsDonateMsg');
+        if (msgEl && don.message) msgEl.textContent = don.message;
+        const linksEl = document.getElementById('settingsDonateLinks');
+        if (linksEl) {
+          const defs = [
+            [don.paypal,    '💳', 'PayPal',   don.paypal],
+            [don.cashapp,   '💵', 'Cash App', don.cashapp ? `https://cash.app/${don.cashapp.replace(/^\$/,'')}` : ''],
+            [don.venmo,     '🏦', 'Venmo',    don.venmo   ? `https://venmo.com/${don.venmo.replace(/^@/,'')}` : ''],
+            [don.kofi,      '☕', 'Ko-fi',    don.kofi],
+            [don.patreon,   '🎨', 'Patreon',  don.patreon],
+            [don.gofundme,  '❤️', 'GoFundMe', don.gofundme],
+          ].filter(([val]) => val);
+          linksEl.innerHTML = defs.map(([, ico, label, url]) =>
+            `<a href="${url}" target="_blank" rel="noopener" class="donate-link-btn">${ico} ${label}</a>`
+          ).join('');
+        }
+      }
+      // Bio links
+      const links = m.links || [];
+      if (links.length) {
+        const bioSec = document.getElementById('settingsBioSection');
+        if (bioSec) bioSec.style.display = '';
+        const bioEl = document.getElementById('settingsBioLinks');
+        if (bioEl) {
+          bioEl.innerHTML = links.map(l =>
+            `<a href="${l.url}" target="_blank" rel="noopener" class="settings-bio-link">
+               <span class="sbl-emoji">${l.emoji || '🔗'}</span>
+               <div class="sbl-info"><div class="sbl-title">${l.title}</div>${l.desc ? `<div class="sbl-desc">${l.desc}</div>` : ''}</div>
+               <span class="sbl-arrow">↗</span>
+             </a>`
+          ).join('');
+        }
+      }
+    }
+
+    // Sponsors
+    const spSnap = await fsMod.getDocs(
+      fsMod.query(fsMod.collection(db, 'hub_sponsors'),
+        fsMod.where('status', '==', 'active'),
+        fsMod.where('targetApp', 'in', ['all', 'erifam'])
+      )
+    );
+    const bannerEl = document.getElementById('sponsorBanner');
+    if (bannerEl && !spSnap.empty) {
+      bannerEl.style.display = '';
+      const sponsors = spSnap.docs.map(d => d.data());
+      const sp = sponsors[Math.floor(Math.random() * sponsors.length)];
+      bannerEl.innerHTML = `
+        <a href="${sp.link}" target="_blank" rel="noopener" class="sponsor-banner-link">
+          ${sp.logo ? `<img src="${sp.logo}" alt="${sp.name}" class="sp-logo"/>` : `<span class="sp-emoji">🤝</span>`}
+          <div class="sp-info">
+            <div class="sp-label">Sponsored</div>
+            <div class="sp-name">${sp.name}</div>
+            ${sp.description ? `<div class="sp-desc">${sp.description}</div>` : ''}
+          </div>
+          <span class="sp-arrow">↗</span>
+        </a>`;
+    }
+  } catch(e) { console.warn('[Monetize]', e); }
 })();

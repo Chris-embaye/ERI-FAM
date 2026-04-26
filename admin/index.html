@@ -126,6 +126,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         <span>Analytics</span>
       </button>
+      <button class="sb-item" data-page="monetize">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Monetize</span>
+      </button>
       <button class="sb-item" data-page="about">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span>About Us</span>
@@ -226,6 +230,13 @@
           <div class="stat-body">
             <div class="stat-num" id="statTracks">—</div>
             <div class="stat-lbl">Music Tracks</div>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#10b981">
+          <div class="stat-ico">💰</div>
+          <div class="stat-body">
+            <div class="stat-num" id="statRevenue">$0</div>
+            <div class="stat-lbl">Revenue Logged</div>
           </div>
         </div>
       </div>
@@ -374,6 +385,7 @@
             <option value="title">Title A–Z</option>
             <option value="artist">Artist A–Z</option>
           </select>
+          <button class="btn-sm" id="toggleSelectBtn">☐ Select</button>
           <button class="btn-sm" id="exportTracksBtn">📥 CSV</button>
           <span id="musicCount" style="font-size:.82rem;color:var(--text-dim)"></span>
         </div>
@@ -384,6 +396,16 @@
         <select id="musicAlbumFilter"  class="form-input music-filter-sel"><option value="">All Albums</option></select>
         <button class="btn-danger" id="musicDeleteFilteredBtn" style="display:none;padding:6px 14px;font-size:.8rem">🗑 Delete Filtered</button>
         <span id="musicFilterCount" style="font-size:.78rem;color:var(--text-dim);margin-left:auto"></span>
+      </div>
+
+      <!-- Bulk edit bar -->
+      <div id="musicBulkBar" class="music-bulk-bar" style="display:none">
+        <span id="musicBulkCount" class="music-bulk-count">0 selected</span>
+        <input type="text" id="bulkArtist" class="form-input music-bulk-input" placeholder="Set artist for all selected…"/>
+        <input type="text" id="bulkAlbum"  class="form-input music-bulk-input" placeholder="Set album for all selected…"/>
+        <button class="btn-sm" id="bulkApplyBtn">✓ Apply</button>
+        <button class="btn-danger" id="bulkDeleteBtn" style="padding:6px 14px;font-size:.8rem">🗑 Delete</button>
+        <button class="btn-sm" id="bulkClearBtn">✕ Clear</button>
       </div>
 
       <!-- Upload zone -->
@@ -613,6 +635,74 @@
             <p class="empty-msg">No activity logged yet.</p>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ══ MONETIZE ══ -->
+    <div class="page" id="page-monetize">
+      <div class="page-hd">
+        <div>
+          <h1>Monetize</h1>
+          <p class="page-sub">Donation links, revenue tracking, sponsors, and your public bio links</p>
+        </div>
+        <button class="btn-primary" id="saveMonetizeBtn">💾 Save Settings</button>
+      </div>
+      <div class="settings-grid">
+
+        <div class="card" style="grid-column:1/-1">
+          <h3>💸 Donation &amp; Support Links</h3>
+          <p style="font-size:.78rem;color:var(--text-dim);margin:-8px 0 16px">These links appear as a "Support Us" button in your apps. Turn on to make it visible.</p>
+          <label class="toggle-row" style="border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:16px">
+            <span>Show Support button in apps</span>
+            <label class="switch"><input type="checkbox" id="donateEnabled" checked/><span class="slider"></span></label>
+          </label>
+          <div class="form-group"><label>Support Message</label><input type="text" id="donateMessage" class="form-input" placeholder="Support ERI-FAM and help keep the music going! 🙏" maxlength="120"/></div>
+          <div class="form-row2">
+            <div class="form-group"><label>PayPal</label><input type="url" id="donatePaypal" class="form-input" placeholder="https://paypal.me/yourname"/></div>
+            <div class="form-group"><label>Cash App</label><input type="text" id="donateCashapp" class="form-input" placeholder="$yourcashtag"/></div>
+            <div class="form-group"><label>Venmo</label><input type="text" id="donateVenmo" class="form-input" placeholder="@yourvenmo"/></div>
+            <div class="form-group"><label>Ko-fi</label><input type="url" id="donateKofi" class="form-input" placeholder="https://ko-fi.com/yourname"/></div>
+            <div class="form-group"><label>Patreon</label><input type="url" id="donatePatreon" class="form-input" placeholder="https://patreon.com/yourname"/></div>
+            <div class="form-group"><label>GoFundMe</label><input type="url" id="donateGofundme" class="form-input" placeholder="https://gofundme.com/…"/></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd" style="margin-bottom:16px">
+            <h3>📊 Revenue Tracker</h3>
+            <button class="btn-sm" id="addRevenueBtn">+ Log Payment</button>
+          </div>
+          <div class="revenue-total-row">
+            <span class="revenue-total-num" id="revTotal">$0.00</span>
+            <span class="revenue-total-lbl">total logged</span>
+          </div>
+          <div id="revenueList" class="revenue-list">
+            <p class="empty-msg">No revenue logged yet. Click + Log Payment to add.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd" style="margin-bottom:16px">
+            <h3>🔗 Your Links (Bio)</h3>
+            <button class="btn-sm" id="addBioLinkBtn">+ Add Link</button>
+          </div>
+          <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:14px">Clickable links shown in your apps — merch store, booking, download, etc.</p>
+          <div id="bioLinkList" class="bio-link-list">
+            <p class="empty-msg">No links yet. Add your merch store, booking page, etc.</p>
+          </div>
+        </div>
+
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-hd" style="margin-bottom:16px">
+            <h3>🤝 Sponsor Slots</h3>
+            <button class="btn-sm" id="addSponsorBtn">+ New Sponsor</button>
+          </div>
+          <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:16px">Sponsors appear as banners in your apps. Charge local businesses for featured placement.</p>
+          <div id="sponsorGrid" class="sponsor-grid">
+            <p class="empty-msg" style="grid-column:1/-1">No sponsors yet. Add a sponsor slot to start earning.</p>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -952,6 +1042,10 @@ match /community_posts/{d} {
         <span id="trackCoverStatus" style="font-size:.75rem;color:var(--text-dim)"></span>
       </div>
     </div>
+    <label class="toggle-row" style="border-top:1px solid var(--border);padding-top:12px;border-bottom:none">
+      <span style="display:flex;align-items:center;gap:6px">🔒 <span>Premium — Members Only</span></span>
+      <label class="switch"><input type="checkbox" id="trackPremium"/><span class="slider"></span></label>
+    </label>
     <div class="modal-actions">
       <button class="btn-secondary" id="trackModalCancel">Cancel</button>
       <button class="btn-primary" id="trackModalSave">Save Track</button>
@@ -969,7 +1063,18 @@ match /community_posts/{d} {
     <input type="hidden" id="playlistModalId"/>
     <div class="form-group"><label>Playlist Name *</label><input type="text" id="plName" class="form-input" placeholder="Best of Eritrean 2024"/></div>
     <div class="form-group"><label>Description</label><input type="text" id="plDesc" class="form-input" placeholder="A curated collection of…"/></div>
-    <div class="form-group"><label>Cover Image URL</label><input type="url" id="plCover" class="form-input" placeholder="https://…"/></div>
+    <div class="form-group">
+      <label>Cover Image <span style="color:var(--text-dim);font-weight:400">(URL or upload)</span></label>
+      <div style="display:flex;gap:8px">
+        <input type="url" id="plCover" class="form-input" placeholder="https://… or upload →"/>
+        <label class="btn-sm" for="plCoverFile" style="cursor:pointer;padding:7px 12px;white-space:nowrap;display:flex;align-items:center">📷 Upload</label>
+        <input type="file" id="plCoverFile" accept="image/*" hidden/>
+      </div>
+      <div id="plCoverPreview" style="margin-top:8px;display:none;align-items:center;gap:10px">
+        <img id="plCoverPreviewImg" src="" style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1px solid var(--border)"/>
+        <span id="plCoverStatus" style="font-size:.75rem;color:var(--text-dim)"></span>
+      </div>
+    </div>
     <div class="form-group">
       <label>Status</label>
       <select id="plStatus" class="form-input">
@@ -978,6 +1083,16 @@ match /community_posts/{d} {
       </select>
     </div>
     <div class="form-group"><label>Tags <span style="color:var(--text-dim);font-weight:400">(comma separated)</span></label><input type="text" id="plTags" class="form-input" placeholder="eritrean, traditional, 2024"/></div>
+    <div class="form-group">
+      <label>Tracks <span style="color:var(--text-dim);font-weight:400">(drag to reorder)</span></label>
+      <div id="plTrackManager" class="pl-track-manager">
+        <div class="pl-track-search-wrap">
+          <input type="text" id="plTrackSearch" class="form-input" placeholder="Search tracks to add…" style="font-size:.82rem"/>
+        </div>
+        <div id="plTrackSearchResults" class="pl-track-search-results" hidden></div>
+        <div id="plTrackOrder" class="pl-track-order"></div>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-secondary" id="playlistModalCancel">Cancel</button>
       <button class="btn-primary" id="playlistModalSave">Save Playlist</button>
@@ -1011,15 +1126,119 @@ match /community_posts/{d} {
     <div class="form-group"><label>Author Name</label><input type="text" id="postMAuthor" class="form-input" placeholder="Admin"/></div>
     <div class="form-group">
       <label>Status</label>
-      <select id="postMStatus" class="form-input">
+      <select id="postMStatus" class="form-input" id="postMStatusSel">
         <option value="approved">✅ Approved — Public now</option>
+        <option value="scheduled">🕐 Scheduled — publish at a set time</option>
         <option value="pending">⏳ Pending — Needs review</option>
         <option value="rejected">❌ Rejected</option>
       </select>
     </div>
+    <div class="form-group" id="postPublishAtGroup" style="display:none">
+      <label>Publish At <span style="color:var(--text-dim);font-weight:400">(required for scheduled)</span></label>
+      <input type="datetime-local" id="postPublishAt" class="form-input"/>
+    </div>
     <div class="modal-actions">
       <button class="btn-secondary" id="postModalCancel">Cancel</button>
       <button class="btn-primary"   id="postModalSave">Publish Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sponsor Modal -->
+<div class="modal-overlay" id="sponsorModal" hidden>
+  <div class="modal" style="max-width:500px">
+    <div class="modal-hd">
+      <h3 id="sponsorModalTitle">New Sponsor</h3>
+      <button class="modal-x" id="sponsorModalClose">✕</button>
+    </div>
+    <input type="hidden" id="sponsorModalId"/>
+    <div class="form-group"><label>Business / Sponsor Name *</label><input type="text" id="sponsorName" class="form-input" placeholder="Eritrean Restaurant DC" maxlength="80"/></div>
+    <div class="form-group"><label>Logo URL <span style="color:var(--text-dim);font-weight:400">(optional)</span></label><input type="url" id="sponsorLogo" class="form-input" placeholder="https://… PNG logo"/></div>
+    <div class="form-group"><label>Website / Link *</label><input type="url" id="sponsorLink" class="form-input" placeholder="https://…"/></div>
+    <div class="form-group"><label>Tagline / Description</label><input type="text" id="sponsorDesc" class="form-input" placeholder="Authentic Eritrean food in Washington DC" maxlength="120"/></div>
+    <div class="form-row2">
+      <div class="form-group">
+        <label>Target App</label>
+        <select id="sponsorTarget" class="form-input">
+          <option value="all">All Apps</option>
+          <option value="erifam">ERI-FAM only</option>
+          <option value="eritreaninfo">Eritrean Info only</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="sponsorStatus" class="form-input">
+          <option value="active">🟢 Active</option>
+          <option value="draft">⚫ Draft</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="sponsorModalCancel">Cancel</button>
+      <button class="btn-primary"   id="sponsorModalSave">Save Sponsor</button>
+    </div>
+  </div>
+</div>
+
+<!-- Revenue Entry Modal -->
+<div class="modal-overlay" id="revenueModal" hidden>
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd">
+      <h3 id="revenueModalTitle">Log Payment</h3>
+      <button class="modal-x" id="revenueModalClose">✕</button>
+    </div>
+    <input type="hidden" id="revenueModalId"/>
+    <div class="form-row2">
+      <div class="form-group"><label>Amount *</label><input type="number" id="revAmount" class="form-input" placeholder="25.00" min="0" step="0.01"/></div>
+      <div class="form-group">
+        <label>Currency</label>
+        <select id="revCurrency" class="form-input">
+          <option value="USD">USD $</option>
+          <option value="ETB">ETB</option>
+          <option value="EUR">EUR €</option>
+          <option value="GBP">GBP £</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Source</label>
+      <select id="revSource" class="form-input">
+        <option value="PayPal">PayPal</option>
+        <option value="Cash App">Cash App</option>
+        <option value="Venmo">Venmo</option>
+        <option value="Ko-fi">Ko-fi</option>
+        <option value="Patreon">Patreon</option>
+        <option value="Sponsor">Sponsor</option>
+        <option value="GoFundMe">GoFundMe</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Date</label><input type="date" id="revDate" class="form-input"/></div>
+    <div class="form-group"><label>Note (optional)</label><input type="text" id="revNote" class="form-input" placeholder="Monthly supporter from John…" maxlength="200"/></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="revenueModalCancel">Cancel</button>
+      <button class="btn-primary"   id="revenueModalSave">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bio Link Modal -->
+<div class="modal-overlay" id="bioLinkModal" hidden>
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd">
+      <h3 id="bioLinkModalTitle">Add Link</h3>
+      <button class="modal-x" id="bioLinkModalClose">✕</button>
+    </div>
+    <input type="hidden" id="bioLinkModalId"/>
+    <div class="form-row2">
+      <div class="form-group"><label>Emoji / Icon</label><input type="text" id="bioLinkEmoji" class="form-input" placeholder="🛍" maxlength="4" style="font-size:1.4rem;text-align:center"/></div>
+      <div class="form-group"><label>Title *</label><input type="text" id="bioLinkTitle" class="form-input" placeholder="My Merch Store" maxlength="60"/></div>
+    </div>
+    <div class="form-group"><label>URL *</label><input type="url" id="bioLinkUrl" class="form-input" placeholder="https://…"/></div>
+    <div class="form-group"><label>Description (optional)</label><input type="text" id="bioLinkDesc" class="form-input" placeholder="Check out my latest merch!" maxlength="100"/></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="bioLinkModalCancel">Cancel</button>
+      <button class="btn-primary"   id="bioLinkModalSave">Save Link</button>
     </div>
   </div>
 </div>

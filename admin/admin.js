@@ -2277,5 +2277,797 @@ document.addEventListener('keydown', e => {
   });
 });
 
+// ── MONETIZE PAGE ─────────────────────────────────────────
+let allSponsors  = [];
+let allRevenue   = [];
+let _bioLinks    = [];
+
+// Wire showPage for monetize
+const _origShowPage2 = window.showPage;
+window.showPage = function(name) {
+  _origShowPage2(name);
+  if (name === 'monetize') loadMonetize();
+};
+
+document.getElementById('saveMonetizeBtn')?.addEventListener('click', saveMonetizeSettings);
+
+async function loadMonetize() {
+  try {
+    const snap = await fb.getDoc(fb.doc(_db, 'hub_settings', 'monetize'));
+    if (snap.exists()) {
+      const d = snap.data();
+      const don = d.donation || {};
+      document.getElementById('donateEnabled').checked  = don.enabled !== false;
+      document.getElementById('donateMessage').value    = don.message   || '';
+      document.getElementById('donatePaypal').value     = don.paypal    || '';
+      document.getElementById('donateCashapp').value    = don.cashapp   || '';
+      document.getElementById('donateVenmo').value      = don.venmo     || '';
+      document.getElementById('donateKofi').value       = don.kofi      || '';
+      document.getElementById('donatePatreon').value    = don.patreon   || '';
+      document.getElementById('donateGofundme').value   = don.gofundme  || '';
+      _bioLinks = d.links || [];
+      _renderBioLinks();
+    }
+    await Promise.all([loadSponsors(), loadRevenue()]);
+    // Load dashboard revenue total
+    _updateRevenueDashStat();
+  } catch(e) { console.warn('[Monetize]', e); }
+}
+
+async function saveMonetizeSettings() {
+  const btn = document.getElementById('saveMonetizeBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const data = {
+    donation: {
+      enabled:  document.getElementById('donateEnabled').checked,
+      message:  document.getElementById('donateMessage').value.trim(),
+      paypal:   document.getElementById('donatePaypal').value.trim(),
+      cashapp:  document.getElementById('donateCashapp').value.trim(),
+      venmo:    document.getElementById('donateVenmo').value.trim(),
+      kofi:     document.getElementById('donateKofi').value.trim(),
+      patreon:  document.getElementById('donatePatreon').value.trim(),
+      gofundme: document.getElementById('donateGofundme').value.trim(),
+    },
+    links: _bioLinks,
+    updatedAt: fb.serverTimestamp(),
+  };
+  try {
+    await fb.setDoc(fb.doc(_db, 'hub_settings', 'monetize'), data, { merge: true });
+    toast('✅ Monetize settings saved! Apps updated.', 'success');
+    logActivity('Monetize settings updated');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = '💾 Save Settings'; btn.disabled = false;
+}
+
+// ── SPONSORS ──────────────────────────────────────────────
+const sponsorModal = document.getElementById('sponsorModal');
+document.getElementById('addSponsorBtn')?.addEventListener('click', () => openSponsorModal());
+document.getElementById('sponsorModalClose')?.addEventListener('click',  () => sponsorModal.hidden = true);
+document.getElementById('sponsorModalCancel')?.addEventListener('click', () => sponsorModal.hidden = true);
+document.getElementById('sponsorModalSave')?.addEventListener('click',   saveSponsor);
+sponsorModal?.addEventListener('click', e => { if (e.target === sponsorModal) sponsorModal.hidden = true; });
+
+async function loadSponsors() {
+  const grid = document.getElementById('sponsorGrid');
+  if (!grid) return;
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_sponsors'), fb.orderBy('createdAt', 'desc')));
+    allSponsors = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderSponsors();
+  } catch(e) {
+    grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Error loading sponsors.</p>';
+  }
+}
+
+function renderSponsors() {
+  const grid = document.getElementById('sponsorGrid');
+  if (!grid) return;
+  if (!allSponsors.length) {
+    grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">No sponsors yet. Add a sponsor slot to start earning.</p>';
+    return;
+  }
+  grid.innerHTML = allSponsors.map(s => {
+    const statusCls = s.status === 'active' ? 'status-active' : 'status-draft';
+    const logo = s.logo
+      ? `<img src="${esc(s.logo)}" alt="${esc(s.name)}" style="width:48px;height:48px;object-fit:contain;border-radius:10px;border:1px solid var(--border)"/>`
+      : `<div style="width:48px;height:48px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:1.4rem">🤝</div>`;
+    return `
+      <div class="sponsor-card">
+        <div class="sponsor-card-top">
+          ${logo}
+          <div style="flex:1;min-width:0">
+            <div class="sponsor-card-name">${esc(s.name)}</div>
+            <div class="sponsor-card-desc">${esc(s.description || '')}</div>
+          </div>
+          <span class="app-status-pill ${statusCls}">${esc(s.status)}</span>
+        </div>
+        <div style="font-size:.72rem;color:var(--text-mute);margin:8px 0">Target: ${esc(s.targetApp === 'all' ? 'All Apps' : s.targetApp)}</div>
+        <div class="sponsor-card-actions">
+          <button class="app-act-edit"   onclick="openSponsorModal('${s.id}')">✏ Edit</button>
+          ${s.link ? `<button class="app-act-open" onclick="window.open('${esc(s.link)}','_blank')">↗ Visit</button>` : ''}
+          <button class="app-act-delete" onclick="deleteSponsor('${s.id}')">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+window.openSponsorModal = function(id) {
+  const s = id ? allSponsors.find(x => x.id === id) : null;
+  document.getElementById('sponsorModalTitle').textContent = s ? 'Edit Sponsor' : 'New Sponsor';
+  document.getElementById('sponsorModalId').value    = s?.id          || '';
+  document.getElementById('sponsorName').value       = s?.name        || '';
+  document.getElementById('sponsorLogo').value       = s?.logo        || '';
+  document.getElementById('sponsorLink').value       = s?.link        || '';
+  document.getElementById('sponsorDesc').value       = s?.description || '';
+  document.getElementById('sponsorTarget').value     = s?.targetApp   || 'all';
+  document.getElementById('sponsorStatus').value     = s?.status      || 'active';
+  sponsorModal.hidden = false;
+  document.getElementById('sponsorName').focus();
+};
+function openSponsorModal(id) { window.openSponsorModal(id); }
+
+async function saveSponsor() {
+  const id   = document.getElementById('sponsorModalId').value;
+  const name = document.getElementById('sponsorName').value.trim();
+  const link = document.getElementById('sponsorLink').value.trim();
+  if (!name || !link) { toast('Name and link are required.', 'error'); return; }
+  const btn = document.getElementById('sponsorModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const data = {
+    name, link,
+    logo:        document.getElementById('sponsorLogo').value.trim(),
+    description: document.getElementById('sponsorDesc').value.trim(),
+    targetApp:   document.getElementById('sponsorTarget').value,
+    status:      document.getElementById('sponsorStatus').value,
+    updatedAt:   fb.serverTimestamp(),
+  };
+  try {
+    if (id) {
+      await fb.updateDoc(fb.doc(_db, 'hub_sponsors', id), data);
+    } else {
+      data.createdAt = fb.serverTimestamp();
+      data.createdBy = currentUser.uid;
+      await fb.addDoc(fb.collection(_db, 'hub_sponsors'), data);
+      logActivity(`Sponsor "${name}" added`);
+    }
+    sponsorModal.hidden = true;
+    toast(id ? 'Sponsor updated!' : 'Sponsor added!', 'success');
+    loadSponsors();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Sponsor'; btn.disabled = false;
+}
+
+window.deleteSponsor = async function(id) {
+  const s = allSponsors.find(x => x.id === id);
+  if (!confirm(`Remove sponsor "${s?.name}"?`)) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'hub_sponsors', id));
+    toast('Sponsor removed.', 'warn');
+    logActivity(`Sponsor "${s?.name}" removed`);
+    loadSponsors();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+// ── REVENUE TRACKER ───────────────────────────────────────
+const revenueModal = document.getElementById('revenueModal');
+document.getElementById('addRevenueBtn')?.addEventListener('click', () => openRevenueModal());
+document.getElementById('revenueModalClose')?.addEventListener('click',  () => revenueModal.hidden = true);
+document.getElementById('revenueModalCancel')?.addEventListener('click', () => revenueModal.hidden = true);
+document.getElementById('revenueModalSave')?.addEventListener('click',   saveRevenueEntry);
+revenueModal?.addEventListener('click', e => { if (e.target === revenueModal) revenueModal.hidden = true; });
+
+async function loadRevenue() {
+  const list = document.getElementById('revenueList');
+  if (!list) return;
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_revenue'), fb.orderBy('createdAt', 'desc'), fb.limit(30)));
+    allRevenue = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderRevenue();
+    _updateRevenueDashStat();
+  } catch(e) {
+    list.innerHTML = '<p class="empty-msg">Error loading revenue.</p>';
+  }
+}
+
+function renderRevenue() {
+  const list = document.getElementById('revenueList');
+  const totalEl = document.getElementById('revTotal');
+  if (!list) return;
+  const usdEntries = allRevenue.filter(r => r.currency === 'USD' || !r.currency);
+  const total = usdEntries.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
+  if (!allRevenue.length) { list.innerHTML = '<p class="empty-msg">No revenue logged yet. Click + Log Payment to add.</p>'; return; }
+  list.innerHTML = allRevenue.map(r => {
+    const date = r.date ? new Date(r.date).toLocaleDateString() : (r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString() : '');
+    const cur  = r.currency || 'USD';
+    const sym  = { USD:'$', ETB:'', EUR:'€', GBP:'£' }[cur] || '';
+    return `
+      <div class="revenue-item">
+        <div class="revenue-item-left">
+          <div class="revenue-amount">${sym}${parseFloat(r.amount || 0).toFixed(2)} <span class="revenue-currency">${cur}</span></div>
+          <div class="revenue-meta">${esc(r.source || 'Other')} ${date ? '· ' + date : ''}</div>
+          ${r.note ? `<div class="revenue-note">${esc(r.note)}</div>` : ''}
+        </div>
+        <button class="revenue-del" onclick="deleteRevenueEntry('${r.id}')">✕</button>
+      </div>`;
+  }).join('');
+}
+
+function _updateRevenueDashStat() {
+  const el = document.getElementById('statRevenue');
+  if (!el) return;
+  const total = allRevenue.filter(r => r.currency === 'USD' || !r.currency)
+    .reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  el.textContent = '$' + total.toFixed(0);
+}
+
+function openRevenueModal(id) {
+  const r = id ? allRevenue.find(x => x.id === id) : null;
+  document.getElementById('revenueModalTitle').textContent = r ? 'Edit Entry' : 'Log Payment';
+  document.getElementById('revenueModalId').value  = r?.id     || '';
+  document.getElementById('revAmount').value       = r?.amount || '';
+  document.getElementById('revCurrency').value     = r?.currency || 'USD';
+  document.getElementById('revSource').value       = r?.source   || 'PayPal';
+  document.getElementById('revDate').value         = r?.date     || new Date().toISOString().slice(0, 10);
+  document.getElementById('revNote').value         = r?.note     || '';
+  revenueModal.hidden = false;
+  document.getElementById('revAmount').focus();
+}
+
+async function saveRevenueEntry() {
+  const id     = document.getElementById('revenueModalId').value;
+  const amount = parseFloat(document.getElementById('revAmount').value);
+  if (!amount || amount <= 0) { toast('Enter a valid amount.', 'error'); return; }
+  const btn = document.getElementById('revenueModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const data = {
+    amount,
+    currency:  document.getElementById('revCurrency').value,
+    source:    document.getElementById('revSource').value,
+    date:      document.getElementById('revDate').value,
+    note:      document.getElementById('revNote').value.trim(),
+    createdAt: fb.serverTimestamp(),
+  };
+  try {
+    if (id) {
+      await fb.updateDoc(fb.doc(_db, 'hub_revenue', id), data);
+    } else {
+      data.loggedBy = currentUser.uid;
+      await fb.addDoc(fb.collection(_db, 'hub_revenue'), data);
+      logActivity(`Revenue logged: $${amount} from ${data.source}`);
+    }
+    revenueModal.hidden = true;
+    toast('Revenue entry saved!', 'success');
+    loadRevenue();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Entry'; btn.disabled = false;
+}
+
+window.deleteRevenueEntry = async function(id) {
+  if (!confirm('Remove this revenue entry?')) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'hub_revenue', id));
+    toast('Entry removed.', 'warn');
+    loadRevenue();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+// ── BIO LINKS ─────────────────────────────────────────────
+const bioLinkModal = document.getElementById('bioLinkModal');
+document.getElementById('addBioLinkBtn')?.addEventListener('click', () => openBioLinkModal());
+document.getElementById('bioLinkModalClose')?.addEventListener('click',  () => bioLinkModal.hidden = true);
+document.getElementById('bioLinkModalCancel')?.addEventListener('click', () => bioLinkModal.hidden = true);
+document.getElementById('bioLinkModalSave')?.addEventListener('click',   saveBioLink);
+bioLinkModal?.addEventListener('click', e => { if (e.target === bioLinkModal) bioLinkModal.hidden = true; });
+
+function openBioLinkModal(id) {
+  const link = id ? _bioLinks.find(l => l.id === id) : null;
+  document.getElementById('bioLinkModalTitle').textContent = link ? 'Edit Link' : 'Add Link';
+  document.getElementById('bioLinkModalId').value    = link?.id    || '';
+  document.getElementById('bioLinkEmoji').value      = link?.emoji || '';
+  document.getElementById('bioLinkTitle').value      = link?.title || '';
+  document.getElementById('bioLinkUrl').value        = link?.url   || '';
+  document.getElementById('bioLinkDesc').value       = link?.desc  || '';
+  bioLinkModal.hidden = false;
+  document.getElementById('bioLinkTitle').focus();
+}
+
+function saveBioLink() {
+  const id    = document.getElementById('bioLinkModalId').value;
+  const title = document.getElementById('bioLinkTitle').value.trim();
+  const url   = document.getElementById('bioLinkUrl').value.trim();
+  if (!title || !url) { toast('Title and URL are required.', 'error'); return; }
+  const entry = {
+    id:    id || Date.now().toString(),
+    emoji: document.getElementById('bioLinkEmoji').value.trim() || '🔗',
+    title, url,
+    desc:  document.getElementById('bioLinkDesc').value.trim(),
+  };
+  if (id) {
+    const idx = _bioLinks.findIndex(l => l.id === id);
+    if (idx !== -1) _bioLinks[idx] = entry;
+  } else {
+    _bioLinks.push(entry);
+  }
+  _renderBioLinks();
+  bioLinkModal.hidden = true;
+  toast('Link saved! Click "Save Settings" to publish.', 'success');
+}
+
+function _renderBioLinks() {
+  const list = document.getElementById('bioLinkList');
+  if (!list) return;
+  if (!_bioLinks.length) { list.innerHTML = '<p class="empty-msg">No links yet. Add your merch store, booking page, etc.</p>'; return; }
+  list.innerHTML = _bioLinks.map(l => `
+    <div class="bio-link-item" data-lid="${esc(l.id)}">
+      <span class="bio-link-drag">⠿</span>
+      <span class="bio-link-emoji">${esc(l.emoji)}</span>
+      <div class="bio-link-info">
+        <div class="bio-link-title">${esc(l.title)}</div>
+        <div class="bio-link-url">${esc(l.url)}</div>
+      </div>
+      <button class="btn-sm" style="font-size:.72rem" onclick="openBioLinkModal('${esc(l.id)}')">✏</button>
+      <button class="btn-sm" style="font-size:.72rem;color:var(--danger)" onclick="deleteBioLink('${esc(l.id)}')">✕</button>
+    </div>`).join('');
+  _setupBioLinkDrag();
+}
+
+window.openBioLinkModal = openBioLinkModal;
+
+window.deleteBioLink = function(id) {
+  _bioLinks = _bioLinks.filter(l => l.id !== id);
+  _renderBioLinks();
+  toast('Link removed. Click Save Settings to publish.', 'warn');
+};
+
+function _setupBioLinkDrag() {
+  const list  = document.getElementById('bioLinkList');
+  const items = list?.querySelectorAll('.bio-link-item');
+  if (!items?.length) return;
+  let dragId = null;
+  items.forEach(item => {
+    item.setAttribute('draggable', 'true');
+    item.addEventListener('dragstart', () => { dragId = item.dataset.lid; item.style.opacity = '.4'; });
+    item.addEventListener('dragend',   () => { item.style.opacity = '1'; dragId = null; });
+    item.addEventListener('dragover',  e => { e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', () => {
+      item.classList.remove('drag-over');
+      const toId   = item.dataset.lid;
+      if (!dragId || dragId === toId) return;
+      const fromIdx = _bioLinks.findIndex(l => l.id === dragId);
+      const toIdx   = _bioLinks.findIndex(l => l.id === toId);
+      const [moved] = _bioLinks.splice(fromIdx, 1);
+      _bioLinks.splice(toIdx, 0, moved);
+      _renderBioLinks();
+    });
+  });
+}
+
+// ── BULK TRACK EDITOR ─────────────────────────────────────
+let _bulkSelected = new Set();
+let _selectMode   = false;
+
+document.getElementById('toggleSelectBtn')?.addEventListener('click', () => {
+  _selectMode = !_selectMode;
+  _bulkSelected.clear();
+  document.getElementById('toggleSelectBtn').textContent = _selectMode ? '✕ Cancel' : '☐ Select';
+  renderMusicTracks(getFilteredSortedTracks());
+  _updateBulkBar();
+});
+
+document.getElementById('bulkClearBtn')?.addEventListener('click', () => {
+  _bulkSelected.clear();
+  _updateBulkBar();
+  renderMusicTracks(getFilteredSortedTracks());
+});
+
+document.getElementById('bulkApplyBtn')?.addEventListener('click', async () => {
+  if (!_bulkSelected.size) return;
+  const artist = document.getElementById('bulkArtist').value.trim();
+  const album  = document.getElementById('bulkAlbum').value.trim();
+  if (!artist && !album) { toast('Enter an artist or album to apply.', 'error'); return; }
+  const updates = {};
+  if (artist) updates.artist = artist;
+  if (album)  updates.album  = album;
+  const btn = document.getElementById('bulkApplyBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await Promise.all([..._bulkSelected].map(id => fb.updateDoc(fb.doc(_db, 'tracks', id), updates)));
+    toast(`✓ Updated ${_bulkSelected.size} track${_bulkSelected.size !== 1 ? 's' : ''}!`, 'success');
+    logActivity(`Bulk updated ${_bulkSelected.size} track(s) (${Object.keys(updates).join(', ')})`);
+    _bulkSelected.clear();
+    document.getElementById('bulkArtist').value = '';
+    document.getElementById('bulkAlbum').value  = '';
+    loadMusic();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = '✓ Apply'; btn.disabled = false;
+});
+
+document.getElementById('bulkDeleteBtn')?.addEventListener('click', async () => {
+  if (!_bulkSelected.size) return;
+  if (!confirm(`Delete ${_bulkSelected.size} selected track${_bulkSelected.size !== 1 ? 's' : ''}? This cannot be undone.`)) return;
+  try {
+    await Promise.all([..._bulkSelected].map(id => fb.deleteDoc(fb.doc(_db, 'tracks', id))));
+    toast(`🗑 Deleted ${_bulkSelected.size} track${_bulkSelected.size !== 1 ? 's' : ''}`, 'warn');
+    logActivity(`Bulk deleted ${_bulkSelected.size} track(s)`);
+    _bulkSelected.clear();
+    loadMusic();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+});
+
+function _updateBulkBar() {
+  const bar = document.getElementById('musicBulkBar');
+  const cnt = document.getElementById('musicBulkCount');
+  if (!bar) return;
+  bar.style.display = (_selectMode && _bulkSelected.size > 0) ? 'flex' : 'none';
+  if (cnt) cnt.textContent = `${_bulkSelected.size} selected`;
+}
+
+// Override renderMusicTracks to support select mode + inline editing + premium badge
+const _origRenderMusicTracks = renderMusicTracks;
+window.renderMusicTracks = renderMusicTracks;
+
+// Patch renderMusicTracks to add checkboxes, premium badge, and inline editing
+(function patchRenderMusic() {
+  const orig = renderMusicTracks;
+  renderMusicTracks = function(tracks = allTracks) {
+    const list = document.getElementById('musicTrackList');
+    if (!tracks.length) {
+      list.innerHTML = allTracks.length
+        ? '<p class="empty-msg">No tracks match your search.</p>'
+        : '<p class="empty-msg">No cloud tracks yet. Upload songs above.</p>';
+      return;
+    }
+    list.innerHTML = tracks.map(t => {
+      const cover = t.cover ? `<img src="${esc(t.cover)}" alt=""/>` : '🎵';
+      const dur   = t.duration ? fmtDuration(t.duration) : '—';
+      const premBadge = t.premium ? '<span class="premium-badge">🔒 Premium</span>' : '';
+      const cb    = _selectMode
+        ? `<input type="checkbox" class="track-cb" data-id="${t.id}" ${_bulkSelected.has(t.id) ? 'checked' : ''} style="margin-right:4px;cursor:pointer"/>`
+        : '';
+      return `
+        <div class="music-track-row ${_selectMode ? 'select-mode' : ''}" data-track-id="${t.id}">
+          ${cb}
+          <div class="music-track-cover">${cover}</div>
+          <div class="music-track-info">
+            <div class="music-track-title" data-field="title" data-id="${t.id}">${esc(t.title || 'Unknown')}</div>
+            <div class="music-track-meta">
+              <span data-field="artist" data-id="${t.id}">${esc(t.artist || 'Unknown Artist')}</span>${t.album ? ` · <span data-field="album" data-id="${t.id}">${esc(t.album)}</span>` : ''}
+              ${premBadge}
+            </div>
+          </div>
+          <div class="music-track-dur">${dur}</div>
+          <div class="music-track-actions">
+            <button class="music-act-edit" onclick="openTrackModal('${t.id}')">✏ Edit</button>
+            <button class="music-act-del"  onclick="deleteTrack('${t.id}')">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Checkboxes
+    list.querySelectorAll('.track-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) _bulkSelected.add(cb.dataset.id);
+        else _bulkSelected.delete(cb.dataset.id);
+        _updateBulkBar();
+      });
+    });
+
+    // Inline editing — double-click title/artist/album to edit in place
+    list.querySelectorAll('[data-field]').forEach(el => {
+      el.style.cursor = 'text';
+      el.title = 'Double-click to edit';
+      el.addEventListener('dblclick', () => {
+        const field = el.dataset.field;
+        const id    = el.dataset.id;
+        const orig  = el.textContent;
+        const input = document.createElement('input');
+        input.value     = orig;
+        input.className = 'inline-track-input';
+        el.replaceWith(input);
+        input.focus();
+        input.select();
+        const finish = async (save) => {
+          const val = input.value.trim() || orig;
+          const span = document.createElement(el.tagName);
+          span.className     = el.className;
+          span.dataset.field = field;
+          span.dataset.id    = id;
+          span.textContent   = val;
+          input.replaceWith(span);
+          span.style.cursor = 'text';
+          span.title = 'Double-click to edit';
+          span.addEventListener('dblclick', el.ondblclick);
+          if (save && val !== orig) {
+            try {
+              await fb.updateDoc(fb.doc(_db, 'tracks', id), { [field]: val });
+              const t = allTracks.find(x => x.id === id);
+              if (t) t[field] = val;
+              toast(`✓ ${field} updated`, 'success');
+            } catch(e) { toast('Save failed: ' + e.message, 'error'); }
+          }
+        };
+        input.addEventListener('blur',    () => finish(true));
+        input.addEventListener('keydown', e => {
+          if (e.key === 'Enter')  { e.preventDefault(); finish(true); }
+          if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+        });
+      });
+    });
+  };
+  window.renderMusicTracks = renderMusicTracks;
+})();
+
+// ── PREMIUM GATING (track modal patch) ────────────────────
+const _origOpenTrackModal = window.openTrackModal;
+window.openTrackModal = function(id) {
+  _origOpenTrackModal(id);
+  const t = allTracks.find(x => x.id === id);
+  const cb = document.getElementById('trackPremium');
+  if (cb) cb.checked = !!(t?.premium);
+};
+
+const _origSaveTrack = saveTrack;
+async function saveTrack() {
+  const id      = document.getElementById('trackModalId').value;
+  const title   = document.getElementById('trackTitle').value.trim();
+  const artist  = document.getElementById('trackArtist').value.trim();
+  const premium = document.getElementById('trackPremium')?.checked || false;
+  if (!title || !artist) { toast('Title and artist are required.', 'error'); return; }
+  const btn = document.getElementById('trackModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await fb.updateDoc(fb.doc(_db, 'tracks', id), {
+      title, artist,
+      album:   document.getElementById('trackAlbum').value.trim(),
+      cover:   document.getElementById('trackCover').value.trim(),
+      premium,
+    });
+    toast('Track updated!', 'success');
+    document.getElementById('trackModal').hidden = true;
+    loadMusic();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Track'; btn.disabled = false;
+}
+// Re-wire the save button to the new function
+document.getElementById('trackModalSave').onclick = saveTrack;
+
+// ── SCHEDULED POSTS ───────────────────────────────────────
+// Show/hide publishAt field based on status selection
+document.getElementById('postMStatus')?.addEventListener('change', function() {
+  const grp = document.getElementById('postPublishAtGroup');
+  if (grp) grp.style.display = this.value === 'scheduled' ? '' : 'none';
+});
+
+// Patch openPostModal to populate publishAt
+const _origOpenPostModal = window.openPostModal;
+window.openPostModal = function(id) {
+  _origOpenPostModal(id);
+  const p   = id ? allPosts.find(x => x.id === id) : null;
+  const grp = document.getElementById('postPublishAtGroup');
+  const inp = document.getElementById('postPublishAt');
+  const fmt = ts => ts?.toDate ? ts.toDate().toISOString().slice(0,16) : '';
+  if (inp) inp.value = fmt(p?.publishAt);
+  if (grp) grp.style.display = (p?.status === 'scheduled') ? '' : 'none';
+};
+
+// Patch savePost to include publishAt
+const _origSavePost = savePost;
+async function savePost() {
+  const id      = document.getElementById('postModalId').value;
+  const title   = document.getElementById('postMTitle').value.trim();
+  const body    = document.getElementById('postMBody').value.trim();
+  const status  = document.getElementById('postMStatus').value;
+  const pubAt   = document.getElementById('postPublishAt')?.value;
+  if (!title) { toast('Title is required.', 'error'); return; }
+  if (status === 'scheduled' && !pubAt) { toast('Set a Publish At date for scheduled posts.', 'error'); return; }
+  const btn  = document.getElementById('postModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const tags   = document.getElementById('postMTags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const data   = {
+    title, body,
+    imageUrl:   document.getElementById('postMImageUrl').value.trim(),
+    tags,
+    authorName: document.getElementById('postMAuthor').value.trim() || 'Admin',
+    status,
+    publishAt:  (status === 'scheduled' && pubAt) ? new Date(pubAt) : null,
+    updatedAt:  fb.serverTimestamp(),
+  };
+  try {
+    if (id) {
+      if (status === 'approved') data.approvedAt = fb.serverTimestamp();
+      await fb.updateDoc(fb.doc(_db, 'community_posts', id), data);
+      toast('Post updated!', 'success');
+    } else {
+      data.source         = 'admin';
+      data.submittedAt    = fb.serverTimestamp();
+      data.approvedAt     = status === 'approved' ? fb.serverTimestamp() : null;
+      data.authorContact  = '';
+      await fb.addDoc(fb.collection(_db, 'community_posts'), data);
+      logActivity(`Post "${title}" created (${status})`);
+      toast('Post saved!', 'success');
+    }
+    document.getElementById('postModal').hidden = true;
+    loadPosts();
+    loadPostsBadge();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Publish Post'; btn.disabled = false;
+}
+document.getElementById('postModalSave').onclick = savePost;
+
+// Show scheduled posts with clock icon in renderPosts patch
+const _origRenderPosts = renderPosts;
+renderPosts = function() {
+  _origRenderPosts();
+  // Add scheduled status color + clock
+  document.querySelectorAll('.post-review-card').forEach(card => {
+    const statusSpan = card.querySelector('[style*="background"]');
+    if (!statusSpan) return;
+    const txt = statusSpan.textContent;
+    if (txt.includes('scheduled')) {
+      card.style.borderLeftColor = '#a855f7';
+      statusSpan.style.background = 'rgba(168,85,247,.15)';
+      statusSpan.style.color = '#c084fc';
+    }
+  });
+};
+
+// ── PLAYLIST TRACK MANAGER ────────────────────────────────
+let _plCurrentTrackIds = [];
+
+document.getElementById('plCoverFile')?.addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  const preview  = document.getElementById('plCoverPreview');
+  const img      = document.getElementById('plCoverPreviewImg');
+  const statusEl = document.getElementById('plCoverStatus');
+  preview.style.display = 'flex';
+  statusEl.textContent  = 'Uploading…';
+  img.style.opacity = '0.4';
+  try {
+    const url = await uploadToCloudinary(file);
+    document.getElementById('plCover').value = url;
+    img.src = url;
+    img.style.opacity = '1';
+    statusEl.textContent = 'Uploaded!';
+    setTimeout(() => { statusEl.textContent = ''; }, 2000);
+  } catch(e) {
+    statusEl.textContent = 'Failed: ' + e.message;
+    img.style.opacity = '1';
+  }
+  this.value = '';
+});
+
+// Patch openPlaylistModal to include track manager
+const _origOpenPlaylistModal = window.openPlaylistModal;
+window.openPlaylistModal = function(id) {
+  _origOpenPlaylistModal(id);
+  const pl = id ? allAdminPlaylists.find(p => p.id === id) : null;
+  _plCurrentTrackIds = [...(pl?.trackIds || [])];
+  _renderPlTrackOrder();
+  // Sync cover preview
+  const coverUrl = document.getElementById('plCover').value;
+  const preview  = document.getElementById('plCoverPreview');
+  const img      = document.getElementById('plCoverPreviewImg');
+  if (coverUrl) { preview.style.display = 'flex'; img.src = coverUrl; }
+  else          { preview.style.display = 'none'; }
+};
+
+document.getElementById('plTrackSearch')?.addEventListener('input', function() {
+  const q     = this.value.trim().toLowerCase();
+  const res   = document.getElementById('plTrackSearchResults');
+  if (!res) return;
+  if (!q) { res.hidden = true; return; }
+  const hits = allTracks.filter(t =>
+    ((t.title||'') + ' ' + (t.artist||'')).toLowerCase().includes(q) &&
+    !_plCurrentTrackIds.includes(t.id)
+  ).slice(0, 8);
+  if (!hits.length) { res.hidden = true; return; }
+  res.hidden = false;
+  res.innerHTML = hits.map(t =>
+    `<div class="pl-search-result" data-id="${t.id}">${esc(t.title)} <span style="color:var(--text-mute);font-size:.75rem">— ${esc(t.artist||'')}</span></div>`
+  ).join('');
+  res.querySelectorAll('.pl-search-result').forEach(el => {
+    el.addEventListener('click', () => {
+      _plCurrentTrackIds.push(el.dataset.id);
+      document.getElementById('plTrackSearch').value = '';
+      res.hidden = true;
+      _renderPlTrackOrder();
+    });
+  });
+});
+
+function _renderPlTrackOrder() {
+  const container = document.getElementById('plTrackOrder');
+  if (!container) return;
+  if (!_plCurrentTrackIds.length) {
+    container.innerHTML = '<p style="font-size:.78rem;color:var(--text-mute);text-align:center;padding:10px 0">No tracks yet. Search above to add.</p>';
+    return;
+  }
+  container.innerHTML = _plCurrentTrackIds.map((tid, idx) => {
+    const t = allTracks.find(x => x.id === tid);
+    if (!t) return '';
+    return `
+      <div class="pl-track-item" draggable="true" data-idx="${idx}" data-id="${tid}">
+        <span class="pl-track-drag">⠿</span>
+        <span class="pl-track-num">${idx + 1}</span>
+        <div class="pl-track-info">
+          <div style="font-size:.82rem;font-weight:600">${esc(t.title)}</div>
+          <div style="font-size:.72rem;color:var(--text-mute)">${esc(t.artist||'')}</div>
+        </div>
+        <button class="revenue-del" onclick="_plRemoveTrack(${idx})" style="flex-shrink:0">✕</button>
+      </div>`;
+  }).filter(Boolean).join('');
+
+  // Drag to reorder
+  const items = container.querySelectorAll('.pl-track-item');
+  let dragIdx = null;
+  items.forEach(item => {
+    item.addEventListener('dragstart', () => { dragIdx = +item.dataset.idx; item.style.opacity = '.4'; });
+    item.addEventListener('dragend',   () => { item.style.opacity = '1'; dragIdx = null; });
+    item.addEventListener('dragover',  e => { e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', () => {
+      item.classList.remove('drag-over');
+      const toIdx = +item.dataset.idx;
+      if (dragIdx === null || dragIdx === toIdx) return;
+      const [moved] = _plCurrentTrackIds.splice(dragIdx, 1);
+      _plCurrentTrackIds.splice(toIdx, 0, moved);
+      _renderPlTrackOrder();
+    });
+  });
+}
+
+window._plRemoveTrack = function(idx) {
+  _plCurrentTrackIds.splice(idx, 1);
+  _renderPlTrackOrder();
+};
+
+// Patch savePlaylist to include trackIds
+const _origSavePlaylist = savePlaylist;
+async function savePlaylist() {
+  const id   = document.getElementById('playlistModalId').value;
+  const name = document.getElementById('plName').value.trim();
+  if (!name) { toast('Playlist name is required.', 'error'); return; }
+  const btn = document.getElementById('playlistModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const rawTags = document.getElementById('plTags').value;
+  const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
+  const data = {
+    name,
+    description: document.getElementById('plDesc').value.trim(),
+    cover:       document.getElementById('plCover').value.trim(),
+    status:      document.getElementById('plStatus').value,
+    tags,
+    trackIds:    _plCurrentTrackIds,
+    updatedAt:   fb.serverTimestamp(),
+  };
+  try {
+    if (id) {
+      await fb.updateDoc(fb.doc(_db, 'hub_playlists', id), data);
+    } else {
+      data.createdAt = fb.serverTimestamp();
+      data.createdBy = currentUser.uid;
+      await fb.addDoc(fb.collection(_db, 'hub_playlists'), data);
+      logActivity(`Playlist "${name}" created`);
+    }
+    document.getElementById('playlistModal').hidden = true;
+    toast(id ? 'Playlist updated!' : 'Playlist created!', 'success');
+    loadPlaylists();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Playlist'; btn.disabled = false;
+}
+document.getElementById('playlistModalSave').onclick = savePlaylist;
+
+// Add escape key for new modals
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  ['sponsorModal','revenueModal','bioLinkModal'].forEach(id => {
+    const m = document.getElementById(id);
+    if (m && !m.hidden) m.hidden = true;
+  });
+});
+
 // ── BOOT ──────────────────────────────────────────────────
 bootAuth();
