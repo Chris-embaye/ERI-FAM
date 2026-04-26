@@ -251,10 +251,10 @@ async function importFiles(files) {
 // ── Load local tracks from IDB ─────────────────────────────────
 async function loadLocalTracks() {
   const rows = await idbGetAll('tracks');
-  S.tracks = rows.map(t => ({
-    ...t,
-    _blobUrl: null,
-  }));
+  S.tracks = rows.map(t => {
+    const { data, ...meta } = t;
+    return { ...meta, _blobUrl: null };
+  });
   renderTracks();
   if (activeLibTab === 'songs')   renderSongs();
   if (activeLibTab === 'artists') renderArtists();
@@ -263,8 +263,12 @@ async function loadLocalTracks() {
 }
 
 // ── Get blob URL for a local track ────────────────────────────
-function getBlobUrl(track) {
+async function getBlobUrl(track) {
   if (track._blobUrl) return track._blobUrl;
+  if (!track.data) {
+    const stored = await idbGet('tracks', track.id);
+    if (stored?.data) track.data = stored.data;
+  }
   if (track.data) {
     track._blobUrl = URL.createObjectURL(new Blob([track.data], { type: track.mimeType || 'audio/mpeg' }));
     return track._blobUrl;
@@ -286,7 +290,7 @@ async function playTrack(track, queueTracks) {
     if (S.shuffle) buildShuffleQueue(track);
   }
 
-  let src = track.type === 'cloud' ? track.url : getBlobUrl(track);
+  let src = track.type === 'cloud' ? track.url : await getBlobUrl(track);
   if (!src) { toast('⚠ Could not load track'); return; }
 
   audio.src = src;
@@ -507,7 +511,7 @@ function renderTracks(search = '') {
   let tracks = getAllTracks();
   if (search) {
     const q = search.toLowerCase();
-    tracks = tracks.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q) || (t.album||'').toLowerCase().includes(q));
+    tracks = tracks.filter(t => (t.title||'').toLowerCase().includes(q) || (t.artist||'').toLowerCase().includes(q) || (t.album||'').toLowerCase().includes(q));
   }
   if (S.viewMode === 'grid') renderGrid(tracks);
   else renderList(tracks);
@@ -516,11 +520,9 @@ function renderTracks(search = '') {
 
 function artEl(t, cls) {
   if (t.artwork) return `<img src="${t.artwork}" alt="" loading="lazy" />`;
-  const colors = ['#1a2a1a','#0d1a2a','#2a1a1a','#1a1a2a'];
-  const c = colors[t.title.charCodeAt(0) % colors.length];
+  const code = (t.title || '').charCodeAt(0) || 0;
   const emojis = ['🎵','🎶','🎸','🎹','🥁','🎺','🎻','🪗'];
-  const em = emojis[t.title.charCodeAt(0) % emojis.length];
-  return `<span style="font-size:${cls==='card'?'2.5rem':'1.4rem'}">${em}</span>`;
+  return `<span style="font-size:${cls==='card'?'2.5rem':'1.4rem'}">${emojis[code % emojis.length]}</span>`;
 }
 
 function renderGrid(tracks) {
@@ -1621,7 +1623,7 @@ async function init() {
     const track = S.tracks.find(t => t.id === lastId) || S.cloudTracks.find(t => t.id === lastId);
     if (track) {
       S.currentTrack = track;
-      const src = track.type === 'cloud' ? track.url : getBlobUrl(track);
+      const src = track.type === 'cloud' ? track.url : await getBlobUrl(track);
       if (src) {
         audio.src = src;
         audio.volume = S.volume;
