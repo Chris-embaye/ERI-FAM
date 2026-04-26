@@ -195,8 +195,14 @@ async function saveSettings() {
 
 function savePlaybackState() {
   if (!S.currentTrack) return;
-  localStorage.setItem('erifam_last_track', S.currentTrack.id);
+  const t = S.currentTrack;
+  localStorage.setItem('erifam_last_track', t.id);
   localStorage.setItem('erifam_last_pos',   audio.currentTime.toFixed(2));
+  localStorage.setItem('erifam_last_meta',  JSON.stringify({
+    id: t.id, title: t.title || '', artist: t.artist || '',
+    duration: t.duration || 0, type: t.type || 'local',
+    url: t.type === 'cloud' ? t.url : null, mimeType: t.mimeType || 'audio/mpeg'
+  }));
 }
 
 // ── Read file metadata ─────────────────────────────────────────
@@ -1597,6 +1603,20 @@ if ('serviceWorker' in navigator) {
 
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
+  // ── Step 1: Immediately restore mini player from localStorage (no IDB wait) ──
+  const lastId   = localStorage.getItem('erifam_last_track');
+  const lastPos  = parseFloat(localStorage.getItem('erifam_last_pos') || '0');
+  const lastMeta = JSON.parse(localStorage.getItem('erifam_last_meta') || 'null');
+  if (lastId && lastMeta) {
+    S.currentTrack = { ...lastMeta, _blobUrl: null };
+    updatePlayerUI();
+    showMiniPlayer();
+  }
+
+  // ── Step 2: Restore the saved view immediately (before any async work) ──
+  const savedView = localStorage.getItem('erifam_view');
+  if (savedView && document.getElementById('view-' + savedView)) switchView(savedView);
+
   await openIDB();
 
   // Liked tracks
@@ -1637,29 +1657,22 @@ async function init() {
     });
   }
 
-  // Restore last played track (paused at saved position, no auto-play)
-  const lastId  = localStorage.getItem('erifam_last_track');
-  const lastPos = parseFloat(localStorage.getItem('erifam_last_pos') || '0');
+  // ── Step 3: Wire up audio for the restored track (local tracks only) ──
   if (lastId) {
-    const track = S.tracks.find(t => t.id === lastId) || S.cloudTracks.find(t => t.id === lastId);
+    const track = S.tracks.find(t => t.id === lastId);
     if (track) {
       S.currentTrack = track;
-      const src = track.type === 'cloud' ? track.url : await getBlobUrl(track);
+      const src = await getBlobUrl(track);
       if (src) {
         audio.src = src;
         audio.volume = S.volume;
         audio.addEventListener('loadedmetadata', () => {
-          if (lastPos > 1 && lastPos < (audio.duration || 0) - 2) {
-            audio.currentTime = lastPos;
-          }
+          if (lastPos > 1 && lastPos < (audio.duration || 0) - 2) audio.currentTime = lastPos;
         }, { once: true });
-        updatePlayerUI();
-        showMiniPlayer();
         updateMediaSession();
-      } else {
-        updatePlayerUI();
-        showMiniPlayer();
       }
+      updatePlayerUI();
+      showMiniPlayer();
     }
   }
 
@@ -1670,10 +1683,28 @@ async function init() {
   initNotificationListener();
   handlePlayParam();
 
-  if (navigator.onLine) { syncCloud(); loadPromos(); }
-
-  const savedView = localStorage.getItem('erifam_view');
-  if (savedView && document.getElementById('view-' + savedView)) switchView(savedView);
+  if (navigator.onLine) {
+    syncCloud().then(() => {
+      // ── Step 4: Wire up audio for cloud tracks (available after sync) ──
+      if (lastId && lastMeta?.type === 'cloud') {
+        const cloudTrack = S.cloudTracks.find(t => t.id === lastId);
+        if (cloudTrack) {
+          S.currentTrack = cloudTrack;
+          if (!audio.src) {
+            audio.src = cloudTrack.url;
+            audio.volume = S.volume;
+            audio.addEventListener('loadedmetadata', () => {
+              if (lastPos > 1 && lastPos < (audio.duration || 0) - 2) audio.currentTime = lastPos;
+            }, { once: true });
+            updateMediaSession();
+          }
+          updatePlayerUI();
+          showMiniPlayer();
+        }
+      }
+    }).catch(() => {});
+    loadPromos();
+  }
 }
 
 init();
