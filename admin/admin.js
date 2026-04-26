@@ -3885,3 +3885,388 @@ function downloadCsv(rows, filename) {
   const a    = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: filename });
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
+
+// ══════════════════════════════════════════════════════════════
+// ADMIN FEATURES — BATCH 2
+// ══════════════════════════════════════════════════════════════
+
+// ── FEATURE A: ANALYTICS TIME-SERIES LINE CHART ──────────────
+(function loadChartJS() {
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+  s.onload = () => { if (document.getElementById('page-analytics').classList.contains('active')) renderAnLineChart(); };
+  document.head.appendChild(s);
+})();
+
+let _anLineChartInst = null;
+
+async function renderAnLineChart() {
+  if (typeof Chart === 'undefined') return;
+  const canvas = document.getElementById('anLineChart');
+  if (!canvas) return;
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_users'), fb.orderBy('createdAt', 'asc')));
+    const users = snap.docs.map(d => d.data()).filter(u => u.createdAt && u.createdAt.toDate);
+    const now = new Date();
+    const labels = [], counts = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now); d.setDate(d.getDate() - i);
+      labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const dayEnd   = new Date(dayStart.getTime() + 86400000);
+      counts.push(users.filter(u => { const t = u.createdAt.toDate(); return t >= dayStart && t < dayEnd; }).length);
+    }
+    const cumulative = counts.reduce((acc, v) => { acc.push((acc[acc.length - 1] || 0) + v); return acc; }, []);
+    if (_anLineChartInst) _anLineChartInst.destroy();
+    _anLineChartInst = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Total Users',
+          data: cumulative,
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99,102,241,0.1)',
+          borderWidth: 2,
+          pointRadius: 2,
+          tension: 0.4,
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y + ' users' } } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', maxTicksLimit: 8 } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', precision: 0 }, beginAtZero: true }
+        }
+      }
+    });
+  } catch(e) { console.warn('[AnLineChart]', e); }
+}
+
+const _origLoadAnalyticsB2 = loadAnalytics;
+loadAnalytics = async function() {
+  await _origLoadAnalyticsB2();
+  setTimeout(renderAnLineChart, 300);
+};
+document.getElementById('refreshAnalyticsBtn').addEventListener('click', () => setTimeout(renderAnLineChart, 400));
+
+// ── FEATURE B: ROLE-BASED UI GATING ──────────────────────────
+const ROLE_PAGE_ACCESS = {
+  editor: ['dashboard','apps','music','erimusic','ericontent','playlists','assets','notify','promotions','posts','feedback','analytics','about','versions','newsletter'],
+  viewer: ['dashboard','apps','music','erimusic','ericontent','analytics','about']
+};
+const ROLE_ACTION_HIDE = {
+  editor: ['inviteBtn','bulkApproveBtn','exportUsersBtn'],
+  viewer: ['inviteBtn','bulkApproveBtn','addAppBtn','dashAddApp','addPostBtn','approveAllPostsBtn','addPromoBtn','toggleSelectBtn','exportUsersBtn']
+};
+
+function applyRoleGating() {
+  if (!currentUserData) return;
+  const role = currentUserData.role;
+  if (role === 'super_admin' || role === 'admin') return;
+  const allowed = ROLE_PAGE_ACCESS[role];
+  if (allowed) {
+    document.querySelectorAll('.sb-item[data-page]').forEach(btn => {
+      if (!allowed.includes(btn.dataset.page)) btn.style.display = 'none';
+    });
+  }
+  (ROLE_ACTION_HIDE[role] || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+const _origSetupUserDisplayB2 = setupUserDisplay;
+setupUserDisplay = function() {
+  _origSetupUserDisplayB2();
+  applyRoleGating();
+};
+
+// ── FEATURE C: INLINE TRACK AUDIO PREVIEW ────────────────────
+let _previewAudio   = null;
+let _previewTrackId = null;
+
+(function patchRenderMusicForPreview() {
+  const prev = renderMusicTracks;
+  renderMusicTracks = function(tracks) {
+    if (tracks === undefined) tracks = allTracks;
+    prev(tracks);
+    const list = document.getElementById('musicTrackList');
+    list.querySelectorAll('.music-track-row').forEach(row => {
+      const tid = row.dataset.trackId;
+      if (!tid) return;
+      const track = tracks.find(t => t.id === tid);
+      if (!track || !track.url) return;
+      if (row.querySelector('.preview-btn')) return;
+      const btn = document.createElement('button');
+      btn.className = 'preview-btn';
+      btn.textContent = '▶';
+      btn.title = 'Preview track';
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (_previewTrackId === tid) {
+          if (_previewAudio) { _previewAudio.pause(); _previewAudio = null; _previewTrackId = null; btn.textContent = '▶'; }
+          return;
+        }
+        if (_previewAudio) { _previewAudio.pause(); document.querySelectorAll('.preview-btn').forEach(b => { b.textContent = '▶'; }); }
+        _previewAudio   = new Audio(track.url);
+        _previewTrackId = tid;
+        btn.textContent = '⏸';
+        _previewAudio.play().catch(() => {});
+        _previewAudio.addEventListener('ended', () => { btn.textContent = '▶'; _previewAudio = null; _previewTrackId = null; });
+      });
+      const actDiv = row.querySelector('.music-track-actions');
+      if (actDiv) actDiv.prepend(btn);
+    });
+  };
+})();
+
+// ── FEATURE D: FEEDBACK EXPORT ────────────────────────────────
+let allFeedback = [];
+
+const _origLoadFeedbackB2 = loadFeedback;
+loadFeedback = async function() {
+  await _origLoadFeedbackB2();
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'feedback'), fb.orderBy('createdAt', 'desc'), fb.limit(500)));
+    allFeedback = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+  } catch(e) { /* non-critical */ }
+};
+
+document.getElementById('exportFeedbackBtn') && document.getElementById('exportFeedbackBtn').addEventListener('click', () => {
+  if (!allFeedback.length) { toast('Open Feedback page first to load data.', 'warn'); return; }
+  const rows = [['Message','Rating','User','Email','Date']];
+  allFeedback.forEach(f => rows.push([
+    f.message || f.text || f.body || f.feedback || '',
+    f.rating != null ? f.rating : '',
+    f.userName || f.displayName || f.user || 'Anonymous',
+    f.email || '',
+    f.createdAt && f.createdAt.toDate ? f.createdAt.toDate().toLocaleDateString() : ''
+  ]));
+  _downloadCSV(rows, 'hub-feedback-' + new Date().toISOString().slice(0, 10) + '.csv');
+  toast('📥 Feedback CSV downloaded!', 'success');
+});
+
+// ── FEATURE E: KEYBOARD SHORTCUT MAP ─────────────────────────
+const kbdModal = document.getElementById('kbdShortcutModal');
+const kbdClose = document.getElementById('kbdShortcutClose');
+if (kbdClose) kbdClose.addEventListener('click', () => { kbdModal.hidden = true; });
+if (kbdModal) kbdModal.addEventListener('click', e => { if (e.target === kbdModal) kbdModal.hidden = true; });
+
+const PAGE_KEYS = { d: 'dashboard', u: 'users', m: 'music', a: 'analytics', p: 'posts', n: 'notify', f: 'feedback', v: 'versions' };
+const SIDEBAR_PAGES = ['dashboard','apps','users','music','erimusic','ericontent','newsletter','versions','coupons'];
+
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    if (kbdModal) kbdModal.hidden = false;
+    return;
+  }
+  if (e.key === 'Escape' && kbdModal && !kbdModal.hidden) { kbdModal.hidden = true; return; }
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 's') { e.preventDefault(); const btn = document.querySelector('.page.active .btn-primary'); if (btn) btn.click(); }
+    return;
+  }
+  if (e.key === 'r' || e.key === 'R') {
+    const btn = document.querySelector('.page.active [id*="refresh"], .page.active [id*="Refresh"]');
+    if (btn) { btn.click(); return; }
+  }
+  if (PAGE_KEYS[e.key.toLowerCase()]) { showPage(PAGE_KEYS[e.key.toLowerCase()]); return; }
+  const num = parseInt(e.key, 10);
+  if (num >= 1 && num <= 9 && SIDEBAR_PAGES[num - 1]) showPage(SIDEBAR_PAGES[num - 1]);
+});
+
+// ── FEATURE F: CONTENT DUPLICATION ───────────────────────────
+window.duplicatePost = async function(id) {
+  const p = allPosts.find(x => x.id === id);
+  if (!p) return;
+  const data = Object.assign({}, p);
+  delete data.id;
+  data.title       = (data.title || 'Untitled') + ' (Copy)';
+  data.status      = 'pending';
+  data.submittedAt = fb.serverTimestamp();
+  data.approvedAt  = null;
+  data.source      = 'admin';
+  try {
+    await fb.addDoc(fb.collection(_db, 'community_posts'), data);
+    toast('Post duplicated!', 'success');
+    logActivity('Duplicated post "' + p.title + '"');
+    loadPosts();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+const _origRenderPostsB2 = renderPosts;
+renderPosts = function() {
+  _origRenderPostsB2();
+  setTimeout(() => {
+    document.querySelectorAll('.post-card-actions').forEach(div => {
+      if (div.querySelector('.dup-btn')) return;
+      const editBtn = div.querySelector('[onclick*="openPostModal"]');
+      if (!editBtn) return;
+      const m = editBtn.getAttribute('onclick').match(/'([^']+)'/);
+      if (!m) return;
+      const dupBtn = document.createElement('button');
+      dupBtn.className = 'btn-sm dup-btn';
+      dupBtn.textContent = '⧉ Dup';
+      dupBtn.style.cssText = 'font-size:.72rem;padding:4px 8px';
+      dupBtn.addEventListener('click', () => window.duplicatePost(m[1]));
+      div.insertBefore(dupBtn, editBtn);
+    });
+  }, 100);
+};
+
+window.duplicatePlaylist = async function(id) {
+  if (!id || !allAdminPlaylists) return;
+  const pl = allAdminPlaylists.find(x => x.id === id);
+  if (!pl) { toast('Playlist not found', 'error'); return; }
+  const data = Object.assign({}, pl);
+  delete data.id;
+  data.name      = (data.name || 'Untitled') + ' (Copy)';
+  data.status    = 'draft';
+  data.createdAt = fb.serverTimestamp();
+  data.createdBy = currentUser.uid;
+  try {
+    await fb.addDoc(fb.collection(_db, 'hub_playlists'), data);
+    toast('Playlist duplicated!', 'success');
+    loadPlaylists();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+window.duplicatePromo = async function(id) {
+  const pr = allPromos.find(x => x.id === id);
+  if (!pr) { toast('Promo not found', 'error'); return; }
+  const data = Object.assign({}, pr);
+  delete data.id;
+  data.title     = (data.title || 'Untitled') + ' (Copy)';
+  data.status    = 'inactive';
+  data.createdAt = fb.serverTimestamp();
+  try {
+    await fb.addDoc(fb.collection(_db, 'hub_promotions'), data);
+    toast('Promotion duplicated!', 'success');
+    loadPromotions();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+// Inject Dup buttons into playlist grid after load
+const _origLoadPlaylistsB2 = loadPlaylists;
+loadPlaylists = async function() {
+  await _origLoadPlaylistsB2();
+  setTimeout(() => {
+    document.querySelectorAll('#playlistGrid .card').forEach(card => {
+      if (card.querySelector('.dup-btn')) return;
+      const editBtn = card.querySelector('[onclick*="openPlaylistModal"]');
+      if (!editBtn) return;
+      const m = editBtn.getAttribute('onclick').match(/'([^']+)'/);
+      if (!m) return;
+      const dupBtn = document.createElement('button');
+      dupBtn.className = 'btn-sm dup-btn';
+      dupBtn.textContent = '⧉ Duplicate';
+      dupBtn.style.cssText = 'font-size:.72rem;width:100%;margin-top:4px';
+      dupBtn.addEventListener('click', e => { e.stopPropagation(); window.duplicatePlaylist(m[1]); });
+      editBtn.parentNode.appendChild(dupBtn);
+    });
+  }, 400);
+};
+
+// Inject Dup buttons into promo grid after load
+const _origLoadPromotionsB2 = loadPromotions;
+loadPromotions = async function() {
+  await _origLoadPromotionsB2();
+  setTimeout(() => {
+    document.querySelectorAll('#promoGrid .promo-card').forEach(card => {
+      if (card.querySelector('.dup-btn')) return;
+      const editBtn = card.querySelector('[onclick*="openPromoModal"]');
+      if (!editBtn) return;
+      const m = editBtn.getAttribute('onclick').match(/'([^']+)'/);
+      if (!m) return;
+      const dupBtn = document.createElement('button');
+      dupBtn.className = 'btn-sm dup-btn';
+      dupBtn.textContent = '⧉ Dup';
+      dupBtn.style.cssText = 'font-size:.72rem;padding:4px 8px';
+      dupBtn.addEventListener('click', e => { e.stopPropagation(); window.duplicatePromo(m[1]); });
+      editBtn.parentNode.insertBefore(dupBtn, editBtn);
+    });
+  }, 400);
+};
+
+// ── FEATURE G: AUDIT LOG DATE RANGE FILTER ───────────────────
+function _applyAuditFilters() {
+  const q      = (document.getElementById('auditSearch') || {}).value || '';
+  const from   = (document.getElementById('auditDateFrom') || {}).value;
+  const to     = (document.getElementById('auditDateTo') || {}).value;
+  const qLower = q.trim().toLowerCase();
+  const fromMs = from ? new Date(from).getTime() : 0;
+  const toMs   = to   ? new Date(to).getTime() + 86400000 : Infinity;
+  if (!_auditEntries) return;
+  const filtered = _auditEntries.filter(e => {
+    const ms       = e.createdAt && e.createdAt.toDate ? e.createdAt.toDate().getTime() : 0;
+    const matchQ   = !qLower || (e.action || '').toLowerCase().includes(qLower) || (e.adminEmail || '').toLowerCase().includes(qLower);
+    const matchDate = ms >= fromMs && ms <= toMs;
+    return matchQ && matchDate;
+  });
+  renderAuditLog(filtered);
+}
+
+const _auditFromEl = document.getElementById('auditDateFrom');
+const _auditToEl   = document.getElementById('auditDateTo');
+if (_auditFromEl) _auditFromEl.addEventListener('change', _applyAuditFilters);
+if (_auditToEl)   _auditToEl.addEventListener('change',   _applyAuditFilters);
+
+// Replace old auditSearch with combined listener
+(function rewireAuditSearch() {
+  const old = document.getElementById('auditSearch');
+  if (!old) return;
+  const clone = old.cloneNode(true);
+  old.parentNode.replaceChild(clone, old);
+  clone.addEventListener('input', _applyAuditFilters);
+})();
+
+// ── FEATURE H: DASHBOARD STAT CARDS DRAG/REORDER ─────────────
+function initDashboardDrag() {
+  const row = document.querySelector('#page-dashboard .stat-row');
+  if (!row || row.dataset.dragInited) return;
+  row.dataset.dragInited = '1';
+
+  const cards = [...row.querySelectorAll('.stat-card')];
+  const saved = localStorage.getItem('hub_stat_order');
+  if (saved) {
+    try {
+      const order = JSON.parse(saved);
+      order.forEach(idx => { if (cards[idx]) row.appendChild(cards[idx]); });
+    } catch(e) { /* ignore */ }
+  }
+
+  let dragEl = null;
+  row.querySelectorAll('.stat-card').forEach(card => {
+    card.draggable = true;
+    card.style.cursor = 'grab';
+    card.addEventListener('dragstart', e => {
+      dragEl = card;
+      card.style.opacity = '0.45';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      if (dragEl) dragEl.style.opacity = '1';
+      dragEl = null;
+      const newOrder = [...row.querySelectorAll('.stat-card')].map(c => cards.indexOf(c));
+      localStorage.setItem('hub_stat_order', JSON.stringify(newOrder));
+    });
+    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over-card'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over-card'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('drag-over-card');
+      if (dragEl && dragEl !== card) row.insertBefore(dragEl, card);
+    });
+  });
+}
+
+const _origLoadDashboardB2 = loadDashboard;
+loadDashboard = async function() {
+  await _origLoadDashboardB2();
+  setTimeout(initDashboardDrag, 500);
+};

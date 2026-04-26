@@ -1084,3 +1084,63 @@ body.dark .toast { background: #1e1e2e; color: #e2e8f0; }
 .audit-body { flex: 1; }
 .audit-action { font-size: .83rem; color: var(--text); font-weight: 500; }
 .audit-meta { font-size: .7rem; color: var(--text-dim); margin-top: 2px; }
+
+/* ── ANALYTICS LINE CHART ── */
+.an-line-wrap { position: relative; height: 160px; padding: 4px 0; }
+.an-line-wrap canvas { width: 100% !important; }
+
+/* ── INLINE AUDIO PREVIEW ── */
+.preview-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(99,102,241,.18);
+  color: #818cf8;
+  font-size: .78rem;
+  border: 1px solid rgba(99,102,241,.3);
+  cursor: pointer;
+  transition: background .15s;
+  margin-right: 4px;
+}
+.preview-btn:hover { background: rgba(99,102,241,.32); }
+
+/* ── DUPLICATION BUTTON ── */
+.dup-btn {
+  background: rgba(245,158,11,.12) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245,158,11,.25) !important;
+}
+.dup-btn:hover { background: rgba(245,158,11,.22) !important; }
+
+/* ── KEYBOARD SHORTCUT MODAL ── */
+.kbd-shortcut-list { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
+.kbd-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .85rem;
+  color: var(--text-dim);
+}
+.kbd-row span { margin-left: auto; color: var(--text); }
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border2);
+  background: var(--card2);
+  font-family: monospace;
+  font-size: .78rem;
+  color: var(--text);
+  box-shadow: 0 1px 0 var(--border);
+  white-space: nowrap;
+}
+
+/* ── DRAGGABLE STAT CARDS ── */
+.stat-card[draggable="true"] { user-select: none; }
+.drag-over-card { outline: 2px dashed var(--accent); outline-offset: 3px; }
+
+/* ── AUDIT DATE FILTERS ── */
+#auditDateFrom, #auditDateTo {
+  color-scheme: dark;
+}

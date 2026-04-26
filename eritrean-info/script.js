@@ -2099,3 +2099,422 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
     return `${m}:${sec}`;
   }
 })();
+
+// ══════════════════════════════════════════════════════════════
+// ERITREAN INFO — NEW FEATURES BATCH
+// ══════════════════════════════════════════════════════════════
+
+// ── FEATURE 11: INTERACTIVE LEAFLET MAP ──────────────────────
+const ERI_CITIES = [
+  { name: 'Asmara', lat: 15.3384, lng: 38.9318, pop: '~963,000', desc: 'Capital city — UNESCO World Heritage Modernist architecture, cool highland climate at 2,325m altitude.', ico: '🏙️' },
+  { name: 'Massawa', lat: 15.6095, lng: 39.4745, pop: '~32,000', desc: 'Ancient Red Sea port city, 3,000 years old. Ottoman architecture, Dahlak island gateway.', ico: '⚓' },
+  { name: 'Keren', lat: 15.7770, lng: 38.4539, pop: '~75,000', desc: "Eritrea's 2nd city. Famous weekly camel market, Shrine of Our Lady of Keren, WWII battle sites.", ico: '🐪' },
+  { name: 'Assab', lat: 13.0000, lng: 42.7350, pop: '~16,000', desc: 'Southern port city on the Red Sea, formerly Ethiopia\'s main sea outlet. Very hot and remote.', ico: '🌊' },
+  { name: 'Mendefera', lat: 14.8872, lng: 38.8140, pop: '~25,000', desc: 'Capital of the Southern Region. Access point to ancient Qohaito archaeological sites.', ico: '⛰️' },
+  { name: 'Barentu', lat: 15.1001, lng: 37.5906, pop: '~20,000', desc: 'Capital of Gash-Barka region — western lowland agricultural heartland. Home to Kunama people.', ico: '🌾' },
+  { name: 'Adulis (Ruins)', lat: 15.2833, lng: 39.6167, pop: 'Ancient', desc: 'UNESCO candidate site — ruins of the greatest ancient Red Sea port, used by Aksumite Empire (1st–7th century AD).', ico: '🏺' },
+];
+
+function initLeafletMap() {
+  const container = document.getElementById('eritreaLeafletMap');
+  if (!container || typeof L === 'undefined') return;
+  if (container.dataset.inited) return;
+  container.dataset.inited = '1';
+
+  const map = L.map('eritreaLeafletMap', { center: [15.1794, 39.7823], zoom: 7, zoomControl: true });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 15
+  }).addTo(map);
+
+  ERI_CITIES.forEach(city => {
+    const marker = L.marker([city.lat, city.lng]).addTo(map);
+    marker.bindPopup(
+      '<div style="font-family:Montserrat,sans-serif;max-width:200px">' +
+      '<div style="font-size:1.4rem;margin-bottom:4px">' + city.ico + ' <strong>' + city.name + '</strong></div>' +
+      '<div style="font-size:.75rem;color:#555;margin-bottom:6px">Pop: ' + city.pop + '</div>' +
+      '<div style="font-size:.8rem;line-height:1.5">' + city.desc + '</div>' +
+      '</div>'
+    );
+  });
+}
+
+// Try to init map after Leaflet script loads
+window.addEventListener('load', () => setTimeout(initLeafletMap, 800));
+// Also try when scrolled into view
+(function() {
+  const sec = document.getElementById('eritrea-map');
+  if (!sec) return;
+  let inited = false;
+  const obs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && !inited) { inited = true; setTimeout(initLeafletMap, 300); obs.disconnect(); }
+  }, { threshold: 0.1 });
+  obs.observe(sec);
+})();
+
+// ── FEATURE 12: ON THIS DAY ───────────────────────────────────
+const ON_THIS_DAY_DATA = {
+  '01-01': '1890 — Italy formally established the Colony of Eritrea, the first use of the name "Eritrea."',
+  '02-11': '1975 — The Eritrean Liberation Front launched major offensives in the independence struggle.',
+  '03-25': '1955 — The Eritrean Assembly, under pressure, voted to federate with Ethiopia.',
+  '04-12': '1984 — Major EPLF victory at the Battle of Nakfa, securing the liberated zone.',
+  '05-24': '1993 — 🎉 Eritrea officially declared independence! May 24 is celebrated as Independence Day.',
+  '05-29': '1991 — EPLF captured Asmara, ending 30 years of armed independence struggle.',
+  '06-20': 'Martyrs\' Day (Sehideti) — Eritrea honors the tens of thousands who gave their lives for independence.',
+  '09-01': '1961 — Hamid Idris Awate fired the first shots of the Eritrean Liberation War, beginning a 30-year struggle.',
+  '09-03': '2001 — The G-15 open letter to President Isaias calling for democratic reform was published.',
+  '10-01': '1952 — Eritrea was federated with Ethiopia under UN Resolution 390A(V).',
+  '11-14': '1962 — Ethiopia illegally annexed Eritrea, dissolving the federation and triggering full war.',
+  '12-10': '2000 — The Algiers Peace Agreement formally ended the 1998–2000 Eritrea-Ethiopia War.',
+};
+
+function initOnThisDay() {
+  if (localStorage.getItem('eri_otd_dismissed') === new Date().toDateString()) return;
+  const today = new Date();
+  const key = String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  const event = ON_THIS_DAY_DATA[key];
+  if (!event) return;
+  const bar = document.getElementById('onThisDayBar');
+  const el  = document.getElementById('onThisDayEvent');
+  if (!bar || !el) return;
+  el.textContent = event;
+  bar.style.display = '';
+  document.getElementById('onThisDayClose').addEventListener('click', () => {
+    bar.style.display = 'none';
+    localStorage.setItem('eri_otd_dismissed', new Date().toDateString());
+  });
+}
+initOnThisDay();
+
+// ── FEATURE 13: TIGRINYA PHRASEBOOK SPEECHSYNTHESIS ──────────
+(function initPhrasebookSpeech() {
+  if (!window.speechSynthesis) return;
+  function addSpeakBtn(item) {
+    if (item.querySelector('.speak-btn')) return;
+    const btn = document.createElement('button');
+    btn.className = 'speak-btn';
+    btn.title = 'Listen to pronunciation';
+    btn.textContent = '🔊';
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const tiText = item.querySelector('.phrase-ti, [lang="ti"], .phrase-tigrinya');
+      const text = tiText ? tiText.textContent : item.querySelector('.phrase-en, .phrase-text')?.textContent || item.textContent.slice(0, 60);
+      if (!text) return;
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text.trim());
+      utt.lang = 'ti';
+      utt.rate = 0.85;
+      const voices = window.speechSynthesis.getVoices();
+      const tiVoice = voices.find(v => v.lang.startsWith('ti') || v.lang.startsWith('am'));
+      if (tiVoice) utt.voice = tiVoice;
+      window.speechSynthesis.speak(utt);
+      btn.textContent = '🔉';
+      utt.addEventListener('end', () => { btn.textContent = '🔊'; });
+    });
+    item.appendChild(btn);
+  }
+
+  function tryAddButtons() {
+    document.querySelectorAll('.phrase-item').forEach(addSpeakBtn);
+  }
+  tryAddButtons();
+  // Also observe phrasebook history items added dynamically
+  const phrasebook = document.querySelector('.phrasebook');
+  if (phrasebook) {
+    new MutationObserver(tryAddButtons).observe(phrasebook, { childList: true, subtree: true });
+  }
+})();
+
+// ── FEATURE 15: QUIZ SCORE LEADERBOARD ───────────────────────
+const QUIZ_LB_KEY = 'eri_quiz_scores';
+const MAX_LB_ENTRIES = 5;
+
+function saveQuizScore(score, total) {
+  const entry = { score, total, date: new Date().toLocaleDateString(), pct: Math.round(score / total * 100) };
+  const scores = JSON.parse(localStorage.getItem(QUIZ_LB_KEY) || '[]');
+  scores.push(entry);
+  scores.sort((a, b) => b.pct - a.pct || b.score - a.score);
+  localStorage.setItem(QUIZ_LB_KEY, JSON.stringify(scores.slice(0, MAX_LB_ENTRIES)));
+}
+
+function renderQuizLeaderboard() {
+  const lb     = document.getElementById('quizLeaderboard');
+  const list   = document.getElementById('quizLeaderboardList');
+  const scores = JSON.parse(localStorage.getItem(QUIZ_LB_KEY) || '[]');
+  if (!lb || !list || !scores.length) return;
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  list.innerHTML = scores.map((s, i) =>
+    '<div class="ql-row">' +
+    '<span class="ql-medal">' + (medals[i] || '') + '</span>' +
+    '<span class="ql-score">' + s.score + ' / ' + s.total + '</span>' +
+    '<span class="ql-pct">' + s.pct + '%</span>' +
+    '<span class="ql-date">' + s.date + '</span>' +
+    '</div>'
+  ).join('');
+  lb.style.display = '';
+}
+
+// Patch quiz showResult to save score and render leaderboard
+(function patchQuiz() {
+  const origShowResult = window.showResult;
+  // Fallback: observe quizResult becoming visible
+  const resultEl = document.getElementById('quizResult');
+  if (resultEl) {
+    new MutationObserver(() => {
+      if (!resultEl.hasAttribute('hidden')) {
+        const scoreEl = document.getElementById('quizFinalScore');
+        if (scoreEl && scoreEl.textContent) {
+          const parts = scoreEl.textContent.split('/');
+          if (parts.length === 2) {
+            const score = parseInt(parts[0].trim(), 10);
+            const total = parseInt(parts[1].trim(), 10);
+            if (!isNaN(score) && !isNaN(total)) {
+              saveQuizScore(score, total);
+              renderQuizLeaderboard();
+            }
+          }
+        }
+      }
+    }).observe(resultEl, { attributes: true, attributeFilter: ['hidden'] });
+  }
+})();
+
+// ── FEATURE 16: BOOKMARKS ─────────────────────────────────────
+const BK_KEY = 'eri_bookmarks';
+
+function getBookmarks() { return JSON.parse(localStorage.getItem(BK_KEY) || '[]'); }
+function saveBookmarks(bks) { localStorage.setItem(BK_KEY, JSON.stringify(bks)); }
+
+function toggleBookmark(id, label) {
+  const bks = getBookmarks();
+  const idx = bks.findIndex(b => b.id === id);
+  if (idx >= 0) bks.splice(idx, 1);
+  else bks.push({ id, label, href: '#' + id });
+  saveBookmarks(bks);
+  renderBookmarkPanel();
+  updateBookmarkCount();
+}
+
+function updateBookmarkCount() {
+  const bks = getBookmarks();
+  const cnt = document.getElementById('bookmarkCount');
+  if (!cnt) return;
+  cnt.style.display = bks.length ? 'flex' : 'none';
+  cnt.textContent = bks.length;
+}
+
+function renderBookmarkPanel() {
+  const list = document.getElementById('bookmarkList');
+  if (!list) return;
+  const bks = getBookmarks();
+  if (!bks.length) { list.innerHTML = '<p class="bkp-empty">No bookmarks yet. Click 🔖 on any section to save it.</p>'; return; }
+  list.innerHTML = bks.map(b =>
+    '<div class="bkp-item">' +
+    '<a href="' + b.href + '" class="bkp-link" onclick="document.getElementById(\'bookmarkPanel\').hidden=true">' + b.label + '</a>' +
+    '<button class="bkp-remove" data-id="' + b.id + '">✕</button>' +
+    '</div>'
+  ).join('');
+  list.querySelectorAll('.bkp-remove').forEach(btn => {
+    btn.addEventListener('click', () => { toggleBookmark(btn.dataset.id, ''); });
+  });
+}
+
+(function initBookmarks() {
+  const fab   = document.getElementById('bookmarkFab');
+  const panel = document.getElementById('bookmarkPanel');
+  const close = document.getElementById('bookmarkClose');
+  if (!fab || !panel) return;
+
+  fab.addEventListener('click', () => {
+    panel.hidden = !panel.hidden;
+    if (!panel.hidden) renderBookmarkPanel();
+  });
+  if (close) close.addEventListener('click', () => { panel.hidden = true; });
+
+  // Add bookmark icons to section headers
+  const BOOKMARKABLE = [
+    { id: 'overview',   label: '🏛️ Overview' },
+    { id: 'history',    label: '📜 History' },
+    { id: 'geography',  label: '🗺️ Geography' },
+    { id: 'people',     label: '👥 People' },
+    { id: 'culture',    label: '🎭 Culture' },
+    { id: 'economy',    label: '💰 Economy' },
+    { id: 'government', label: '⚖️ Government' },
+    { id: 'recipes',    label: '🍽️ Recipes' },
+    { id: 'tourism',    label: '✈️ Tourism' },
+    { id: 'quiz',       label: '🏆 Quiz' },
+  ];
+
+  BOOKMARKABLE.forEach(({ id, label }) => {
+    const section = document.getElementById(id);
+    if (!section) return;
+    const hdr = section.querySelector('.section-header, h2');
+    if (!hdr) return;
+    const btn = document.createElement('button');
+    btn.className = 'section-bookmark-btn';
+    btn.title = 'Bookmark this section';
+    btn.dataset.id = id;
+    btn.textContent = '🔖';
+    btn.addEventListener('click', () => { toggleBookmark(id, label); btn.classList.toggle('active', getBookmarks().some(b => b.id === id)); });
+    hdr.style.position = 'relative';
+    hdr.appendChild(btn);
+  });
+
+  updateBookmarkCount();
+})();
+
+// ── FEATURE 17: RECIPE DETAIL MODAL ──────────────────────────
+(function initRecipeModal() {
+  const modal    = document.getElementById('recipeModal');
+  const modalBox = document.getElementById('recipeModalBox');
+  const closeBtn = document.getElementById('recipeModalClose');
+  const printBtn = document.getElementById('recipePrintBtn');
+  const body     = document.getElementById('recipeModalBody');
+  const titleEl  = document.getElementById('recipeModalTitle');
+  if (!modal || !body) return;
+
+  if (closeBtn) closeBtn.addEventListener('click', () => { modal.hidden = true; document.body.style.overflow = ''; });
+  modal.addEventListener('click', e => { if (e.target === modal) { modal.hidden = true; document.body.style.overflow = ''; } });
+  if (printBtn) printBtn.addEventListener('click', () => {
+    const w = window.open('', '_blank', 'width=700,height=900');
+    w.document.write('<html><head><title>Recipe</title><style>body{font-family:sans-serif;padding:24px}h2{margin-bottom:8px}ul,ol{padding-left:20px}li{margin-bottom:6px}.ing-check{cursor:pointer}label{display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:4px}</style></head><body>');
+    w.document.write('<h2>' + (titleEl ? titleEl.textContent : 'Recipe') + '</h2>');
+    w.document.write(body.innerHTML);
+    w.document.write('<br><script>window.onload=function(){window.print();window.close();}<\/script></body></html>');
+    w.document.close();
+  });
+
+  function openRecipe(r) {
+    if (!modal || !body || !titleEl) return;
+    titleEl.textContent = r.emoji + ' ' + r.name;
+    body.innerHTML =
+      '<div class="rm-meta"><span>⏱ ' + r.time + '</span><span>🍽️ Serves ' + r.serves + '</span></div>' +
+      '<div class="rm-cols">' +
+      '<div class="rm-ingredients"><h4>🛒 Ingredients</h4><ul class="rm-ing-list">' +
+      r.ingredients.map((ing, i) =>
+        '<li><label class="rm-ing-item"><input type="checkbox" class="rm-cb" id="ing' + i + '"/><span>' + ing + '</span></label></li>'
+      ).join('') +
+      '</ul></div>' +
+      '<div class="rm-steps"><h4>👨‍🍳 Steps</h4><ol>' +
+      r.steps.map(s => '<li>' + s + '</li>').join('') +
+      '</ol></div></div>' +
+      '<div class="rm-tip">💡 <em>' + r.tip + '</em></div>';
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Wait for STATIC_RECIPES to be available then patch recipe cards
+  function patchRecipeCards() {
+    if (typeof STATIC_RECIPES === 'undefined') { setTimeout(patchRecipeCards, 500); return; }
+    const grid = document.getElementById('recipeGrid');
+    if (!grid) return;
+    grid.addEventListener('click', e => {
+      const card = e.target.closest('.recipe-card');
+      if (!card) return;
+      const btn = e.target.closest('.recipe-toggle, .recipe-card-header, h3');
+      if (!btn) return;
+      const idx = parseInt(card.id.replace('recipe-', ''), 10);
+      if (!isNaN(idx) && STATIC_RECIPES[idx]) openRecipe(STATIC_RECIPES[idx]);
+    });
+    // Add "Open Details" to each card header
+    grid.querySelectorAll('.recipe-card-header').forEach((hdr, idx) => {
+      if (hdr.querySelector('.rm-open-btn')) return;
+      const openBtn = document.createElement('button');
+      openBtn.className = 'rm-open-btn recipe-toggle';
+      openBtn.textContent = '📖 Details';
+      openBtn.dataset.ri = idx;
+      openBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (STATIC_RECIPES[idx]) openRecipe(STATIC_RECIPES[idx]);
+      });
+      hdr.appendChild(openBtn);
+    });
+  }
+  setTimeout(patchRecipeCards, 800);
+})();
+
+// ── FEATURE 18: COMMUNITY STORIES VOTING ─────────────────────
+(function initCommunityVoting() {
+  let db;
+  try {
+    const { getFirestore, doc, getDoc, updateDoc, increment } = window.firebaseFirestore || {};
+    if (!getFirestore) { setTimeout(initCommunityVoting, 2000); return; }
+    db = getFirestore();
+  } catch(e) { /* Firebase not ready yet */ return; }
+
+  const VOTED_KEY = 'eri_voted_posts';
+  function getVoted() { return JSON.parse(localStorage.getItem(VOTED_KEY) || '[]'); }
+  function markVoted(id) { const v = getVoted(); if (!v.includes(id)) { v.push(id); localStorage.setItem(VOTED_KEY, JSON.stringify(v)); } }
+
+  async function upvotePost(id, btn) {
+    if (getVoted().includes(id)) { return; }
+    try {
+      const { doc: docRef, updateDoc: updDoc, increment: inc } = window.firebaseFirestore || {};
+      const { getFirestore: getFS } = window.firebaseFirestore || {};
+      if (!getFS) return;
+      const _db = getFS();
+      await updDoc(docRef(_db, 'community_posts', id), { upvotes: inc(1) });
+      markVoted(id);
+      const cnt = btn.querySelector('.vote-count');
+      if (cnt) cnt.textContent = parseInt(cnt.textContent || '0', 10) + 1;
+      btn.classList.add('voted');
+      btn.title = 'Already voted';
+    } catch(e) { console.warn('[Vote]', e); }
+  }
+
+  // Observe communityPostsGrid for new cards
+  const grid = document.getElementById('communityPostsGrid');
+  if (!grid) return;
+
+  function addVoteButtons() {
+    const voted = getVoted();
+    grid.querySelectorAll('.community-post-card').forEach(card => {
+      if (card.querySelector('.vote-btn')) return;
+      const id = card.dataset.postId || card.getAttribute('data-id');
+      if (!id) return;
+      const votes = parseInt(card.dataset.upvotes || '0', 10);
+      const isVoted = voted.includes(id);
+      const btn = document.createElement('button');
+      btn.className = 'vote-btn' + (isVoted ? ' voted' : '');
+      btn.title = isVoted ? 'Already voted' : 'Like this story';
+      btn.innerHTML = '❤️ <span class="vote-count">' + votes + '</span>';
+      btn.addEventListener('click', () => upvotePost(id, btn));
+      card.appendChild(btn);
+    });
+  }
+
+  new MutationObserver(addVoteButtons).observe(grid, { childList: true });
+  addVoteButtons();
+})();
+
+// ── FEATURE 20: RELATED SECTIONS (YOU MIGHT LIKE) ─────────────
+const RELATED_MAP = {
+  history:    [{ id: 'overview', label: '🏛️ Overview of Eritrea' }, { id: 'geography', label: '🗺️ Geography' }, { id: 'famous', label: '⭐ Famous Eritreans' }],
+  geography:  [{ id: 'regions', label: '🗾 Explore the Regions' }, { id: 'eritrea-map', label: '🗺️ Interactive Map' }, { id: 'tourism', label: '✈️ Tourism Guide' }],
+  people:     [{ id: 'culture', label: '🎭 Culture & Traditions' }, { id: 'languages', label: '🗣️ Languages' }, { id: 'community', label: '🤝 Community' }],
+  culture:    [{ id: 'recipes', label: '🍽️ Recipes' }, { id: 'artists', label: '🎵 Famous Artists' }, { id: 'holidays', label: '🗓️ Holidays' }],
+  economy:    [{ id: 'government', label: '⚖️ Government' }, { id: 'geography', label: '🗺️ Geography' }, { id: 'history', label: '📜 History' }],
+  government: [{ id: 'history', label: '📜 History' }, { id: 'economy', label: '💰 Economy' }, { id: 'people', label: '👥 The People' }],
+  recipes:    [{ id: 'culture', label: '🎭 Culture' }, { id: 'artists', label: '🎵 Artists' }, { id: 'community', label: '🤝 Community' }],
+  tourism:    [{ id: 'geography', label: '🗺️ Geography' }, { id: 'eritrea-map', label: '🗺️ Interactive Map' }, { id: 'culture', label: '🎭 Culture' }],
+  quiz:       [{ id: 'history', label: '📜 History' }, { id: 'overview', label: '🏛️ Overview' }, { id: 'famous', label: '⭐ Famous Eritreans' }],
+};
+
+function initRelatedSections() {
+  Object.entries(RELATED_MAP).forEach(([sectionId, links]) => {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    const existing = section.querySelector('.related-sections-block');
+    if (existing) return;
+    const block = document.createElement('div');
+    block.className = 'related-sections-block';
+    block.innerHTML =
+      '<div class="rs-title">You might also like</div>' +
+      '<div class="rs-links">' +
+      links.map(l => '<a href="#' + l.id + '" class="rs-link">' + l.label + ' →</a>').join('') +
+      '</div>';
+    const container = section.querySelector('.container');
+    if (container) container.appendChild(block);
+  });
+}
+initRelatedSections();

@@ -98,6 +98,7 @@
     <div class="nav-dropdown" id="navDropdown">
       <div class="nav-dropdown-grid">
         <a href="#world-search" class="nav-dd-item">🌍<span>World Search</span></a>
+        <a href="#eritrea-map"  class="nav-dd-item">🗺️<span>Map</span></a>
         <a href="#overview"     class="nav-dd-item">🏛️<span>Overview</span></a>
         <a href="#history"      class="nav-dd-item">📜<span>History</span></a>
         <a href="#geography"    class="nav-dd-item">🗺️<span>Geography</span></a>
@@ -156,6 +157,18 @@
     </div>
     <div class="hero-scroll-hint">↓ Scroll to explore</div>
   </section>
+
+  <!-- ON THIS DAY -->
+  <div class="on-this-day-bar" id="onThisDayBar" style="display:none">
+    <div class="otd-inner">
+      <span class="otd-icon">📅</span>
+      <div class="otd-text">
+        <span class="otd-label">On This Day in Eritrea</span>
+        <span class="otd-event" id="onThisDayEvent"></span>
+      </div>
+      <button class="otd-close" id="onThisDayClose" title="Dismiss">✕</button>
+    </div>
+  </div>
 
   <!-- QUICK FACTS -->
   <section id="quick-facts">
@@ -265,7 +278,19 @@
   </section>
 
   <!-- OVERVIEW -->
-  <section id="overview">
+  <!-- ERITREA MAP -->
+  <section id="eritrea-map">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Interactive Map</span>
+        <h2>Explore Eritrea</h2>
+        <p>Click any city pin to learn about it — major cities, ports, and landmarks</p>
+      </div>
+      <div id="eritreaLeafletMap" class="eritrea-map-wrap"></div>
+    </div>
+  </section>
+
+  <!-- OVERVIEW -->
     <div class="container">
       <div class="section-header">
         <span class="section-tag">About</span>
@@ -1372,6 +1397,10 @@
               <button class="quiz-start-btn" id="quizRetryBtn">↺ Try Again</button>
               <button class="quiz-share-btn" id="quizShareBtn">🔗 Share Result</button>
             </div>
+            <div class="quiz-leaderboard" id="quizLeaderboard" style="display:none">
+              <h4 class="ql-title">🏅 Your Best Scores</h4>
+              <div id="quizLeaderboardList"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1761,7 +1790,37 @@
   <audio id="mpfAudio" preload="metadata"></audio>
   <!-- ═══ END MUSIC PHONE WIDGET ═══ -->
 
+  <!-- BOOKMARK BUTTON + PANEL -->
+  <button class="bookmark-fab" id="bookmarkFab" title="My Reading List" aria-label="Bookmarks">🔖<span class="bookmark-count" id="bookmarkCount" style="display:none">0</span></button>
+  <div class="bookmark-panel" id="bookmarkPanel" hidden>
+    <div class="bkp-header">
+      <h3>🔖 Reading List</h3>
+      <button class="bkp-close" id="bookmarkClose">✕</button>
+    </div>
+    <div id="bookmarkList" class="bkp-list"></div>
+    <p class="bkp-hint">Tap a section header's bookmark icon to save it here.</p>
+  </div>
+
+  <!-- RECIPE DETAIL MODAL -->
+  <div class="recipe-modal-overlay" id="recipeModal" hidden>
+    <div class="recipe-modal-box" id="recipeModalBox">
+      <div class="recipe-modal-hd">
+        <h3 id="recipeModalTitle"></h3>
+        <div style="display:flex;gap:8px">
+          <button class="recipe-print-btn" id="recipePrintBtn">🖨 Print</button>
+          <button class="recipe-modal-close" id="recipeModalClose">✕</button>
+        </div>
+      </div>
+      <div id="recipeModalBody" class="recipe-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- LEAFLET CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
   <script src="firebase-config.js"></script>
   <script src="script.js"></script>
+  <!-- LEAFLET JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>

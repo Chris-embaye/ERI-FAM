@@ -605,6 +605,7 @@
           <h1>User Feedback</h1>
           <p class="page-sub">Messages and ratings from ERI-FAM users</p>
         </div>
+        <button class="btn-sm" id="exportFeedbackBtn">📥 Export CSV</button>
         <button class="btn-sm" id="refreshFeedbackBtn">⟳ Refresh</button>
       </div>
       <div id="feedbackList" class="feedback-list">
@@ -702,6 +703,10 @@
           <div id="anActivity" class="activity-list">
             <p class="empty-msg">No activity logged yet.</p>
           </div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-hd"><h3>User Signups — Last 30 Days</h3><span class="page-sub" style="font-size:.75rem">cumulative</span></div>
+          <div class="an-line-wrap"><canvas id="anLineChart" height="90"></canvas></div>
         </div>
       </div>
     </div>
@@ -1501,7 +1506,9 @@ match /community_posts/{d} {
       <div class="page-hd">
         <div><h1>Audit Log</h1><p class="page-sub">Complete record of all admin actions</p></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input type="search" id="auditSearch" class="form-input" placeholder="Filter actions…" style="width:200px"/>
+          <input type="search" id="auditSearch" class="form-input" placeholder="Filter actions…" style="width:160px"/>
+          <input type="date" id="auditDateFrom" class="form-input" style="width:140px" title="From date"/>
+          <input type="date" id="auditDateTo"   class="form-input" style="width:140px" title="To date"/>
           <button class="btn-sm" id="exportAuditBtn">📥 Export CSV</button>
           <button class="btn-sm" id="refreshAuditBtn">⟳ Refresh</button>
         </div>
@@ -1523,6 +1530,29 @@ match /community_posts/{d} {
 
 <!-- TOAST -->
 <div id="toast" class="toast" hidden></div>
+
+<!-- Keyboard Shortcut Map Modal -->
+<div class="modal-overlay" id="kbdShortcutModal" hidden>
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd">
+      <h3>⌨️ Keyboard Shortcuts</h3>
+      <button class="modal-x" id="kbdShortcutClose">✕</button>
+    </div>
+    <div class="kbd-shortcut-list">
+      <div class="kbd-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Open global search</span></div>
+      <div class="kbd-row"><kbd>?</kbd><span>Show this shortcut map</span></div>
+      <div class="kbd-row"><kbd>Esc</kbd><span>Close any open modal</span></div>
+      <div class="kbd-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Save current form (where supported)</span></div>
+      <div class="kbd-row"><kbd>N</kbd><span>New item (focused page: App, Track, Post…)</span></div>
+      <div class="kbd-row"><kbd>R</kbd><span>Refresh current page data</span></div>
+      <div class="kbd-row"><kbd>1</kbd>–<kbd>9</kbd><span>Jump to sidebar pages 1–9</span></div>
+      <div class="kbd-row"><kbd>D</kbd><span>Go to Dashboard</span></div>
+      <div class="kbd-row"><kbd>U</kbd><span>Go to Users</span></div>
+      <div class="kbd-row"><kbd>M</kbd><span>Go to Music</span></div>
+      <div class="kbd-row"><kbd>A</kbd><span>Go to Analytics</span></div>
+    </div>
+  </div>
+</div>
 
 <script src="../firebase-config.js"></script>
 <script type="module" src="admin.js"></script>

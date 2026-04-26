@@ -3,7 +3,7 @@
    Caches all app assets for offline use
    ============================================ */
 
-const CACHE_NAME    = 'eritrean-info-v2';
+const CACHE_NAME    = 'eritrean-info-v4';
 const OFFLINE_URL   = './index.html';
 
 const PRECACHE_ASSETS = [
@@ -13,6 +13,10 @@ const PRECACHE_ASSETS = [
   './firebase-config.js',
   './manifest.json',
   './icons/icon.svg',
+  // Leaflet for offline map rendering
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  // Map tiles: can't precache all, but cache a few Asmara-area tiles on fetch
 ];
 
 // ── INSTALL: cache core assets ────────────────
@@ -46,6 +50,21 @@ self.addEventListener('fetch', (event) => {
   // For translation API calls: network only (no caching)
   if (event.request.url.includes('mymemory.translated.net') ||
       event.request.url.includes('api.mymemory')) {
+    return;
+  }
+
+  // Leaflet + map tiles: cache-first so map works offline
+  if (event.request.url.includes('unpkg.com/leaflet') ||
+      event.request.url.includes('tile.openstreetmap.org')) {
+    event.respondWith(
+      caches.match(event.request).then(cached => cached || fetch(event.request).then(res => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+        }
+        return res;
+      }).catch(() => new Response('', { status: 404 })))
+    );
     return;
   }
 
