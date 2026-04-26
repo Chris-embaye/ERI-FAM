@@ -2096,38 +2096,29 @@ document.head.appendChild(notifStyle);
    ════════════════════════════════════════════════════════════════ */
 const TV_STATIONS = [
   {
-    id:       'eritv',
-    name:     'ERi-TV',
-    desc:     'Eritrean State Television — News, Culture & Entertainment',
-    lang:     'Tigrinya · Arabic · English',
-    icon:     '📺',
-    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCpPhzhCfud9ctQSJJv4Kqlw&autoplay=1',
-    ytUrl:    'https://www.youtube.com/channel/UCpPhzhCfud9ctQSJJv4Kqlw/live',
+    id:        'eritv',
+    name:      'ERi-TV',
+    desc:      'Eritrean State Television — News, Culture & Entertainment',
+    lang:      'Tigrinya · Arabic · English',
+    icon:      '📺',
+    streamUrl: 'https://jmc-live.ercdn.net/eritreatv/eritreatv.m3u8',
+    ytUrl:     'https://www.youtube.com/channel/UCpPhzhCfud9ctQSJJv4Kqlw/live',
   },
   {
-    id:    'eritv2',
-    name:  'ERi-TV 2',
-    desc:  'Eritrean News Live Television',
-    lang:  'Tigrinya · Arabic',
-    icon:  '🎬',
-    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UC9NwSxLe5_Rgofrgdb-MhtA&autoplay=1',
-    ytUrl:    'https://www.youtube.com/channel/UC9NwSxLe5_Rgofrgdb-MhtA/live',
-  },
-  {
-    id:    'erisat',
-    name:  'ERISAT',
-    desc:  'Eritrean Satellite Television — News & Commentary',
-    lang:  'Tigrinya · English',
-    icon:  '📡',
+    id:       'erisat',
+    name:     'ERISAT',
+    desc:     'Eritrean Satellite Television — News & Commentary',
+    lang:     'Tigrinya · English',
+    icon:     '📡',
     embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCuGlhBoxVNUBIAtP4-0Kqfw&autoplay=1',
     ytUrl:    'https://www.youtube.com/channel/UCuGlhBoxVNUBIAtP4-0Kqfw/live',
   },
   {
-    id:    'assenna',
-    name:  'ATV Asena',
-    desc:  'Independent Eritrean Media — News & Analysis',
-    lang:  'Tigrinya',
-    icon:  '🎙',
+    id:       'assenna',
+    name:     'ATV Asena',
+    desc:     'Independent Eritrean Media — News & Analysis',
+    lang:     'Tigrinya',
+    icon:     '🎙',
     embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCXdyJFImjPTccqnZ46ccrmw&autoplay=1',
     ytUrl:    'https://www.youtube.com/c/ATVasena/live',
   },
@@ -2156,27 +2147,64 @@ function renderTVGrid() {
   });
 }
 
+let tvHls = null;
+
 function openTVPlayer(id) {
   const station = TV_STATIONS.find(s => s.id === id);
   if (!station) return;
   if (S.playing) { audio.pause(); S.playing = false; updatePlayIcons(); }
   if (radioAudio) stopRadio();
 
-  if (station.embedUrl) {
-    // Use the in-app fullscreen overlay
-    document.getElementById('tvOverlayName').textContent = station.name;
-    document.getElementById('tvOverlayDesc').textContent = `${station.name} — ${station.desc} · ${station.lang}`;
-    document.getElementById('tvYTLink').href = station.ytUrl;
-    document.getElementById('tvIframe').src = station.embedUrl;
-    document.getElementById('tvOverlay').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+  document.getElementById('tvOverlayName').textContent = station.name;
+  document.getElementById('tvOverlayDesc').textContent = `${station.name} — ${station.desc} · ${station.lang}`;
+  document.getElementById('tvYTLink').href = station.ytUrl || '#';
+  document.getElementById('tvYTLink').style.display = station.ytUrl ? '' : 'none';
+
+  const video  = document.getElementById('tvVideo');
+  const iframe = document.getElementById('tvIframe');
+  const hint   = document.getElementById('tvOverlayHint');
+
+  if (station.streamUrl) {
+    iframe.style.display = 'none';
+    iframe.src = 'about:blank';
+    video.style.display = '';
+    hint.textContent = 'Direct satellite stream';
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+      if (tvHls) tvHls.destroy();
+      tvHls = new Hls({ lowLatencyMode: true });
+      tvHls.loadSource(station.streamUrl);
+      tvHls.attachMedia(video);
+      tvHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+      tvHls.on(Hls.Events.ERROR, (e, data) => {
+        if (data.fatal) toast('⚠ Stream error — try the YouTube link above');
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = station.streamUrl;
+      video.play().catch(() => {});
+    } else {
+      toast('⚠ Browser cannot play this stream');
+    }
+  } else if (station.embedUrl) {
+    video.style.display = 'none';
+    video.pause(); video.src = '';
+    if (tvHls) { tvHls.destroy(); tvHls = null; }
+    iframe.style.display = '';
+    iframe.src = station.embedUrl;
+    hint.textContent = 'Streaming via YouTube';
   } else {
     window.open(station.ytUrl, '_blank', 'noopener,noreferrer');
-    toast(`📺 Opening ${station.name} on YouTube…`);
+    toast(`📺 Opening ${station.name}…`);
+    return;
   }
+
+  document.getElementById('tvOverlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 
 function closeTVPlayer() {
+  if (tvHls) { tvHls.destroy(); tvHls = null; }
+  const video = document.getElementById('tvVideo');
+  video.pause(); video.src = '';
   document.getElementById('tvIframe').src = 'about:blank';
   document.getElementById('tvOverlay').style.display = 'none';
   document.body.style.overflow = '';

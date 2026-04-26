@@ -12,6 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="ERI-FAM" />
   <link rel="apple-touch-icon" href="icons/icon-512.png" />
   <link rel="icon" href="icons/icon-512.png" />
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -808,13 +809,14 @@
     </div>
   </div>
   <div class="tv-iframe-wrap">
+    <video id="tvVideo" controls playsinline autoplay style="display:none;width:100%;height:100%;background:#000;"></video>
     <iframe id="tvIframe" frameborder="0" allowfullscreen
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       referrerpolicy="no-referrer-when-downgrade"></iframe>
   </div>
   <div class="tv-overlay-footer">
     <p id="tvOverlayDesc">ERi-TV — Eritrean State Television · Tigrinya · Arabic · English</p>
-    <p style="font-size:0.7rem;margin-top:4px;color:rgba(255,255,255,0.4)">If the stream doesn't load, tap "YouTube" to watch on YouTube</p>
+    <p style="font-size:0.7rem;margin-top:4px;color:rgba(255,255,255,0.4)" id="tvOverlayHint">Direct satellite stream</p>
   </div>
 </div>
 
