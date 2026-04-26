@@ -2290,6 +2290,13 @@ function switchView(viewName) {
     ytState.loaded = true;
     ytvSearch('eritrean music 2024');
   }
+  // Load library content when switching to library view
+  if (viewName === 'library') {
+    if (activeLibTab === 'songs')     renderSongs();
+    if (activeLibTab === 'playlists') renderPlaylists();
+    if (activeLibTab === 'artists')   renderArtists();
+    if (activeLibTab === 'albums')    renderAlbums();
+  }
 }
 
 document.querySelectorAll('.sb-nav-item').forEach(btn => {
@@ -2591,7 +2598,7 @@ document.querySelectorAll('.theme-opt-btn').forEach(btn => {
 // ── SETTINGS: LANGUAGE ─────────────────────────────────────────
 const LANG_DICT = {
   en: {
-    'nav-home':'Home','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Translate',
+    'nav-home':'Home','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Translate','nav-library':'Library',
     'lib-tab-songs':'Songs','lib-tab-playlists':'Playlists','lib-tab-artists':'Artists','lib-tab-albums':'Albums',
     'fp-label':'Now Playing',
     'extra-eq':'EQ','extra-sleep':'Sleep','extra-playlist':'Playlist','extra-lyrics':'Lyrics','extra-share':'Share','extra-save':'Save',
@@ -2599,7 +2606,7 @@ const LANG_DICT = {
     'songs-play':'Play','songs-shuffle':'Shuffle',
   },
   ti: {
-    'nav-home':'ቤት','nav-radio':'ሬድዮ','nav-youtube':'ዩቱብ','nav-translate':'ትርጉም',
+    'nav-home':'ቤት','nav-radio':'ሬድዮ','nav-youtube':'ዩቱብ','nav-translate':'ትርጉም','nav-library':'ቤተ-መጻሕፍቲ',
     'lib-tab-songs':'ደርፍታት','lib-tab-playlists':'ዝርዝር ደርፊ','lib-tab-artists':'ደረፍቲ','lib-tab-albums':'ኣልበማት',
     'fp-label':'ሕጂ ይጻወት',
     'extra-eq':'ኢኪዩ','extra-sleep':'ዕረፍቲ','extra-playlist':'ዝርዝር','extra-lyrics':'ቃላት','extra-share':'ኣካፍል','extra-save':'ምቅሓት',
@@ -2607,7 +2614,7 @@ const LANG_DICT = {
     'songs-play':'ጸወት','songs-shuffle':'ቀያዪር',
   },
   ar: {
-    'nav-home':'الرئيسية','nav-radio':'راديو','nav-youtube':'يوتيوب','nav-translate':'ترجمة',
+    'nav-home':'الرئيسية','nav-radio':'راديو','nav-youtube':'يوتيوب','nav-translate':'ترجمة','nav-library':'المكتبة',
     'lib-tab-songs':'الأغاني','lib-tab-playlists':'قوائم التشغيل','lib-tab-artists':'الفنانون','lib-tab-albums':'الألبومات',
     'fp-label':'يعزف الآن',
     'extra-eq':'إيكيو','extra-sleep':'نوم','extra-playlist':'قائمة','extra-lyrics':'كلمات','extra-share':'مشاركة','extra-save':'حفظ',
@@ -2615,7 +2622,7 @@ const LANG_DICT = {
     'songs-play':'تشغيل','songs-shuffle':'عشوائي',
   },
   it: {
-    'nav-home':'Home','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Traduttore',
+    'nav-home':'Home','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Traduttore','nav-library':'Libreria',
     'lib-tab-songs':'Brani','lib-tab-playlists':'Playlist','lib-tab-artists':'Artisti','lib-tab-albums':'Album',
     'fp-label':'In riproduzione',
     'extra-eq':'EQ','extra-sleep':'Timer','extra-playlist':'Playlist','extra-lyrics':'Testi','extra-share':'Condividi','extra-save':'Salva',
@@ -2623,7 +2630,7 @@ const LANG_DICT = {
     'songs-play':'Riproduci','songs-shuffle':'Casuale',
   },
   fr: {
-    'nav-home':'Accueil','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Traduire',
+    'nav-home':'Accueil','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Traduire','nav-library':'Bibliothèque',
     'lib-tab-songs':'Chansons','lib-tab-playlists':'Playlists','lib-tab-artists':'Artistes','lib-tab-albums':'Albums',
     'fp-label':'En cours de lecture',
     'extra-eq':'EQ','extra-sleep':'Sommeil','extra-playlist':'Playlist','extra-lyrics':'Paroles','extra-share':'Partager','extra-save':'Sauver',
@@ -2631,7 +2638,7 @@ const LANG_DICT = {
     'songs-play':'Jouer','songs-shuffle':'Aléatoire',
   },
   de: {
-    'nav-home':'Start','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Übersetzen',
+    'nav-home':'Start','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Übersetzen','nav-library':'Bibliothek',
     'lib-tab-songs':'Songs','lib-tab-playlists':'Playlists','lib-tab-artists':'Künstler','lib-tab-albums':'Alben',
     'fp-label':'Jetzt läuft',
     'extra-eq':'EQ','extra-sleep':'Schlaf','extra-playlist':'Playlist','extra-lyrics':'Text','extra-share':'Teilen','extra-save':'Speichern',
@@ -2639,7 +2646,7 @@ const LANG_DICT = {
     'songs-play':'Abspielen','songs-shuffle':'Zufällig',
   },
   es: {
-    'nav-home':'Inicio','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Traducir',
+    'nav-home':'Inicio','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Traducir','nav-library':'Biblioteca',
     'lib-tab-songs':'Canciones','lib-tab-playlists':'Listas','lib-tab-artists':'Artistas','lib-tab-albums':'Álbumes',
     'fp-label':'Reproduciendo',
     'extra-eq':'EQ','extra-sleep':'Sueño','extra-playlist':'Lista','extra-lyrics':'Letra','extra-share':'Compartir','extra-save':'Guardar',
@@ -2647,7 +2654,7 @@ const LANG_DICT = {
     'songs-play':'Reproducir','songs-shuffle':'Aleatorio',
   },
   am: {
-    'nav-home':'ቤት','nav-radio':'ራዲዮ','nav-youtube':'ዩቲዩብ','nav-translate':'ተርጓሚ',
+    'nav-home':'ቤት','nav-radio':'ራዲዮ','nav-youtube':'ዩቲዩብ','nav-translate':'ተርጓሚ','nav-library':'ቤተ-መጻህፍት',
     'lib-tab-songs':'ዘፈኖች','lib-tab-playlists':'ዝርዝሮች','lib-tab-artists':'አርቲስቶች','lib-tab-albums':'አልበሞች',
     'fp-label':'አሁን እየተጫወተ',
     'extra-eq':'ኢኪዩ','extra-sleep':'ተኛ','extra-playlist':'ዝርዝር','extra-lyrics':'ግጥም','extra-share':'አጋራ','extra-save':'አስቀምጥ',

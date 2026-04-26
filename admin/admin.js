@@ -249,6 +249,7 @@ function showPage(name) {
   if (name === 'apps')        loadApps();
   if (name === 'users')       loadUsers();
   if (name === 'music')       loadMusic();
+  if (name === 'playlists')   loadPlaylists();
   if (name === 'assets')      loadAssets();
   if (name === 'notify')      loadNotifications();
   if (name === 'promotions')  loadPromotions();
@@ -1439,6 +1440,115 @@ function toast(msg, type = '') {
 window.showPage   = showPage;
 window.openEditor = openEditor;
 window.openAppModal = openAppModal;
+
+// ── PLAYLISTS ─────────────────────────────────────────────
+let allAdminPlaylists = [];
+
+document.getElementById('addPlaylistBtn').addEventListener('click', () => openPlaylistModal());
+
+const playlistModal = document.getElementById('playlistModal');
+document.getElementById('playlistModalClose').addEventListener('click',  () => playlistModal.hidden = true);
+document.getElementById('playlistModalCancel').addEventListener('click', () => playlistModal.hidden = true);
+document.getElementById('playlistModalSave').addEventListener('click',   savePlaylist);
+playlistModal.addEventListener('click', e => { if (e.target === playlistModal) playlistModal.hidden = true; });
+
+async function loadPlaylists() {
+  const grid = document.getElementById('playlistAdminGrid');
+  grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_playlists'), fb.orderBy('createdAt', 'desc')));
+    allAdminPlaylists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!allAdminPlaylists.length) {
+      grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">No playlists yet. Click + New Playlist to get started.</p>';
+      return;
+    }
+    grid.innerHTML = allAdminPlaylists.map(pl => {
+      const cover = pl.cover
+        ? `<div class="promo-img" style="background-image:url('${esc(pl.cover)}');height:120px"></div>`
+        : `<div class="promo-img-placeholder" style="height:120px">🎵</div>`;
+      const statusCls = pl.status === 'public' ? 'status-active' : 'status-draft';
+      const tags = (pl.tags || []).map(t => `<span class="promo-cta-badge">${esc(t)}</span>`).join(' ');
+      return `
+        <div class="app-card">
+          ${cover}
+          <div class="app-card-body">
+            <div class="app-card-name">${esc(pl.name)}</div>
+            <div class="app-card-desc">${esc(pl.description || '')}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+              <span class="app-status-pill ${statusCls}">${pl.status || 'draft'}</span>
+              ${tags}
+            </div>
+            <div style="font-size:.72rem;color:var(--text-mute);margin-top:6px">${pl.trackIds?.length || 0} tracks</div>
+          </div>
+          <div class="app-card-actions">
+            <button class="app-act-edit"   onclick="openPlaylistModal('${pl.id}')">✏ Edit</button>
+            <button class="app-act-delete" onclick="deletePlaylist('${pl.id}')">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error: ${e.message}</p>`;
+  }
+}
+
+window.openPlaylistModal = function(id) {
+  const pl = id ? allAdminPlaylists.find(p => p.id === id) : null;
+  document.getElementById('playlistModalTitle').textContent = pl ? 'Edit Playlist' : 'New Playlist';
+  document.getElementById('playlistModalId').value = pl?.id    || '';
+  document.getElementById('plName').value          = pl?.name  || '';
+  document.getElementById('plDesc').value          = pl?.description || '';
+  document.getElementById('plCover').value         = pl?.cover || '';
+  document.getElementById('plStatus').value        = pl?.status|| 'public';
+  document.getElementById('plTags').value          = (pl?.tags || []).join(', ');
+  playlistModal.hidden = false;
+  document.getElementById('plName').focus();
+};
+
+function openPlaylistModal(id) { window.openPlaylistModal(id); }
+
+async function savePlaylist() {
+  const id   = document.getElementById('playlistModalId').value;
+  const name = document.getElementById('plName').value.trim();
+  if (!name) { toast('Playlist name is required.', 'error'); return; }
+  const btn = document.getElementById('playlistModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const rawTags = document.getElementById('plTags').value;
+  const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
+  const data = {
+    name,
+    description: document.getElementById('plDesc').value.trim(),
+    cover:       document.getElementById('plCover').value.trim(),
+    status:      document.getElementById('plStatus').value,
+    tags,
+    updatedAt:   fb.serverTimestamp(),
+  };
+  try {
+    if (id) {
+      await fb.updateDoc(fb.doc(_db, 'hub_playlists', id), data);
+    } else {
+      data.createdAt  = fb.serverTimestamp();
+      data.createdBy  = currentUser.uid;
+      data.trackIds   = [];
+      await fb.addDoc(fb.collection(_db, 'hub_playlists'), data);
+      logActivity(`Playlist "${name}" created`);
+    }
+    playlistModal.hidden = true;
+    toast(id ? 'Playlist updated!' : 'Playlist created!', 'success');
+    loadPlaylists();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Playlist'; btn.disabled = false;
+}
+
+window.deletePlaylist = async function(id) {
+  const pl = allAdminPlaylists.find(p => p.id === id);
+  if (!confirm(`Delete "${pl?.name}"? This cannot be undone.`)) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'hub_playlists', id));
+    toast('Playlist deleted.', 'warn');
+    logActivity(`Playlist "${pl?.name}" deleted`);
+    loadPlaylists();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
 
 // ── ANALYTICS ─────────────────────────────────────────────
 document.getElementById('refreshAnalyticsBtn').addEventListener('click', loadAnalytics);
