@@ -5,7 +5,7 @@
 'use strict';
 
 // ── Firebase state ────────────────────────────────────────
-let _db, _st, _auth, fb = {};
+let _db, _auth, fb = {};
 let _fbPromise      = null; // singleton — prevents double-init
 let currentUser     = null;
 let currentUserData = null;
@@ -33,14 +33,12 @@ async function _loadFB() {
   try {
     const appMod = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`);
     const fs     = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-firestore.js`);
-    const st     = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-storage.js`);
     const au     = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-auth.js`);
     // Use existing app if already initialized (avoids duplicate-app error)
     const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
     _db   = fs.getFirestore(app);
-    _st   = st.getStorage(app);
     _auth = au.getAuth(app);
-    fb    = { ...appMod, ...fs, ...st, ...au };
+    fb    = { ...appMod, ...fs, ...au };
     return true;
   } catch(e) {
     console.error('[HUB] Firebase init error:', e);
@@ -250,6 +248,7 @@ function showPage(name) {
   // Lazy-load page data
   if (name === 'apps')        loadApps();
   if (name === 'users')       loadUsers();
+  if (name === 'music')       loadMusic();
   if (name === 'assets')      loadAssets();
   if (name === 'notify')      loadNotifications();
   if (name === 'promotions')  loadPromotions();
@@ -707,6 +706,166 @@ async function loadPendingBadge() {
   } catch(e) {}
 }
 
+// ── MUSIC ─────────────────────────────────────────────────
+const musicDropZone    = document.getElementById('musicDropZone');
+const musicFileInput   = document.getElementById('musicFileInput');
+const musicFolderInput = document.getElementById('musicFolderInput');
+let allTracks = [];
+
+musicDropZone.addEventListener('dragover',  e => { e.preventDefault(); musicDropZone.classList.add('drag-active'); });
+musicDropZone.addEventListener('dragleave', () => musicDropZone.classList.remove('drag-active'));
+musicDropZone.addEventListener('drop', e => {
+  e.preventDefault(); musicDropZone.classList.remove('drag-active');
+  handleMusicFiles([...e.dataTransfer.files]);
+});
+musicFileInput.addEventListener('change',   () => { handleMusicFiles([...musicFileInput.files]);   musicFileInput.value   = ''; });
+musicFolderInput.addEventListener('change', () => { handleMusicFiles([...musicFolderInput.files]); musicFolderInput.value = ''; });
+
+async function loadMusic() {
+  const list = document.getElementById('musicTrackList');
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'tracks'), fb.orderBy('addedAt', 'desc')));
+    allTracks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    document.getElementById('musicCount').textContent = allTracks.length + ' track' + (allTracks.length !== 1 ? 's' : '');
+    renderMusicTracks();
+  } catch(e) {
+    list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`;
+  }
+}
+
+function renderMusicTracks() {
+  const list = document.getElementById('musicTrackList');
+  if (!allTracks.length) { list.innerHTML = '<p class="empty-msg">No cloud tracks yet. Upload songs above.</p>'; return; }
+  list.innerHTML = allTracks.map(t => {
+    const cover = t.cover
+      ? `<img src="${esc(t.cover)}" alt=""/>`
+      : '🎵';
+    const dur = t.duration ? fmtDuration(t.duration) : '—';
+    return `
+      <div class="music-track-row">
+        <div class="music-track-cover">${cover}</div>
+        <div class="music-track-info">
+          <div class="music-track-title">${esc(t.title || 'Unknown')}</div>
+          <div class="music-track-meta">${esc(t.artist || 'Unknown Artist')}${t.album ? ' · ' + esc(t.album) : ''}</div>
+        </div>
+        <div class="music-track-dur">${dur}</div>
+        <div class="music-track-actions">
+          <button class="music-act-edit" onclick="openTrackModal('${t.id}')">✏ Edit</button>
+          <button class="music-act-del"  onclick="deleteTrack('${t.id}')">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function fmtDuration(sec) {
+  const s = Math.round(sec);
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+async function handleMusicFiles(files) {
+  const audio_types = ['audio/mpeg','audio/mp4','audio/flac','audio/wav','audio/ogg','audio/x-flac','audio/x-m4a'];
+  const audioFiles  = [...files].filter(f => f.type.startsWith('audio/') || audio_types.includes(f.type) || /\.(mp3|m4a|flac|wav|ogg)$/i.test(f.name));
+  if (!audioFiles.length) { toast('No audio files found.', 'error'); return; }
+
+  const progWrap = document.getElementById('musicUploadProgress');
+  const bar      = document.getElementById('musicUpBar');
+  const status   = document.getElementById('musicUpStatus');
+  progWrap.hidden = false;
+  musicDropZone.hidden = true;
+
+  for (let i = 0; i < audioFiles.length; i++) {
+    const file = audioFiles[i];
+    status.textContent = `Uploading ${i+1}/${audioFiles.length}: ${file.name}`;
+    bar.style.width = ((i / audioFiles.length) * 100) + '%';
+    try {
+      // Get duration from audio element
+      const duration = await getAudioDuration(file);
+      // Upload to Cloudinary
+      const url = await uploadToCloudinary(file, pct => {
+        bar.style.width = ((i / audioFiles.length + pct / audioFiles.length) * 100) + '%';
+      });
+      // Parse title/artist from filename (e.g. "Artist - Title.mp3")
+      const base   = file.name.replace(/\.[^.]+$/, '');
+      const parts  = base.split(' - ');
+      const artist = parts.length > 1 ? parts[0].trim() : 'Unknown Artist';
+      const title  = parts.length > 1 ? parts.slice(1).join(' - ').trim() : base;
+      // Save to Firestore tracks collection
+      await fb.addDoc(fb.collection(_db, 'tracks'), {
+        title, artist, album: '', url, cover: '',
+        duration, addedAt: fb.serverTimestamp(),
+        uploadedBy: currentUser.uid
+      });
+      toast(`Uploaded: ${title}`, 'success');
+    } catch(e) { toast('Failed: ' + file.name + ' — ' + e.message, 'error'); }
+  }
+
+  bar.style.width = '100%';
+  status.textContent = 'Done!';
+  setTimeout(() => { progWrap.hidden = true; musicDropZone.hidden = false; bar.style.width = '0%'; }, 1200);
+  loadMusic();
+  logActivity(`${audioFiles.length} track(s) uploaded`);
+}
+
+function getAudioDuration(file) {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const a   = new Audio();
+    a.addEventListener('loadedmetadata', () => { URL.revokeObjectURL(url); resolve(a.duration || 0); });
+    a.addEventListener('error', () => { URL.revokeObjectURL(url); resolve(0); });
+    a.src = url;
+  });
+}
+
+// Track edit modal
+const trackModal = document.getElementById('trackModal');
+document.getElementById('trackModalClose').addEventListener('click',  () => trackModal.hidden = true);
+document.getElementById('trackModalCancel').addEventListener('click', () => trackModal.hidden = true);
+document.getElementById('trackModalSave').addEventListener('click',   saveTrack);
+trackModal.addEventListener('click', e => { if (e.target === trackModal) trackModal.hidden = true; });
+
+window.openTrackModal = function(id) {
+  const t = allTracks.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('trackModalId').value    = t.id;
+  document.getElementById('trackTitle').value      = t.title  || '';
+  document.getElementById('trackArtist').value     = t.artist || '';
+  document.getElementById('trackAlbum').value      = t.album  || '';
+  document.getElementById('trackCover').value      = t.cover  || '';
+  trackModal.hidden = false;
+  document.getElementById('trackTitle').focus();
+};
+
+async function saveTrack() {
+  const id     = document.getElementById('trackModalId').value;
+  const title  = document.getElementById('trackTitle').value.trim();
+  const artist = document.getElementById('trackArtist').value.trim();
+  if (!title || !artist) { toast('Title and artist are required.', 'error'); return; }
+  const btn = document.getElementById('trackModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await fb.updateDoc(fb.doc(_db, 'tracks', id), {
+      title, artist,
+      album: document.getElementById('trackAlbum').value.trim(),
+      cover: document.getElementById('trackCover').value.trim(),
+    });
+    toast('Track updated!', 'success');
+    trackModal.hidden = true;
+    loadMusic();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Track'; btn.disabled = false;
+}
+
+window.deleteTrack = async function(id) {
+  const t = allTracks.find(x => x.id === id);
+  if (!confirm(`Delete "${t?.title || 'this track'}"? This cannot be undone.`)) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'tracks', id));
+    toast('Track deleted.', 'warn');
+    loadMusic();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
 // ── ASSETS ────────────────────────────────────────────────
 const dropZone       = document.getElementById('assetDropZone');
 const assetFileInput = document.getElementById('assetFileInput');
@@ -745,13 +904,31 @@ async function loadAssets() {
           </div>
           <div class="asset-actions">
             <button class="asset-copy" onclick="copyUrl('${a.url}')">Copy URL</button>
-            <button class="asset-del"  onclick="deleteAsset('${a.id}','${a.storagePath||''}')">Delete</button>
+            <button class="asset-del"  onclick="deleteAsset('${a.id}')">Delete</button>
           </div>
         </div>`;
     }).join('');
   } catch(e) {
     grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error: ${e.message}</p>`;
   }
+}
+
+async function uploadToCloudinary(file, onProgress) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`);
+    xhr.upload.onprogress = e => { if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total); };
+    xhr.onload = () => {
+      const data = JSON.parse(xhr.responseText);
+      if (xhr.status === 200) resolve(data.secure_url);
+      else reject(new Error(data.error?.message || 'Upload failed'));
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(formData);
+  });
 }
 
 async function handleAssetFiles(files) {
@@ -767,23 +944,16 @@ async function handleAssetFiles(files) {
     status.textContent = `Uploading ${i+1}/${files.length}: ${file.name}`;
     bar.style.width = ((i / files.length) * 100) + '%';
     try {
-      const path    = `hub_assets/${appId}/${Date.now()}_${file.name}`;
-      const ref     = fb.ref(_st, path);
-      const task    = fb.uploadBytesResumable(ref, file);
-      await new Promise((res, rej) => {
-        task.on('state_changed',
-          snap => { bar.style.width = ((i / files.length + snap.bytesTransferred / snap.totalBytes / files.length) * 100) + '%'; },
-          rej, res
-        );
+      const url = await uploadToCloudinary(file, pct => {
+        bar.style.width = ((i / files.length + pct / files.length) * 100) + '%';
       });
-      const url = await fb.getDownloadURL(ref);
       await fb.addDoc(fb.collection(_db, 'hub_assets'), {
-        name: file.name, url, storagePath: path, type: file.type,
+        name: file.name, url, storagePath: '', type: file.type,
         size: file.size, appId,
         uploadedBy: currentUser.uid,
         createdAt: fb.serverTimestamp()
       });
-    } catch(e) { toast('Failed: ' + file.name, 'error'); }
+    } catch(e) { toast('Failed: ' + file.name + ' — ' + e.message, 'error'); }
   }
   bar.style.width = '100%';
   status.textContent = 'Done!';
@@ -795,10 +965,9 @@ async function handleAssetFiles(files) {
 window.copyUrl = function(url) {
   navigator.clipboard.writeText(url).then(() => toast('URL copied!', 'success'));
 };
-window.deleteAsset = async function(id, path) {
+window.deleteAsset = async function(id) {
   if (!confirm('Delete this asset? This cannot be undone.')) return;
   try {
-    if (path) await fb.deleteObject(fb.ref(_st, path));
     await fb.deleteDoc(fb.doc(_db, 'hub_assets', id));
     toast('Asset deleted.', 'warn');
     loadAssets();
@@ -1013,16 +1182,7 @@ document.getElementById('profilePicInput').addEventListener('change', async func
   status.textContent = 'Uploading…';
 
   try {
-    const path = `hub_avatars/${currentUser.uid}/avatar`;
-    const ref  = fb.ref(_st, path);
-    const task = fb.uploadBytesResumable(ref, file);
-    await new Promise((res, rej) => {
-      task.on('state_changed',
-        snap => { bar.style.width = (snap.bytesTransferred / snap.totalBytes * 100) + '%'; },
-        rej, res
-      );
-    });
-    const photoURL = await fb.getDownloadURL(ref);
+    const photoURL = await uploadToCloudinary(file, pct => { bar.style.width = (pct * 100) + '%'; });
     await fb.updateDoc(fb.doc(_db, 'hub_users', currentUser.uid), { photoURL });
     await fb.updateProfile(currentUser, { photoURL });
     currentUserData.photoURL = photoURL;
