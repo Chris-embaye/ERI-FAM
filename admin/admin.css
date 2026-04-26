@@ -424,6 +424,7 @@ select.form-input { cursor: pointer; }
 .drop-zone:hover, .drop-zone.drag-active { border-color: var(--accent); background: rgba(99,102,241,0.05); }
 .drop-zone[hidden] { display: none; }
 .dz-content { pointer-events: none; }
+.drop-zone .link-btn { pointer-events: auto; }
 .dz-icon { font-size: 2.5rem; margin-bottom: 10px; }
 .dz-sub  { font-size: .78rem; color: var(--text-mute); margin-top: 6px; }
 

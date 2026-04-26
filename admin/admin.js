@@ -715,6 +715,7 @@ const musicFileInput   = document.getElementById('musicFileInput');
 const musicFolderInput = document.getElementById('musicFolderInput');
 let allTracks = [];
 
+musicDropZone.addEventListener('click', e => { if (!e.target.closest('.link-btn')) musicFileInput.click(); });
 musicDropZone.addEventListener('dragover',  e => { e.preventDefault(); musicDropZone.classList.add('drag-active'); });
 musicDropZone.addEventListener('dragleave', () => musicDropZone.classList.remove('drag-active'));
 musicDropZone.addEventListener('drop', e => {
