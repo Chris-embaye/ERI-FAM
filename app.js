@@ -2589,18 +2589,95 @@ document.querySelectorAll('.theme-opt-btn').forEach(btn => {
 });
 
 // ── SETTINGS: LANGUAGE ─────────────────────────────────────────
+const LANG_DICT = {
+  en: {
+    'nav-home':'Home','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Translate',
+    'lib-tab-songs':'Songs','lib-tab-playlists':'Playlists','lib-tab-artists':'Artists','lib-tab-albums':'Albums',
+    'fp-label':'Now Playing',
+    'extra-eq':'EQ','extra-sleep':'Sleep','extra-playlist':'Playlist','extra-lyrics':'Lyrics','extra-share':'Share','extra-save':'Save',
+    'hero-sub':'Your Eritrean music, anywhere',
+    'songs-play':'Play','songs-shuffle':'Shuffle',
+  },
+  ti: {
+    'nav-home':'ቤት','nav-radio':'ሬድዮ','nav-youtube':'ዩቱብ','nav-translate':'ትርጉም',
+    'lib-tab-songs':'ደርፍታት','lib-tab-playlists':'ዝርዝር ደርፊ','lib-tab-artists':'ደረፍቲ','lib-tab-albums':'ኣልበማት',
+    'fp-label':'ሕጂ ይጻወት',
+    'extra-eq':'ኢኪዩ','extra-sleep':'ዕረፍቲ','extra-playlist':'ዝርዝር','extra-lyrics':'ቃላት','extra-share':'ኣካፍል','extra-save':'ምቅሓት',
+    'hero-sub':'ሙዚቃ ኤርትራ፡ ኣብ ዝደለኻዮ',
+    'songs-play':'ጸወት','songs-shuffle':'ቀያዪር',
+  },
+  ar: {
+    'nav-home':'الرئيسية','nav-radio':'راديو','nav-youtube':'يوتيوب','nav-translate':'ترجمة',
+    'lib-tab-songs':'الأغاني','lib-tab-playlists':'قوائم التشغيل','lib-tab-artists':'الفنانون','lib-tab-albums':'الألبومات',
+    'fp-label':'يعزف الآن',
+    'extra-eq':'إيكيو','extra-sleep':'نوم','extra-playlist':'قائمة','extra-lyrics':'كلمات','extra-share':'مشاركة','extra-save':'حفظ',
+    'hero-sub':'موسيقى إريتريا في أي مكان',
+    'songs-play':'تشغيل','songs-shuffle':'عشوائي',
+  },
+  it: {
+    'nav-home':'Home','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Traduttore',
+    'lib-tab-songs':'Brani','lib-tab-playlists':'Playlist','lib-tab-artists':'Artisti','lib-tab-albums':'Album',
+    'fp-label':'In riproduzione',
+    'extra-eq':'EQ','extra-sleep':'Timer','extra-playlist':'Playlist','extra-lyrics':'Testi','extra-share':'Condividi','extra-save':'Salva',
+    'hero-sub':'La tua musica eritrea, ovunque',
+    'songs-play':'Riproduci','songs-shuffle':'Casuale',
+  },
+  fr: {
+    'nav-home':'Accueil','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Traduire',
+    'lib-tab-songs':'Chansons','lib-tab-playlists':'Playlists','lib-tab-artists':'Artistes','lib-tab-albums':'Albums',
+    'fp-label':'En cours de lecture',
+    'extra-eq':'EQ','extra-sleep':'Sommeil','extra-playlist':'Playlist','extra-lyrics':'Paroles','extra-share':'Partager','extra-save':'Sauver',
+    'hero-sub':'Votre musique érythréenne, partout',
+    'songs-play':'Jouer','songs-shuffle':'Aléatoire',
+  },
+  de: {
+    'nav-home':'Start','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Übersetzen',
+    'lib-tab-songs':'Songs','lib-tab-playlists':'Playlists','lib-tab-artists':'Künstler','lib-tab-albums':'Alben',
+    'fp-label':'Jetzt läuft',
+    'extra-eq':'EQ','extra-sleep':'Schlaf','extra-playlist':'Playlist','extra-lyrics':'Text','extra-share':'Teilen','extra-save':'Speichern',
+    'hero-sub':'Deine eritreische Musik, überall',
+    'songs-play':'Abspielen','songs-shuffle':'Zufällig',
+  },
+  es: {
+    'nav-home':'Inicio','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Traducir',
+    'lib-tab-songs':'Canciones','lib-tab-playlists':'Listas','lib-tab-artists':'Artistas','lib-tab-albums':'Álbumes',
+    'fp-label':'Reproduciendo',
+    'extra-eq':'EQ','extra-sleep':'Sueño','extra-playlist':'Lista','extra-lyrics':'Letra','extra-share':'Compartir','extra-save':'Guardar',
+    'hero-sub':'Tu música eritrea, en cualquier lugar',
+    'songs-play':'Reproducir','songs-shuffle':'Aleatorio',
+  },
+  am: {
+    'nav-home':'ቤት','nav-radio':'ራዲዮ','nav-youtube':'ዩቲዩብ','nav-translate':'ተርጓሚ',
+    'lib-tab-songs':'ዘፈኖች','lib-tab-playlists':'ዝርዝሮች','lib-tab-artists':'አርቲስቶች','lib-tab-albums':'አልበሞች',
+    'fp-label':'አሁን እየተጫወተ',
+    'extra-eq':'ኢኪዩ','extra-sleep':'ተኛ','extra-playlist':'ዝርዝር','extra-lyrics':'ግጥም','extra-share':'አጋራ','extra-save':'አስቀምጥ',
+    'hero-sub':'የኤርትራ ሙዚቃዎ፣ ሁሉ ቦታ',
+    'songs-play':'አጫውት','songs-shuffle':'ቀይር',
+  },
+};
+
+function applyLanguage(lang) {
+  const dict = LANG_DICT[lang] || LANG_DICT['en'];
+  document.documentElement.lang = lang;
+  document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) el.textContent = dict[key];
+  });
+}
+
 const savedLang = localStorage.getItem('eri_lang');
 if (savedLang) {
   const sel = document.getElementById('settingLang');
   if (sel) sel.value = savedLang;
+  applyLanguage(savedLang);
 }
 
 document.getElementById('applyLangBtn').addEventListener('click', () => {
   const lang = document.getElementById('settingLang').value;
   localStorage.setItem('eri_lang', lang);
-  const combo = document.querySelector('.goog-te-combo');
-  if (combo && lang !== 'en') { combo.value = lang; combo.dispatchEvent(new Event('change')); }
-  toast('Language applied!');
+  applyLanguage(lang);
+  toast('✅ Language applied!');
 });
 
 

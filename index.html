@@ -57,19 +57,19 @@
     </div>
     <button class="sb-nav-item" data-view="radio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>
-      <span>Radio</span>
+      <span data-i18n="nav-radio">Radio</span>
     </button>
     <button class="sb-nav-item" data-view="youtube">
       <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon fill="white" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
-      <span>YouTube</span>
+      <span data-i18n="nav-youtube">YouTube</span>
     </button>
     <button class="sb-nav-item" data-view="translate">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
-      <span>Translate</span>
+      <span data-i18n="nav-translate">Translate</span>
     </button>
     <button class="sb-nav-item" data-view="home">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <span>Home</span>
+      <span data-i18n="nav-home">Home</span>
     </button>
   </nav>
 </aside>
@@ -117,7 +117,7 @@
       <div class="hero-orb hero-orb-1"></div>
       <div class="hero-orb hero-orb-2"></div>
       <span class="hero-greeting" id="heroGreeting">Welcome</span>
-      <p class="hero-sub">Your Eritrean music, anywhere</p>
+      <p class="hero-sub" data-i18n="hero-sub">Your Eritrean music, anywhere</p>
       <div class="hero-quick-btns">
         <button class="hero-quick-btn" id="heroPlayBtn">
           <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play All
@@ -271,10 +271,10 @@
 
     <!-- Library tab bar -->
     <div class="lib-tabs">
-      <button class="lib-tab active" data-libtab="songs">Songs</button>
-      <button class="lib-tab" data-libtab="playlists">Playlists</button>
-      <button class="lib-tab" data-libtab="artists">Artists</button>
-      <button class="lib-tab" data-libtab="albums">Albums</button>
+      <button class="lib-tab active" data-libtab="songs" data-i18n="lib-tab-songs">Songs</button>
+      <button class="lib-tab" data-libtab="playlists" data-i18n="lib-tab-playlists">Playlists</button>
+      <button class="lib-tab" data-libtab="artists" data-i18n="lib-tab-artists">Artists</button>
+      <button class="lib-tab" data-libtab="albums" data-i18n="lib-tab-albums">Albums</button>
     </div>
 
     <!-- Songs tab (default) -->
@@ -282,11 +282,11 @@
       <div class="songs-actions">
         <button class="songs-play-btn" id="songsPlayBtn">
           <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Play
+          <span data-i18n="songs-play">Play</span>
         </button>
         <button class="songs-shuffle-btn" id="songsShuffleBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
-          Shuffle
+          <span data-i18n="songs-shuffle">Shuffle</span>
         </button>
       </div>
       <div class="lib-song-list" id="songList"></div>
@@ -428,15 +428,15 @@
 <nav class="bottom-nav" id="bottomNav">
   <button class="nav-item active" data-view="home">
     <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span>Home</span>
+    <span data-i18n="nav-home">Home</span>
   </button>
   <button class="nav-item" data-view="radio">
     <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>
-    <span>Radio</span>
+    <span data-i18n="nav-radio">Radio</span>
   </button>
   <button class="nav-item" data-view="youtube">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon fill="#1a1a2e" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
-    <span>YouTube</span>
+    <span data-i18n="nav-youtube">YouTube</span>
   </button>
 </nav>
 
@@ -485,7 +485,7 @@
       <button class="icon-btn" id="fpClose">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <span class="fp-header-label" id="fpLabel">Now Playing</span>
+      <span class="fp-header-label" id="fpLabel" data-i18n="fp-label">Now Playing</span>
       <button class="icon-btn" id="fpFullscreenBtn" title="Fullscreen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-fs="0">
           <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
@@ -589,12 +589,12 @@
 
     <!-- Extras row -->
     <div class="fp-extras">
-      <button class="extra-btn" id="eqBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>EQ</button>
-      <button class="extra-btn" id="sleepBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Sleep</button>
-      <button class="extra-btn" id="addToPlBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Playlist</button>
-      <button class="extra-btn" id="lyricsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/></svg>Lyrics</button>
-      <button class="extra-btn" id="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
-      <button class="extra-btn" id="dlTrackBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save</button>
+      <button class="extra-btn" id="eqBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span data-i18n="extra-eq">EQ</span></button>
+      <button class="extra-btn" id="sleepBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span data-i18n="extra-sleep">Sleep</span></button>
+      <button class="extra-btn" id="addToPlBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span data-i18n="extra-playlist">Playlist</span></button>
+      <button class="extra-btn" id="lyricsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/></svg><span data-i18n="extra-lyrics">Lyrics</span></button>
+      <button class="extra-btn" id="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span data-i18n="extra-share">Share</span></button>
+      <button class="extra-btn" id="dlTrackBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span data-i18n="extra-save">Save</span></button>
     </div>
 
   </div>
