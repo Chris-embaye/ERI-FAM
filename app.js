@@ -2323,19 +2323,39 @@ async function ytvSearch(query) {
   status.textContent = '⏳ Searching…';
   grid.innerHTML = '';
 
+  // ── Official YouTube Data API v3 (most reliable, requires key) ──
+  if (typeof YOUTUBE_API_KEY !== 'undefined' && YOUTUBE_API_KEY) {
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`,
+        { signal: AbortSignal.timeout(8000) }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.items) && data.items.length) {
+          const results = data.items.map(v => ({
+            videoId: v.id.videoId,
+            title: v.snippet.title,
+            author: v.snippet.channelTitle,
+            lengthSeconds: 0,
+            viewCount: 0,
+            thumb: v.snippet.thumbnails?.medium?.url,
+          })).filter(v => v.videoId);
+          status.textContent = '';
+          ytvRenderResults(results);
+          return;
+        }
+      }
+    } catch { /* fall through to proxy */ }
+  }
+
+  // ── Fallback: CORS proxies + Piped API ──
   const pipedUrl = `https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=videos`;
-
   const attempts = [
-    // Direct Piped (works if CORS allowed)
     () => fetch(pipedUrl, { signal: AbortSignal.timeout(6000) }),
-    // Via corsproxy.io
     () => fetch(`https://corsproxy.io/?${encodeURIComponent(pipedUrl)}`, { signal: AbortSignal.timeout(9000) }),
-    // Via allorigins
     () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(pipedUrl)}`, { signal: AbortSignal.timeout(9000) }),
-    // Alternate Piped instance via corsproxy
-    () => fetch(`https://corsproxy.io/?${encodeURIComponent(`https://pipedapi.adminforge.de/search?q=${encodeURIComponent(query)}&filter=videos`)}`, { signal: AbortSignal.timeout(9000) }),
   ];
-
   for (const attempt of attempts) {
     try {
       const res = await attempt();
@@ -2359,14 +2379,14 @@ async function ytvSearch(query) {
     } catch { /* try next */ }
   }
 
-  status.textContent = '⚠ Search unavailable — check connection or try again.';
+  status.textContent = '⚠ Search unavailable — add a YouTube API key in firebase-config.js';
 }
 
 function ytvRenderResults(results) {
   const grid = document.getElementById('ytvGrid');
   if (!results.length) { grid.innerHTML = '<p class="ytv-empty">No results found.</p>'; return; }
   grid.innerHTML = results.filter(v => v.videoId).map(v => {
-    const thumb = `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`;
+    const thumb = v.thumb || `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`;
     const dur   = v.lengthSeconds ? ytvFmtDur(v.lengthSeconds) : '';
     const views = v.viewCount     ? ytvFmtViews(v.viewCount)   : '';
     const safeTitle  = (v.title  || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');

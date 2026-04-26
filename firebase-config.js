@@ -29,5 +29,10 @@ const GEMINI_API_KEY = "";
 const CLOUDINARY_CLOUD  = "dcbqqqpmw";
 const CLOUDINARY_PRESET = "eri-fam-music";
 
+// YouTube Data API v3 — free 10,000 units/day (~100 searches)
+// Get key: console.cloud.google.com → Enable "YouTube Data API v3" → Credentials → API Key
+// Restrict key to: HTTP referrers → https://chris-embaye.github.io/*
+const YOUTUBE_API_KEY = "";
+
 // YouTube backend URL (optional — deploy yt-dlp backend separately)
 const YT_BACKEND_URL = "";
