@@ -1810,12 +1810,9 @@ function initSwipeGestures() {
    FEATURE 4 — Live Eritrean Radio
    ════════════════════════════════════════════════════════════════ */
 const RADIO_STATIONS = [
-  { id: 're',    name: 'Radio Erena',       desc: 'Eritrean Diaspora Radio',   lang: 'Tigrinya · Arabic',    icon: '📻', url: 'https://streaming.radioerena.net/radio_erena' },
-  { id: 'dh',    name: 'Dimtsi Hafash',     desc: 'Voice of Broad Masses',     lang: 'Tigrinya · Arabic',    icon: '🎙', url: 'https://stream.eritrea.net/live' },
-  { id: 've',    name: 'Voice of Eritrea',  desc: 'Community Radio',           lang: 'Tigrinya',             icon: '📡', url: 'https://voiceoferitrea.net/stream' },
-  { id: 'awate', name: 'Awate Radio',       desc: 'News & Commentary',         lang: 'Tigrinya · English',   icon: '🗞', url: 'https://awate.com/radio/stream' },
-  { id: 'assna', name: 'Assenna Radio',     desc: 'Independent Eritrean Radio',lang: 'Tigrinya',             icon: '🌍', url: 'https://assenna.com/radio/stream' },
-  { id: 'zara',  name: 'Radio Zara',        desc: 'Eritrean Music & Culture',  lang: 'Tigrinya · English',   icon: '🎶', url: 'https://radiosalina.net/stream' },
+  { id: 're',   name: 'Radio Erena',    desc: 'Eritrean Diaspora Radio',            lang: 'Tigrinya · Arabic', icon: '📻', url: 'https://stream.zeno.fm/u8h8qa8z4neuv' },
+  { id: 'hero', name: 'Hero Radio',     desc: 'Eritrean Music 24/7',                lang: 'Tigrinya',          icon: '🎵', url: 'https://a2.asurahosting.com:6790/eritrea.mp3' },
+  { id: 'etem', name: 'Eritrean Music', desc: 'Eritrean & Ethiopian Tigrigna Music', lang: 'Tigrinya',          icon: '🎶', url: 'https://linuxfreelancer.com:8443/test.mp3' },
 ];
 
 let radioAudio = null, currentStation = null;
@@ -2126,24 +2123,6 @@ const TV_STATIONS = [
     icon:      '📺',
     streamUrl: 'https://jmc-live.ercdn.net/eritreatv/eritreatv.m3u8',
     ytUrl:     'https://www.youtube.com/channel/UCpPhzhCfud9ctQSJJv4Kqlw/live',
-  },
-  {
-    id:       'erisat',
-    name:     'ERISAT',
-    desc:     'Eritrean Satellite Television — News & Commentary',
-    lang:     'Tigrinya · English',
-    icon:     '📡',
-    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCuGlhBoxVNUBIAtP4-0Kqfw&autoplay=1',
-    ytUrl:    'https://www.youtube.com/channel/UCuGlhBoxVNUBIAtP4-0Kqfw/live',
-  },
-  {
-    id:       'assenna',
-    name:     'ATV Asena',
-    desc:     'Independent Eritrean Media — News & Analysis',
-    lang:     'Tigrinya',
-    icon:     '🎙',
-    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCXdyJFImjPTccqnZ46ccrmw&autoplay=1',
-    ytUrl:    'https://www.youtube.com/c/ATVasena/live',
   },
 ];
 
