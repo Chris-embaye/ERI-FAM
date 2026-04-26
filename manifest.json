@@ -1,21 +1,42 @@
 {
   "name": "ERI-FAM Music",
   "short_name": "ERI-FAM",
-  "description": "Eritrean Music Player — Stream, Download & Listen Offline",
-  "start_url": "/",
-  "scope": "/",
+  "description": "Eritrean Music Player \u00e2\u20ac\u201d Stream, Download & Listen Offline",
+  "start_url": "/ERI-FAM/",
+  "scope": "/ERI-FAM/",
   "display": "standalone",
   "background_color": "#0D0D14",
   "theme_color": "#007A3D",
   "orientation": "portrait-primary",
   "lang": "en-US",
-  "categories": ["music", "entertainment"],
+  "categories": [
+    "music",
+    "entertainment"
+  ],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "Now Playing", "url": "./", "description": "Open player" },
-    { "name": "Admin Panel", "url": "./admin/", "description": "Admin dashboard" }
+    {
+      "name": "Now Playing",
+      "url": "./",
+      "description": "Open player"
+    },
+    {
+      "name": "Admin Panel",
+      "url": "./admin/",
+      "description": "Admin dashboard"
+    }
   ]
 }
