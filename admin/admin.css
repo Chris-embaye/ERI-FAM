@@ -910,3 +910,51 @@ body.dark .toast { background: #1e1e2e; color: #e2e8f0; }
 .pl-track-drag { color: var(--text-mute); font-size: .9rem; flex-shrink: 0; }
 .pl-track-num { font-size: .72rem; color: var(--text-mute); width: 20px; text-align: center; flex-shrink: 0; }
 .pl-track-info { flex: 1; min-width: 0; }
+
+/* ── ERITREAN INFO MUSIC WIDGET PAGE ── */
+.eri-music-upload-card {
+  background: var(--card2, #1c1c32);
+  border: 1px solid var(--border, rgba(255,255,255,0.07));
+  border-radius: 12px;
+  padding: 18px 20px 16px;
+  margin-bottom: 6px;
+}
+.eri-music-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.eri-music-file-btn {
+  background: var(--accent, #6c63ff);
+  color: #fff;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity .2s;
+  user-select: none;
+}
+.eri-music-file-btn:hover { opacity: .85; }
+.eri-music-fname {
+  font-size: .78rem;
+  color: var(--text-dim, #9ca3af);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.eri-music-prog {
+  margin-top: 12px;
+}
+.eri-music-msg {
+  margin-top: 10px;
+  font-size: .82rem;
+  font-weight: 600;
+}
+.eri-track-row .music-act-del {
+  font-size: .75rem;
+  padding: 5px 10px;
+}

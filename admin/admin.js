@@ -250,6 +250,7 @@ function showPage(name) {
   if (name === 'apps')        loadApps();
   if (name === 'users')       loadUsers();
   if (name === 'music')       loadMusic();
+  if (name === 'erimusic')    loadEriMusic();
   if (name === 'playlists')   loadPlaylists();
   if (name === 'assets')      loadAssets();
   if (name === 'notify')      loadNotifications();
@@ -3071,3 +3072,155 @@ document.addEventListener('keydown', e => {
 
 // ── BOOT ──────────────────────────────────────────────────
 bootAuth();
+
+// ── ERITREAN INFO MUSIC WIDGET MANAGEMENT ──────────────────────────
+// Manages 'eri_tracks' Firestore collection → feeds Eritrean Info phone widget
+
+let _eriTracks = [];
+
+// File input + upload button wiring
+(function initEriMusicUI() {
+  const fileInput = document.getElementById('eriMusicFile');
+  const fnameEl   = document.getElementById('eriMusicFileName');
+  const uploadBtn = document.getElementById('eriMusicUploadBtn');
+  if (!fileInput) return;
+
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files[0];
+    fnameEl.textContent = f ? f.name : 'No file chosen';
+    _validateEriUploadBtn();
+  });
+
+  ['eriMusicTitle', 'eriMusicArtist'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', _validateEriUploadBtn);
+  });
+
+  function _validateEriUploadBtn() {
+    const title  = document.getElementById('eriMusicTitle')?.value.trim();
+    const artist = document.getElementById('eriMusicArtist')?.value.trim();
+    const file   = document.getElementById('eriMusicFile')?.files[0];
+    uploadBtn.disabled = !(title && artist && file);
+  }
+
+  uploadBtn.addEventListener('click', handleEriMusicUpload);
+})();
+
+async function loadEriMusic() {
+  const list = document.getElementById('eriMusicList');
+  if (!list) return;
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(
+      fb.query(fb.collection(_db, 'eri_tracks'), fb.orderBy('addedAt', 'desc'))
+    );
+    _eriTracks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    document.getElementById('eriMusicCount').textContent =
+      _eriTracks.length + ' song' + (_eriTracks.length !== 1 ? 's' : '');
+    renderEriTracks();
+  } catch(e) {
+    list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`;
+  }
+}
+
+function cleanEriTitle(raw) {
+  if (!raw) return 'Unknown';
+  let s = String(raw);
+  try { s = decodeURIComponent(s.replace(/\+/g, ' ')); } catch(e) {}
+  if (s.includes('==')) s = s.split('==')[0].trim();
+  s = s.replace(/\.(mp3|m4a|wav|flac|ogg|aac|opus)$/i, '').replace(/_+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  return s || 'Unknown';
+}
+
+function renderEriTracks() {
+  const list = document.getElementById('eriMusicList');
+  if (!_eriTracks.length) {
+    list.innerHTML = '<p class="empty-msg">No songs yet — upload the first one above.</p>';
+    return;
+  }
+  list.innerHTML = _eriTracks.map((t, i) => {
+    const dur = t.duration ? fmtDuration(t.duration) : '—';
+    return `
+      <div class="music-track-row eri-track-row">
+        <div class="music-track-cover">🎵</div>
+        <div class="music-track-info">
+          <div class="music-track-title">${esc(cleanEriTitle(t.title))}</div>
+          <div class="music-track-meta">${esc(t.artist || 'Eritrean Artist')}</div>
+        </div>
+        <div class="music-track-dur">${dur}</div>
+        <div class="music-track-actions">
+          <button class="music-act-del" onclick="deleteEriTrack('${t.id}')">🗑 Remove</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function deleteEriTrack(id) {
+  if (!confirm('Remove this song from the Eritrean Info music widget?')) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'eri_tracks', id));
+    _eriTracks = _eriTracks.filter(t => t.id !== id);
+    document.getElementById('eriMusicCount').textContent =
+      _eriTracks.length + ' song' + (_eriTracks.length !== 1 ? 's' : '');
+    renderEriTracks();
+    toast('Song removed', 'success');
+  } catch(e) {
+    toast('Delete failed: ' + e.message, 'error');
+  }
+}
+
+async function handleEriMusicUpload() {
+  const title  = document.getElementById('eriMusicTitle').value.trim();
+  const artist = document.getElementById('eriMusicArtist').value.trim();
+  const file   = document.getElementById('eriMusicFile').files[0];
+  if (!title || !artist || !file) return;
+
+  const btn     = document.getElementById('eriMusicUploadBtn');
+  const prog    = document.getElementById('eriMusicProgress');
+  const bar     = document.getElementById('eriMusicBar');
+  const statusEl = document.getElementById('eriMusicStatus');
+  const msgEl   = document.getElementById('eriMusicMsg');
+
+  btn.disabled = true;
+  prog.hidden  = false;
+  msgEl.hidden = true;
+  bar.style.width = '0%';
+  statusEl.textContent = 'Getting duration…';
+
+  try {
+    const duration = await getAudioDuration(file);
+    statusEl.textContent = 'Uploading audio…';
+    const url = await uploadToCloudinary(file, pct => {
+      bar.style.width = Math.round(pct * 100) + '%';
+    });
+    bar.style.width = '95%';
+    statusEl.textContent = 'Saving to database…';
+    await fb.addDoc(fb.collection(_db, 'eri_tracks'), {
+      title, artist, url, duration,
+      addedAt: fb.serverTimestamp(),
+      uploadedBy: currentUser?.uid || ''
+    });
+    bar.style.width = '100%';
+    statusEl.textContent = 'Done!';
+
+    // Reset form
+    document.getElementById('eriMusicTitle').value  = '';
+    document.getElementById('eriMusicArtist').value = '';
+    document.getElementById('eriMusicFile').value   = '';
+    document.getElementById('eriMusicFileName').textContent = 'No file chosen';
+
+    msgEl.textContent = `✅ "${title}" added to Eritrean Info music widget!`;
+    msgEl.style.color = '#22c55e';
+    msgEl.hidden = false;
+    setTimeout(() => { prog.hidden = true; bar.style.width = '0%'; btn.disabled = true; }, 1500);
+    loadEriMusic();
+    logActivity?.(`Eri Music: uploaded "${title}" by ${artist}`);
+  } catch(e) {
+    bar.style.width = '0%';
+    prog.hidden = true;
+    msgEl.textContent = '❌ Upload failed: ' + e.message;
+    msgEl.style.color = '#f87171';
+    msgEl.hidden = false;
+    btn.disabled = false;
+    console.error('[EriMusic]', e);
+  }
+}

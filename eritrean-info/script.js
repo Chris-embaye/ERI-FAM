@@ -1963,9 +1963,9 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
       const db  = fsMod.getFirestore(app);
       const snap = await fsMod.getDocs(
         fsMod.query(
-          fsMod.collection(db, 'tracks'),
+          fsMod.collection(db, 'eri_tracks'),
           fsMod.orderBy('addedAt', 'desc'),
-          fsMod.limit(60)
+          fsMod.limit(200)
         )
       );
       tracks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -2004,7 +2004,7 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
 
   function renderPlaylist() {
     if (!tracks.length) {
-      playlist.innerHTML = '<div class="mpf-loading">No songs in library yet</div>';
+      playlist.innerHTML = '<div class="mpf-loading">No songs added yet — use Admin → Eri Music to upload</div>';
       countEl.textContent = '0 songs';
       return;
     }

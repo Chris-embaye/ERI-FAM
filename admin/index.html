@@ -98,6 +98,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
         <span>Music</span>
       </button>
+      <button class="sb-item" data-page="erimusic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M9 18V9l10-2v9"/><circle cx="6" cy="18" r="2"/><circle cx="16" cy="16" r="2"/></svg>
+        <span>Eri Music</span>
+      </button>
       <button class="sb-item" data-page="playlists">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         <span>Playlists</span>
@@ -428,6 +432,42 @@
       <!-- Track list -->
       <div id="musicTrackList" class="music-track-list">
         <p class="empty-msg">No cloud tracks yet. Upload songs above.</p>
+      </div>
+    </div>
+
+    <!-- ══ ERITREAN INFO MUSIC ══ -->
+    <div class="page" id="page-erimusic">
+      <div class="page-hd">
+        <div>
+          <h1>🇪🇷 Eritrean Info — Music Widget</h1>
+          <p class="page-sub">Songs shown in the phone widget on the Eritrean Info website</p>
+        </div>
+        <span id="eriMusicCount" style="font-size:.82rem;color:var(--text-dim);align-self:center"></span>
+      </div>
+
+      <!-- Upload form -->
+      <div class="eri-music-upload-card">
+        <h3 style="margin:0 0 14px;font-size:.95rem;font-weight:700">Add New Song</h3>
+        <div class="eri-music-form">
+          <input type="text"  id="eriMusicTitle"  class="form-input" placeholder="Song title *" style="flex:1;min-width:140px"/>
+          <input type="text"  id="eriMusicArtist" class="form-input" placeholder="Artist name *" style="flex:1;min-width:140px"/>
+          <label class="eri-music-file-btn" for="eriMusicFile">
+            🎵 Choose Audio File
+            <input type="file" id="eriMusicFile" accept="audio/*" hidden/>
+          </label>
+          <span id="eriMusicFileName" class="eri-music-fname">No file chosen</span>
+          <button class="btn-primary" id="eriMusicUploadBtn" disabled>Upload</button>
+        </div>
+        <div id="eriMusicProgress" class="eri-music-prog" hidden>
+          <div class="up-bar-wrap"><div class="up-bar" id="eriMusicBar"></div></div>
+          <p id="eriMusicStatus" style="font-size:.8rem;color:var(--text-dim);margin:6px 0 0">Uploading…</p>
+        </div>
+        <p id="eriMusicMsg" class="eri-music-msg" hidden></p>
+      </div>
+
+      <!-- Track list -->
+      <div id="eriMusicList" class="music-track-list" style="margin-top:20px">
+        <p class="empty-msg">Click "Eri Music" to load tracks.</p>
       </div>
     </div>
 
