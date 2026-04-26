@@ -61,20 +61,7 @@
         <span class="logo-flag">🇪🇷</span>
         <span>Eritrean<strong>Info</strong></span>
       </a>
-      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="#world-search">🌍 World Search</a></li>
-        <li><a href="#overview">Overview</a></li>
-        <li><a href="#history">History</a></li>
-        <li><a href="#people">People</a></li>
-        <li><a href="#culture">Culture</a></li>
-        <li><a href="#famous">Famous</a></li>
-        <li><a href="#gallery">Gallery</a></li>
-        <li><a href="#community">Community</a></li>
-        <li><a href="#translator" class="nav-cta">Translator</a></li>
-        <li><button class="nav-download-btn" id="navDownloadBtn">&#11015; Get App</button></li>
-      </ul>
-      <div class="nav-extras">
+      <div class="nav-right">
         <button class="dark-toggle" id="darkToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
         <div class="lang-picker-wrap" id="langPickerWrap">
           <button class="lang-picker-btn" id="langPickerBtn" title="Choose language">🌐 <span id="currentLangLabel">EN</span></button>
@@ -98,9 +85,40 @@
             <button class="lang-opt" data-lang="ko"          data-label="KO">🇰🇷 한국어</button>
           </div>
         </div>
+        <button class="nav-menu-btn" id="navToggle" aria-label="Toggle menu">
+          <span class="nav-menu-icon">☰</span>
+          <span class="nav-menu-label">Menu</span>
+        </button>
+      </div>
+    </div>
+    <!-- Slide-down nav panel -->
+    <div class="nav-dropdown" id="navDropdown">
+      <div class="nav-dropdown-grid">
+        <a href="#world-search" class="nav-dd-item">🌍<span>World Search</span></a>
+        <a href="#overview"     class="nav-dd-item">🏛️<span>Overview</span></a>
+        <a href="#history"      class="nav-dd-item">📜<span>History</span></a>
+        <a href="#geography"    class="nav-dd-item">🗺️<span>Geography</span></a>
+        <a href="#people"       class="nav-dd-item">👥<span>People</span></a>
+        <a href="#culture"      class="nav-dd-item">🎭<span>Culture</span></a>
+        <a href="#economy"      class="nav-dd-item">💰<span>Economy</span></a>
+        <a href="#government"   class="nav-dd-item">⚖️<span>Government</span></a>
+        <a href="#famous"       class="nav-dd-item">⭐<span>Famous</span></a>
+        <a href="#gallery"      class="nav-dd-item">📸<span>Gallery</span></a>
+        <a href="#community"    class="nav-dd-item">🤝<span>Community</span></a>
+        <a href="#translator"   class="nav-dd-item">🌐<span>Translator</span></a>
+        <a href="#tourism"      class="nav-dd-item">✈️<span>Tourism</span></a>
+        <a href="#languages"    class="nav-dd-item">🗣️<span>Languages</span></a>
+      </div>
+      <div class="nav-dd-footer">
+        <button class="nav-dd-app-btn" id="navDownloadBtn">⬇️ Get App — Works Offline</button>
       </div>
     </div>
   </nav>
+
+  <!-- SHARE STORY FLOATING BUTTON -->
+  <button class="share-story-float" id="shareStoryFloat" title="Share Your Story with the Community">
+    ✍️ <span>Share Story</span>
+  </button>
 
   <!-- HERO -->
   <section id="hero">
@@ -1163,16 +1181,23 @@
     <div class="container">
       <div class="section-header">
         <span class="section-tag">Community</span>
-        <h2>Community Stories</h2>
-        <p>Stories, memories, and updates shared by Eritreans around the world</p>
+        <h2>Community & Travel Guide</h2>
+        <p>Stories from Eritreans worldwide · Travel routes to Eritrea from anywhere on the map</p>
       </div>
-      <div class="community-posts-grid" id="communityPostsGrid">
-        <div class="community-loading">Loading posts…</div>
+      <div class="comm-tabs">
+        <button class="comm-tab active" data-ctab="posts">🤝 Community Posts</button>
+        <button class="comm-tab" data-ctab="travel">✈️ Travel Guide</button>
       </div>
-      <div class="community-submit-wrap">
-        <button class="community-submit-btn" id="communitySubmitBtn">
-          ✍️ Share Your Story
-        </button>
+      <!-- Posts panel -->
+      <div class="comm-panel active" id="commPanelPosts">
+        <div class="community-posts-grid" id="communityPostsGrid">
+          <div class="community-loading">Loading posts…</div>
+        </div>
+      </div>
+      <!-- Travel Guide panel -->
+      <div class="comm-panel" id="commPanelTravel">
+        <p class="travel-intro">Click any country to see how to reach <strong>Asmara International Airport (ASM)</strong> from there</p>
+        <div class="travel-guide-grid" id="travelGuideGrid"></div>
       </div>
     </div>
   </section>

@@ -3,17 +3,29 @@
    ============================================ */
 
 // ── NAVIGATION ──────────────────────────────
-const navbar    = document.getElementById('navbar');
-const navToggle = document.getElementById('navToggle');
-const navLinks  = document.getElementById('navLinks');
+const navbar      = document.getElementById('navbar');
+const navToggle   = document.getElementById('navToggle');
+const navDropdown = document.getElementById('navDropdown');
 
 navToggle.addEventListener('click', () => {
-  navLinks.classList.toggle('open');
+  navDropdown.classList.toggle('open');
+  navToggle.classList.toggle('active');
 });
 
-// Close mobile nav on link click
-navLinks.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', () => navLinks.classList.remove('open'));
+// Close dropdown on link click
+document.querySelectorAll('.nav-dd-item').forEach(link => {
+  link.addEventListener('click', () => {
+    navDropdown.classList.remove('open');
+    navToggle.classList.remove('active');
+  });
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!navbar.contains(e.target)) {
+    navDropdown.classList.remove('open');
+    navToggle.classList.remove('active');
+  }
 });
 
 // Active nav link on scroll
@@ -24,10 +36,10 @@ function updateActiveNav() {
     const top    = section.offsetTop;
     const bottom = top + section.offsetHeight;
     const id     = section.getAttribute('id');
-    const link   = navLinks.querySelector(`a[href="#${id}"]`);
+    const link   = navDropdown.querySelector(`a[href="#${id}"]`);
     if (link) {
       if (scrollY >= top && scrollY < bottom) {
-        navLinks.querySelectorAll('a').forEach(l => l.classList.remove('active'));
+        navDropdown.querySelectorAll('.nav-dd-item').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
       }
     }
@@ -960,18 +972,86 @@ communityObserver.observe(communitySection);
 
 // Submit modal
 const communityModal      = document.getElementById('communityModal');
-const communitySubmitBtn  = document.getElementById('communitySubmitBtn');
 const communityModalClose = document.getElementById('communityModalClose');
 const communityModalCancel= document.getElementById('communityModalCancel');
 const communityModalSubmit= document.getElementById('communityModalSubmit');
+const shareStoryFloat     = document.getElementById('shareStoryFloat');
 
 function openCommunityModal() { communityModal.removeAttribute('hidden'); document.body.style.overflow = 'hidden'; }
 function closeCommunityModal() { communityModal.setAttribute('hidden', ''); document.body.style.overflow = ''; }
 
-communitySubmitBtn.addEventListener('click', openCommunityModal);
+shareStoryFloat.addEventListener('click', openCommunityModal);
 communityModalClose.addEventListener('click', closeCommunityModal);
 communityModalCancel.addEventListener('click', closeCommunityModal);
 communityModal.addEventListener('click', e => { if (e.target === communityModal) closeCommunityModal(); });
+
+// ── COMMUNITY TABS ───────────────────────────
+document.querySelectorAll('.comm-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.comm-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.comm-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const panel = document.getElementById('commPanel' + tab.dataset.ctab.charAt(0).toUpperCase() + tab.dataset.ctab.slice(1));
+    if (panel) panel.classList.add('active');
+    if (tab.dataset.ctab === 'travel') renderTravelGuide();
+  });
+});
+
+// ── TRAVEL GUIDE ─────────────────────────────
+const TRAVEL_DATA = [
+  { flag:'🇺🇸', country:'United States', cities:['Washington DC','New York','Atlanta','Los Angeles'], airlines:'Ethiopian Airlines, EgyptAir, Emirates', duration:'18–22 hrs', tip:'Fly via Addis Ababa (ADD) or Cairo (CAI). Ethiopian Airlines has the most direct connection to Asmara (ASM).' },
+  { flag:'🇬🇧', country:'United Kingdom', cities:['London Heathrow (LHR)'], airlines:'Ethiopian Airlines, EgyptAir, Turkish Airlines', duration:'11–14 hrs', tip:'Connect via Addis Ababa or Cairo. Ethiopian Airlines flies LHR–ADD–ASM with the best schedule.' },
+  { flag:'🇩🇪', country:'Germany', cities:['Frankfurt (FRA)','Berlin (BER)'], airlines:'Ethiopian Airlines, EgyptAir, Lufthansa+partner', duration:'10–14 hrs', tip:'Frankfurt is the main European hub for East Africa connections. Fly via Addis Ababa or Cairo.' },
+  { flag:'🇮🇹', country:'Italy', cities:['Rome Fiumicino (FCO)','Milan (MXP)'], airlines:'Ethiopian Airlines, ITA Airways+partner', duration:'8–12 hrs', tip:'Shortest connection in Europe — strong historical ties. Rome to Asmara via Addis Ababa.' },
+  { flag:'🇸🇪', country:'Sweden', cities:['Stockholm Arlanda (ARN)'], airlines:'Ethiopian Airlines, SAS+partner', duration:'11–15 hrs', tip:'Large Eritrean diaspora in Sweden. Connect via Addis Ababa or Frankfurt to Asmara.' },
+  { flag:'🇳🇱', country:'Netherlands', cities:['Amsterdam Schiphol (AMS)'], airlines:'Ethiopian Airlines, KLM+Ethiopian codeshare', duration:'11–14 hrs', tip:'Connect via Addis Ababa. KLM and Ethiopian codeshare makes booking straightforward.' },
+  { flag:'🇦🇺', country:'Australia', cities:['Sydney (SYD)','Melbourne (MEL)'], airlines:'Ethiopian Airlines, Emirates', duration:'22–26 hrs', tip:'Long journey — consider a stopover in Dubai (DXB) or Addis Ababa. Emirates via Dubai is popular.' },
+  { flag:'🇨🇦', country:'Canada', cities:['Toronto (YYZ)','Ottawa (YOW)','Calgary (YYC)'], airlines:'Ethiopian Airlines, EgyptAir', duration:'18–24 hrs', tip:'Large Eritrean community in Ottawa and Toronto. Fly via Addis Ababa or Cairo.' },
+  { flag:'🇦🇪', country:'UAE', cities:['Dubai (DXB)','Abu Dhabi (AUH)'], airlines:'Emirates, Air Arabia, flydubai, Eritrean Airlines', duration:'3–4 hrs', tip:'Closest major hub to Eritrea. Multiple daily flights across the Red Sea. Best transit point globally.' },
+  { flag:'🇸🇦', country:'Saudi Arabia', cities:['Jeddah (JED)','Riyadh (RUH)'], airlines:'Eritrean Airlines, flynas, flydubai', duration:'2–3 hrs', tip:'Short Red Sea crossing. Jeddah is closest to Massawa. Multiple weekly connections available.' },
+  { flag:'🇸🇩', country:'Sudan', cities:['Khartoum (KRT)'], airlines:'Eritrean Airlines, Sudan Airways', duration:'1–2 hrs', tip:'Neighboring country — short flight or land border crossing. Check current border status.' },
+  { flag:'🇪🇹', country:'Ethiopia', cities:['Addis Ababa (ADD)'], airlines:'Ethiopian Airlines, Eritrean Airlines', duration:'~1 hr', tip:'Main hub for ALL international connections to Asmara. Multiple daily flights, best prices from here.' },
+  { flag:'🇫🇷', country:'France', cities:['Paris CDG'], airlines:'Ethiopian Airlines, Air France+partner', duration:'10–13 hrs', tip:'Growing Eritrean community in Paris. Connect via Addis Ababa. Air France codeshares with Ethiopian.' },
+  { flag:'🇳🇴', country:'Norway', cities:['Oslo Gardermoen (OSL)'], airlines:'Ethiopian Airlines, SAS+partner', duration:'11–15 hrs', tip:'Significant Eritrean population in Oslo. Connect via Addis Ababa or Frankfurt.' },
+  { flag:'🇩🇰', country:'Denmark', cities:['Copenhagen (CPH)'], airlines:'Ethiopian Airlines', duration:'11–14 hrs', tip:'Connect via Addis Ababa. Copenhagen–Frankfurt–Addis–Asmara is a popular route.' },
+  { flag:'🇨🇭', country:'Switzerland', cities:['Geneva (GVA)','Zurich (ZRH)'], airlines:'Ethiopian Airlines, SWISS+partner', duration:'10–13 hrs', tip:'Geneva hosts major UN agencies with Eritrean delegates. Connect via Addis Ababa.' },
+  { flag:'🇸🇬', country:'Singapore', cities:['Singapore Changi (SIN)'], airlines:'Singapore Airlines+partner, Emirates', duration:'14–18 hrs', tip:'Connect via Dubai or Addis Ababa. Singapore is a great stopover for long-haul flights.' },
+  { flag:'🇯🇵', country:'Japan', cities:['Tokyo Narita (NRT)'], airlines:'Ethiopian Airlines, Emirates', duration:'18–22 hrs', tip:'Connect via Addis Ababa or Dubai. Ethiopian Airlines offers a Tokyo–Addis–Asmara connection.' },
+];
+
+let travelRendered = false;
+function renderTravelGuide() {
+  if (travelRendered) return;
+  travelRendered = true;
+  const grid = document.getElementById('travelGuideGrid');
+  grid.innerHTML = '';
+  TRAVEL_DATA.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'travel-card';
+    card.innerHTML = `
+      <div class="travel-card-header">
+        <span class="travel-flag">${d.flag}</span>
+        <div class="travel-card-info">
+          <div class="travel-country">${d.country}</div>
+          <div class="travel-duration">✈️ ${d.duration} to ASM</div>
+        </div>
+        <span class="travel-chevron">▼</span>
+      </div>
+      <div class="travel-card-body">
+        <div class="travel-detail"><strong>Hub cities:</strong> ${d.cities.join(', ')}</div>
+        <div class="travel-detail"><strong>Airlines:</strong> ${d.airlines}</div>
+        <div class="travel-detail">${d.tip}</div>
+        <div class="travel-hubs">${d.cities.map(c => `<span class="travel-hub">${c}</span>`).join('')}</div>
+      </div>
+    `;
+    card.addEventListener('click', () => {
+      const isOpen = card.classList.contains('open');
+      document.querySelectorAll('.travel-card.open').forEach(c => c.classList.remove('open'));
+      if (!isOpen) card.classList.add('open');
+    });
+    grid.appendChild(card);
+  });
+}
 
 communityModalSubmit.addEventListener('click', async () => {
   const name  = document.getElementById('cmName').value.trim();
