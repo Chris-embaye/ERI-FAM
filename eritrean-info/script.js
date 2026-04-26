@@ -1976,8 +1976,30 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
     }
   }
 
-  function safeHtml(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // Clean URL-encoded, duplicated, or placeholder track fields
+  const UNKNOWN_ARTIST_PLACEHOLDERS = ['ዘይፍለጥ', 'unknown', 'Unknown Artist', 'ዘይፍለጥ ስነጦባዊ'];
+  function cleanField(raw, fallback) {
+    if (!raw) return fallback;
+    let s = String(raw);
+    // Decode URL encoding (%20 etc.)
+    try { s = decodeURIComponent(s.replace(/\+/g, ' ')); } catch(e) {}
+    // Strip "Title==Title" or "Title == Duplicate" patterns — keep first part
+    if (s.includes('==')) s = s.split('==')[0].trim();
+    // Remove audio file extensions
+    s = s.replace(/\.(mp3|m4a|wav|flac|ogg|aac|opus)$/i, '');
+    // Underscores to spaces, collapse whitespace
+    s = s.replace(/[_]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+    return s || fallback;
+  }
+  function cleanTitle(t)  { return cleanField(t.title,  'Unknown Song'); }
+  function cleanArtist(t) {
+    const raw = cleanField(t.artist, '');
+    if (!raw) return 'Eritrean Artist';
+    if (UNKNOWN_ARTIST_PLACEHOLDERS.some(p => raw.startsWith(p))) return 'Eritrean Artist';
+    return raw;
+  }
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   function renderPlaylist() {
@@ -1986,13 +2008,13 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
       countEl.textContent = '0 songs';
       return;
     }
-    countEl.textContent = tracks.length + ' songs';
+    countEl.textContent = tracks.length + ' ደርፍታት';
     playlist.innerHTML = tracks.map((t, i) =>
       `<div class="mpf-track-row" data-idx="${i}">` +
         `<span class="mpf-track-num">${i + 1}</span>` +
         `<div class="mpf-track-row-info">` +
-          `<div class="mpf-track-row-title">${safeHtml(t.title || 'Unknown')}</div>` +
-          `<div class="mpf-track-row-artist">${safeHtml(t.artist || '')}</div>` +
+          `<div class="mpf-track-row-title">${esc(cleanTitle(t))}</div>` +
+          `<div class="mpf-track-row-artist">${esc(cleanArtist(t))}</div>` +
         `</div>` +
       `</div>`
     ).join('');
@@ -2006,8 +2028,8 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
     currentIdx = idx;
     const t = tracks[idx];
 
-    titleEl.textContent  = t.title  || 'Unknown';
-    artistEl.textContent = t.artist || '';
+    titleEl.textContent  = cleanTitle(t);
+    artistEl.textContent = cleanArtist(t);
 
     // highlight row
     playlist.querySelectorAll('.mpf-track-row').forEach((r, i) =>
