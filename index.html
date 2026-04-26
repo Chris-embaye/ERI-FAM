@@ -56,6 +56,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>
       <span>Radio</span>
     </button>
+    <button class="sb-nav-item" data-view="youtube">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon fill="white" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
+      <span>YouTube</span>
+    </button>
     <button class="sb-nav-item" data-view="translate">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
       <span>Translate</span>
@@ -301,6 +305,53 @@
     <p style="font-size:0.7rem;color:var(--text-dim);margin-top:20px;text-align:center">Streams may require a stable connection · Tap card to watch live</p>
   </div>
 
+  <!-- YOUTUBE VIEW -->
+  <div class="view" id="view-youtube">
+
+    <!-- Search -->
+    <div class="ytv-search-section">
+      <div class="ytv-search-row">
+        <div class="ytv-search-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" id="ytvSearch" placeholder="Search YouTube…" autocomplete="off" spellcheck="false"/>
+        </div>
+        <button class="ytv-search-btn" id="ytvSearchBtn">Search</button>
+      </div>
+      <div class="ytv-chips" id="ytvChips">
+        <button class="ytv-chip active" data-q="eritrean music 2024">🇪🇷 Eritrean</button>
+        <button class="ytv-chip" data-q="tigrinya music new">🎵 Tigrinya</button>
+        <button class="ytv-chip" data-q="eritrean comedy funny">😂 Comedy</button>
+        <button class="ytv-chip" data-q="eritrean news today">📰 News</button>
+        <button class="ytv-chip" data-q="eritrean wedding songs">💒 Wedding</button>
+        <button class="ytv-chip" data-q="eritrean gospel mezmur">✝ Gospel</button>
+      </div>
+    </div>
+
+    <!-- Inline player -->
+    <div class="ytv-player" id="ytvPlayer" hidden>
+      <div class="ytv-frame-wrap" id="ytvFrameWrap">
+        <iframe id="ytvFrame" class="ytv-frame"
+          allowfullscreen
+          allow="autoplay; encrypted-media; picture-in-picture"
+          referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <div class="ytv-bar">
+        <div class="ytv-bar-title" id="ytvBarTitle">—</div>
+        <div class="ytv-bar-author" id="ytvBarAuthor">—</div>
+        <div class="ytv-bar-btns">
+          <button class="ytv-bar-btn" id="ytvAudioBtn" title="Audio-only mode">🎵 Audio</button>
+          <button class="ytv-bar-btn" id="ytvPipBtn"   title="Picture-in-Picture">⧉ PiP</button>
+          <button class="ytv-bar-btn ytv-stop-btn" id="ytvCloseBtn">✕ Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status + results -->
+    <p class="ytv-status" id="ytvStatus"></p>
+    <div class="ytv-grid" id="ytvGrid"></div>
+
+  </div>
+
   <!-- TRANSLATE VIEW -->
   <div class="view" id="view-translate">
     <div class="translate-panel">
@@ -357,11 +408,22 @@
     <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>
     <span>Radio</span>
   </button>
-  <button class="nav-item" data-view="translate">
-    <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
-    <span>Translate</span>
+  <button class="nav-item" data-view="youtube">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon fill="#1a1a2e" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
+    <span>YouTube</span>
   </button>
 </nav>
+
+<!-- YOUTUBE FLOAT PLAYER -->
+<div class="yt-float" id="ytFloat" hidden>
+  <img class="yt-float-thumb" id="ytFloatThumb" src="" alt=""/>
+  <div class="yt-float-info">
+    <div class="yt-float-title" id="ytFloatTitle">YouTube</div>
+    <div class="yt-float-author" id="ytFloatAuthor"></div>
+  </div>
+  <button class="yt-float-open" id="ytFloatOpen">▶ Open</button>
+  <button class="yt-float-close" id="ytFloatClose">✕</button>
+</div>
 
 <!-- MINI PLAYER -->
 <div class="mini-player" id="miniPlayer" style="display:none">

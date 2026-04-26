@@ -2274,6 +2274,16 @@ function switchView(viewName) {
   if (viewEl) viewEl.classList.add('active');
   const navBtn = document.querySelector(`.nav-item[data-view="${viewName}"]`);
   if (navBtn) navBtn.classList.add('active');
+  // Show/hide floating YT player when navigating away from YouTube view
+  const ytFloat = document.getElementById('ytFloat');
+  if (ytFloat && ytState.videoId) {
+    ytFloat.hidden = (viewName === 'youtube');
+  }
+  // Auto-load Eritrean music on first YouTube view open
+  if (viewName === 'youtube' && !ytState.loaded) {
+    ytState.loaded = true;
+    ytvSearch('eritrean music 2024');
+  }
 }
 
 document.querySelectorAll('.sb-nav-item').forEach(btn => {
@@ -2302,6 +2312,148 @@ document.querySelectorAll('.sb-grp-hd').forEach(btn => {
     if (!isOpen) grp.classList.add('open');
   });
 });
+
+// ── YOUTUBE VANCED ────────────────────────────────────────────
+const INVIDIOUS_INSTANCES = [
+  'https://invidious.io',
+  'https://inv.tux.pizza',
+  'https://yt.artemislena.eu',
+  'https://invidious.nerdvpn.de',
+  'https://vid.puffyan.us',
+];
+
+const ytState = { videoId: null, title: '', author: '', thumb: '', loaded: false };
+
+async function ytvSearch(query) {
+  const grid   = document.getElementById('ytvGrid');
+  const status = document.getElementById('ytvStatus');
+  if (!query.trim()) return;
+  status.textContent = '⏳ Searching…';
+  grid.innerHTML = '';
+
+  for (const inst of INVIDIOUS_INSTANCES) {
+    try {
+      const res = await fetch(
+        `${inst}/api/v1/search?q=${encodeURIComponent(query)}&type=video&page=1`,
+        { signal: AbortSignal.timeout(6000) }
+      );
+      if (!res.ok) continue;
+      const results = await res.json();
+      if (!Array.isArray(results)) continue;
+      status.textContent = '';
+      ytvRenderResults(results, inst);
+      return;
+    } catch { /* try next */ }
+  }
+  status.textContent = '⚠ Search unavailable — check connection or try again.';
+}
+
+function ytvRenderResults(results, inst) {
+  const grid = document.getElementById('ytvGrid');
+  if (!results.length) { grid.innerHTML = '<p class="ytv-empty">No results found.</p>'; return; }
+  grid.innerHTML = results.filter(v => v.videoId).map(v => {
+    const thumb = `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`;
+    const dur   = v.lengthSeconds ? ytvFmtDur(v.lengthSeconds) : '';
+    const views = v.viewCount     ? ytvFmtViews(v.viewCount)   : '';
+    const safeTitle  = (v.title  || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+    const safeAuthor = (v.author || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+    return `
+      <div class="ytv-card" onclick="ytvPlay('${v.videoId}','${safeTitle}','${thumb}','${safeAuthor}')">
+        <div class="ytv-thumb-wrap">
+          <img class="ytv-thumb" src="${thumb}" alt="" loading="lazy" onerror="this.parentNode.style.background='#222'"/>
+          ${dur ? `<span class="ytv-dur">${dur}</span>` : ''}
+        </div>
+        <div class="ytv-card-info">
+          <div class="ytv-card-title">${esc(v.title || '')}</div>
+          <div class="ytv-card-meta">${esc(v.author || '')}${views ? ' · ' + views : ''}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+window.ytvPlay = function(videoId, title, thumb, author) {
+  ytState.videoId = videoId;
+  ytState.title   = title;
+  ytState.thumb   = thumb;
+  ytState.author  = author;
+
+  const frame  = document.getElementById('ytvFrame');
+  const player = document.getElementById('ytvPlayer');
+  const wrap   = document.getElementById('ytvFrameWrap');
+
+  frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1`;
+  wrap.classList.remove('audio-mode');
+  player.hidden = false;
+  document.getElementById('ytvBarTitle').textContent  = title;
+  document.getElementById('ytvBarAuthor').textContent = author;
+  document.getElementById('ytvAudioBtn').classList.remove('active');
+
+  // Float player info
+  document.getElementById('ytFloatTitle').textContent  = title;
+  document.getElementById('ytFloatAuthor').textContent = author;
+  document.getElementById('ytFloatThumb').src          = thumb;
+  document.getElementById('ytFloat').hidden            = true;
+
+  player.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+function ytvStop() {
+  const frame = document.getElementById('ytvFrame');
+  frame.src = '';
+  document.getElementById('ytvPlayer').hidden = true;
+  document.getElementById('ytFloat').hidden   = true;
+  ytState.videoId = null;
+}
+
+// Audio-only mode — collapse the video frame, keep audio
+document.getElementById('ytvAudioBtn').addEventListener('click', () => {
+  const wrap = document.getElementById('ytvFrameWrap');
+  const on   = wrap.classList.toggle('audio-mode');
+  document.getElementById('ytvAudioBtn').classList.toggle('active', on);
+  toast(on ? '🎵 Audio-only — video hidden, music keeps playing' : '📺 Video restored');
+});
+
+// PiP — guide the user (iframe PiP is browser-native)
+document.getElementById('ytvPipBtn').addEventListener('click', () => {
+  toast('▶ Tap inside the video → browser menu → Picture in Picture');
+});
+
+document.getElementById('ytvCloseBtn').addEventListener('click', ytvStop);
+
+// Float player controls
+document.getElementById('ytFloatOpen').addEventListener('click',  () => switchView('youtube'));
+document.getElementById('ytFloatClose').addEventListener('click', ytvStop);
+
+// Search
+document.getElementById('ytvSearchBtn').addEventListener('click', () => {
+  const q = document.getElementById('ytvSearch').value.trim();
+  if (q) ytvSearch(q);
+});
+document.getElementById('ytvSearch').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) ytvSearch(q); }
+});
+
+// Preset chips
+document.querySelectorAll('.ytv-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.ytv-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    document.getElementById('ytvSearch').value = '';
+    ytvSearch(chip.dataset.q);
+  });
+});
+
+function ytvFmtDur(s) {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  if (h) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+}
+function ytvFmtViews(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return Math.round(n/1e3) + 'K';
+  return String(n);
+}
 
 // ── YOUTUBE WATCH PLAYER ───────────────────────────────────────
 function parseYtId(input) {
