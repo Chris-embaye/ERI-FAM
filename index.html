@@ -92,6 +92,9 @@
     <button class="icon-btn" id="ytBtn" title="YouTube to MP3">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.58 7.19a2.76 2.76 0 0 0-1.94-1.95C18 4.8 12 4.8 12 4.8s-6 0-7.64.44A2.76 2.76 0 0 0 2.42 7.19 29 29 0 0 0 2 12a29 29 0 0 0 .42 4.81 2.76 2.76 0 0 0 1.94 1.95C6 19.2 12 19.2 12 19.2s6 0 7.64-.44a2.76 2.76 0 0 0 1.94-1.95A29 29 0 0 0 22 12a29 29 0 0 0-.42-4.81zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>
     </button>
+    <button class="icon-btn header-radio-btn" id="radioHeaderBtn" title="Live Radio">
+      <svg viewBox="0 0 24 24" stroke-width="2.2" fill="none" stroke="currentColor"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg>
+    </button>
     <button class="icon-btn" id="settingsBtn" title="Settings">
       <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
@@ -425,6 +428,31 @@
   </div>
 
 </main>
+
+<!-- RADIO FULLSCREEN OVERLAY -->
+<div class="radio-fullscreen" id="radioFullscreen" style="display:none">
+  <div class="radio-fs-header">
+    <div class="radio-fs-live">
+      <span style="width:5px;height:5px;border-radius:50%;background:white;display:inline-block;animation:livePulse 1.4s ease-in-out infinite"></span>
+      LIVE
+    </div>
+    <button class="radio-fs-close" id="radioFsClose">✕</button>
+  </div>
+  <div class="radio-fs-glow" aria-hidden="true"></div>
+  <div class="radio-fs-icon" id="radioFsIcon">📻</div>
+  <div class="radio-fs-name" id="radioFsName">Radio</div>
+  <div class="radio-fs-desc" id="radioFsDesc">Live Stream</div>
+  <div class="radio-eq" id="radioEq">
+    <div class="radio-eq-bar"></div>
+    <div class="radio-eq-bar"></div>
+    <div class="radio-eq-bar"></div>
+    <div class="radio-eq-bar"></div>
+    <div class="radio-eq-bar"></div>
+    <div class="radio-eq-bar"></div>
+    <div class="radio-eq-bar"></div>
+  </div>
+  <button class="radio-fs-stop" id="radioFsStop">■ Stop Radio</button>
+</div>
 
 <!-- BOTTOM NAVIGATION -->
 <nav class="bottom-nav" id="bottomNav">

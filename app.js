@@ -1857,32 +1857,38 @@ function renderRadioGrid() {
       <div class="radio-card-desc">${esc(s.desc)}</div>
       <div class="radio-card-lang">${esc(s.lang)}</div>
       ${currentStation?.id === s.id
-        ? '<div class="radio-live-badge"><span class="radio-live-dot"></span> Live</div>'
+        ? '<div class="radio-live-badge"><span class="radio-live-dot"></span> Live — tap to open</div>'
         : '<div class="radio-card-lang" style="color:var(--text-dim)">Tap to stream</div>'}
     </div>`).join('');
   grid.querySelectorAll('.radio-card').forEach(card => {
     card.addEventListener('click', () => playRadio(card.getAttribute('data-rid')));
   });
+  // Highlight bottom-nav radio button when playing
+  document.querySelector('.nav-item[data-view="radio"]')?.classList.toggle('radio-active', !!currentStation);
+}
+
+function openRadioFullscreen() {
+  if (!currentStation) return;
+  document.getElementById('radioFsIcon').textContent = currentStation.icon;
+  document.getElementById('radioFsName').textContent = currentStation.name;
+  document.getElementById('radioFsDesc').textContent = currentStation.desc;
+  document.getElementById('radioFullscreen').style.display = 'flex';
 }
 
 function playRadio(id) {
   const station = RADIO_STATIONS.find(s => s.id === id);
   if (!station) return;
-  if (currentStation?.id === id) { stopRadio(); return; }
+  // If same station already playing, just reopen fullscreen
+  if (currentStation?.id === id) { openRadioFullscreen(); return; }
   stopRadio();
-  // Pause main audio
   if (S.playing) { audio.pause(); S.playing = false; updatePlayIcons(); }
   radioAudio = new Audio(station.url);
   radioAudio.volume = S.volume;
   radioAudio.play().catch(() => toast('⚠ Could not connect to this stream'));
   currentStation = station;
-  const rnp = document.getElementById('radioNowPlaying');
-  document.getElementById('rnpArt').textContent  = station.icon;
-  document.getElementById('rnpName').textContent = station.name;
-  rnp.style.display = '';
   renderRadioGrid();
-  toast(`📻 ${station.name}`);
-  // Media session for radio
+  openRadioFullscreen();
+  updateHeaderRadioBtn();
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({ title: station.name, artist: station.desc, album: 'Live Radio', artwork: [] });
     navigator.mediaSession.setActionHandler('pause', stopRadio);
@@ -1894,10 +1900,23 @@ function stopRadio() {
   if (radioAudio) { radioAudio.pause(); radioAudio.src = ''; radioAudio = null; }
   currentStation = null;
   document.getElementById('radioNowPlaying').style.display = 'none';
+  document.getElementById('radioFullscreen').style.display = 'none';
   renderRadioGrid();
+  updateHeaderRadioBtn();
+}
+
+function updateHeaderRadioBtn() {
+  document.getElementById('radioHeaderBtn')?.classList.toggle('playing', !!currentStation);
 }
 
 document.getElementById('rnpStop').addEventListener('click', stopRadio);
+document.getElementById('radioFsStop').addEventListener('click', stopRadio);
+document.getElementById('radioFsClose').addEventListener('click', () => {
+  document.getElementById('radioFullscreen').style.display = 'none';
+});
+document.getElementById('radioHeaderBtn').addEventListener('click', () => {
+  if (currentStation) { openRadioFullscreen(); } else { switchView('radio'); }
+});
 
 /* ════════════════════════════════════════════════════════════════
    FEATURE 5 — Artist Page (click artist name)
