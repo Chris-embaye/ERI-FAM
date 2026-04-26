@@ -256,6 +256,9 @@ async function loadLocalTracks() {
     _blobUrl: null,
   }));
   renderTracks();
+  if (activeLibTab === 'songs')   renderSongs();
+  if (activeLibTab === 'artists') renderArtists();
+  if (activeLibTab === 'albums')  renderAlbums();
   updateStats();
 }
 
@@ -1519,6 +1522,9 @@ async function syncCloud() {
     const snap = await db.getDocs(db.query(db.collection(db._db, 'tracks'), db.orderBy('addedAt', 'desc')));
     S.cloudTracks = snap.docs.map(d => ({ ...d.data(), id: d.id, type: 'cloud' }));
     renderTracks(); updateStats();
+    if (activeLibTab === 'songs')   renderSongs();
+    if (activeLibTab === 'artists') renderArtists();
+    if (activeLibTab === 'albums')  renderAlbums();
     document.getElementById('syncMsg').textContent = `✅ ${S.cloudTracks.length} cloud tracks loaded`;
     setTimeout(() => banner.style.display = 'none', 3000);
     renderTopCharts();
