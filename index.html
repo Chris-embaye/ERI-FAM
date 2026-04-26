@@ -168,6 +168,15 @@
       </div>
     </div>
 
+    <!-- Recently Played -->
+    <div class="recently-played-section" id="recentSection" style="display:none">
+      <div class="section-hdr">
+        <h2 class="section-title">🕐 Recently Played</h2>
+        <button class="btn-sm" id="recentClearBtn">Clear</button>
+      </div>
+      <div class="recent-scroll" id="recentScroll"></div>
+    </div>
+
     <!-- Promotions / Advertise -->
     <div class="promo-section" id="promoSection" style="display:none">
       <div class="section-hdr">
@@ -221,6 +230,14 @@
       <button class="filter-chip" data-filter="liked">❤ Liked</button>
       <select id="artistFilterSelect" class="filter-select"><option value="">All Artists</option></select>
       <select id="albumFilterSelect" class="filter-select"><option value="">All Albums</option></select>
+      <select id="sortSelect" class="filter-select">
+        <option value="default">Sort: Default</option>
+        <option value="title">A–Z Title</option>
+        <option value="artist">A–Z Artist</option>
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+        <option value="plays">Most Played</option>
+      </select>
       <div class="view-toggle-wrap">
         <button class="view-tog active" id="gridViewBtn" title="Grid">⊞</button>
         <button class="view-tog" id="listViewBtn" title="List">☰</button>
@@ -1010,6 +1027,18 @@
     </div>
     <div class="modal-actions" style="margin-top:20px">
       <button class="btn-primary" id="keyboardModalClose">Got it!</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE SHEET MODAL -->
+<div class="modal-overlay" id="shareSheetModal">
+  <div class="modal-box share-sheet-box">
+    <h3>Share Song</h3>
+    <p class="modal-sub" id="shareSheetTitle">—</p>
+    <div class="share-apps-grid" id="shareAppsGrid"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn-secondary" id="shareSheetClose">Cancel</button>
     </div>
   </div>
 </div>

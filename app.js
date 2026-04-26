@@ -3498,3 +3498,505 @@ document.getElementById('kbdHelpBtn')?.addEventListener('click', _toggleKeyboard
     }
   } catch(e) { console.warn('[Monetize]', e); }
 })();
+
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 1 — Recently Played Section
+   Shows last 15 played tracks on the home page
+   ════════════════════════════════════════════════════════════════ */
+function renderRecentlyPlayed() {
+  const section = document.getElementById('recentSection');
+  const scroll  = document.getElementById('recentScroll');
+  if (!section || !scroll) return;
+  const recent = JSON.parse(localStorage.getItem('erifam_recent') || '[]');
+  const all    = [...S.tracks, ...S.cloudTracks];
+  const tracks = recent.map(id => all.find(t => t.id === id)).filter(Boolean).slice(0, 15);
+  if (!tracks.length) { section.style.display = 'none'; return; }
+  scroll.innerHTML = tracks.map(t => `
+    <div class="recent-card" data-id="${t.id}">
+      <div class="recent-art">${t.artwork ? `<img src="${esc(t.artwork)}" alt="" loading="lazy" />` : artEl(t,'card')}</div>
+      <div class="recent-title">${esc(t.title)}</div>
+      <div class="recent-artist">${esc(t.artist)}</div>
+    </div>`).join('');
+  scroll.querySelectorAll('.recent-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const track = tracks.find(t => t.id === card.getAttribute('data-id'));
+      if (track) playTrack(track, tracks);
+    });
+  });
+  section.style.display = '';
+}
+
+document.getElementById('recentClearBtn')?.addEventListener('click', () => {
+  localStorage.removeItem('erifam_recent');
+  document.getElementById('recentSection').style.display = 'none';
+  toast('🕐 Recently played cleared');
+});
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 2 — Playlist Detail View + Delete + Rename
+   ════════════════════════════════════════════════════════════════ */
+async function renderPlaylistsV2() {
+  const playlists = await idbGetAll('playlists');
+  const grid = document.getElementById('playlistGrid');
+  if (!playlists.length) {
+    grid.innerHTML = '<p class="empty-msg">No playlists yet. Create one!</p>';
+    return;
+  }
+  grid.innerHTML = playlists.map(pl => `
+    <div class="pl-card" data-plid="${pl.id}">
+      <div class="pl-art">📁</div>
+      <div class="pl-name">${esc(pl.name)}</div>
+      <div class="pl-count">${(pl.trackIds||[]).length} tracks</div>
+      <button class="pl-card-opts" data-plid="${pl.id}">⋯</button>
+    </div>`).join('');
+  grid.querySelectorAll('.pl-card').forEach(card => {
+    card.addEventListener('click', async e => {
+      if (e.target.closest('.pl-card-opts')) {
+        e.stopPropagation();
+        const pl = playlists.find(p => p.id === e.target.closest('.pl-card-opts').getAttribute('data-plid'));
+        if (pl) openPlaylistOptions(pl);
+        return;
+      }
+      const pl = playlists.find(p => p.id === card.getAttribute('data-plid'));
+      if (pl) openPlaylistDetail(pl);
+    });
+  });
+}
+renderPlaylists = renderPlaylistsV2;
+
+function openPlaylistOptions(pl) {
+  sheetTrackId = null;
+  document.getElementById('sheetInfo').innerHTML = `<strong>${esc(pl.name)}</strong><span>${(pl.trackIds||[]).length} tracks</span>`;
+  document.getElementById('sheetActions').innerHTML = `
+    <button class="sheet-action" id="plOptPlay">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px"><polygon points="5 3 19 12 5 21 5 3"/></svg>Play
+    </button>
+    <button class="sheet-action" id="plOptRename">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M11 4H4a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Rename
+    </button>
+    <button class="sheet-action danger" id="plOptDelete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Delete
+    </button>`;
+  document.getElementById('plOptPlay').onclick = async () => {
+    const all = [...S.tracks, ...S.cloudTracks];
+    const tracks = (pl.trackIds||[]).map(id => all.find(t => t.id === id)).filter(Boolean);
+    tracks.length ? playTrack(tracks[0], tracks) : toast('Playlist is empty');
+    closeSheet();
+  };
+  document.getElementById('plOptRename').onclick = async () => {
+    closeSheet();
+    const name = prompt('New name:', pl.name);
+    if (!name?.trim()) return;
+    pl.name = name.trim();
+    await idbPut('playlists', pl);
+    renderPlaylists();
+    toast(`✅ Renamed to "${pl.name}"`);
+  };
+  document.getElementById('plOptDelete').onclick = async () => {
+    closeSheet();
+    if (!confirm(`Delete "${pl.name}"?`)) return;
+    await idbDelete('playlists', pl.id);
+    renderPlaylists();
+    toast('🗑 Playlist deleted');
+  };
+  document.getElementById('sheetOverlay').classList.add('open');
+  document.getElementById('trackSheet').classList.add('open');
+}
+
+function openPlaylistDetail(pl) {
+  const all    = [...S.tracks, ...S.cloudTracks];
+  const tracks = (pl.trackIds||[]).map(id => all.find(t => t.id === id)).filter(Boolean);
+  const totalDur = tracks.reduce((a, t) => a + (t.duration||0), 0);
+  const panel = document.getElementById('libtab-playlists');
+  panel.innerHTML = `
+    <div class="lib-detail-back" id="plBack">‹ Playlists</div>
+    <div class="pl-detail-hdr">
+      <div class="pl-detail-art">📁</div>
+      <div>
+        <div class="pl-detail-name">${esc(pl.name)}</div>
+        <div class="pl-detail-meta">${tracks.length} song${tracks.length!==1?'s':''} · ${fmtTime(totalDur)}</div>
+      </div>
+    </div>
+    <div class="songs-actions">
+      <button class="songs-play-btn" id="plDetailPlay">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play
+      </button>
+      <button class="songs-shuffle-btn" id="plDetailShuffle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg> Shuffle
+      </button>
+    </div>
+    <div class="lib-song-list">
+      ${tracks.length ? tracks.map((t, i) => `
+        <div class="lib-song-row${S.currentTrack?.id===t.id?' playing':''}" data-idx="${i}">
+          <span class="lib-song-num">${i+1}</span>
+          <div class="lib-song-info">
+            <div class="lib-song-title">${esc(t.title)}</div>
+            <div class="lib-song-artist">${esc(t.artist)}</div>
+          </div>
+          <span class="lib-song-dur">${fmtTime(t.duration)}</span>
+          <button class="qi-remove pl-rm" data-id="${t.id}">✕</button>
+        </div>`).join('') : '<p class="empty-msg" style="padding:20px 0">No songs yet.</p>'}
+    </div>`;
+  panel.querySelector('#plBack').addEventListener('click', () => renderPlaylists());
+  panel.querySelector('#plDetailPlay')?.addEventListener('click', () => {
+    tracks.length ? playTrack(tracks[0], tracks) : toast('Playlist is empty');
+  });
+  panel.querySelector('#plDetailShuffle')?.addEventListener('click', () => {
+    if (!tracks.length) { toast('Playlist is empty'); return; }
+    S.shuffle = true;
+    playTrack(tracks[Math.floor(Math.random()*tracks.length)], tracks);
+  });
+  panel.querySelectorAll('.lib-song-row').forEach(row => {
+    row.addEventListener('click', e => {
+      if (e.target.closest('.pl-rm')) return;
+      playTrack(tracks[parseInt(row.dataset.idx)], tracks);
+    });
+  });
+  panel.querySelectorAll('.pl-rm').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      pl.trackIds = (pl.trackIds||[]).filter(id => id !== btn.getAttribute('data-id'));
+      await idbPut('playlists', pl);
+      toast('Removed from playlist');
+      openPlaylistDetail(pl);
+    });
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 3 — Queue: Remove Items + Clear All
+   ════════════════════════════════════════════════════════════════ */
+updateQueueUI = function() {
+  const list = document.getElementById('queueList');
+  if (!S.queue.length) { list.innerHTML = '<p class="empty-msg">Queue is empty.</p>'; return; }
+  list.innerHTML = `<button class="queue-clear-btn" id="clearQueueBtn">✕ Clear Queue</button>` +
+    S.queue.map((t, i) => `
+      <div class="queue-item${i===S.queueIndex?' active':''}" data-idx="${i}">
+        <span class="qi-num">${i===S.queueIndex?'▶':i+1}</span>
+        <div class="qi-art">${artEl(t,'list')}</div>
+        <div class="qi-info">
+          <div class="qi-title">${esc(t.title)}</div>
+          <div class="qi-artist">${esc(t.artist)}</div>
+        </div>
+        <span class="qi-dur">${fmtTime(t.duration)}</span>
+        ${i!==S.queueIndex?`<button class="qi-remove" data-qi="${i}">✕</button>`:''}
+      </div>`).join('');
+  list.querySelectorAll('.queue-item').forEach(item => {
+    item.addEventListener('click', e => {
+      if (e.target.closest('.qi-remove')) return;
+      S.queueIndex = parseInt(item.getAttribute('data-idx'));
+      playTrack(S.queue[S.queueIndex]);
+    });
+  });
+  list.querySelectorAll('.qi-remove').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = parseInt(btn.getAttribute('data-qi'));
+      S.queue.splice(idx, 1);
+      if (S.queueIndex > idx) S.queueIndex--;
+      updateQueueUI();
+    });
+  });
+  document.getElementById('clearQueueBtn')?.addEventListener('click', () => {
+    S.queue = []; S.queueIndex = 0;
+    updateQueueUI();
+    toast('Queue cleared');
+  });
+};
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 4 — Lyrics Auto-Fetch (lyrics.ovh API)
+   Replaces static lyrics panel with live fetch fallback
+   ════════════════════════════════════════════════════════════════ */
+async function fetchLyricsOvh(title, artist) {
+  try {
+    const res = await fetch(
+      `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`,
+      { signal: AbortSignal.timeout(7000) }
+    );
+    if (res.ok) {
+      const d = await res.json();
+      return d.lyrics?.trim() || null;
+    }
+  } catch {}
+  return null;
+}
+
+// Replace the lyrics button listener by cloning the element to remove old handlers
+{
+  const lyricsBtn = document.getElementById('lyricsBtn');
+  const newBtn = lyricsBtn.cloneNode(true);
+  lyricsBtn.parentNode.replaceChild(newBtn, lyricsBtn);
+  newBtn.addEventListener('click', async () => {
+    const t    = S.currentTrack;
+    const body = document.getElementById('lyricsBody');
+    if (!t) { toast('Play a track first'); return; }
+    openPanel('lyricsPanel');
+    if (t.lyrics) {
+      body.innerHTML = `
+        <div class="lyrics-track-info"><h4>${esc(t.title)}</h4><p>${esc(t.artist)}</p></div>
+        <div class="lyrics-text">${esc(t.lyrics).replace(/\n/g,'<br>')}</div>`;
+      return;
+    }
+    body.innerHTML = `
+      <div class="lyrics-track-info"><h4>${esc(t.title)}</h4><p>${esc(t.artist)}</p></div>
+      <p style="text-align:center;padding:24px;color:var(--text-sub)">⏳ Searching for lyrics…</p>`;
+    const lyrics = await fetchLyricsOvh(t.title, t.artist);
+    if (lyrics) {
+      t.lyrics = lyrics;
+      body.innerHTML = `
+        <div class="lyrics-track-info"><h4>${esc(t.title)}</h4><p>${esc(t.artist)}</p></div>
+        <div class="lyrics-text">${esc(lyrics).replace(/\n/g,'<br>')}</div>
+        <p style="font-size:.67rem;color:var(--text-dim);text-align:center;margin-top:14px">via lyrics.ovh</p>`;
+    } else {
+      body.innerHTML = `
+        <div class="lyrics-track-info"><h4>${esc(t.title)}</h4><p>${esc(t.artist)}</p></div>
+        <p class="empty-msg" style="padding:20px 0">No lyrics found.<br><small style="color:var(--text-dim)">Tigrinya songs may not be in the lyrics database yet.</small></p>`;
+    }
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 5 — Sort Options (title / artist / newest / plays)
+   ════════════════════════════════════════════════════════════════ */
+let _sortMode = 'default';
+
+document.getElementById('sortSelect')?.addEventListener('change', function() {
+  _sortMode = this.value;
+  const q = document.getElementById('homeSearchInput')?.value?.trim() || '';
+  let tracks = getAllTracks();
+  if (q) {
+    const lq = q.toLowerCase();
+    tracks = tracks.filter(t =>
+      (t.title||'').toLowerCase().includes(lq) ||
+      (t.artist||'').toLowerCase().includes(lq)
+    );
+  }
+  switch (_sortMode) {
+    case 'title':  tracks.sort((a,b) => (a.title||'').localeCompare(b.title)); break;
+    case 'artist': tracks.sort((a,b) => (a.artist||'').localeCompare(b.artist)); break;
+    case 'newest': tracks.sort((a,b) => (b.addedAt||0) - (a.addedAt||0)); break;
+    case 'oldest': tracks.sort((a,b) => (a.addedAt||0) - (b.addedAt||0)); break;
+    case 'plays':  tracks.sort((a,b) => (b.playCount||0) - (a.playCount||0)); break;
+  }
+  if (S.viewMode === 'grid') renderGrid(tracks);
+  else renderList(tracks);
+});
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 6 — Browser Push Notification Permission
+   Asked 35 s after first use; shown once only
+   ════════════════════════════════════════════════════════════════ */
+function requestPushPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'default') return;
+  if (localStorage.getItem('erifam_notif_asked')) return;
+  setTimeout(async () => {
+    localStorage.setItem('erifam_notif_asked', '1');
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      toast('🔔 Notifications enabled!');
+      try {
+        new Notification('ERI-FAM 🎵', {
+          body: "We'll notify you when new Eritrean music is added.",
+          icon: './icons/icon-192.png',
+        });
+      } catch {}
+    }
+  }, 35000);
+}
+requestPushPermission();
+
+function showNativeNotification(title, body) {
+  if (Notification.permission === 'granted') {
+    try { new Notification(title, { body, icon: './icons/icon-192.png' }); } catch {}
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 7 — Share to WhatsApp / Telegram / X / Email
+   Replaces the single Share button with a rich sheet
+   ════════════════════════════════════════════════════════════════ */
+{
+  const shareBtn = document.getElementById('shareBtn');
+  const newShareBtn = shareBtn.cloneNode(true);
+  shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
+  newShareBtn.addEventListener('click', () => {
+    if (!S.currentTrack) { toast('Play a track first'); return; }
+    openShareSheet(S.currentTrack);
+  });
+}
+
+function openShareSheet(t) {
+  const url  = `${location.origin}${location.pathname}?play=${t.id}`;
+  const text = `🎵 ${t.title} — ${t.artist} | ERI-FAM`;
+  document.getElementById('shareSheetTitle').textContent = `${t.title} — ${t.artist}`;
+  const apps = [
+    {
+      ico: '💬', label: 'WhatsApp',
+      action: () => window.open(`https://wa.me/?text=${encodeURIComponent(text+'\n'+url)}`, '_blank', 'noopener'),
+    },
+    {
+      ico: '✈️', label: 'Telegram',
+      action: () => window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank', 'noopener'),
+    },
+    {
+      ico: '𝕏', label: 'Twitter/X',
+      action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text+'\n'+url)}`, '_blank', 'noopener'),
+    },
+    {
+      ico: '📧', label: 'Email',
+      action: () => window.open(`mailto:?subject=${encodeURIComponent(t.title)}&body=${encodeURIComponent(text+'\n\n'+url)}`),
+    },
+    {
+      ico: '📋', label: 'Copy Link',
+      action: async () => {
+        try { await navigator.clipboard.writeText(url); toast('📋 Link copied!'); }
+        catch { toast(url); }
+      },
+    },
+    {
+      ico: '📱', label: 'More…',
+      action: async () => {
+        if (navigator.share) {
+          try { await navigator.share({ title: t.title, text, url }); } catch {}
+        } else {
+          try { await navigator.clipboard.writeText(url); toast('📋 Copied!'); } catch {}
+        }
+      },
+    },
+  ];
+  document.getElementById('shareAppsGrid').innerHTML = apps.map((a, i) =>
+    `<div class="share-app-btn" data-si="${i}">
+       <span class="share-ico">${a.ico}</span>
+       <span>${a.label}</span>
+     </div>`
+  ).join('');
+  document.querySelectorAll('.share-app-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => { apps[i].action(); closeModal('shareSheetModal'); });
+  });
+  openModal('shareSheetModal');
+}
+
+document.getElementById('shareSheetClose')?.addEventListener('click', () => closeModal('shareSheetModal'));
+document.getElementById('shareSheetModal')?.addEventListener('click', e => {
+  if (e.target.id === 'shareSheetModal') closeModal('shareSheetModal');
+});
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 8 — Download / Saved-Offline Badge on Track Cards
+   Shows a green "✓ saved" chip on tracks saved offline
+   ════════════════════════════════════════════════════════════════ */
+const _savedOfflineIds = new Set(JSON.parse(localStorage.getItem('erifam_offline_ids') || '[]'));
+
+const _baseDownloadCloudTrack = downloadCloudTrack;
+downloadCloudTrack = async function(track) {
+  await _baseDownloadCloudTrack(track);
+  _savedOfflineIds.add(track.id);
+  localStorage.setItem('erifam_offline_ids', JSON.stringify([..._savedOfflineIds]));
+  renderTracks();
+};
+
+const _baseRenderGrid = renderGrid;
+renderGrid = function(tracks) {
+  const grid = document.getElementById('trackGrid');
+  if (!tracks.length) { grid.innerHTML = ''; return; }
+  grid.innerHTML = tracks.map((t, i) => {
+    const playing  = S.currentTrack && S.currentTrack.id === t.id;
+    const selected = S.selectedIds.has(t.id);
+    const saved    = _savedOfflineIds.has(t.id);
+    return `<div class="track-card${playing?' playing':''}${selected?' selected':''}" data-id="${t.id}" data-idx="${i}">
+      <div class="tc-art" style="position:relative">
+        ${artEl(t,'card')}
+        ${saved ? '<span class="tc-saved-badge">✓ saved</span>' : ''}
+        <div class="tc-sel-check"></div>
+        <div class="tc-play-overlay">
+          <div class="tc-play-ico"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+        </div>
+        ${playing ? '<div class="tc-eq-bars"><span style="height:8px"></span><span style="height:14px"></span><span style="height:6px"></span></div>' : ''}
+      </div>
+      <div class="tc-info">
+        <div class="tc-title">${esc(t.title)}${t.premium?' <span class="tc-premium-lock">🔒</span>':''}</div>
+        <div class="tc-artist">${esc(t.artist)}</div>
+      </div>
+      <button class="tc-more" data-id="${t.id}">⋯</button>
+    </div>`;
+  }).join('');
+  grid.style.display = '';
+  document.getElementById('trackList').style.display = 'none';
+  bindTrackCardEvents(grid, tracks);
+};
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 9 — Artist Profile: Total Duration + Play Count
+   ════════════════════════════════════════════════════════════════ */
+openArtistModal = function(artistName) {
+  const all        = [...S.tracks, ...S.cloudTracks].filter(t => t.artist === artistName);
+  const totalDur   = all.reduce((a, t) => a + (t.duration||0), 0);
+  const totalPlays = all.reduce((a, t) => a + (t.playCount||0), 0);
+  document.getElementById('artistModalName').textContent = artistName;
+  document.getElementById('artistModalCount').innerHTML =
+    `${all.length} track${all.length!==1?'s':''} · ${fmtTime(totalDur)}` +
+    (totalPlays > 0 ? ` · <span style="color:var(--accent)">▶ ${totalPlays} plays</span>` : '');
+  const list = document.getElementById('artistModalTracks');
+  list.innerHTML = all.map((t, i) => `
+    <div class="track-row" data-id="${t.id}" data-idx="${i}">
+      <div class="tr-art">${artEl(t,'list')}</div>
+      <div class="tr-info">
+        <div class="tr-title">${esc(t.title)}</div>
+        <div class="tr-artist">${esc(t.album||fmtTime(t.duration))}${t.playCount>0?' · ▶ '+t.playCount:''}</div>
+      </div>
+      <span class="tr-dur">${fmtTime(t.duration)}</span>
+    </div>`).join('');
+  list.querySelectorAll('.track-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const track = all.find(t => t.id === row.getAttribute('data-id'));
+      if (track) { playTrack(track, all); closeModal('artistModal'); }
+    });
+  });
+  openModal('artistModal');
+};
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 10 — New Releases Badge + Native Notification
+   Detects newly added cloud tracks since last visit
+   ════════════════════════════════════════════════════════════════ */
+function checkNewReleases(cloudTracks) {
+  const lastVisit = parseInt(localStorage.getItem('erifam_last_visit') || '0');
+  const now = Date.now();
+  if (lastVisit > 0) {
+    const newTracks = cloudTracks.filter(t => (t.addedAt||0) > lastVisit);
+    if (newTracks.length > 0) {
+      const sample = newTracks.slice(0, 2).map(t => `"${t.title}"`).join(', ');
+      const msg = newTracks.length === 1
+        ? `New: ${sample} just added!`
+        : `${newTracks.length} new tracks including ${sample}`;
+      setTimeout(() => showInAppNotification({ title: '🎵 New Music Added!', body: msg }), 1500);
+      showNativeNotification('🎵 ERI-FAM — New Music!', msg);
+      const syncBtn = document.getElementById('statSyncBtn');
+      if (syncBtn && !syncBtn.querySelector('.new-releases-badge')) {
+        const badge = document.createElement('span');
+        badge.className = 'new-releases-badge';
+        badge.textContent = newTracks.length;
+        syncBtn.appendChild(badge);
+        syncBtn.addEventListener('click', () => badge.remove(), { once: true });
+      }
+    }
+  }
+  localStorage.setItem('erifam_last_visit', String(now));
+}
+
+// Hook new features into the existing sync and load flows
+const _baseSyncCloud = syncCloud;
+syncCloud = async function() {
+  await _baseSyncCloud();
+  renderRecentlyPlayed();
+  checkNewReleases(S.cloudTracks);
+};
+
+const _baseLoadLocalTracks = loadLocalTracks;
+loadLocalTracks = async function() {
+  await _baseLoadLocalTracks();
+  setTimeout(renderRecentlyPlayed, 100);
+};
