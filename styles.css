@@ -1535,7 +1535,12 @@ body {
   background: linear-gradient(160deg, #1e0a3c 0%, #0d0d1a 50%, #030518 100%);
 }
 .fp-overlay { background: rgba(0,0,0,0.28); }
-.fp-content { padding: 0 28px 24px; }
+.fp-content {
+  padding: 0 28px env(safe-area-inset-bottom, 20px);
+  justify-content: space-between;
+  min-height: 100%;
+  overflow-y: hidden;
+}
 
 /* Song title / artist */
 .fp-title { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.5px; }

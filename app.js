@@ -2297,8 +2297,12 @@ document.querySelectorAll('.sb-sub-item').forEach(btn => {
   btn.addEventListener('click', () => {
     switchView(btn.dataset.view);
     if (btn.dataset.libtab) {
+      activeLibTab = btn.dataset.libtab;
       document.querySelectorAll('.lib-tab').forEach(t => t.classList.toggle('active', t.dataset.libtab === btn.dataset.libtab));
       document.querySelectorAll('.lib-panel').forEach(p => p.classList.toggle('active', p.id === 'libtab-' + btn.dataset.libtab));
+      if (btn.dataset.libtab === 'songs')   renderSongs();
+      if (btn.dataset.libtab === 'artists') renderArtists();
+      if (btn.dataset.libtab === 'albums')  renderAlbums();
     }
     closeSidebar();
   });
@@ -2695,3 +2699,19 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('mouseleave', () => {
   document.querySelectorAll('.track-card').forEach(c => { c.style.transform = ''; c.style.boxShadow = ''; });
 }, true);
+
+// ── Full-player fullscreen toggle ──────────────────────────
+document.getElementById('fpFullscreenBtn')?.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+});
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('fpFullscreenBtn');
+  if (!btn) return;
+  const isFs = !!document.fullscreenElement;
+  btn.title = isFs ? 'Exit Fullscreen' : 'Fullscreen';
+  btn.querySelector('svg')?.setAttribute('data-fs', isFs ? '1' : '0');
+});
