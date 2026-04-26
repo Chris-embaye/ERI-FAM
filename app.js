@@ -1841,9 +1841,8 @@ function initSwipeGestures() {
    FEATURE 4 — Live Eritrean Radio
    ════════════════════════════════════════════════════════════════ */
 const RADIO_STATIONS = [
-  { id: 're',   name: 'Radio Erena',    desc: 'Eritrean Diaspora Radio',            lang: 'Tigrinya · Arabic', icon: '📻', url: 'https://stream.zeno.fm/u8h8qa8z4neuv' },
-  { id: 'hero', name: 'Hero Radio',     desc: 'Eritrean Music 24/7',                lang: 'Tigrinya',          icon: '🎵', url: 'https://a2.asurahosting.com:6790/eritrea.mp3' },
-  { id: 'etem', name: 'Eritrean Music', desc: 'Eritrean & Ethiopian Tigrigna Music', lang: 'Tigrinya',          icon: '🎶', url: 'https://linuxfreelancer.com:8443/test.mp3' },
+  { id: 'hero', name: 'Hero Radio',     desc: 'Eritrean Music 24/7',                lang: 'Tigrinya', icon: '🎵', url: 'https://a2.asurahosting.com:6790/eritrea.mp3' },
+  { id: 'etem', name: 'Eritrean Music', desc: 'Eritrean & Ethiopian Tigrigna Music', lang: 'Tigrinya', icon: '🎶', url: 'https://linuxfreelancer.com:8443/test.mp3' },
 ];
 
 let radioAudio = null, currentStation = null;
