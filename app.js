@@ -86,20 +86,41 @@ function initAudioCtx() {
 }
 
 // ── IndexedDB ──────────────────────────────────────────────────
-const DB_NAME = 'erifam', DB_VER = 1;
+const DB_NAME = 'erifam', DB_VER = 2;
 let idb;
 
 function openIDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VER);
     req.onupgradeneeded = e => {
-      const d = e.target.result;
+      const d  = e.target.result;
+      const tx = e.target.transaction;
       if (!d.objectStoreNames.contains('tracks')) {
         const ts = d.createObjectStore('tracks', { keyPath: 'id' });
         ts.createIndex('title', 'title'); ts.createIndex('artist', 'artist');
       }
       if (!d.objectStoreNames.contains('playlists')) d.createObjectStore('playlists', { keyPath: 'id' });
       if (!d.objectStoreNames.contains('settings'))  d.createObjectStore('settings',  { keyPath: 'key' });
+      // v2: audio bytes live in a separate store so loading track metadata
+      // never forces the browser to deserialize every MP3 in the library.
+      if (!d.objectStoreNames.contains('trackData')) {
+        d.createObjectStore('trackData', { keyPath: 'id' });
+        if (e.oldVersion >= 1) {
+          const tracksStore = tx.objectStore('tracks');
+          const dataStore   = tx.objectStore('trackData');
+          tracksStore.openCursor().onsuccess = evt => {
+            const cursor = evt.target.result;
+            if (!cursor) return;
+            const rec = cursor.value;
+            if (rec.data) {
+              dataStore.put({ id: rec.id, data: rec.data });
+              delete rec.data;
+              cursor.update(rec);
+            }
+            cursor.continue();
+          };
+        }
+      }
     };
     req.onsuccess = e => { idb = e.target.result; resolve(idb); };
     req.onerror   = () => reject(req.error);
@@ -225,16 +246,17 @@ async function importFiles(files) {
     // Smart metadata extraction from filename
     const { title, artist } = parseFilename(file.name);
 
+    const mimeType = file.type || 'audio/mpeg';
+    const id = uid();
     const track = {
-      id: uid(), title, artist,
+      id, title, artist,
       album: '', duration, size: file.size,
       addedAt: Date.now(), playCount: 0, liked: false,
-      type: 'local', hashKey, mimeType: file.type || 'audio/mpeg',
-      data: buf,
+      type: 'local', hashKey, mimeType,
     };
     await idbPut('tracks', track);
-    // _blobUrl intentionally NOT set here — getBlobUrl creates a fresh Blob URL from
-    // the stored ArrayBuffer, giving the browser full data for accurate VBR duration.
+    await idbPut('trackData', { id, data: buf });
+    track._blobUrl = URL.createObjectURL(new Blob([buf], { type: mimeType }));
     S.tracks.push(track);
     added++;
   }
@@ -251,10 +273,7 @@ async function importFiles(files) {
 // ── Load local tracks from IDB ─────────────────────────────────
 async function loadLocalTracks() {
   const rows = await idbGetAll('tracks');
-  S.tracks = rows.map(t => {
-    const { data, ...meta } = t;
-    return { ...meta, _blobUrl: null };
-  });
+  S.tracks = rows.map(t => ({ ...t, _blobUrl: null }));
   renderTracks();
   if (activeLibTab === 'songs')   renderSongs();
   if (activeLibTab === 'artists') renderArtists();
@@ -265,12 +284,9 @@ async function loadLocalTracks() {
 // ── Get blob URL for a local track ────────────────────────────
 async function getBlobUrl(track) {
   if (track._blobUrl) return track._blobUrl;
-  if (!track.data) {
-    const stored = await idbGet('tracks', track.id);
-    if (stored?.data) track.data = stored.data;
-  }
-  if (track.data) {
-    track._blobUrl = URL.createObjectURL(new Blob([track.data], { type: track.mimeType || 'audio/mpeg' }));
+  const stored = await idbGet('trackData', track.id);
+  if (stored?.data) {
+    track._blobUrl = URL.createObjectURL(new Blob([stored.data], { type: track.mimeType || 'audio/mpeg' }));
     return track._blobUrl;
   }
   return null;
@@ -305,7 +321,7 @@ async function playTrack(track, queueTracks) {
   }
 
   track.playCount = (track.playCount || 0) + 1;
-  if (track.type === 'local') idbPut('tracks', { ...track, _blobUrl: undefined, data: track.data });
+  if (track.type === 'local') { const { _blobUrl, data, ...meta } = track; idbPut('tracks', meta); }
 
   updatePlayerUI();
   updateMediaSession();
@@ -738,6 +754,7 @@ async function deleteTrack(id) {
   if (!track) return;
   if (track._blobUrl) URL.revokeObjectURL(track._blobUrl);
   await idbDelete('tracks', id);
+  await idbDelete('trackData', id);
   S.tracks = S.tracks.filter(t => t.id !== id);
   if (S.currentTrack?.id === id) { audio.pause(); S.playing = false; S.currentTrack = null; document.getElementById('miniPlayer').style.display = 'none'; }
   renderTracks(); updateStats();
@@ -1353,8 +1370,10 @@ document.getElementById('settingsClose').addEventListener('click',() => closePan
 document.getElementById('findDupsBtn').addEventListener('click',  () => { closePanel('settingsPanel'); openDuplicates(); });
 document.getElementById('clearCacheBtn').addEventListener('click', async () => {
   if (!confirm('Clear all local music? This cannot be undone.')) return;
-  const tx = idb.transaction('tracks', 'readwrite');
+  const tx = idb.transaction(['tracks','trackData'], 'readwrite');
   tx.objectStore('tracks').clear();
+  tx.objectStore('trackData').clear();
+  S.tracks.forEach(t => { if (t._blobUrl) URL.revokeObjectURL(t._blobUrl); });
   S.tracks = []; renderTracks(); updateStats();
   toast('🗑 Local library cleared');
 });
@@ -1384,7 +1403,9 @@ document.getElementById('identifyBtn').addEventListener('click', async () => {
   openModal('identifyModal');
   document.getElementById('identifyResult').innerHTML = '<p style="text-align:center;padding:20px">🎵 Listening…</p>';
   try {
-    const blob = new Blob([S.currentTrack.data], { type: 'audio/mpeg' });
+    const blobUrl = S.currentTrack._blobUrl || await getBlobUrl(S.currentTrack);
+    if (!blobUrl) { toast('⚠ Track not loaded'); return; }
+    const blob = await fetch(blobUrl).then(r => r.blob());
     const sliced = blob.slice(0, 500000);
     const form = new FormData();
     form.append('file', sliced, 'sample.mp3');
@@ -1986,16 +2007,18 @@ async function downloadCloudTrack(track) {
     const res  = await fetch(track.url);
     if (!res.ok) throw new Error('Network error');
     const buf  = await res.arrayBuffer();
+    const mimeType = track.mimeType || 'audio/mpeg';
     const local = {
       ...track,
       type: 'local',
-      data: buf,
       hashKey: track.title.toLowerCase() + '_' + Math.round(track.duration || 0),
       addedAt: Date.now(),
     };
     delete local._blobUrl;
+    delete local.data;
     await idbPut('tracks', local);
-    local._blobUrl = URL.createObjectURL(new Blob([buf]));
+    await idbPut('trackData', { id: local.id, data: buf });
+    local._blobUrl = URL.createObjectURL(new Blob([buf], { type: mimeType }));
     // Remove cloud copy from S.cloudTracks to avoid duplicate display
     S.cloudTracks = S.cloudTracks.filter(t => t.id !== track.id);
     // Add as local
