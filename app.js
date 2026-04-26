@@ -1613,10 +1613,6 @@ async function init() {
     showMiniPlayer();
   }
 
-  // ── Step 2: Restore the saved view immediately (before any async work) ──
-  const savedView = localStorage.getItem('erifam_view');
-  if (savedView && document.getElementById('view-' + savedView)) switchView(savedView);
-
   await openIDB();
 
   // Liked tracks
@@ -1656,6 +1652,10 @@ async function init() {
       if (inp) inp.value = v;
     });
   }
+
+  // ── Step 2: Restore saved view now that tracks are loaded (no "No songs yet" flash) ──
+  const savedView = localStorage.getItem('erifam_view');
+  if (savedView && document.getElementById('view-' + savedView)) switchView(savedView);
 
   // ── Step 3: Wire up audio for the restored track (local tracks only) ──
   if (lastId) {
