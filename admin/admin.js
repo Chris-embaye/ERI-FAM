@@ -1439,5 +1439,111 @@ window.showPage   = showPage;
 window.openEditor = openEditor;
 window.openAppModal = openAppModal;
 
+// ── ANALYTICS ─────────────────────────────────────────────
+document.getElementById('refreshAnalyticsBtn').addEventListener('click', loadAnalytics);
+
+async function loadAnalytics() {
+  try {
+    const weekAgo = new Date(Date.now() - 7 * 86400000);
+    const [usersSnap, tracksSnap, promosSnap, actSnap] = await Promise.all([
+      fb.getDocs(fb.collection(_db, 'hub_users')),
+      fb.getDocs(fb.query(fb.collection(_db, 'tracks'), fb.orderBy('plays', 'desc'), fb.limit(10))),
+      fb.getDocs(fb.collection(_db, 'hub_promotions')),
+      fb.getDocs(fb.query(fb.collection(_db, 'hub_activity'), fb.orderBy('ts', 'desc'), fb.limit(10))),
+    ]);
+
+    const users    = usersSnap.docs.map(d => d.data());
+    const newUsers = users.filter(u => u.createdAt?.toDate?.() > weekAgo).length;
+    const pending  = users.filter(u => u.status === 'pending').length;
+    const activePromos = promosSnap.docs.filter(d => d.data().status === 'active').length;
+
+    document.getElementById('anTotalUsers').textContent = users.length;
+    document.getElementById('anNewUsers').textContent   = newUsers;
+    document.getElementById('anPending').textContent    = pending;
+    document.getElementById('anTracks').textContent     = tracksSnap.size;
+    document.getElementById('anPromos').textContent     = activePromos;
+
+    // Top tracks bar chart
+    const tracksEl = document.getElementById('anTopTracks');
+    const tracks   = tracksSnap.docs.map(d => d.data());
+    if (!tracks.length) { tracksEl.innerHTML = '<p class="empty-msg">No tracks yet.</p>'; }
+    else {
+      const max = Math.max(...tracks.map(t => t.plays || 0), 1);
+      tracksEl.innerHTML = tracks.slice(0, 6).map(t => {
+        const pct = Math.round(((t.plays || 0) / max) * 100);
+        return `<div class="an-bar-row">
+          <div class="an-bar-label" title="${esc(t.title)}">${esc(t.title || 'Untitled')}</div>
+          <div class="an-bar-track"><div class="an-bar-fill" style="width:${Math.max(pct,4)}%"></div></div>
+          <div class="an-bar-val">${t.plays || 0}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Role breakdown
+    const roles = {};
+    users.forEach(u => { roles[u.role || 'viewer'] = (roles[u.role || 'viewer'] || 0) + 1; });
+    const roleEl  = document.getElementById('anRoleChart');
+    const roleMax = Math.max(...Object.values(roles), 1);
+    const roleColors = { super_admin: '#ef4444', admin: '#f59e0b', editor: '#6366f1', viewer: '#10b981' };
+    roleEl.innerHTML = Object.entries(roles).map(([r, n]) => `
+      <div class="an-bar-row">
+        <div class="an-bar-label">${r.replace('_',' ')}</div>
+        <div class="an-bar-track"><div class="an-bar-fill" style="width:${Math.round(n/roleMax*100)}%;background:${roleColors[r]||'#6366f1'}"></div></div>
+        <div class="an-bar-val">${n}</div>
+      </div>`).join('');
+
+    // Recent activity
+    const actEl = document.getElementById('anActivity');
+    const acts  = actSnap.docs.map(d => d.data());
+    if (!acts.length) { actEl.innerHTML = '<p class="empty-msg">No activity logged yet.</p>'; }
+    else {
+      actEl.innerHTML = acts.map(a => {
+        const time = a.ts?.toDate ? timeAgo(a.ts.toDate()) : '';
+        return `<div class="activity-item"><div class="act-dot"></div><div><div class="act-text">${esc(a.text)}</div><div class="act-time">${time}</div></div></div>`;
+      }).join('');
+    }
+  } catch(e) { console.warn('[Analytics]', e); }
+}
+
+// ── BULK APPROVE USERS ────────────────────────────────────
+document.getElementById('bulkApproveBtn').addEventListener('click', async () => {
+  const pending = allUsers.filter(u => u.status === 'pending');
+  if (!pending.length) { toast('No pending users to approve.', 'warn'); return; }
+  if (!confirm(`Approve all ${pending.length} pending user(s)?`)) return;
+  try {
+    await Promise.all(pending.map(u =>
+      fb.updateDoc(fb.doc(_db, 'hub_users', u.id), {
+        status: 'approved',
+        approvedAt: fb.serverTimestamp(),
+        approvedBy: currentUser.uid
+      })
+    ));
+    toast(`✓ Approved ${pending.length} user(s)!`, 'success');
+    logActivity(`Bulk approved ${pending.length} pending user(s)`);
+    loadUsers();
+    loadPendingBadge();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+});
+
+// ── DARK MODE ─────────────────────────────────────────────
+(function initDarkMode() {
+  const btn     = document.getElementById('darkModeBtn');
+  const isDark  = localStorage.getItem('hub_dark') === '1';
+  if (isDark) document.body.classList.add('dark');
+  btn.textContent = isDark ? '☀️' : '🌙';
+  btn.addEventListener('click', () => {
+    const dark = document.body.classList.toggle('dark');
+    localStorage.setItem('hub_dark', dark ? '1' : '0');
+    btn.textContent = dark ? '☀️' : '🌙';
+  });
+})();
+
+// Hook analytics into showPage
+const _origShowPage = showPage;
+window.showPage = function(name) {
+  _origShowPage(name);
+  if (name === 'analytics') loadAnalytics();
+};
+
 // ── BOOT ──────────────────────────────────────────────────
 bootAuth();

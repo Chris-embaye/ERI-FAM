@@ -625,3 +625,46 @@ select.form-input { cursor: pointer; }
   display: flex; align-items: center; gap: 16px;
   font-size: .74rem; color: var(--text-mute);
 }
+
+/* ── ANALYTICS ────────────────────────────────────────────── */
+.an-bar-list { display: flex; flex-direction: column; gap: 10px; }
+.an-bar-row  { display: flex; align-items: center; gap: 10px; }
+.an-bar-label {
+  width: 110px; font-size: .75rem; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+}
+.an-bar-track {
+  flex: 1; height: 20px; background: var(--card2);
+  border-radius: 6px; overflow: hidden;
+}
+.an-bar-fill {
+  height: 100%; background: var(--accent);
+  border-radius: 6px;
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  min-width: 4px;
+}
+.an-bar-val { font-size: .72rem; color: var(--text-mute); width: 32px; text-align: right; flex-shrink: 0; }
+
+/* ── DARK MODE TOGGLE BUTTON ─────────────────────────────── */
+.sb-darkmode {
+  background: none; border: none; cursor: pointer;
+  font-size: 1rem; padding: 4px 6px; border-radius: 8px;
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+.sb-darkmode:hover { background: var(--card2); }
+
+/* ── LIGHT MODE (body.dark reverses to light) ────────────── */
+body.dark {
+  --bg:        #f0f2f8;
+  --bg2:       #e4e8f2;
+  --card:      #ffffff;
+  --card2:     #f4f6fc;
+  --border:    rgba(0,0,0,0.08);
+  --border2:   rgba(0,0,0,0.14);
+  --text:      #1e1e2e;
+  --text-dim:  #4a5568;
+  --text-mute: #718096;
+  --shadow:    0 4px 24px rgba(0,0,0,0.1);
+}
+body.dark .toast { background: #1e1e2e; color: #e2e8f0; }
