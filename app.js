@@ -2314,17 +2314,6 @@ document.querySelectorAll('.sb-grp-hd').forEach(btn => {
 });
 
 // ── YOUTUBE VANCED ────────────────────────────────────────────
-const PIPED_INSTANCES = [
-  'https://pipedapi.kavin.rocks',
-  'https://pipedapi.adminforge.de',
-  'https://api.piped.yt',
-];
-const INVIDIOUS_INSTANCES = [
-  'https://inv.tux.pizza',
-  'https://yt.artemislena.eu',
-  'https://invidious.nerdvpn.de',
-];
-
 const ytState = { videoId: null, title: '', author: '', thumb: '', loaded: false };
 
 async function ytvSearch(query) {
@@ -2334,16 +2323,25 @@ async function ytvSearch(query) {
   status.textContent = '⏳ Searching…';
   grid.innerHTML = '';
 
-  // Try Piped API first (better CORS support)
-  for (const inst of PIPED_INSTANCES) {
+  const pipedUrl = `https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=videos`;
+
+  const attempts = [
+    // Direct Piped (works if CORS allowed)
+    () => fetch(pipedUrl, { signal: AbortSignal.timeout(6000) }),
+    // Via corsproxy.io
+    () => fetch(`https://corsproxy.io/?${encodeURIComponent(pipedUrl)}`, { signal: AbortSignal.timeout(9000) }),
+    // Via allorigins
+    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(pipedUrl)}`, { signal: AbortSignal.timeout(9000) }),
+    // Alternate Piped instance via corsproxy
+    () => fetch(`https://corsproxy.io/?${encodeURIComponent(`https://pipedapi.adminforge.de/search?q=${encodeURIComponent(query)}&filter=videos`)}`, { signal: AbortSignal.timeout(9000) }),
+  ];
+
+  for (const attempt of attempts) {
     try {
-      const res = await fetch(
-        `${inst}/search?q=${encodeURIComponent(query)}&filter=videos`,
-        { signal: AbortSignal.timeout(6000) }
-      );
+      const res = await attempt();
       if (!res.ok) continue;
       const data = await res.json();
-      if (!Array.isArray(data.items)) continue;
+      if (!Array.isArray(data.items) || !data.items.length) continue;
       const results = data.items
         .filter(v => v.url && v.type === 'stream')
         .map(v => ({
@@ -2352,23 +2350,9 @@ async function ytvSearch(query) {
           author: v.uploaderName,
           lengthSeconds: v.duration,
           viewCount: v.views,
-        }));
-      status.textContent = '';
-      ytvRenderResults(results);
-      return;
-    } catch { /* try next */ }
-  }
-
-  // Fallback: Invidious API
-  for (const inst of INVIDIOUS_INSTANCES) {
-    try {
-      const res = await fetch(
-        `${inst}/api/v1/search?q=${encodeURIComponent(query)}&type=video&page=1`,
-        { signal: AbortSignal.timeout(6000) }
-      );
-      if (!res.ok) continue;
-      const results = await res.json();
-      if (!Array.isArray(results)) continue;
+        }))
+        .filter(v => v.videoId);
+      if (!results.length) continue;
       status.textContent = '';
       ytvRenderResults(results);
       return;
