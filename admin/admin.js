@@ -353,7 +353,7 @@ function renderApps(apps) {
   grid.innerHTML = apps.map(a => `
     <div class="app-card">
       <div class="app-card-top" style="background:linear-gradient(135deg,${a.color||'#6366f1'}33,${a.color||'#6366f1'}11)">
-        <div class="app-card-ico">${a.icon || '📱'}</div>
+        <div class="app-card-ico">${a.iconUrl ? `<img src="${esc(a.iconUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" onerror="this.parentElement.textContent='📱'"/>` : (a.icon || '📱')}</div>
         <span class="app-status-pill status-${a.status||'active'}">${a.status||'active'}</span>
       </div>
       <div class="app-card-body">
@@ -452,6 +452,16 @@ async function deleteApp(id) {
 // ── EDITOR ────────────────────────────────────────────────
 document.getElementById('editorBack').addEventListener('click', () => showPage('apps'));
 document.getElementById('editorSave').addEventListener('click', saveEditorChanges);
+document.getElementById('editorDelete').addEventListener('click', async () => {
+  if (!currentEditApp) return;
+  if (!confirm(`Delete "${currentEditApp.name}"? This cannot be undone.`)) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'hub_apps', currentEditApp.id));
+    toast('App deleted.', 'warn');
+    logActivity(`App "${currentEditApp.name}" deleted`);
+    showPage('apps');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+});
 document.getElementById('editorRefresh').addEventListener('click', () => {
   const frame = document.getElementById('editorFrame');
   frame.src = frame.src;
@@ -468,12 +478,13 @@ function openEditor(appId) {
   currentEditApp = { ...app };
   document.getElementById('editorTitle').textContent    = app.name;
   document.getElementById('editorSubtitle').textContent = app.url || '';
-  document.getElementById('epName').value   = app.name || '';
-  document.getElementById('epDesc').value   = app.description || '';
-  document.getElementById('epUrl').value    = app.url || '';
-  document.getElementById('epIcon').value   = app.icon || '';
-  document.getElementById('epColor').value  = app.color || '#6366f1';
-  document.getElementById('epStatus').value = app.status || 'active';
+  document.getElementById('epName').value    = app.name || '';
+  document.getElementById('epDesc').value    = app.description || '';
+  document.getElementById('epUrl').value     = app.url || '';
+  document.getElementById('epIcon').value    = app.icon || '';
+  document.getElementById('epIconUrl').value = app.iconUrl || '';
+  document.getElementById('epColor').value   = app.color || '#6366f1';
+  document.getElementById('epStatus').value  = app.status || 'active';
   const frame = document.getElementById('editorFrame');
   document.getElementById('chromeUrl').textContent = app.url || 'about:blank';
   frame.src = app.url || 'about:blank';
@@ -550,10 +561,11 @@ async function saveEditorChanges() {
   const btn = document.getElementById('editorSave');
   btn.textContent = 'Saving…'; btn.disabled = true;
   const data = {
-    name:        document.getElementById('epName').value.trim()  || currentEditApp.name,
+    name:        document.getElementById('epName').value.trim()    || currentEditApp.name,
     description: document.getElementById('epDesc').value.trim(),
     url:         document.getElementById('epUrl').value.trim(),
-    icon:        document.getElementById('epIcon').value.trim()  || '📱',
+    icon:        document.getElementById('epIcon').value.trim()    || '📱',
+    iconUrl:     document.getElementById('epIconUrl').value.trim() || '',
     color:       document.getElementById('epColor').value,
     status:      document.getElementById('epStatus').value,
     sections:    currentEditApp.sections || [],
@@ -1314,6 +1326,8 @@ function updateProfilePicPreview(photoURL) {
 document.getElementById('saveGeneralBtn').addEventListener('click', saveGeneralSettings);
 document.getElementById('saveAccessBtn').addEventListener('click',  saveAccessSettings);
 document.getElementById('exportDataBtn').addEventListener('click',  exportData);
+document.getElementById('saveBrandingBtn').addEventListener('click', saveBrandingSettings);
+document.getElementById('saveApiBtn').addEventListener('click',      saveApiSettings);
 
 async function loadSettings() {
   try {
@@ -1324,12 +1338,48 @@ async function loadSettings() {
       document.getElementById('setHubDesc').value        = s.description || '';
       document.getElementById('setAllowReg').checked     = s.allowReg    !== false;
       document.getElementById('setMaintenance').checked  = s.maintenance || false;
+      document.getElementById('setHubIcon').value        = s.hubIcon     || '';
+      document.getElementById('setAccentColor').value    = s.accentColor || '#6366f1';
+      document.getElementById('setCloudName').value      = s.cloudName   || '';
+      document.getElementById('setCloudPreset').value    = s.cloudPreset || '';
+      document.getElementById('setMaxUpload').value      = s.maxUpload   || 50;
+      if (s.accentColor) document.documentElement.style.setProperty('--accent', s.accentColor);
     }
     const userSnap = await fb.getDoc(fb.doc(_db, 'hub_users', currentUser.uid));
     if (userSnap.exists()) document.getElementById('setDisplayName').value = userSnap.data().name || '';
   } catch(e) {}
   // Sync profile pic preview
   updateProfilePicPreview(currentUserData?.photoURL || currentUser?.photoURL || '');
+}
+
+async function saveBrandingSettings() {
+  const btn = document.getElementById('saveBrandingBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    const color = document.getElementById('setAccentColor').value;
+    const icon  = document.getElementById('setHubIcon').value.trim();
+    await fb.setDoc(fb.doc(_db, 'hub_settings', 'global'), {
+      hubIcon: icon, accentColor: color, updatedAt: fb.serverTimestamp()
+    }, { merge: true });
+    document.documentElement.style.setProperty('--accent', color);
+    toast('Branding saved!', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Branding'; btn.disabled = false;
+}
+
+async function saveApiSettings() {
+  const btn = document.getElementById('saveApiBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await fb.setDoc(fb.doc(_db, 'hub_settings', 'global'), {
+      cloudName:   document.getElementById('setCloudName').value.trim(),
+      cloudPreset: document.getElementById('setCloudPreset').value.trim(),
+      maxUpload:   parseInt(document.getElementById('setMaxUpload').value) || 50,
+      updatedAt:   fb.serverTimestamp(),
+    }, { merge: true });
+    toast('API config saved!', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save API Config'; btn.disabled = false;
 }
 
 async function saveGeneralSettings() {
@@ -1487,7 +1537,16 @@ async function loadPlaylists() {
         </div>`;
     }).join('');
   } catch(e) {
-    grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error: ${e.message}</p>`;
+    if (e.code === 'permission-denied' || (e.message||'').includes('permission')) {
+      grid.innerHTML = `<div style="grid-column:1/-1;padding:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px">
+        <div style="font-weight:700;color:#ef4444;margin-bottom:8px">🔒 Firestore Permission Denied</div>
+        <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:10px">Add this rule in <a href="https://console.firebase.google.com/" target="_blank" style="color:var(--accent)">Firebase Console → Firestore → Rules</a>:</p>
+        <pre style="font-size:.72rem;background:rgba(0,0,0,.35);padding:10px 12px;border-radius:8px;overflow-x:auto">match /hub_playlists/{d} {\n  allow read, write: if request.auth != null;\n}</pre>
+        <a href="https://console.firebase.google.com/" target="_blank" class="btn-primary" style="display:inline-block;margin-top:12px;text-decoration:none;font-size:.8rem">Open Firebase Console →</a>
+      </div>`;
+    } else {
+      grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error: ${e.message}</p>`;
+    }
   }
 }
 

@@ -253,6 +253,7 @@
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn-sm" id="editorRefresh">⟳ Refresh</button>
+          <button class="btn-danger" id="editorDelete">🗑 Delete App</button>
           <button class="btn-primary" id="editorSave">Save Changes</button>
         </div>
       </div>
@@ -269,6 +270,7 @@
               <div class="form-group"><label>Icon (emoji)</label><input type="text" id="epIcon" class="form-input" maxlength="4" style="font-size:1.5rem;text-align:center"/></div>
               <div class="form-group"><label>Color</label><input type="color" id="epColor" class="form-input color-input"/></div>
             </div>
+            <div class="form-group"><label>Icon Image URL <span style="color:var(--text-dim);font-weight:400">(overrides emoji)</span></label><input type="url" id="epIconUrl" class="form-input" placeholder="https://… PNG or SVG logo"/></div>
           </div>
           <div class="ep-sect">
             <div class="ep-sect-hd">Status</div>
@@ -587,6 +589,37 @@
           <h3>Danger Zone</h3>
           <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Export all your Hub data as JSON for backup.</p>
           <button class="btn-danger" id="exportDataBtn">📥 Export All Data</button>
+        </div>
+        <div class="card">
+          <h3>Branding &amp; Appearance</h3>
+          <div class="form-group"><label>Hub Icon URL <span style="color:var(--text-dim);font-weight:400">(leave blank for default)</span></label><input type="url" id="setHubIcon" class="form-input" placeholder="https://…"/></div>
+          <div class="form-group">
+            <label>Accent Color</label>
+            <div style="display:flex;gap:10px;align-items:center">
+              <input type="color" id="setAccentColor" class="form-input color-input" value="#6366f1"/>
+              <button class="btn-sm" onclick="document.getElementById('setAccentColor').value='#6366f1'">Reset</button>
+            </div>
+          </div>
+          <button class="btn-primary" id="saveBrandingBtn">Save Branding</button>
+        </div>
+        <div class="card">
+          <h3>API Configuration</h3>
+          <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:16px;line-height:1.6">External service keys used for uploads. Saved to Firestore.</p>
+          <div class="form-group"><label>Cloudinary Cloud Name</label><input type="text" id="setCloudName" class="form-input" placeholder="your-cloud-name"/></div>
+          <div class="form-group"><label>Cloudinary Upload Preset</label><input type="text" id="setCloudPreset" class="form-input" placeholder="unsigned_preset"/></div>
+          <div class="form-group"><label>Max Upload Size (MB)</label><input type="number" id="setMaxUpload" class="form-input" value="50" min="1" max="500"/></div>
+          <button class="btn-primary" id="saveApiBtn">Save API Config</button>
+        </div>
+        <div class="card">
+          <h3>Firestore Rules Helper</h3>
+          <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:12px;line-height:1.6">If a page shows "Missing permissions", add this rule to your <a href="https://console.firebase.google.com/" target="_blank" style="color:var(--accent)">Firebase Console</a> → Firestore → Rules:</p>
+          <pre style="font-size:.72rem;background:rgba(0,0,0,.3);padding:12px 14px;border-radius:8px;overflow-x:auto;white-space:pre;line-height:1.6">match /hub_playlists/{d} {
+  allow read, write: if request.auth != null;
+}
+match /hub_activity/{d} {
+  allow read, write: if request.auth != null;
+}</pre>
+          <a href="https://console.firebase.google.com/" target="_blank" class="btn-sm" style="display:inline-block;margin-top:12px;text-decoration:none">Open Firebase Console →</a>
         </div>
       </div>
     </div>

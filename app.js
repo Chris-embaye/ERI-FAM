@@ -2535,6 +2535,61 @@ function ytWatchPlay(input) {
 document.getElementById('ytWatchPlayBtn').addEventListener('click', () => ytWatchPlay(document.getElementById('ytWatchInput').value));
 document.getElementById('ytWatchInput').addEventListener('keydown', e => { if (e.key === 'Enter') ytWatchPlay(document.getElementById('ytWatchInput').value); });
 
+// ── YouTube → MP3 ──────────────────────────────────────────────
+document.getElementById('ytExtractBtn').addEventListener('click', ytExtractMp3);
+document.getElementById('heroYtMp3Btn')?.addEventListener('click', () => {
+  switchView('home');
+  setTimeout(() => document.getElementById('ytWatchInput')?.focus(), 300);
+});
+
+async function ytExtractMp3() {
+  const rawInput = document.getElementById('ytWatchInput').value.trim();
+  if (!rawInput) { toast('Paste a YouTube URL above first.'); return; }
+
+  let url = rawInput;
+  if (!url.startsWith('http')) url = 'https://www.youtube.com/watch?v=' + url;
+
+  const btn = document.getElementById('ytExtractBtn');
+  btn.textContent = '⏳…'; btn.disabled = true;
+
+  try {
+    const res = await fetch('https://api.cobalt.tools/api/json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ url, aFormat: 'mp3', isAudioOnly: true, filenamePattern: 'basic' }),
+    });
+    if (!res.ok) throw new Error('Cobalt API error ' + res.status);
+    const data = await res.json();
+    if (data.status === 'error') throw new Error(data.text || 'Conversion failed');
+
+    const downloadUrl = data.url;
+    if (!downloadUrl) throw new Error('No audio URL returned');
+
+    toast('⬇️ Downloading audio…');
+    try {
+      const audioRes = await fetch(downloadUrl);
+      if (!audioRes.ok) throw new Error('fetch failed');
+      const blob = await audioRes.blob();
+      const filename = data.filename || 'youtube_audio.mp3';
+      const file = new File([blob], filename, { type: blob.type || 'audio/mpeg' });
+      await importFiles([file]);
+      toast('✅ Added to your library!');
+    } catch {
+      // CORS blocked — fall back to browser download
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = data.filename || 'audio.mp3';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast('💾 File downloading — drag it into the app to add it!', 3500);
+    }
+  } catch(e) {
+    toast('❌ ' + (e.message || 'Convert failed. Try again.'), 3500);
+  }
+  btn.textContent = '↓ MP3'; btn.disabled = false;
+}
+
 document.querySelectorAll('.yt-pre').forEach(btn => {
   btn.addEventListener('click', () => ytWatchPlay(btn.dataset.vid));
 });
