@@ -2593,3 +2593,105 @@ document.getElementById('applyLangBtn').addEventListener('click', () => {
   toast('Language applied!');
 });
 
+
+// ── 3D HERO · MOOD · AMBIENT · TILT ───────────────────────────
+
+// Hero greeting based on time
+(function() {
+  const h = new Date().getHours();
+  const greet =
+    h < 5  ? '🌙 Night Owl Mode' :
+    h < 12 ? '☀️ Good Morning' :
+    h < 17 ? '👋 Good Afternoon' :
+    h < 21 ? '🌆 Good Evening' : '🌙 Good Night';
+  const el = document.getElementById('heroGreeting');
+  if (el) el.textContent = greet;
+})();
+
+// Hero quick buttons
+document.getElementById('heroPlayBtn')?.addEventListener('click', () => {
+  document.getElementById('songsPlayBtn')?.click();
+  switchView('library');
+});
+document.getElementById('heroShuffleBtn')?.addEventListener('click', () => {
+  document.getElementById('songsShuffleBtn')?.click();
+  switchView('library');
+});
+
+// Mood chips
+document.querySelectorAll('.mood-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    const keywords = (chip.dataset.mood || '').toLowerCase().split(' ').filter(Boolean);
+    const grid = document.getElementById('trackGrid');
+    const list = document.getElementById('trackList');
+    if (!keywords.length) {
+      grid?.querySelectorAll('.track-card').forEach(c => c.style.display = '');
+      list?.querySelectorAll('.track-row').forEach(r => r.style.display = '');
+    } else {
+      grid?.querySelectorAll('.track-card').forEach(card => {
+        const txt = (card.querySelector('.tc-title')?.textContent + ' ' + card.querySelector('.tc-artist')?.textContent).toLowerCase();
+        card.style.display = keywords.some(k => txt.includes(k)) ? '' : 'none';
+      });
+      list?.querySelectorAll('.track-row').forEach(row => {
+        const txt = (row.querySelector('.tr-title')?.textContent + ' ' + row.querySelector('.tr-artist')?.textContent).toLowerCase();
+        row.style.display = keywords.some(k => txt.includes(k)) ? '' : 'none';
+      });
+    }
+  });
+});
+
+// Show mood row when tracks exist
+const _moodObserver = new MutationObserver(() => {
+  const grid = document.getElementById('trackGrid');
+  const moodRow = document.getElementById('moodRow');
+  if (moodRow && grid && grid.children.length > 0) {
+    moodRow.style.display = 'flex';
+    _moodObserver.disconnect();
+  }
+});
+const _tg = document.getElementById('trackGrid');
+if (_tg) _moodObserver.observe(_tg, { childList: true });
+
+// Ambient background colour cycle
+const _ambientBg = document.getElementById('ambientBg');
+const _ambientPalette = [
+  ['rgba(200,145,74,.15)',  'rgba(99,102,241,.12)'],
+  ['rgba(139,92,246,.14)', 'rgba(200,145,74,.10)'],
+  ['rgba(236,72,153,.12)', 'rgba(99,102,241,.10)'],
+  ['rgba(16,185,129,.11)', 'rgba(200,145,74,.12)'],
+  ['rgba(6,182,212,.12)',  'rgba(139,92,246,.10)'],
+];
+let _ambIdx = 0;
+function _cycleAmbient() {
+  if (!_ambientBg) return;
+  const [a, b] = _ambientPalette[_ambIdx % _ambientPalette.length];
+  _ambientBg.style.background =
+    `radial-gradient(ellipse at 30% 20%, ${a} 0%, transparent 65%),` +
+    `radial-gradient(ellipse at 70% 75%, ${b} 0%, transparent 65%)`;
+  _ambIdx++;
+}
+_cycleAmbient();
+setInterval(_cycleAmbient, 6000);
+
+// 3D card tilt on desktop (mouse hover)
+let _tiltRaf = null;
+document.addEventListener('mousemove', e => {
+  cancelAnimationFrame(_tiltRaf);
+  _tiltRaf = requestAnimationFrame(() => {
+    const card = e.target.closest('.track-card');
+    document.querySelectorAll('.track-card').forEach(c => {
+      if (c !== card) { c.style.transform = ''; c.style.boxShadow = ''; }
+    });
+    if (!card) return;
+    const r = card.getBoundingClientRect();
+    const dx = (e.clientX - r.left - r.width  / 2) / (r.width  / 2);
+    const dy = (e.clientY - r.top  - r.height / 2) / (r.height / 2);
+    card.style.transform = `perspective(700px) rotateY(${dx*8}deg) rotateX(${-dy*8}deg) scale(1.04) translateZ(10px)`;
+    card.style.boxShadow = `${-dx*10}px ${dy*10}px 36px rgba(0,0,0,.65), 0 0 0 1px rgba(200,145,74,.28)`;
+  });
+});
+document.addEventListener('mouseleave', () => {
+  document.querySelectorAll('.track-card').forEach(c => { c.style.transform = ''; c.style.boxShadow = ''; });
+}, true);
