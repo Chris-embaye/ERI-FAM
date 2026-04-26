@@ -253,6 +253,7 @@ function showPage(name) {
   if (name === 'notify')      loadNotifications();
   if (name === 'promotions')  loadPromotions();
   if (name === 'settings')    loadSettings();
+  if (name === 'feedback')    loadFeedback();
 }
 
 // Sidebar toggle
@@ -282,16 +283,18 @@ async function loadDashboard() {
   document.getElementById('dashDate').textContent     = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 
   try {
-    const [appsSnap, usersSnap, assetsSnap, notifsSnap] = await Promise.all([
+    const [appsSnap, usersSnap, assetsSnap, notifsSnap, tracksSnap] = await Promise.all([
       fb.getDocs(fb.collection(_db, 'hub_apps')),
       fb.getDocs(fb.collection(_db, 'hub_users')),
       fb.getDocs(fb.collection(_db, 'hub_assets')),
       fb.getDocs(fb.collection(_db, 'hub_notifications')),
+      fb.getDocs(fb.collection(_db, 'tracks')),
     ]);
     document.getElementById('statApps').textContent   = appsSnap.size;
     document.getElementById('statUsers').textContent  = usersSnap.docs.filter(d => d.data().status === 'approved').length;
     document.getElementById('statAssets').textContent = assetsSnap.size;
     document.getElementById('statNotifs').textContent = notifsSnap.size;
+    document.getElementById('statTracks').textContent = tracksSnap.size;
 
     // Mini app list
     const apps = appsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -721,6 +724,24 @@ musicDropZone.addEventListener('drop', e => {
 musicFileInput.addEventListener('change',   () => { handleMusicFiles([...musicFileInput.files]);   musicFileInput.value   = ''; });
 musicFolderInput.addEventListener('change', () => { handleMusicFiles([...musicFolderInput.files]); musicFolderInput.value = ''; });
 
+function getFilteredSortedTracks() {
+  const q    = (document.getElementById('musicSearch')?.value || '').toLowerCase().trim();
+  const sort = document.getElementById('musicSort')?.value || 'newest';
+  let tracks = q
+    ? allTracks.filter(t =>
+        (t.title||'').toLowerCase().includes(q) ||
+        (t.artist||'').toLowerCase().includes(q) ||
+        (t.album||'').toLowerCase().includes(q))
+    : [...allTracks];
+  if (sort === 'title')  tracks.sort((a,b) => (a.title||'').localeCompare(b.title||''));
+  if (sort === 'artist') tracks.sort((a,b) => (a.artist||'').localeCompare(b.artist||''));
+  if (sort === 'oldest') tracks.sort((a,b) => (a.addedAt?.toMillis?.()??0) - (b.addedAt?.toMillis?.()??0));
+  return tracks;
+}
+
+document.addEventListener('input',  e => { if (e.target.id === 'musicSearch') renderMusicTracks(getFilteredSortedTracks()); });
+document.addEventListener('change', e => { if (e.target.id === 'musicSort')   renderMusicTracks(getFilteredSortedTracks()); });
+
 async function loadMusic() {
   const list = document.getElementById('musicTrackList');
   list.innerHTML = '<p class="empty-msg">Loading…</p>';
@@ -734,10 +755,15 @@ async function loadMusic() {
   }
 }
 
-function renderMusicTracks() {
+function renderMusicTracks(tracks = allTracks) {
   const list = document.getElementById('musicTrackList');
-  if (!allTracks.length) { list.innerHTML = '<p class="empty-msg">No cloud tracks yet. Upload songs above.</p>'; return; }
-  list.innerHTML = allTracks.map(t => {
+  if (!tracks.length) {
+    list.innerHTML = allTracks.length
+      ? '<p class="empty-msg">No tracks match your search.</p>'
+      : '<p class="empty-msg">No cloud tracks yet. Upload songs above.</p>';
+    return;
+  }
+  list.innerHTML = tracks.map(t => {
     const cover = t.cover
       ? `<img src="${esc(t.cover)}" alt=""/>`
       : '🎵';
@@ -824,6 +850,29 @@ document.getElementById('trackModalCancel').addEventListener('click', () => trac
 document.getElementById('trackModalSave').addEventListener('click',   saveTrack);
 trackModal.addEventListener('click', e => { if (e.target === trackModal) trackModal.hidden = true; });
 
+document.getElementById('trackCoverFile').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  const preview  = document.getElementById('trackCoverPreview');
+  const img      = document.getElementById('trackCoverPreviewImg');
+  const statusEl = document.getElementById('trackCoverStatus');
+  preview.style.display = 'flex';
+  statusEl.textContent  = 'Uploading…';
+  img.style.opacity     = '0.4';
+  try {
+    const url = await uploadToCloudinary(file);
+    document.getElementById('trackCover').value = url;
+    img.src           = url;
+    img.style.opacity = '1';
+    statusEl.textContent = 'Uploaded!';
+    setTimeout(() => { statusEl.textContent = ''; }, 2000);
+  } catch(e) {
+    statusEl.textContent = 'Failed: ' + e.message;
+    img.style.opacity = '1';
+  }
+  this.value = '';
+});
+
 window.openTrackModal = function(id) {
   const t = allTracks.find(x => x.id === id);
   if (!t) return;
@@ -832,6 +881,16 @@ window.openTrackModal = function(id) {
   document.getElementById('trackArtist').value     = t.artist || '';
   document.getElementById('trackAlbum').value      = t.album  || '';
   document.getElementById('trackCover').value      = t.cover  || '';
+  const preview = document.getElementById('trackCoverPreview');
+  const img     = document.getElementById('trackCoverPreviewImg');
+  if (t.cover) {
+    preview.style.display = 'flex';
+    img.src = t.cover;
+  } else {
+    preview.style.display = 'none';
+    img.src = '';
+  }
+  document.getElementById('trackCoverStatus').textContent = '';
   trackModal.hidden = false;
   document.getElementById('trackTitle').focus();
 };
@@ -1031,6 +1090,44 @@ async function doSendNotification() {
     logActivity(`Notification sent: "${title}"`);
   } catch(e) { toast('Error: ' + e.message, 'error'); }
   btn.textContent = 'Send Notification'; btn.disabled = false;
+}
+
+// ── FEEDBACK ──────────────────────────────────────────────
+document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
+
+async function loadFeedback() {
+  const list  = document.getElementById('feedbackList');
+  const badge = document.getElementById('feedbackBadge');
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(
+      fb.query(fb.collection(_db, 'feedback'), fb.orderBy('createdAt', 'desc'), fb.limit(100))
+    );
+    if (!snap.size) {
+      list.innerHTML = '<p class="empty-msg">No feedback yet.</p>';
+      badge.hidden = true;
+      return;
+    }
+    badge.textContent = snap.size;
+    badge.hidden = false;
+    list.innerHTML = snap.docs.map(d => {
+      const f    = d.data();
+      const time = f.createdAt?.toDate ? timeAgo(f.createdAt.toDate()) : '';
+      const msg  = f.message || f.text || f.body || f.content || f.feedback || '';
+      const stars = typeof f.rating === 'number'
+        ? '<span class="fb-stars">' + '★'.repeat(Math.min(5, f.rating)) + '☆'.repeat(Math.max(0, 5 - f.rating)) + '</span>'
+        : '';
+      const user = esc(f.email || f.userName || f.displayName || f.user || 'Anonymous');
+      return `
+        <div class="feedback-item">
+          ${stars}
+          <div class="feedback-body">${esc(msg || '(no message)')}</div>
+          <div class="feedback-meta"><span>${user}</span><span>${time}</span></div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<p class="empty-msg">No feedback found. (Users submit feedback from the main app.)</p>`;
+  }
 }
 
 // ── PROMOTIONS ────────────────────────────────────────────

@@ -596,3 +596,32 @@ select.form-input { cursor: pointer; }
 .music-act-edit:hover { color: var(--accent); border-color: var(--accent); }
 .music-act-del    { padding: 5px 10px; border-radius: 6px; font-size: .75rem; font-weight: 600; background: transparent; color: var(--text-mute); border: 1px solid var(--border); cursor: pointer; transition: all var(--transition); }
 .music-act-del:hover  { color: var(--danger); border-color: var(--danger); }
+
+/* Quick Links */
+.quick-links { display: flex; flex-direction: column; gap: 6px; }
+.quick-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  background: var(--card2); border: 1px solid var(--border);
+  color: var(--text-dim); text-decoration: none;
+  font-size: .83rem; transition: all var(--transition);
+}
+.quick-link:hover { background: var(--card2); border-color: var(--border2); color: var(--text); }
+.quick-link span:first-child { font-size: 1rem; width: 22px; text-align: center; flex-shrink: 0; }
+.quick-link span:nth-child(2) { flex: 1; }
+.quick-link span:last-child { color: var(--text-mute); font-size: .8rem; }
+
+/* Feedback */
+.feedback-list { display: flex; flex-direction: column; gap: 12px; }
+.feedback-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 16px 18px;
+  transition: background var(--transition);
+}
+.feedback-item:hover { background: var(--card2); }
+.fb-stars { font-size: 1rem; color: #f59e0b; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+.feedback-body { font-size: .88rem; color: var(--text); line-height: 1.6; margin-bottom: 10px; }
+.feedback-meta {
+  display: flex; align-items: center; gap: 16px;
+  font-size: .74rem; color: var(--text-mute);
+}
