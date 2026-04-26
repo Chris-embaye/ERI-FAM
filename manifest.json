@@ -1,7 +1,7 @@
 {
   "name": "ERI-FAM Music",
   "short_name": "ERI-FAM",
-  "description": "Eritrean Music Player \u00e2\u20ac\u201d Stream, Download & Listen Offline",
+  "description": "Eritrean Music Player - Stream, Download & Listen Offline",
   "start_url": "/ERI-FAM/",
   "scope": "/ERI-FAM/",
   "display": "standalone",
