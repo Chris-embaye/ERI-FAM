@@ -387,6 +387,8 @@ audio.addEventListener('pause', () => {
   savePlaybackState();
 });
 window.addEventListener('beforeunload', savePlaybackState);
+window.addEventListener('pagehide', savePlaybackState);
+document.addEventListener('visibilitychange', () => { if (document.hidden) savePlaybackState(); });
 setInterval(() => { if (S.playing && !audio.paused) savePlaybackState(); }, 5000);
 audio.addEventListener('error', () => toast('⚠ Could not play this track'));
 
@@ -1616,10 +1618,10 @@ async function init() {
   const lastId  = localStorage.getItem('erifam_last_track');
   const lastPos = parseFloat(localStorage.getItem('erifam_last_pos') || '0');
   if (lastId) {
-    const track = S.tracks.find(t => t.id === lastId);
+    const track = S.tracks.find(t => t.id === lastId) || S.cloudTracks.find(t => t.id === lastId);
     if (track) {
       S.currentTrack = track;
-      const src = getBlobUrl(track);
+      const src = track.type === 'cloud' ? track.url : getBlobUrl(track);
       if (src) {
         audio.src = src;
         audio.volume = S.volume;
@@ -1631,6 +1633,9 @@ async function init() {
         updatePlayerUI();
         showMiniPlayer();
         updateMediaSession();
+      } else {
+        updatePlayerUI();
+        showMiniPlayer();
       }
     }
   }
@@ -1643,6 +1648,9 @@ async function init() {
   handlePlayParam();
 
   if (navigator.onLine) { syncCloud(); loadPromos(); }
+
+  const savedView = localStorage.getItem('erifam_view');
+  if (savedView && document.getElementById('view-' + savedView)) switchView(savedView);
 }
 
 init();
@@ -1814,7 +1822,6 @@ function playRadio(id) {
   // Pause main audio
   if (S.playing) { audio.pause(); S.playing = false; updatePlayIcons(); }
   radioAudio = new Audio(station.url);
-  radioAudio.crossOrigin = 'anonymous';
   radioAudio.volume = S.volume;
   radioAudio.play().catch(() => toast('⚠ Could not connect to this stream'));
   currentStation = station;
@@ -2092,16 +2099,17 @@ const TV_STATIONS = [
     desc:     'Eritrean State Television — News, Culture & Entertainment',
     lang:     'Tigrinya · Arabic · English',
     icon:     '📺',
-    embedUrl: 'https://famelack.com/tv/er/YRWHSN7GJpzMLf',
-    ytUrl:    'https://famelack.com/tv/er/YRWHSN7GJpzMLf',
+    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCpPhzhCfud9ctQSJJv4Kqlw&autoplay=1',
+    ytUrl:    'https://www.youtube.com/channel/UCpPhzhCfud9ctQSJJv4Kqlw/live',
   },
   {
     id:    'eritv2',
     name:  'ERi-TV 2',
-    desc:  'Culture, Sports & Entertainment Channel',
+    desc:  'Eritrean News Live Television',
     lang:  'Tigrinya · Arabic',
     icon:  '🎬',
-    ytUrl: 'https://www.youtube.com/@EritvEritrea/live',
+    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UC9NwSxLe5_Rgofrgdb-MhtA&autoplay=1',
+    ytUrl:    'https://www.youtube.com/channel/UC9NwSxLe5_Rgofrgdb-MhtA/live',
   },
   {
     id:    'erisat',
@@ -2109,15 +2117,17 @@ const TV_STATIONS = [
     desc:  'Eritrean Satellite Television — News & Commentary',
     lang:  'Tigrinya · English',
     icon:  '📡',
-    ytUrl: 'https://www.youtube.com/@ERISATEritrea/live',
+    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCuGlhBoxVNUBIAtP4-0Kqfw&autoplay=1',
+    ytUrl:    'https://www.youtube.com/channel/UCuGlhBoxVNUBIAtP4-0Kqfw/live',
   },
   {
     id:    'assenna',
-    name:  'Assenna TV',
+    name:  'ATV Asena',
     desc:  'Independent Eritrean Media — News & Analysis',
     lang:  'Tigrinya',
     icon:  '🎙',
-    ytUrl: 'https://www.youtube.com/@assennacom/live',
+    embedUrl: 'https://www.youtube.com/embed/live_stream?channel=UCXdyJFImjPTccqnZ46ccrmw&autoplay=1',
+    ytUrl:    'https://www.youtube.com/c/ATVasena/live',
   },
 ];
 
@@ -2274,6 +2284,7 @@ document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
 sidebarOverlay.addEventListener('click', closeSidebar);
 
 function switchView(viewName) {
+  localStorage.setItem('erifam_view', viewName);
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   const viewEl = document.getElementById('view-' + viewName);
