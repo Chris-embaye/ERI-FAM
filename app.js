@@ -347,6 +347,7 @@ function togglePlay() {
   if (audio.paused) { audio.play(); S.playing = true; }
   else { audio.pause(); S.playing = false; }
   updatePlayerUI();
+  updateHeaderPlayState();
 }
 
 // Fisher-Yates shuffle of the queue, current track always plays first
@@ -404,11 +405,11 @@ audio.addEventListener('ended', () => {
 
 audio.addEventListener('timeupdate', updateProgress);
 audio.addEventListener('play',  () => {
-  S.playing = true; updatePlayIcons();
+  S.playing = true; updatePlayIcons(); updateHeaderPlayState();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
 });
 audio.addEventListener('pause', () => {
-  S.playing = false; updatePlayIcons();
+  S.playing = false; updatePlayIcons(); updateHeaderPlayState();
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
   savePlaybackState();
 });
@@ -474,6 +475,14 @@ function updatePlayIcons() {
   });
 }
 
+function updateHeaderPlayState() {
+  document.getElementById('appHeader').classList.toggle('music-playing', S.playing);
+  const vinyl  = document.getElementById('fpVinyl');
+  const djWave = document.getElementById('fpDjWave');
+  if (vinyl)  vinyl.classList.toggle('spinning', S.playing);
+  if (djWave) djWave.classList.toggle('active', S.playing);
+}
+
 function updatePlayerUI() {
   const t = S.currentTrack;
   if (!t) return;
@@ -501,6 +510,7 @@ function updatePlayerUI() {
   // Like button
   document.getElementById('likeBtn').classList.toggle('liked', S.likedIds.has(t.id));
   updatePlayIcons();
+  updateHeaderPlayState();
 }
 
 function showMiniPlayer() {
@@ -1371,7 +1381,7 @@ document.getElementById('songsShuffleBtn').addEventListener('click', () => {
 });
 
 // ── Settings ───────────────────────────────────────────────────
-document.getElementById('settingsBtn').addEventListener('click',  () => openPanel('settingsPanel'));
+document.getElementById('settingsBtn').addEventListener('click',  () => { closeSidebar(); openPanel('settingsPanel'); });
 document.getElementById('settingsClose').addEventListener('click',() => closePanel('settingsPanel'));
 document.getElementById('findDupsBtn').addEventListener('click',  () => { closePanel('settingsPanel'); openDuplicates(); });
 document.getElementById('clearCacheBtn').addEventListener('click', async () => {
@@ -1704,7 +1714,26 @@ async function init() {
       }
     }).catch(() => {});
     loadPromos();
+    registerAppSession();
   }
+}
+
+async function registerAppSession() {
+  try {
+    await FB_READY;
+    if (!db) return;
+    let devId = localStorage.getItem('erifam_device_id');
+    if (!devId) {
+      devId = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+      localStorage.setItem('erifam_device_id', devId);
+    }
+    // Use updateDoc with merge-like approach via addDoc to a fixed device doc path
+    const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    await setDoc(doc(db._db, 'app_sessions', devId), {
+      lastSeen: serverTimestamp(),
+      ua: navigator.userAgent.slice(0, 80),
+    });
+  } catch(e) { /* non-critical */ }
 }
 
 init();
@@ -2393,6 +2422,7 @@ function switchView(viewName) {
 
 document.querySelectorAll('.sb-nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (!btn.dataset.view) return; // settings btn has no data-view; handled by its own listener
     switchView(btn.dataset.view);
     closeSidebar();
   });
@@ -2624,25 +2654,23 @@ function ytWatchPlay(input) {
   bar.hidden = false;
 }
 
-document.getElementById('ytWatchPlayBtn').addEventListener('click', () => ytWatchPlay(document.getElementById('ytWatchInput').value));
-document.getElementById('ytWatchInput').addEventListener('keydown', e => { if (e.key === 'Enter') ytWatchPlay(document.getElementById('ytWatchInput').value); });
+document.getElementById('ytWatchPlayBtn')?.addEventListener('click', () => ytWatchPlay(document.getElementById('ytWatchInput')?.value));
+document.getElementById('ytWatchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') ytWatchPlay(document.getElementById('ytWatchInput')?.value); });
 
 // ── YouTube → MP3 ──────────────────────────────────────────────
-document.getElementById('ytExtractBtn').addEventListener('click', ytExtractMp3);
-document.getElementById('heroYtMp3Btn')?.addEventListener('click', () => {
-  switchView('home');
-  setTimeout(() => document.getElementById('ytWatchInput')?.focus(), 300);
-});
+document.getElementById('ytExtractBtn')?.addEventListener('click', ytExtractMp3);
+document.getElementById('heroYtMp3Btn')?.addEventListener('click', () => switchView('youtube'));
 
 async function ytExtractMp3() {
-  const rawInput = document.getElementById('ytWatchInput').value.trim();
-  if (!rawInput) { toast('Paste a YouTube URL above first.'); return; }
+  const inputEl = document.getElementById('ytWatchInput') || document.getElementById('ytUrl');
+  const rawInput = inputEl?.value?.trim() || '';
+  if (!rawInput) { toast('Paste a YouTube URL first.'); return; }
 
   let url = rawInput;
   if (!url.startsWith('http')) url = 'https://www.youtube.com/watch?v=' + url;
 
   const btn = document.getElementById('ytExtractBtn');
-  btn.textContent = '⏳…'; btn.disabled = true;
+  if (btn) { btn.textContent = '⏳…'; btn.disabled = true; }
 
   try {
     const res = await fetch('https://api.cobalt.tools/api/json', {
@@ -2686,15 +2714,16 @@ document.querySelectorAll('.yt-pre').forEach(btn => {
   btn.addEventListener('click', () => ytWatchPlay(btn.dataset.vid));
 });
 
-document.getElementById('ytWatchStop').addEventListener('click', () => {
+document.getElementById('ytWatchStop')?.addEventListener('click', () => {
   const frame = document.getElementById('ytWatchFrame');
+  if (!frame) return;
   frame.src = ''; frame.hidden = true;
   document.getElementById('ytWatchEmpty').style.display = '';
   document.getElementById('ytWatchBar').hidden = true;
 });
 
-document.getElementById('ytCollapseBtn').addEventListener('click', () => {
-  document.getElementById('ytWatchSection').classList.toggle('collapsed');
+document.getElementById('ytCollapseBtn')?.addEventListener('click', () => {
+  document.getElementById('ytWatchSection')?.classList.toggle('collapsed');
 });
 
 // ── SETTINGS: ACCENT COLOR ─────────────────────────────────────
@@ -2730,8 +2759,10 @@ document.getElementById('settingAccentColor').addEventListener('input', function
 });
 
 // ── SETTINGS: THEME ────────────────────────────────────────────
+const THEMES = ['dark', 'glass', 'neon', 'sunset', 'ocean', 'forest', 'galaxy'];
+
 function applyTheme(theme) {
-  document.body.classList.toggle('theme-glass', theme === 'glass');
+  THEMES.forEach(t => document.body.classList.toggle('theme-' + t, t === theme && t !== 'dark'));
   document.querySelectorAll('.theme-opt-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
   localStorage.setItem('eri_theme', theme);
 }

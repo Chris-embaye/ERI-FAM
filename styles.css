@@ -2096,3 +2096,204 @@ body.theme-glass .upload-zone { background: rgba(255,255,255,0.04); backdrop-fil
 /* Bottom-nav radio button — glow when live */
 .nav-item[data-view="radio"].radio-active svg { stroke: #a855f7; }
 .nav-item[data-view="radio"].radio-active span { color: #a855f7; }
+
+/* ══════════════════════════════════════════════════════════════
+   HEADER — MUSIC PLAYING GLOW
+   ══════════════════════════════════════════════════════════════ */
+.app-header { position: relative; overflow: visible; }
+.app-header.music-playing {
+  border-bottom-color: var(--accent) !important;
+  box-shadow: 0 0 24px var(--accent-glow), 0 1px 0 rgba(255,255,255,.05), 0 4px 24px rgba(0,0,0,.5) !important;
+}
+.app-header.music-playing::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--accent-dk), var(--accent), transparent);
+  background-size: 200% 100%;
+  animation: headerBeat 1.8s linear infinite;
+  pointer-events: none;
+}
+@keyframes headerBeat {
+  0%   { background-position: 200% 0; opacity: 0.8; }
+  50%  { opacity: 1; }
+  100% { background-position: -200% 0; opacity: 0.8; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   THEMES — Neon, Sunset, Ocean, Forest, Galaxy
+   ══════════════════════════════════════════════════════════════ */
+
+/* NEON */
+body.theme-neon {
+  --bg: #030d1a; --surface: #061424; --card: #0a1e30; --card-hover: #112840;
+  --accent: #00f0ff; --accent-dk: #00b8cc; --accent-glow: rgba(0,240,255,0.30);
+  --text: #e0f8ff; --text-sub: rgba(224,248,255,0.55); --text-dim: rgba(224,248,255,0.28);
+  background:
+    radial-gradient(ellipse at 10% 30%, rgba(0,240,255,.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 70%, rgba(180,0,255,.10) 0%, transparent 55%),
+    #030d1a;
+  background-attachment: fixed;
+}
+body.theme-neon .app-header,
+body.theme-neon .bottom-nav { background: rgba(3,13,26,0.80); border-color: rgba(0,240,255,.15); }
+body.theme-neon .track-card { border-color: rgba(0,240,255,.12); }
+body.theme-neon .nav-item.active::before { box-shadow: 0 0 12px #00f0ff, 0 0 24px rgba(0,240,255,.5); }
+
+/* SUNSET */
+body.theme-sunset {
+  --bg: #0f0500; --surface: #1a0800; --card: #2a0f02; --card-hover: #3a1803;
+  --accent: #ff6b00; --accent-dk: #cc5500; --accent-glow: rgba(255,107,0,0.30);
+  --text: #fff5ee; --text-sub: rgba(255,245,238,0.55); --text-dim: rgba(255,245,238,0.28);
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255,107,0,.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(255,0,80,.12) 0%, transparent 55%),
+    #0f0500;
+  background-attachment: fixed;
+}
+body.theme-sunset .app-header,
+body.theme-sunset .bottom-nav { background: rgba(15,5,0,0.82); border-color: rgba(255,107,0,.15); }
+
+/* OCEAN */
+body.theme-ocean {
+  --bg: #00060f; --surface: #000e1f; --card: #00182e; --card-hover: #00233d;
+  --accent: #0080ff; --accent-dk: #0060cc; --accent-glow: rgba(0,128,255,0.30);
+  --text: #e8f4ff; --text-sub: rgba(232,244,255,0.55); --text-dim: rgba(232,244,255,0.28);
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(0,128,255,.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 80%, rgba(0,200,200,.10) 0%, transparent 55%),
+    #00060f;
+  background-attachment: fixed;
+}
+body.theme-ocean .app-header,
+body.theme-ocean .bottom-nav { background: rgba(0,6,15,0.82); border-color: rgba(0,128,255,.15); }
+
+/* FOREST */
+body.theme-forest {
+  --bg: #010d04; --surface: #031809; --card: #062510; --card-hover: #0a3518;
+  --accent: #00c853; --accent-dk: #009640; --accent-glow: rgba(0,200,83,0.30);
+  --text: #e8ffe4; --text-sub: rgba(232,255,228,0.55); --text-dim: rgba(232,255,228,0.28);
+  background:
+    radial-gradient(ellipse at 25% 25%, rgba(0,200,83,.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 75%, rgba(0,100,30,.14) 0%, transparent 55%),
+    #010d04;
+  background-attachment: fixed;
+}
+body.theme-forest .app-header,
+body.theme-forest .bottom-nav { background: rgba(1,13,4,0.82); border-color: rgba(0,200,83,.15); }
+
+/* GALAXY */
+body.theme-galaxy {
+  --bg: #05000f; --surface: #0a0020; --card: #120030; --card-hover: #1c0040;
+  --accent: #9b59ff; --accent-dk: #7a3fcc; --accent-glow: rgba(155,89,255,0.30);
+  --text: #f5f0ff; --text-sub: rgba(245,240,255,0.55); --text-dim: rgba(245,240,255,0.28);
+  background:
+    radial-gradient(ellipse at 15% 15%, rgba(155,89,255,.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 85%, rgba(0,200,255,.10) 0%, transparent 55%),
+    #05000f;
+  background-attachment: fixed;
+}
+body.theme-galaxy .app-header,
+body.theme-galaxy .bottom-nav { background: rgba(5,0,15,0.85); border-color: rgba(155,89,255,.18); }
+body.theme-galaxy .nav-item.active::before { background: var(--accent); box-shadow: 0 0 14px #9b59ff, 0 0 28px rgba(155,89,255,.5); }
+
+/* Theme button layout */
+.theme-opts-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.theme-opt-btn {
+  flex: none !important;
+  padding: 7px 14px; border-radius: 20px; font-size: 0.77rem; font-weight: 600;
+  background: var(--card); color: var(--text-sub); border: 1.5px solid transparent;
+  transition: all 0.18s; white-space: nowrap;
+}
+.theme-opt-btn.active { background: var(--accent) !important; color: #fff !important; border-color: transparent; }
+.theme-opt-btn:hover { border-color: var(--accent); color: var(--text); }
+
+/* ══════════════════════════════════════════════════════════════
+   DJ FULL PLAYER — Vinyl & Waveform
+   ══════════════════════════════════════════════════════════════ */
+
+/* Vinyl overlay on album art */
+.fp-vinyl {
+  position: absolute; inset: 8%; border-radius: 50%;
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.4s;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2;
+}
+.fp-vinyl.spinning { opacity: 1; }
+.fp-vinyl-grooves {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle at 50% 50%,
+    rgba(0,0,0,0)    0px,
+    rgba(0,0,0,0)    8px,
+    rgba(255,255,255,0.04) 9px,
+    rgba(0,0,0,0)    10px
+  );
+  animation: vinylSpin 2.2s linear infinite;
+}
+.fp-vinyl.spinning .fp-vinyl-grooves { animation-play-state: running; }
+.fp-vinyl:not(.spinning) .fp-vinyl-grooves { animation-play-state: paused; }
+.fp-vinyl-label {
+  width: 32%; height: 32%; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(40,40,40,0.7));
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(2px);
+  position: relative; z-index: 1;
+}
+.fp-vinyl-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 8px var(--accent);
+}
+@keyframes vinylSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* DJ waveform bars below ring */
+.fp-dj-wave {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 36px; width: 100%; margin-bottom: 16px;
+  padding: 0 8px; opacity: 0;
+  transition: opacity 0.4s;
+}
+.fp-dj-wave.active { opacity: 1; }
+.fp-dj-bar {
+  flex: 1; border-radius: 3px 3px 1px 1px;
+  background: linear-gradient(to top, var(--accent-dk), var(--accent));
+  box-shadow: 0 0 6px var(--accent-glow);
+  animation: djWave 0.7s ease-in-out infinite alternate;
+  transform-origin: bottom;
+}
+.fp-dj-bar:nth-child(1)  { animation-duration: 0.55s; animation-delay: 0.00s; }
+.fp-dj-bar:nth-child(2)  { animation-duration: 0.82s; animation-delay: 0.05s; }
+.fp-dj-bar:nth-child(3)  { animation-duration: 0.44s; animation-delay: 0.10s; }
+.fp-dj-bar:nth-child(4)  { animation-duration: 0.68s; animation-delay: 0.15s; }
+.fp-dj-bar:nth-child(5)  { animation-duration: 0.50s; animation-delay: 0.08s; }
+.fp-dj-bar:nth-child(6)  { animation-duration: 0.76s; animation-delay: 0.12s; }
+.fp-dj-bar:nth-child(7)  { animation-duration: 0.40s; animation-delay: 0.20s; }
+.fp-dj-bar:nth-child(8)  { animation-duration: 0.60s; animation-delay: 0.03s; }
+.fp-dj-bar:nth-child(9)  { animation-duration: 0.85s; animation-delay: 0.18s; }
+.fp-dj-bar:nth-child(10) { animation-duration: 0.48s; animation-delay: 0.07s; }
+.fp-dj-bar:nth-child(11) { animation-duration: 0.72s; animation-delay: 0.14s; }
+.fp-dj-bar:nth-child(12) { animation-duration: 0.38s; animation-delay: 0.22s; }
+.fp-dj-bar:nth-child(13) { animation-duration: 0.65s; animation-delay: 0.06s; }
+.fp-dj-bar:nth-child(14) { animation-duration: 0.90s; animation-delay: 0.16s; }
+.fp-dj-bar:nth-child(15) { animation-duration: 0.45s; animation-delay: 0.11s; }
+.fp-dj-bar:nth-child(16) { animation-duration: 0.78s; animation-delay: 0.09s; }
+@keyframes djWave {
+  from { height: 4px;  opacity: 0.5; }
+  to   { height: 34px; opacity: 1; }
+}
+
+/* DJ label on full player */
+.fp-dj-label {
+  font-size: 0.56rem; font-weight: 800; letter-spacing: 2px;
+  color: var(--accent); text-transform: uppercase; opacity: 0.6;
+  margin-bottom: 4px; align-self: flex-start;
+}
+
+/* Sidebar settings button */
+.sb-settings-btn { border-top: 0.5px solid var(--border); margin-top: 8px; padding-top: 12px; }

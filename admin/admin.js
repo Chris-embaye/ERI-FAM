@@ -1614,12 +1614,15 @@ document.getElementById('refreshAnalyticsBtn').addEventListener('click', loadAna
 
 async function loadAnalytics() {
   try {
-    const weekAgo = new Date(Date.now() - 7 * 86400000);
-    const [usersSnap, tracksSnap, promosSnap, actSnap] = await Promise.all([
+    const weekAgo    = new Date(Date.now() - 7 * 86400000);
+    const dayAgo     = new Date(Date.now() - 86400000);
+    const hourAgo    = new Date(Date.now() - 3600000);
+    const [usersSnap, tracksSnap, promosSnap, actSnap, sessSnap] = await Promise.all([
       fb.getDocs(fb.collection(_db, 'hub_users')),
       fb.getDocs(fb.query(fb.collection(_db, 'tracks'), fb.orderBy('plays', 'desc'), fb.limit(10))),
       fb.getDocs(fb.collection(_db, 'hub_promotions')),
       fb.getDocs(fb.query(fb.collection(_db, 'hub_activity'), fb.orderBy('ts', 'desc'), fb.limit(10))),
+      fb.getDocs(fb.collection(_db, 'app_sessions')).catch(() => ({ docs: [] })),
     ]);
 
     const users    = usersSnap.docs.map(d => d.data());
@@ -1627,11 +1630,19 @@ async function loadAnalytics() {
     const pending  = users.filter(u => u.status === 'pending').length;
     const activePromos = promosSnap.docs.filter(d => d.data().status === 'active').length;
 
+    const onlineNow   = sessSnap.docs.filter(d => { const t = d.data().lastSeen?.toDate?.(); return t && t > hourAgo; }).length;
+    const activeToday = sessSnap.docs.filter(d => { const t = d.data().lastSeen?.toDate?.(); return t && t > dayAgo; }).length;
+    const activeWeek  = sessSnap.docs.filter(d => { const t = d.data().lastSeen?.toDate?.(); return t && t > weekAgo; }).length;
+
     document.getElementById('anTotalUsers').textContent = users.length;
     document.getElementById('anNewUsers').textContent   = newUsers;
     document.getElementById('anPending').textContent    = pending;
     document.getElementById('anTracks').textContent     = tracksSnap.size;
     document.getElementById('anPromos').textContent     = activePromos;
+    if (document.getElementById('anOnlineNow'))   document.getElementById('anOnlineNow').textContent   = onlineNow;
+    if (document.getElementById('anActiveToday')) document.getElementById('anActiveToday').textContent = activeToday;
+    if (document.getElementById('anActiveWeek'))  document.getElementById('anActiveWeek').textContent  = activeWeek;
+    if (document.getElementById('dashOnlineNow')) document.getElementById('dashOnlineNow').textContent = onlineNow;
 
     // Top tracks bar chart
     const tracksEl = document.getElementById('anTopTracks');
