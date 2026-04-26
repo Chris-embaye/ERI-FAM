@@ -70,6 +70,7 @@
         <li><a href="#culture">Culture</a></li>
         <li><a href="#famous">Famous</a></li>
         <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#community">Community</a></li>
         <li><a href="#translator" class="nav-cta">Translator</a></li>
         <li><button class="nav-download-btn" id="navDownloadBtn">&#11015; Get App</button></li>
       </ul>
@@ -1157,6 +1158,51 @@
     </div>
   </section>
 
+  <!-- COMMUNITY -->
+  <section id="community">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Community</span>
+        <h2>Community Stories</h2>
+        <p>Stories, memories, and updates shared by Eritreans around the world</p>
+      </div>
+      <div class="community-posts-grid" id="communityPostsGrid">
+        <div class="community-loading">Loading posts…</div>
+      </div>
+      <div class="community-submit-wrap">
+        <button class="community-submit-btn" id="communitySubmitBtn">
+          ✍️ Share Your Story
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMUNITY SUBMISSION MODAL -->
+  <div class="community-modal-overlay" id="communityModal" hidden>
+    <div class="community-modal-box">
+      <button class="community-modal-close" id="communityModalClose">&times;</button>
+      <h3>Share Your Story</h3>
+      <p class="community-modal-sub">Your submission will be reviewed before it goes public.</p>
+      <div class="community-form">
+        <label>Your Name <span class="req">*</span></label>
+        <input type="text" id="cmName" placeholder="e.g. Selam Tesfay" maxlength="80" />
+        <label>Title <span class="req">*</span></label>
+        <input type="text" id="cmTitle" placeholder="Give your story a title…" maxlength="120" />
+        <label>Your Story <span class="req">*</span></label>
+        <textarea id="cmBody" rows="5" placeholder="Share a memory, update, or story about Eritrea…" maxlength="2000"></textarea>
+        <label>Image URL <span class="opt">(optional)</span></label>
+        <input type="url" id="cmImageUrl" placeholder="https://…" />
+        <label>Tags <span class="opt">(optional, comma-separated)</span></label>
+        <input type="text" id="cmTags" placeholder="e.g. culture, Asmara, diaspora" maxlength="120" />
+        <div class="community-form-actions">
+          <button class="community-cancel-btn" id="communityModalCancel">Cancel</button>
+          <button class="community-submit-form-btn" id="communityModalSubmit">Submit Story</button>
+        </div>
+        <p id="cmStatus" class="cm-status"></p>
+      </div>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <footer id="footer">
     <div class="footer-container">
@@ -1177,6 +1223,7 @@
           <li><a href="#translator">Tigrinya Translator</a></li>
           <li><a href="#famous">Famous Eritreans</a></li>
           <li><a href="#world-search">World Search</a></li>
+          <li><a href="#community">Community</a></li>
         </ul>
       </div>
       <div class="footer-facts">
@@ -1369,6 +1416,7 @@
     </div>
   </div>
 
+  <script src="firebase-config.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

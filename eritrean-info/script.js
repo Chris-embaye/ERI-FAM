@@ -897,3 +897,129 @@ wsNewSearch.addEventListener('click', () => {
   wsInput.focus();
   document.getElementById('world-search').scrollIntoView({ behavior: 'smooth' });
 });
+
+// ── COMMUNITY ────────────────────────────────
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadCommunityPosts() {
+  const grid = document.getElementById('communityPostsGrid');
+  grid.innerHTML = '<div class="community-loading">Loading posts…</div>';
+  try {
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const { getFirestore, collection, query, where, orderBy, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    const db  = getFirestore(app);
+    const q   = query(
+      collection(db, 'community_posts'),
+      where('status', '==', 'approved'),
+      orderBy('approvedAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      grid.innerHTML = '<p class="community-empty">No community posts yet — be the first to share your story!</p>';
+      return;
+    }
+    grid.innerHTML = '';
+    snap.forEach(doc => {
+      const d = doc.data();
+      const tags = Array.isArray(d.tags) ? d.tags.filter(Boolean) : [];
+      const date = d.approvedAt?.toDate ? d.approvedAt.toDate().toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) : '';
+      grid.insertAdjacentHTML('beforeend', `
+        <div class="community-post-card">
+          ${d.imageUrl ? `<div class="cp-img-wrap"><img src="${escHtml(d.imageUrl)}" alt="${escHtml(d.title)}" loading="lazy" /></div>` : ''}
+          <div class="cp-body">
+            <h3 class="cp-title">${escHtml(d.title)}</h3>
+            <p class="cp-text">${escHtml(d.body)}</p>
+            <div class="cp-meta">
+              <span class="cp-author">✍️ ${escHtml(d.authorName || 'Anonymous')}</span>
+              ${date ? `<span class="cp-date">${escHtml(date)}</span>` : ''}
+            </div>
+            ${tags.length ? `<div class="cp-tags">${tags.map(t => `<span class="cp-tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
+          </div>
+        </div>
+      `);
+    });
+  } catch (err) {
+    grid.innerHTML = '<p class="community-empty">Unable to load posts right now.</p>';
+    console.error('Community load error:', err);
+  }
+}
+
+// Lazy-load community posts when section scrolls into view
+const communitySection = document.getElementById('community');
+let communityLoaded = false;
+const communityObserver = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !communityLoaded) {
+    communityLoaded = true;
+    loadCommunityPosts();
+  }
+}, { threshold: 0.1 });
+communityObserver.observe(communitySection);
+
+// Submit modal
+const communityModal      = document.getElementById('communityModal');
+const communitySubmitBtn  = document.getElementById('communitySubmitBtn');
+const communityModalClose = document.getElementById('communityModalClose');
+const communityModalCancel= document.getElementById('communityModalCancel');
+const communityModalSubmit= document.getElementById('communityModalSubmit');
+
+function openCommunityModal() { communityModal.removeAttribute('hidden'); document.body.style.overflow = 'hidden'; }
+function closeCommunityModal() { communityModal.setAttribute('hidden', ''); document.body.style.overflow = ''; }
+
+communitySubmitBtn.addEventListener('click', openCommunityModal);
+communityModalClose.addEventListener('click', closeCommunityModal);
+communityModalCancel.addEventListener('click', closeCommunityModal);
+communityModal.addEventListener('click', e => { if (e.target === communityModal) closeCommunityModal(); });
+
+communityModalSubmit.addEventListener('click', async () => {
+  const name  = document.getElementById('cmName').value.trim();
+  const title = document.getElementById('cmTitle').value.trim();
+  const body  = document.getElementById('cmBody').value.trim();
+  const img   = document.getElementById('cmImageUrl').value.trim();
+  const tagsRaw = document.getElementById('cmTags').value;
+  const status  = document.getElementById('cmStatus');
+
+  if (!name || !title || !body) {
+    status.textContent = 'Please fill in your name, title, and story.';
+    status.style.color = '#e53e3e';
+    return;
+  }
+
+  const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  communityModalSubmit.disabled = true;
+  status.textContent = 'Submitting…';
+  status.style.color = '';
+
+  try {
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const { getFirestore, collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    const db  = getFirestore(app);
+    await addDoc(collection(db, 'community_posts'), {
+      authorName:  name,
+      title,
+      body,
+      imageUrl:    img || '',
+      tags,
+      status:      'pending',
+      source:      'community',
+      submittedAt: serverTimestamp()
+    });
+    status.textContent = '✅ Story submitted! It will appear after admin review.';
+    status.style.color = '#38a169';
+    document.getElementById('cmName').value  = '';
+    document.getElementById('cmTitle').value = '';
+    document.getElementById('cmBody').value  = '';
+    document.getElementById('cmImageUrl').value = '';
+    document.getElementById('cmTags').value  = '';
+    setTimeout(closeCommunityModal, 2500);
+  } catch (err) {
+    status.textContent = 'Submission failed — please try again.';
+    status.style.color = '#e53e3e';
+    console.error('Community submit error:', err);
+  } finally {
+    communityModalSubmit.disabled = false;
+  }
+});
