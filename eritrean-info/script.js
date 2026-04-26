@@ -1306,3 +1306,597 @@ document.addEventListener('keydown', e => {
   const si = document.getElementById('worldSearchInput') || document.querySelector('.world-search input');
   if (si) { si.focus(); si.select(); }
 });
+
+// ── NEWS FEED ────────────────────────────────────────────
+(async function loadNewsSection() {
+  const grid = document.getElementById('newsGrid');
+  if (!grid) return;
+  try {
+    const [appMod, fsMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    ]);
+    const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
+    const db  = fsMod.getFirestore(app);
+    const q   = fsMod.query(
+      fsMod.collection(db, 'eri_news'),
+      fsMod.where('status', '==', 'published'),
+      fsMod.orderBy('publishedAt', 'desc'),
+      fsMod.limit(6)
+    );
+    const snap = await fsMod.getDocs(q);
+    if (snap.empty) {
+      grid.innerHTML = '<p class="news-empty">No news articles yet — check back soon!</p>';
+      return;
+    }
+    grid.innerHTML = '';
+    snap.forEach(doc => {
+      const d = doc.data();
+      const date = d.publishedAt?.toDate ? d.publishedAt.toDate().toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) : '';
+      grid.insertAdjacentHTML('beforeend', `
+        <div class="news-card">
+          ${d.imageUrl ? `<div class="news-img-wrap"><img src="${escHtml(d.imageUrl)}" alt="${escHtml(d.title)}" loading="lazy"/></div>` : ''}
+          <div class="news-body">
+            ${d.tag ? `<span class="news-tag">${escHtml(d.tag)}</span>` : ''}
+            <h3 class="news-title">${escHtml(d.title)}</h3>
+            <p class="news-excerpt">${escHtml((d.excerpt || d.body || '').slice(0, 160))}…</p>
+            <div class="news-meta">
+              ${date ? `<span class="news-date">📅 ${date}</span>` : ''}
+              ${d.source ? `<span class="news-source">• ${escHtml(d.source)}</span>` : ''}
+            </div>
+            ${d.link ? `<a href="${escHtml(d.link)}" target="_blank" rel="noopener" class="news-read-more">Read more →</a>` : ''}
+          </div>
+        </div>
+      `);
+    });
+  } catch (err) {
+    grid.innerHTML = '<p class="news-empty">News unavailable right now.</p>';
+    console.warn('[News]', err);
+  }
+})();
+
+// ── REGIONS MAP ──────────────────────────────────────────
+const REGIONS_DATA = [
+  { id:'maekel',   name:'Maekel',               sub:'Central Region',        emoji:'🏙️', color:'#007A3D',
+    capital:'Asmara', pop:'~900,000', area:'2,100 km²', climate:'Cool highland 15–22°C', people:'Predominantly Tigrinya',
+    desc:'The Central Region contains the capital Asmara — a UNESCO World Heritage City renowned for its Modernist architecture. Home to the national government, major universities, and the main international airport.',
+    highlights:['Asmara — UNESCO World Heritage City','National Museum of Eritrea','Asmara International Airport (ASM)','Fiat Tagliero Building (1938)','Art Deco cafés and opera house'] },
+  { id:'debub',    name:'Debub',                 sub:'Southern Region',       emoji:'⛰️', color:'#4189DD',
+    capital:'Mendefera', pop:'~450,000', area:'8,000 km²', climate:'Highland, seasonal rains', people:'Tigrinya, Saho',
+    desc:'The Southern Region borders Ethiopia and features important Aksumite archaeological sites. The ruins of Qohaito stand as testament to Eritrea\'s ancient civilization.',
+    highlights:['Qohaito Ancient Archaeological Site','Metera Aksumite Ruins','Adi Keyih town','Senafe — gateway to ancient sites','Border crossing to Ethiopia'] },
+  { id:'debubawi', name:'Debubawi Keyih Bahri',  sub:'Southern Red Sea',      emoji:'🌊', color:'#CE1126',
+    capital:'Assab (Aseb)', pop:'~120,000', area:'28,000 km²', climate:'Extremely hot 30–50°C', people:'Afar, Saho',
+    desc:'The most sparsely populated region, stretching to Djibouti. Features the Danakil Depression — one of the lowest and hottest places on Earth — and the strategic port of Assab.',
+    highlights:['Assab Port — strategic Red Sea terminal','Danakil Depression (116m below sea level)','Border with Djibouti','Remote Afar communities','Extreme volcanic landscape'] },
+  { id:'semenawi', name:'Semenawi Keyih Bahri',  sub:'Northern Red Sea',      emoji:'⚓', color:'#f59e0b',
+    capital:'Massawa (Mitsiwa)', pop:'~250,000', area:'29,000 km²', climate:'Hot coastal 25–40°C', people:'Tigrinya, Tigre, Rashaida',
+    desc:'Home to the historic port city of Massawa — 3,000 years old — with Ottoman, Egyptian, and Italian architecture. The Dahlak Archipelago\'s 200+ islands are a diver\'s paradise.',
+    highlights:['Massawa — ancient port city','Dahlak Archipelago — 200+ islands','Dahlak Marine National Park','Ancient Adulis (Aksumite era)','Green Island beach resort'] },
+  { id:'anseba',   name:'Anseba',                sub:'Northern Highland',     emoji:'🐪', color:'#7c3aed',
+    capital:'Keren', pop:'~290,000', area:'23,000 km²', climate:'Semi-arid 20–35°C', people:'Tigre, Bilen, Tigrinya',
+    desc:'Home to Keren — Eritrea\'s second city — famous for its camel market, the Shrine of Our Lady of Keren, and WWII battle sites. The Anseba River runs through this rugged region.',
+    highlights:['Keren — Eritrea\'s 2nd city','Famous weekly camel market','Shrine of Our Lady of Keren','WWII battle sites','Anseba River Valley'] },
+  { id:'gash',     name:'Gash-Barka',            sub:'Western Lowland',       emoji:'🌾', color:'#059669',
+    capital:'Barentu', pop:'~400,000', area:'33,500 km²', climate:'Hot semi-arid 25–40°C', people:'Kunama, Nara, Tigre, Tigrinya',
+    desc:'The largest region by area and Eritrea\'s agricultural heartland. The Gash and Setit rivers support farming. Home to the Kunama and Nara peoples with unique Nilo-Saharan languages.',
+    highlights:['Barentu — regional capital','Gash & Setit River valleys','Kunama and Nara cultural heritage','Agricultural heartland','Border with Sudan and Ethiopia'] },
+];
+
+function initRegions() {
+  const grid = document.getElementById('regionsGrid');
+  const detail = document.getElementById('regionDetail');
+  const detailContent = document.getElementById('regionDetailContent');
+  const closeBtn = document.getElementById('regionDetailClose');
+  if (!grid) return;
+
+  REGIONS_DATA.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'region-card';
+    card.style.setProperty('--rc', r.color);
+    card.innerHTML = `
+      <div class="region-card-top">
+        <span class="region-emoji">${r.emoji}</span>
+        <div>
+          <div class="region-name">${r.name}</div>
+          <div class="region-sub">${r.sub}</div>
+        </div>
+      </div>
+      <div class="region-capital">🏛️ ${r.capital}</div>
+      <div class="region-tap-hint">Tap to explore →</div>
+    `;
+    card.addEventListener('click', () => {
+      detailContent.innerHTML = `
+        <div class="rd-header" style="background:${r.color}20;border-left:4px solid ${r.color}">
+          <span class="rd-emoji">${r.emoji}</span>
+          <div>
+            <div class="rd-name">${r.name}</div>
+            <div class="rd-sub">${r.sub}</div>
+          </div>
+        </div>
+        <p class="rd-desc">${r.desc}</p>
+        <div class="rd-stats">
+          <div class="rd-stat"><strong>Capital</strong><span>🏛️ ${r.capital}</span></div>
+          <div class="rd-stat"><strong>Population</strong><span>👥 ${r.pop}</span></div>
+          <div class="rd-stat"><strong>Area</strong><span>📐 ${r.area}</span></div>
+          <div class="rd-stat"><strong>Climate</strong><span>🌡️ ${r.climate}</span></div>
+          <div class="rd-stat"><strong>People</strong><span>👤 ${r.people}</span></div>
+        </div>
+        <div class="rd-highlights">
+          <strong>Highlights</strong>
+          <ul>${r.highlights.map(h => `<li>${h}</li>`).join('')}</ul>
+        </div>
+      `;
+      detail.removeAttribute('hidden');
+      detail.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    });
+    grid.appendChild(card);
+  });
+
+  closeBtn.addEventListener('click', () => detail.setAttribute('hidden', ''));
+}
+initRegions();
+
+// ── RECIPES ──────────────────────────────────────────────
+const STATIC_RECIPES = [
+  { name:'Injera (ኢንጀራ)', emoji:'🫓', time:'48 hrs + 30 min', serves:'6',
+    ingredients:['2 cups teff flour','3 cups water','1 tsp salt','1 tsp baking soda (optional)'],
+    steps:['Mix teff flour and water. Cover and ferment 48–72 hours until bubbly.','Stir in salt and baking soda if using.','Heat a non-stick skillet on medium-high.','Pour batter in a spiral, starting from the edges. Cover and cook 2 min until bubbles appear. Do not flip.','Slide onto a cloth. Serve as a platter with stews on top.'],
+    tip:'True injera uses only teff — a tiny ancient grain rich in iron and fiber. Fermentation creates the signature sour flavor.' },
+  { name:'Tsebhi Derho (ጽብሒ ደርሆ)', emoji:'🍲', time:'1 hr 20 min', serves:'4',
+    ingredients:['1 whole chicken, cut up','3 onions, finely chopped','4 tbsp berbere spice','3 tbsp clarified butter (tesmi)','4 hard-boiled eggs','2 tbsp tomato paste','Salt to taste','1 cup water'],
+    steps:['Dry-fry onions in a heavy pot 20 min until golden.','Add clarified butter and berbere. Cook 5 min until fragrant.','Add tomato paste and water. Stir well.','Add chicken and salt. Cook covered 40 min on medium heat.','Score hard-boiled eggs and add in the last 10 min.','Serve hot on injera.'],
+    tip:'Berbere is the soul of Eritrean cooking — a complex blend of chili, fenugreek, coriander, cardamom, and more.' },
+  { name:'Shiro (ሽሮ)', emoji:'🫘', time:'25 min', serves:'4',
+    ingredients:['2 cups shiro powder (ground chickpeas)','3 cups water','1 onion, chopped','3 tbsp oil','2 garlic cloves, minced','1 tsp berbere','Salt'],
+    steps:['Sauté onions in oil until golden. Add garlic and berbere.','Slowly whisk in shiro powder with water to avoid lumps.','Cook on medium heat 15–20 min, stirring constantly, until thick.','Adjust salt. Serve hot on injera.'],
+    tip:'Shiro is the everyday staple of Eritrean homes. Add more water for a thinner stew. The earthy flavor is addictive.' },
+  { name:'Ful Medames (ፉል)', emoji:'🫙', time:'20 min', serves:'4',
+    ingredients:['2 cans fava beans, drained','3 tbsp olive oil','3 garlic cloves, minced','Juice of 1 lemon','1 tsp cumin','Salt and pepper','Fresh parsley (optional)'],
+    steps:['Heat olive oil. Add garlic and cumin, cook 1 min.','Add fava beans. Mash roughly — leave some beans whole.','Add lemon juice, salt, pepper. Heat through 5 min.','Drizzle with olive oil and serve with bread or injera.'],
+    tip:'Ful reflects Eritrea\'s centuries of Red Sea trade with Arab neighbors. Eaten for breakfast across Eritrea and the Middle East.' },
+  { name:'Coffee Ceremony (ቡን)', emoji:'☕', time:'45 min', serves:'6',
+    ingredients:['½ cup green coffee beans','Water','Sugar to taste','Cardamom (optional)'],
+    steps:['Wash and roast green beans over medium heat, stirring until dark and aromatic.','Grind roasted beans in a mortar or grinder.','Boil water in a jebena (clay pot). Add coffee. Simmer 10 min.','Pour through a strainer into small cups. Serve 3 rounds: Abol, Tona, and Baraka.','Traditionally served with popcorn or bread.'],
+    tip:'Refusing coffee is considered impolite. Always stay for all three rounds — it is a time for community and conversation.' },
+  { name:'Mes — Honey Wine (መስ)', emoji:'🍯', time:'7 days', serves:'8',
+    ingredients:['1 cup raw honey','4 cups water','1 tsp gesho (buckthorn) leaves or hops','Yeast (optional)'],
+    steps:['Dissolve honey in warm (not hot) water. Stir well.','Add gesho leaves for bitterness and flavor.','Cover loosely and leave at room temperature 5–7 days to ferment.','Taste daily. When pleasantly alcoholic and tangy, strain and bottle.','Serve chilled at celebrations and ceremonies.'],
+    tip:'Mes is Eritrean mead — one of the world\'s oldest alcoholic drinks. Traditionally served at weddings and religious feasts.' },
+];
+
+function initRecipes() {
+  const grid = document.getElementById('recipeGrid');
+  if (!grid) return;
+  grid.innerHTML = STATIC_RECIPES.map((r, i) => `
+    <div class="recipe-card" id="recipe-${i}">
+      <div class="recipe-card-header">
+        <span class="recipe-emoji">${r.emoji}</span>
+        <div class="recipe-info">
+          <h3 class="recipe-name">${r.name}</h3>
+          <div class="recipe-meta-row">
+            <span>⏱ ${r.time}</span>
+            <span>🍽️ Serves ${r.serves}</span>
+          </div>
+        </div>
+        <button class="recipe-toggle" data-ri="${i}" aria-expanded="false">▼</button>
+      </div>
+      <div class="recipe-body" hidden>
+        <div class="recipe-cols">
+          <div class="recipe-ingredients">
+            <h4>🛒 Ingredients</h4>
+            <ul>${r.ingredients.map(ing => `<li>${ing}</li>`).join('')}</ul>
+          </div>
+          <div class="recipe-steps">
+            <h4>👨‍🍳 Steps</h4>
+            <ol>${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+          </div>
+        </div>
+        <div class="recipe-tip">💡 <em>${r.tip}</em></div>
+      </div>
+    </div>
+  `).join('');
+
+  grid.addEventListener('click', e => {
+    const btn = e.target.closest('.recipe-toggle');
+    if (!btn) return;
+    const card = btn.closest('.recipe-card');
+    const body = card.querySelector('.recipe-body');
+    const open = !body.hasAttribute('hidden');
+    body.toggleAttribute('hidden', open);
+    btn.textContent = open ? '▼' : '▲';
+    btn.setAttribute('aria-expanded', String(!open));
+  });
+}
+initRecipes();
+
+// ── MUSIC ARTISTS ─────────────────────────────────────────
+const ARTISTS_DATA = [
+  { name:'Abraham Afewerki',  role:'Singer-Songwriter',         years:'1966–2006', genre:'Tigrinya Pop / Traditional',  emoji:'🎤', color:'linear-gradient(135deg,#007A3D,#4189DD)', desc:'Called the "Voice of Eritrea", Abraham Afewerki blended traditional Tigrinya music with modern sounds. His songs Hamid and Hagerey remain global anthems of Eritrean identity.' },
+  { name:'Yemane Barya',      role:'Singer & Poet',             years:'1954–1997', genre:'Traditional Tigrinya',         emoji:'📜', color:'linear-gradient(135deg,#7c3aed,#007A3D)', desc:'Known as the "King" (ንጉስ) of Tigrinya music, Yemane Barya was a revolutionary poet-fighter whose timeless songs remain cornerstones of Eritrean cultural heritage.' },
+  { name:'Helen Meles',       role:'Vocalist',                  years:'Born 1974',  genre:'Tigrinya Ballads / Pop',      emoji:'🎵', color:'linear-gradient(135deg,#CE1126,#f59e0b)', desc:'Eritrea\'s "Golden Voice" — her powerful vocals span traditional Tigrinya to modern ballads. Songs like Lbi Haway made her a beloved icon across the diaspora.' },
+  { name:'Dehab Faytinga',    role:'Singer & Cultural Ambassador', years:'Born 1965', genre:'Traditional / Pan-African', emoji:'🌍', color:'linear-gradient(135deg,#4189DD,#CE1126)', desc:'A legendary vocalist who blends Eritrean rhythms with pan-African influences. She performed at major international festivals and is celebrated for keeping traditions alive globally.' },
+  { name:'Yohannes Tikabo',   role:'Singer & Actor',            years:'Born 1971',  genre:'Modern Tigrinya',             emoji:'🎭', color:'linear-gradient(135deg,#f59e0b,#059669)', desc:'A hugely popular contemporary artist known for his melodic voice and modern Tigrinya music. Also an accomplished actor in Eritrean cinema.' },
+  { name:'Alamin Abdullatif', role:'Tigre Music Icon',          years:'Born 1962',  genre:'Tigre Traditional',           emoji:'🎶', color:'linear-gradient(135deg,#059669,#7c3aed)', desc:'Master of traditional Tigre music, Alamin Abdullatif preserves the musical heritage of the Tigre ethnic group with powerful poetry-songs spanning decades.' },
+];
+
+function initArtists() {
+  const grid = document.getElementById('artistsGrid');
+  if (!grid) return;
+  grid.innerHTML = ARTISTS_DATA.map(a => `
+    <div class="artist-card">
+      <div class="artist-avatar" style="background:${a.color}">${a.emoji}</div>
+      <div class="artist-info">
+        <div class="artist-name">${a.name}</div>
+        <div class="artist-role">${a.role}</div>
+        <div class="artist-years">${a.years} · ${a.genre}</div>
+        <p class="artist-desc">${a.desc}</p>
+      </div>
+    </div>
+  `).join('');
+}
+initArtists();
+
+// ── HOLIDAYS ─────────────────────────────────────────────
+const HOLIDAYS_DATA = [
+  { month:'Jan',      day:'7',   name:'Orthodox Christmas (Ledet ልደት)',   type:'religious', icon:'⛪',
+    desc:'Orthodox Christians celebrate the birth of Jesus with midnight church services, family feasts, and community celebrations. Traditional white clothing is worn.' },
+  { month:'Jan',      day:'19',  name:'Timkat — Epiphany (ጥምቀት)',          type:'religious', icon:'💧',
+    desc:'One of the most spectacular Orthodox celebrations. The Tabot (replica Ark of the Covenant) is carried in colorful processions to water sources with singing and prayer.' },
+  { month:'Mar',      day:'8',   name:"International Women's Day",          type:'national',  icon:'👩',
+    desc:'Widely celebrated in Eritrea, honoring women\'s central role in the 30-year independence struggle and ongoing nation-building.' },
+  { month:'May',      day:'24',  name:'Independence Day 🇪🇷',               type:'national',  icon:'🎉',
+    desc:'THE most important holiday. On May 24, 1993, Eritrea became independent. Celebrated with parades, concerts, fireworks, and community gatherings in Eritrea and diaspora cities worldwide.' },
+  { month:'Jun',      day:'20',  name:"Martyrs' Day (ዓወቱ)",                type:'national',  icon:'🕯️',
+    desc:'A solemn day of remembrance for those who gave their lives in the liberation struggle. Ceremonies at cemeteries and national reflection mark this important day.' },
+  { month:'Sep',      day:'1',   name:'Start of the Armed Struggle',        type:'national',  icon:'⚔️',
+    desc:'Commemorates September 1, 1961, when the ELF launched armed resistance against Ethiopian annexation — the beginning of the 30-year independence war.' },
+  { month:'Sep',      day:'27',  name:'Meskel (መስቀል)',                      type:'religious', icon:'🔥',
+    desc:'The Orthodox celebration of the Finding of the True Cross. Communities light massive bonfires (Demera), sing, pray, and celebrate. A UNESCO-listed intangible heritage.' },
+  { month:'Variable', day:'',    name:'Eid al-Fitr (ዒድ ኣል-ፊጥር)',           type:'religious', icon:'☪️',
+    desc:'Marking the end of Ramadan, celebrated by Eritrea\'s Muslim communities (nearly half the population) with prayers, feasting, charity, and community gatherings.' },
+  { month:'Variable', day:'',    name:'Eid al-Adha (ዒድ ኣል-ኣድሃ)',           type:'religious', icon:'🐑',
+    desc:'The Feast of Sacrifice — Islam\'s holiest holiday. Special prayers, animal sacrifice, and sharing meat with family, neighbors, and the poor.' },
+  { month:'Nov',      day:'25',  name:"Women's Movement Day (NUEW)",        type:'national',  icon:'💪',
+    desc:'Marks the founding of the National Union of Eritrean Women (NUEW), celebrating women\'s organizations and their transformative contributions to Eritrean society.' },
+];
+
+function initHolidays() {
+  const list = document.getElementById('holidaysList');
+  const filters = document.querySelectorAll('.hol-filt');
+  if (!list) return;
+
+  function renderHolidays(type) {
+    const items = type === 'all' ? HOLIDAYS_DATA : HOLIDAYS_DATA.filter(h => h.type === type);
+    list.innerHTML = items.map(h => `
+      <div class="holiday-item ${h.type}">
+        <div class="holiday-icon">${h.icon}</div>
+        <div class="holiday-date">
+          <span class="hol-month">${h.month}</span>
+          ${h.day ? `<span class="hol-day">${h.day}</span>` : '<span class="hol-day hol-var">Variable</span>'}
+        </div>
+        <div class="holiday-body">
+          <div class="holiday-name">${h.name}</div>
+          <p class="holiday-desc">${h.desc}</p>
+          <span class="holiday-type-badge ${h.type}">${h.type === 'national' ? '🇪🇷 National' : '🕌 Religious'}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  renderHolidays('all');
+
+  filters.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filters.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderHolidays(btn.dataset.htype);
+    });
+  });
+}
+initHolidays();
+
+// ── BLOG / ARTICLES ───────────────────────────────────────
+let _blogLoaded = false;
+const blogSection = document.getElementById('blog');
+if (blogSection) {
+  new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && !_blogLoaded) {
+      _blogLoaded = true;
+      loadBlogSection();
+    }
+  }, { threshold: 0.1 }).observe(blogSection);
+}
+
+async function loadBlogSection() {
+  const grid = document.getElementById('blogGrid');
+  if (!grid) return;
+  try {
+    const [appMod, fsMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    ]);
+    const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
+    const db  = fsMod.getFirestore(app);
+    const q   = fsMod.query(
+      fsMod.collection(db, 'eri_articles'),
+      fsMod.where('status', '==', 'published'),
+      fsMod.orderBy('publishedAt', 'desc'),
+      fsMod.limit(6)
+    );
+    const snap = await fsMod.getDocs(q);
+    if (snap.empty) {
+      grid.innerHTML = '<p class="blog-empty">No articles yet — the first one is coming soon!</p>';
+      return;
+    }
+    grid.innerHTML = '';
+    snap.forEach(doc => {
+      const d = doc.data();
+      const date = d.publishedAt?.toDate ? d.publishedAt.toDate().toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) : '';
+      grid.insertAdjacentHTML('beforeend', `
+        <div class="blog-card">
+          ${d.imageUrl ? `<div class="blog-img"><img src="${escHtml(d.imageUrl)}" alt="${escHtml(d.title)}" loading="lazy"/></div>` : ''}
+          <div class="blog-body">
+            ${d.category ? `<span class="blog-cat">${escHtml(d.category)}</span>` : ''}
+            <h3 class="blog-title">${escHtml(d.title)}</h3>
+            <p class="blog-excerpt">${escHtml((d.excerpt || d.body || '').slice(0, 180))}…</p>
+            <div class="blog-footer">
+              <span class="blog-author">✍️ ${escHtml(d.author || 'EritreanInfo')}</span>
+              ${date ? `<span class="blog-date">📅 ${date}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `);
+    });
+  } catch (err) {
+    grid.innerHTML = '<p class="blog-empty">Articles unavailable right now.</p>';
+    console.warn('[Blog]', err);
+  }
+}
+
+// ── QUIZ ─────────────────────────────────────────────────
+const QUIZ_QS = [
+  { q:'What year did Eritrea officially become an independent nation?',
+    opts:['1991','1993','1995','1998'], ans:1,
+    fact:'Eritrea gained independence on May 24, 1993, after a UN-supervised referendum where 99.83% voted for independence.' },
+  { q:'What is the capital city of Eritrea?',
+    opts:['Massawa','Keren','Asmara','Assab'], ans:2,
+    fact:'Asmara (ኣስመራ) sits at 2,325 m above sea level. In 2017 it became a UNESCO World Heritage Site for its Modernist architecture.' },
+  { q:'What percentage voted for independence in the 1993 referendum?',
+    opts:['75%','89.5%','95.2%','99.83%'], ans:3,
+    fact:'An overwhelming 99.83% voted for independence — one of the highest referendum results in history.' },
+  { q:'How many officially recognized ethnic groups does Eritrea have?',
+    opts:['5','7','9','12'], ans:2,
+    fact:'Eritrea has 9 recognized groups: Tigrinya, Tigre, Saho, Kunama, Rashaida, Bilen, Afar, Beja (Hedareb), and Nara.' },
+  { q:'What ancient empire had Eritrea as its heartland?',
+    opts:['Egyptian Empire','Aksumite Empire','Ottoman Empire','Kingdom of Meroe'], ans:1,
+    fact:'The Aksumite Empire (100–940 AD) was one of the great civilizations of the ancient world, with its main port at Adulis near modern Massawa.' },
+  { q:"What is the name of Eritrea's currency?",
+    opts:['Birr','Shilling','Nakfa','Riyal'], ans:2,
+    fact:"The Nakfa (ERN) has been Eritrea's currency since 1997. Named after the town of Nakfa — a symbol of resistance during the liberation war." },
+  { q:'In what year was Asmara inscribed as a UNESCO World Heritage Site?',
+    opts:['2005','2010','2017','2020'], ans:2,
+    fact:"Asmara was recognized in 2017 for its extraordinary collection of Futurist, Rationalist, Art Deco, and Expressionist architecture from the Italian colonial era." },
+  { q:'Which Eritrean athlete won the marathon at the 2016 Rio Olympics?',
+    opts:['Zersenay Tadese','Ghirmay Ghebreslassie','Daniel Teklehaimanot','Yonas Kifle'], ans:1,
+    fact:'Ghirmay Ghebreslassie won gold at Rio 2016 at just 20 years old, becoming one of the youngest marathon champions in Olympic history.' },
+  { q:"What is the length of Eritrea's Red Sea coastline?",
+    opts:['1,200 km','1,800 km','2,234 km','3,100 km'], ans:2,
+    fact:"Eritrea has over 2,234 km of Red Sea coastline — one of the longest in Africa — including the Dahlak Archipelago with 200+ islands." },
+  { q:"What does 'Hade Hzbi, Hade Libbi' mean?",
+    opts:['One Nation, One Flag','Unity and Peace','Eritrea Forever','One People, One Heart'], ans:3,
+    fact:"'ሓደ ህዝቢ ሓደ ልቢ' is the national motto, reflecting the deep Eritrean value of community and collective identity across 9 diverse ethnic groups." },
+];
+
+let _quizIdx = 0, _quizScore = 0, _quizAnswered = false;
+
+function initQuiz() {
+  const startDiv  = document.getElementById('quizStart');
+  const playDiv   = document.getElementById('quizPlay');
+  const resultDiv = document.getElementById('quizResult');
+  const startBtn  = document.getElementById('quizStartBtn');
+  const retryBtn  = document.getElementById('quizRetryBtn');
+  const shareBtn  = document.getElementById('quizShareBtn');
+  const nextBtn   = document.getElementById('quizNextBtn');
+  if (!startBtn) return;
+
+  function startQuiz() {
+    _quizIdx = 0; _quizScore = 0; _quizAnswered = false;
+    startDiv.hidden = true;
+    resultDiv.hidden = true;
+    playDiv.removeAttribute('hidden');
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const q = QUIZ_QS[_quizIdx];
+    document.getElementById('quizCounter').textContent = `${_quizIdx + 1} / ${QUIZ_QS.length}`;
+    document.getElementById('quizScoreLive').textContent = `${_quizScore} pts`;
+    document.getElementById('quizFill').style.width = `${(_quizIdx / QUIZ_QS.length) * 100}%`;
+    document.getElementById('quizQ').textContent = q.q;
+    const factBox = document.getElementById('quizFactBox');
+    factBox.setAttribute('hidden', '');
+    nextBtn.setAttribute('hidden', '');
+    _quizAnswered = false;
+    const opts = document.getElementById('quizOpts');
+    opts.innerHTML = q.opts.map((o, i) => `
+      <button class="quiz-opt" data-idx="${i}">${o}</button>
+    `).join('');
+    opts.querySelectorAll('.quiz-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (_quizAnswered) return;
+        _quizAnswered = true;
+        const chosen = parseInt(btn.dataset.idx);
+        const correct = chosen === q.ans;
+        if (correct) _quizScore++;
+        opts.querySelectorAll('.quiz-opt').forEach((b, i) => {
+          b.disabled = true;
+          if (i === q.ans) b.classList.add('correct');
+          else if (i === chosen) b.classList.add('wrong');
+        });
+        factBox.textContent = `💡 ${q.fact}`;
+        factBox.removeAttribute('hidden');
+        nextBtn.removeAttribute('hidden');
+        document.getElementById('quizScoreLive').textContent = `${_quizScore} pts`;
+      });
+    });
+  }
+
+  nextBtn.addEventListener('click', () => {
+    _quizIdx++;
+    if (_quizIdx >= QUIZ_QS.length) showResult();
+    else renderQuestion();
+  });
+
+  function showResult() {
+    playDiv.setAttribute('hidden', '');
+    resultDiv.removeAttribute('hidden');
+    document.getElementById('quizFinalScore').textContent = `${_quizScore} / ${QUIZ_QS.length}`;
+    const pct = (_quizScore / QUIZ_QS.length) * 100;
+    const msgs = [
+      [80, '🏆 Eritrea Expert!', 'Outstanding! You know Eritrea deeply.'],
+      [50, '⭐ Good knowledge!', 'Solid! Keep exploring Eritrean history.'],
+      [0, '📚 Keep learning!', 'Every question is a chance to discover Eritrea.'],
+    ];
+    const [, trophy, msg] = msgs.find(([threshold]) => pct >= threshold);
+    document.getElementById('quizTrophy').textContent = trophy;
+    document.getElementById('quizFinalMsg').textContent = msg;
+  }
+
+  startBtn.addEventListener('click', startQuiz);
+  retryBtn.addEventListener('click', startQuiz);
+  shareBtn.addEventListener('click', () => {
+    const text = `I scored ${_quizScore}/${QUIZ_QS.length} on the Eritrea Quiz! 🇪🇷 Test your knowledge: ${location.href}#quiz`;
+    if (navigator.share) navigator.share({ text });
+    else navigator.clipboard?.writeText(text).then(() => {
+      shareBtn.textContent = '✓ Copied!';
+      setTimeout(() => { shareBtn.textContent = '🔗 Share Result'; }, 2000);
+    });
+  });
+}
+initQuiz();
+
+// ── GALLERY DYNAMIC LOADER ────────────────────────────────
+let _galleryDynLoaded = false;
+const gallerySection = document.getElementById('gallery');
+if (gallerySection) {
+  new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && !_galleryDynLoaded) {
+      _galleryDynLoaded = true;
+      loadDynamicGallery();
+    }
+  }, { threshold: 0.1 }).observe(gallerySection);
+}
+
+async function loadDynamicGallery() {
+  const dyn = document.getElementById('galleryDynamic');
+  if (!dyn) return;
+  try {
+    const [appMod, fsMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    ]);
+    const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
+    const db  = fsMod.getFirestore(app);
+    const q   = fsMod.query(
+      fsMod.collection(db, 'eri_gallery'),
+      fsMod.where('status', '==', 'active'),
+      fsMod.orderBy('createdAt', 'desc')
+    );
+    const snap = await fsMod.getDocs(q);
+    if (snap.empty) return;
+    snap.forEach(doc => {
+      const d = doc.data();
+      const item = document.createElement('div');
+      item.className = 'gallery-item';
+      item.setAttribute('data-category', d.category || 'culture');
+      item.innerHTML = `
+        <img src="${escHtml(d.imageUrl)}" alt="${escHtml(d.caption || d.title || 'Gallery image')}" loading="lazy" />
+        <div class="gallery-caption">
+          <h4>${escHtml(d.title || '')}</h4>
+          <p>${escHtml(d.caption || '')}</p>
+        </div>
+      `;
+      item.addEventListener('click', () => {
+        const visible = [...document.querySelectorAll('.gallery-item:not(.hidden)')];
+        openLightbox(Math.max(0, visible.indexOf(item)));
+      });
+      dyn.appendChild(item);
+    });
+  } catch (err) {
+    console.warn('[Gallery dynamic]', err);
+  }
+}
+
+// ── NEWSLETTER ────────────────────────────────────────────
+document.getElementById('nlSubmit')?.addEventListener('click', async () => {
+  const emailEl = document.getElementById('nlEmail');
+  const msgEl   = document.getElementById('nlMsg');
+  const btn     = document.getElementById('nlSubmit');
+  const email   = emailEl?.value?.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msgEl.textContent = 'Please enter a valid email address.';
+    msgEl.style.color = '#f87171';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Subscribing…';
+  try {
+    const [appMod, fsMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    ]);
+    const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
+    const db  = fsMod.getFirestore(app);
+    await fsMod.addDoc(fsMod.collection(db, 'eri_newsletter'), {
+      email,
+      source: 'eritreaninfo',
+      subscribedAt: fsMod.serverTimestamp()
+    });
+    emailEl.value = '';
+    msgEl.textContent = '✅ Subscribed! Thank you for joining the community.';
+    msgEl.style.color = '#10b981';
+  } catch (err) {
+    msgEl.textContent = 'Subscription failed — please try again.';
+    msgEl.style.color = '#f87171';
+    console.warn('[Newsletter]', err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Subscribe';
+  }
+});
+
+// ── PHRASEBOOK CATEGORY FILTER ────────────────────────────
+(function initPhrasebookFilter() {
+  const filterBtns = document.querySelectorAll('.phrase-filt');
+  const catLists   = document.querySelectorAll('.phrase-cat');
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.pfilt;
+      catLists.forEach(list => {
+        list.style.display = (cat === 'all' || list.classList.contains(cat)) ? '' : 'none';
+      });
+    });
+  });
+
+  // Event delegation for new phrase-item categories
+  document.querySelectorAll('.phrase-list.phrase-cat').forEach(list => {
+    list.querySelectorAll('.phrase-item[data-ti]').forEach(item => {
+      item.addEventListener('click', () => {
+        const ti = item.getAttribute('data-ti');
+        if (!ti) return;
+        sourceLangSel.value = 'ti';
+        sourceText.classList.add('tigrinya-text');
+        sourceText.placeholder = 'Type Tigrinya (ትግርኛ) here...';
+        sourceText.value = ti;
+        charCount.textContent = `${ti.length} / ${MAX_CHARS}`;
+        transOutput.innerHTML = '<p class="output-placeholder">Click Translate to translate this phrase…</p>';
+        document.getElementById('translator').scrollIntoView({ behavior:'smooth', block:'center' });
+        setTimeout(translateText, 600);
+      });
+    });
+  });
+})();

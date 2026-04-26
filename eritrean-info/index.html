@@ -112,6 +112,13 @@
         <a href="#tourism"      class="nav-dd-item">✈️<span>Tourism</span></a>
         <a href="#languages"    class="nav-dd-item">🗣️<span>Languages</span></a>
         <a href="#about"        class="nav-dd-item">ℹ️<span>About Us</span></a>
+        <a href="#news"         class="nav-dd-item">📰<span>News</span></a>
+        <a href="#regions"      class="nav-dd-item">🗾<span>Regions</span></a>
+        <a href="#recipes"      class="nav-dd-item">🍽️<span>Recipes</span></a>
+        <a href="#artists"      class="nav-dd-item">🎵<span>Artists</span></a>
+        <a href="#holidays"     class="nav-dd-item">🗓️<span>Holidays</span></a>
+        <a href="#blog"         class="nav-dd-item">📖<span>Blog</span></a>
+        <a href="#quiz"         class="nav-dd-item">🏆<span>Quiz</span></a>
       </div>
       <div class="nav-dd-footer">
         <button class="nav-dd-app-btn" id="navDownloadBtn">⬇️ Get App — Works Offline</button>
@@ -239,6 +246,20 @@
             <button class="ws-new-search" id="wsNewSearch">🔍 New Search</button>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWS FEED -->
+  <section id="news">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">News</span>
+        <h2>Latest from Eritrea</h2>
+        <p>Curated updates, stories, and news from Eritrea and the diaspora</p>
+      </div>
+      <div class="news-grid" id="newsGrid">
+        <div class="news-skeleton"><div class="news-skel-card"></div><div class="news-skel-card"></div><div class="news-skel-card"></div></div>
       </div>
     </div>
   </section>
@@ -422,6 +443,22 @@
           <div class="border-item"><span class="dir">Southeast</span><span>🇩🇯 Djibouti</span></div>
           <div class="border-item"><span class="dir">East</span><span>🌊 Red Sea</span></div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ERITREAN REGIONS -->
+  <section id="regions">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Regions</span>
+        <h2>Eritrea's 6 Regions</h2>
+        <p>Click any region to explore its cities, people, and landmarks</p>
+      </div>
+      <div class="regions-grid" id="regionsGrid"></div>
+      <div class="region-detail" id="regionDetail" hidden>
+        <button class="region-detail-close" id="regionDetailClose">✕ Close</button>
+        <div class="region-detail-content" id="regionDetailContent"></div>
       </div>
     </div>
   </section>
@@ -675,6 +712,18 @@
     </div>
   </section>
 
+  <!-- RECIPES -->
+  <section id="recipes">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Recipes</span>
+        <h2>Eritrean Recipes</h2>
+        <p>Traditional dishes from the highlands, coast, and lowlands — step by step</p>
+      </div>
+      <div class="recipe-grid" id="recipeGrid"></div>
+    </div>
+  </section>
+
   <!-- ECONOMY -->
   <section id="economy">
     <div class="container">
@@ -812,6 +861,18 @@
     </div>
   </section>
 
+  <!-- MUSIC & ARTISTS -->
+  <section id="artists">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Music</span>
+        <h2>Eritrean Music &amp; Artists</h2>
+        <p>The voices and instruments that define Eritrean identity — past and present</p>
+      </div>
+      <div class="artists-grid" id="artistsGrid"></div>
+    </div>
+  </section>
+
   <!-- GOVERNMENT -->
   <section id="government">
     <div class="container">
@@ -846,6 +907,23 @@
           <p>Eritrea is a member of the <strong>African Union, Arab League, and United Nations</strong>. Relations with Ethiopia normalized dramatically in 2018. Eritrea has close ties with Gulf states. Relations with Sudan, Djibouti, and some Western nations have been complex and varying.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- HOLIDAYS & CALENDAR -->
+  <section id="holidays">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Calendar</span>
+        <h2>Eritrean Holidays &amp; Calendar</h2>
+        <p>National, religious, and cultural celebrations throughout the Eritrean year</p>
+      </div>
+      <div class="holidays-filter-row">
+        <button class="hol-filt active" data-htype="all">All</button>
+        <button class="hol-filt" data-htype="national">🇪🇷 National</button>
+        <button class="hol-filt" data-htype="religious">🕌 Religious</button>
+      </div>
+      <div class="holidays-list" id="holidaysList"></div>
     </div>
   </section>
 
@@ -1010,6 +1088,7 @@
             <p>Rashaida woman in traditional gold jewelry and embroidered attire</p>
           </div>
         </div>
+        <div id="galleryDynamic"></div>
 
       </div>
     </div>
@@ -1090,7 +1169,14 @@
         <div class="phrasebook">
           <h3>Common Tigrinya Phrases</h3>
           <p class="phrasebook-sub">Click a phrase to load it for translation</p>
-          <div class="phrase-list" id="phraseList">
+          <div class="phrase-filter-row">
+            <button class="phrase-filt active" data-pfilt="greet">💬 Greetings</button>
+            <button class="phrase-filt" data-pfilt="numbers">🔢 Numbers</button>
+            <button class="phrase-filt" data-pfilt="family">👨‍👩‍👧 Family</button>
+            <button class="phrase-filt" data-pfilt="food">🍲 Food</button>
+            <button class="phrase-filt" data-pfilt="travel">✈️ Travel</button>
+          </div>
+          <div class="phrase-list phrase-cat greet active" id="phraseList">
             <div class="phrase-item" data-ti="ሰላም" data-en="Hello / Peace">
               <span class="ti">ሰላም</span>
               <span class="en">Hello / Peace (Selam)</span>
@@ -1132,6 +1218,63 @@
               <span class="en">One people, one heart (national motto)</span>
             </div>
           </div>
+
+          <!-- NUMBERS -->
+          <div class="phrase-list phrase-cat numbers" style="display:none">
+            <div class="phrase-item" data-ti="ሓደ"><span class="ti">ሓደ</span><span class="en">One (Hade)</span></div>
+            <div class="phrase-item" data-ti="ክልተ"><span class="ti">ክልተ</span><span class="en">Two (Klte)</span></div>
+            <div class="phrase-item" data-ti="ሰለስተ"><span class="ti">ሰለስተ</span><span class="en">Three (Seleste)</span></div>
+            <div class="phrase-item" data-ti="ኣርባዕተ"><span class="ti">ኣርባዕተ</span><span class="en">Four (Arbaete)</span></div>
+            <div class="phrase-item" data-ti="ሓሙሽተ"><span class="ti">ሓሙሽተ</span><span class="en">Five (Hamushte)</span></div>
+            <div class="phrase-item" data-ti="ሽዱሽተ"><span class="ti">ሽዱሽተ</span><span class="en">Six (Shedushte)</span></div>
+            <div class="phrase-item" data-ti="ሸውዓተ"><span class="ti">ሸውዓተ</span><span class="en">Seven (Shwate)</span></div>
+            <div class="phrase-item" data-ti="ሸሞነ"><span class="ti">ሸሞነ</span><span class="en">Eight (Shmone)</span></div>
+            <div class="phrase-item" data-ti="ትሽዓተ"><span class="ti">ትሽዓተ</span><span class="en">Nine (Tshate)</span></div>
+            <div class="phrase-item" data-ti="ዓሰርተ"><span class="ti">ዓሰርተ</span><span class="en">Ten (Aserte)</span></div>
+          </div>
+
+          <!-- FAMILY -->
+          <div class="phrase-list phrase-cat family" style="display:none">
+            <div class="phrase-item" data-ti="ኣደ"><span class="ti">ኣደ</span><span class="en">Mother (Ade)</span></div>
+            <div class="phrase-item" data-ti="ኣቦ"><span class="ti">ኣቦ</span><span class="en">Father (Abo)</span></div>
+            <div class="phrase-item" data-ti="ሓዉ"><span class="ti">ሓዉ</span><span class="en">Brother (Hawu)</span></div>
+            <div class="phrase-item" data-ti="ሓፍቲ"><span class="ti">ሓፍቲ</span><span class="en">Sister (Hafti)</span></div>
+            <div class="phrase-item" data-ti="ወዲ"><span class="ti">ወዲ</span><span class="en">Son / Boy (Wedi)</span></div>
+            <div class="phrase-item" data-ti="ጓል"><span class="ti">ጓል</span><span class="en">Daughter / Girl (Gwal)</span></div>
+            <div class="phrase-item" data-ti="ኣቦሓጎ"><span class="ti">ኣቦሓጎ</span><span class="en">Grandfather (Abohago)</span></div>
+            <div class="phrase-item" data-ti="ኣዲኣ"><span class="ti">ኣዲኣ</span><span class="en">Grandmother (Adia)</span></div>
+            <div class="phrase-item" data-ti="ዓቢ ሓዉ"><span class="ti">ዓቢ ሓዉ</span><span class="en">Elder brother</span></div>
+            <div class="phrase-item" data-ti="ንኡስ ሓፍቲ"><span class="ti">ንኡስ ሓፍቲ</span><span class="en">Little sister</span></div>
+          </div>
+
+          <!-- FOOD -->
+          <div class="phrase-list phrase-cat food" style="display:none">
+            <div class="phrase-item" data-ti="ቁርሲ"><span class="ti">ቁርሲ</span><span class="en">Breakfast (Qursi)</span></div>
+            <div class="phrase-item" data-ti="ምሳሕ"><span class="ti">ምሳሕ</span><span class="en">Lunch (Msah)</span></div>
+            <div class="phrase-item" data-ti="ድራር"><span class="ti">ድራር</span><span class="en">Dinner (Drar)</span></div>
+            <div class="phrase-item" data-ti="ኢንጀራ"><span class="ti">ኢንጀራ</span><span class="en">Injera (sourdough flatbread)</span></div>
+            <div class="phrase-item" data-ti="ስጋ"><span class="ti">ስጋ</span><span class="en">Meat (Sga)</span></div>
+            <div class="phrase-item" data-ti="ዓሳ"><span class="ti">ዓሳ</span><span class="en">Fish (Asa)</span></div>
+            <div class="phrase-item" data-ti="ጸባ"><span class="ti">ጸባ</span><span class="en">Milk (Tseba)</span></div>
+            <div class="phrase-item" data-ti="ቡን"><span class="ti">ቡን</span><span class="en">Coffee (Bun)</span></div>
+            <div class="phrase-item" data-ti="ማይ"><span class="ti">ማይ</span><span class="en">Water (May)</span></div>
+            <div class="phrase-item" data-ti="ጣዕሚ ኣለዎ"><span class="ti">ጣዕሚ ኣለዎ</span><span class="en">It is delicious (Taemi Alewo)</span></div>
+          </div>
+
+          <!-- TRAVEL -->
+          <div class="phrase-list phrase-cat travel" style="display:none">
+            <div class="phrase-item" data-ti="ኣበይ ኢዩ?"><span class="ti">ኣበይ ኢዩ?</span><span class="en">Where is it? (Abey Eyu?)</span></div>
+            <div class="phrase-item" data-ti="ክንደይ ይወስድ?"><span class="ti">ክንደይ ይወስድ?</span><span class="en">How much does it cost?</span></div>
+            <div class="phrase-item" data-ti="ሓጊዙኒ"><span class="ti">ሓጊዙኒ</span><span class="en">Help me (Hagizuni)</span></div>
+            <div class="phrase-item" data-ti="ሆቴል"><span class="ti">ሆቴል</span><span class="en">Hotel (Hotel)</span></div>
+            <div class="phrase-item" data-ti="ኣዉቶቡስ"><span class="ti">ኣዉቶቡስ</span><span class="en">Bus (Autobus)</span></div>
+            <div class="phrase-item" data-ti="ሆስፒታል"><span class="ti">ሆስፒታል</span><span class="en">Hospital (Hospital)</span></div>
+            <div class="phrase-item" data-ti="ናብ ቀኝ"><span class="ti">ናብ ቀኝ</span><span class="en">Turn right (Nab Qegn)</span></div>
+            <div class="phrase-item" data-ti="ናብ ጸጋም"><span class="ti">ናብ ጸጋም</span><span class="en">Turn left (Nab Tsegam)</span></div>
+            <div class="phrase-item" data-ti="ቤተ-ፍርዲ"><span class="ti">ቤተ-ፍርዲ</span><span class="en">Police station</span></div>
+            <div class="phrase-item" data-ti="ናብ ኣስመራ"><span class="ti">ናብ ኣስመራ</span><span class="en">To Asmara (Nab Asmara)</span></div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1175,6 +1318,61 @@
           <div class="tourism-badge">🔱 Ancient</div>
           <h3>Qohaito Archaeological Site</h3>
           <p>Ancient ruins of the Aksumite period including the Temple of Mariam Wakiro, the Saphira Dam, and mysterious rock engravings. One of the most significant archaeological sites in the Horn of Africa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOG / ARTICLES -->
+  <section id="blog">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Blog</span>
+        <h2>Articles &amp; Deep Dives</h2>
+        <p>Long-form writing about Eritrea's history, culture, diaspora life, and more</p>
+      </div>
+      <div class="blog-grid" id="blogGrid">
+        <div class="blog-loading">Loading articles…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Quiz</span>
+        <h2>How Much Do You Know About Eritrea?</h2>
+        <p>Test your knowledge — 10 questions about Eritrea's history, culture, and geography</p>
+      </div>
+      <div class="quiz-container">
+        <div id="quizStart">
+          <p class="quiz-intro">From ancient kingdoms to modern champions — how well do you know the Land of the Red Sea?</p>
+          <button class="quiz-start-btn" id="quizStartBtn">▶ Start Quiz</button>
+        </div>
+        <div id="quizPlay" hidden>
+          <div class="quiz-topbar">
+            <div class="quiz-prog-wrap"><div class="quiz-prog-bar"><div id="quizFill" class="quiz-prog-fill"></div></div></div>
+            <span id="quizCounter" class="quiz-counter">1 / 10</span>
+            <span id="quizScoreLive" class="quiz-score-live">0 pts</span>
+          </div>
+          <div class="quiz-card" id="quizCard">
+            <div class="quiz-q" id="quizQ"></div>
+            <div class="quiz-opts" id="quizOpts"></div>
+            <div class="quiz-fact-box" id="quizFactBox" hidden></div>
+            <button class="quiz-next-btn" id="quizNextBtn" hidden>Next →</button>
+          </div>
+        </div>
+        <div id="quizResult" hidden>
+          <div class="quiz-result-inner">
+            <div class="quiz-trophy" id="quizTrophy">🏆</div>
+            <div class="quiz-final-score" id="quizFinalScore"></div>
+            <div class="quiz-final-msg" id="quizFinalMsg"></div>
+            <div class="quiz-result-btns">
+              <button class="quiz-start-btn" id="quizRetryBtn">↺ Try Again</button>
+              <button class="quiz-share-btn" id="quizShareBtn">🔗 Share Result</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1266,6 +1464,15 @@
           <li>📐 Area: 117,600 km²</li>
           <li>💰 Currency: Nakfa (ERN)</li>
         </ul>
+      </div>
+      <div class="footer-newsletter">
+        <h4>📬 Stay Updated</h4>
+        <p>Subscribe for new content and Eritrean stories.</p>
+        <div class="nl-form">
+          <input type="email" id="nlEmail" class="nl-input" placeholder="your@email.com" />
+          <button id="nlSubmit" class="nl-btn">Subscribe</button>
+        </div>
+        <p id="nlMsg" class="nl-msg"></p>
       </div>
     </div>
     <div class="footer-bottom">
