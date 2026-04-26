@@ -2314,12 +2314,15 @@ document.querySelectorAll('.sb-grp-hd').forEach(btn => {
 });
 
 // ── YOUTUBE VANCED ────────────────────────────────────────────
+const PIPED_INSTANCES = [
+  'https://pipedapi.kavin.rocks',
+  'https://pipedapi.adminforge.de',
+  'https://api.piped.yt',
+];
 const INVIDIOUS_INSTANCES = [
-  'https://invidious.io',
   'https://inv.tux.pizza',
   'https://yt.artemislena.eu',
   'https://invidious.nerdvpn.de',
-  'https://vid.puffyan.us',
 ];
 
 const ytState = { videoId: null, title: '', author: '', thumb: '', loaded: false };
@@ -2331,6 +2334,32 @@ async function ytvSearch(query) {
   status.textContent = '⏳ Searching…';
   grid.innerHTML = '';
 
+  // Try Piped API first (better CORS support)
+  for (const inst of PIPED_INSTANCES) {
+    try {
+      const res = await fetch(
+        `${inst}/search?q=${encodeURIComponent(query)}&filter=videos`,
+        { signal: AbortSignal.timeout(6000) }
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (!Array.isArray(data.items)) continue;
+      const results = data.items
+        .filter(v => v.url && v.type === 'stream')
+        .map(v => ({
+          videoId: v.url.replace('/watch?v=', ''),
+          title: v.title,
+          author: v.uploaderName,
+          lengthSeconds: v.duration,
+          viewCount: v.views,
+        }));
+      status.textContent = '';
+      ytvRenderResults(results);
+      return;
+    } catch { /* try next */ }
+  }
+
+  // Fallback: Invidious API
   for (const inst of INVIDIOUS_INSTANCES) {
     try {
       const res = await fetch(
@@ -2341,14 +2370,15 @@ async function ytvSearch(query) {
       const results = await res.json();
       if (!Array.isArray(results)) continue;
       status.textContent = '';
-      ytvRenderResults(results, inst);
+      ytvRenderResults(results);
       return;
     } catch { /* try next */ }
   }
+
   status.textContent = '⚠ Search unavailable — check connection or try again.';
 }
 
-function ytvRenderResults(results, inst) {
+function ytvRenderResults(results) {
   const grid = document.getElementById('ytvGrid');
   if (!results.length) { grid.innerHTML = '<p class="ytv-empty">No results found.</p>'; return; }
   grid.innerHTML = results.filter(v => v.videoId).map(v => {

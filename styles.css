@@ -1752,6 +1752,7 @@ body.theme-glass .upload-zone { background: rgba(255,255,255,0.04); backdrop-fil
 .ytv-empty { text-align: center; color: var(--text-sub); font-size: .85rem; padding: 32px 0; grid-column: 1/-1; }
 
 /* Floating mini YouTube player */
+.yt-float[hidden] { display: none !important; }
 .yt-float {
   position: fixed; bottom: calc(var(--mini-h, 72px) + var(--nav-h, 60px) + 8px);
   left: 50%; transform: translateX(-50%);
