@@ -102,6 +102,34 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M9 18V9l10-2v9"/><circle cx="6" cy="18" r="2"/><circle cx="16" cy="16" r="2"/></svg>
         <span>Eri Music</span>
       </button>
+      <button class="sb-item" data-page="ericontent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+        <span>Eri Content</span>
+      </button>
+      <button class="sb-item" data-page="newsletter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Newsletter <span class="sb-badge" id="newsletterBadge" hidden>0</span></span>
+      </button>
+      <button class="sb-item" data-page="versions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        <span>App Versions</span>
+      </button>
+      <button class="sb-item" data-page="coupons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        <span>Coupons</span>
+      </button>
+      <button class="sb-item" data-page="storage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        <span>Storage</span>
+      </button>
+      <button class="sb-item" data-page="seo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>SEO</span>
+      </button>
+      <button class="sb-item" data-page="auditlog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Audit Log</span>
+      </button>
       <button class="sb-item" data-page="playlists">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         <span>Playlists</span>
@@ -1282,6 +1310,213 @@ match /community_posts/{d} {
     </div>
   </div>
 </div>
+
+
+    <!-- ══ ERI CONTENT MANAGER ══ -->
+    <div class="page" id="page-ericontent">
+      <div class="page-hd">
+        <div><h1>🇪🇷 Eritrean Info — Content</h1><p class="page-sub">Manage News, Blog articles, and Gallery photos shown on the website</p></div>
+        <button class="btn-primary" id="eriContentAddBtn">+ Add Item</button>
+      </div>
+      <div class="user-tabs" id="ecTabRow">
+        <button class="utab ec-tab active" data-ectab="news">📰 News</button>
+        <button class="utab ec-tab" data-ectab="blog">✍️ Blog</button>
+        <button class="utab ec-tab" data-ectab="gallery">🖼 Gallery</button>
+      </div>
+
+      <!-- News panel -->
+      <div class="ec-panel active" id="ecpanel-news">
+        <div class="card ec-form" id="ecNewsForm" hidden>
+          <h4 class="ec-form-title">Add News Article</h4>
+          <input type="hidden" id="ecNewsId"/>
+          <div class="form-row2">
+            <div class="form-group"><label>Headline *</label><input type="text" id="ecNewsTitle" class="form-input" placeholder="Breaking: …"/></div>
+            <div class="form-group"><label>Category</label><select id="ecNewsCategory" class="form-input"><option>Politics</option><option>Culture</option><option>Sports</option><option>Economy</option><option>Diaspora</option><option>General</option></select></div>
+          </div>
+          <div class="form-group"><label>Summary</label><textarea id="ecNewsSummary" class="form-textarea" rows="3" placeholder="Brief summary…"></textarea></div>
+          <div class="form-row2">
+            <div class="form-group"><label>Image URL</label><input type="url" id="ecNewsImage" class="form-input" placeholder="https://…"/></div>
+            <div class="form-group"><label>Source</label><input type="text" id="ecNewsSource" class="form-input" placeholder="VOA, Reuters…"/></div>
+          </div>
+          <div class="modal-actions"><button class="btn-secondary" id="ecNewsCancelBtn">Cancel</button><button class="btn-primary" id="ecNewsSaveBtn">Publish</button></div>
+        </div>
+        <div id="ecNewsList" class="ec-list"><p class="empty-msg">Loading…</p></div>
+      </div>
+
+      <!-- Blog panel -->
+      <div class="ec-panel" id="ecpanel-blog" hidden>
+        <div class="card ec-form" id="ecBlogForm" hidden>
+          <h4 class="ec-form-title">Add Blog Article</h4>
+          <input type="hidden" id="ecBlogId"/>
+          <div class="form-row2">
+            <div class="form-group"><label>Title *</label><input type="text" id="ecBlogTitle" class="form-input"/></div>
+            <div class="form-group"><label>Category</label><select id="ecBlogCategory" class="form-input"><option>History</option><option>Culture</option><option>Travel</option><option>Food</option><option>Music</option><option>General</option></select></div>
+          </div>
+          <div class="form-group"><label>Content *</label><textarea id="ecBlogContent" class="form-textarea" rows="6" placeholder="Write your article…"></textarea></div>
+          <div class="form-row2">
+            <div class="form-group"><label>Author</label><input type="text" id="ecBlogAuthor" class="form-input" placeholder="Admin"/></div>
+            <div class="form-group"><label>Image URL</label><input type="url" id="ecBlogImage" class="form-input" placeholder="https://…"/></div>
+          </div>
+          <div class="modal-actions"><button class="btn-secondary" id="ecBlogCancelBtn">Cancel</button><button class="btn-primary" id="ecBlogSaveBtn">Publish</button></div>
+        </div>
+        <div id="ecBlogList" class="ec-list"><p class="empty-msg">Loading…</p></div>
+      </div>
+
+      <!-- Gallery panel -->
+      <div class="ec-panel" id="ecpanel-gallery" hidden>
+        <div class="card ec-form" id="ecGalleryForm" hidden>
+          <h4 class="ec-form-title">Add Gallery Photo</h4>
+          <div class="form-row2">
+            <div class="form-group"><label>Image URL *</label><input type="url" id="ecGalleryUrl" class="form-input" placeholder="https://…"/></div>
+            <div class="form-group"><label>Caption</label><input type="text" id="ecGalleryCaption" class="form-input"/></div>
+          </div>
+          <div class="form-row2">
+            <div class="form-group"><label>Category</label><select id="ecGalleryCategory" class="form-input"><option>Landscape</option><option>Culture</option><option>People</option><option>Food</option><option>Architecture</option><option>General</option></select></div>
+            <div class="form-group"><label>Location</label><input type="text" id="ecGalleryLocation" class="form-input" placeholder="Asmara, Eritrea"/></div>
+          </div>
+          <div class="modal-actions"><button class="btn-secondary" id="ecGalleryCancelBtn">Cancel</button><button class="btn-primary" id="ecGallerySaveBtn">Add Photo</button></div>
+        </div>
+        <div id="ecGalleryGrid" class="ec-gallery-grid"><p class="empty-msg">Loading…</p></div>
+      </div>
+    </div>
+
+    <!-- ══ NEWSLETTER ══ -->
+    <div class="page" id="page-newsletter">
+      <div class="page-hd">
+        <div><h1>Newsletter Subscribers</h1><p class="page-sub">Emails captured via the Eritrean Info website footer</p></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm" id="exportNewsletterBtn">📥 Export CSV</button>
+          <button class="btn-sm" id="refreshNewsletterBtn">⟳ Refresh</button>
+        </div>
+      </div>
+      <div class="stat-row" style="margin-bottom:20px">
+        <div class="stat-card" style="--accent:#10b981"><div class="stat-ico">📧</div><div class="stat-body"><div class="stat-num" id="nlStatTotal">—</div><div class="stat-lbl">Total Subscribers</div></div></div>
+        <div class="stat-card" style="--accent:#6366f1"><div class="stat-ico">📅</div><div class="stat-body"><div class="stat-num" id="nlStatWeek">—</div><div class="stat-lbl">This Week</div></div></div>
+        <div class="stat-card" style="--accent:#f59e0b"><div class="stat-ico">📆</div><div class="stat-body"><div class="stat-num" id="nlStatMonth">—</div><div class="stat-lbl">This Month</div></div></div>
+      </div>
+      <div id="nlList" class="user-list"><p class="empty-msg">Click Newsletter to load subscribers.</p></div>
+    </div>
+
+    <!-- ══ APP VERSIONS ══ -->
+    <div class="page" id="page-versions">
+      <div class="page-hd">
+        <div><h1>App Version Manager</h1><p class="page-sub">Set current version, minimum required, force-update flag and release notes per app</p></div>
+        <button class="btn-primary" id="saveAllVersionsBtn">💾 Save All</button>
+      </div>
+      <div id="versionsGrid" class="versions-grid"><p class="empty-msg">Loading apps…</p></div>
+    </div>
+
+    <!-- ══ COUPONS ══ -->
+    <div class="page" id="page-coupons">
+      <div class="page-hd">
+        <div><h1>Coupon Codes</h1><p class="page-sub">Create discount codes for subscriptions and promotions</p></div>
+        <button class="btn-primary" id="addCouponBtn">+ New Coupon</button>
+      </div>
+      <div class="card" id="couponForm" hidden style="margin-bottom:20px">
+        <h4 style="margin:0 0 14px;font-size:.95rem;font-weight:700">Create New Coupon</h4>
+        <div class="form-row2">
+          <div class="form-group"><label>Code *</label><input type="text" id="couponCode" class="form-input" placeholder="SUMMER25" maxlength="20" style="text-transform:uppercase"/></div>
+          <div class="form-group"><label>Discount</label><div style="display:flex;gap:8px"><input type="number" id="couponDiscount" class="form-input" placeholder="25" min="1" max="100" style="width:80px"/><select id="couponType" class="form-input"><option value="percent">% Off</option><option value="flat">$ Off</option></select></div></div>
+          <div class="form-group"><label>Max Uses</label><input type="number" id="couponMaxUses" class="form-input" placeholder="100" min="1"/></div>
+          <div class="form-group"><label>Expires</label><input type="date" id="couponExpiry" class="form-input"/></div>
+        </div>
+        <div class="form-group"><label>Internal Note</label><input type="text" id="couponNote" class="form-input" placeholder="Summer promo 2025…"/></div>
+        <div class="modal-actions"><button class="btn-secondary" id="couponCancelBtn">Cancel</button><button class="btn-primary" id="couponSaveBtn">Create Coupon</button></div>
+      </div>
+      <div id="couponList" class="coupon-list"><p class="empty-msg">No coupons yet. Click + New Coupon to create one.</p></div>
+    </div>
+
+    <!-- ══ STORAGE MONITOR ══ -->
+    <div class="page" id="page-storage">
+      <div class="page-hd">
+        <div><h1>Storage Monitor</h1><p class="page-sub">Firestore collection sizes and external storage links</p></div>
+        <button class="btn-sm" id="refreshStorageBtn">⟳ Refresh</button>
+      </div>
+      <div id="storageStatRow" class="stat-row" style="flex-wrap:wrap;margin-bottom:24px"></div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-hd"><h3>📦 Firestore Collections</h3></div>
+          <div id="storageCollections" class="storage-table"><p class="empty-msg">Loading…</p></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>☁️ External Storage</h3></div>
+          <div class="quick-links" style="margin-top:8px">
+            <a href="https://console.firebase.google.com/project/eri-fam/storage" target="_blank" class="quick-link"><span>🔥</span><span>Firebase Storage</span><span>↗</span></a>
+            <a href="https://cloudinary.com/console" target="_blank" class="quick-link"><span>☁️</span><span>Cloudinary</span><span>↗</span></a>
+            <a href="https://console.firebase.google.com/project/eri-fam/firestore" target="_blank" class="quick-link"><span>🗄</span><span>Firestore Console</span><span>↗</span></a>
+          </div>
+          <div style="margin-top:16px;padding:14px;background:rgba(99,102,241,.07);border-radius:10px;font-size:.78rem;color:var(--text-dim);line-height:1.8">
+            <strong style="color:var(--text)">Free tier limits</strong><br/>
+            🔥 Firebase: 1 GB storage · 50k reads/day · 20k writes/day<br/>
+            ☁️ Cloudinary: 25 GB storage · 25 GB bandwidth/month
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SEO MANAGER ══ -->
+    <div class="page" id="page-seo">
+      <div class="page-hd">
+        <div><h1>SEO &amp; Metadata</h1><p class="page-sub">Control how Eritrean Info appears in Google and social shares</p></div>
+        <button class="btn-primary" id="saveSeoBtn">💾 Save Changes</button>
+      </div>
+      <div class="settings-grid">
+        <div class="card">
+          <h3>🔍 Search Engine</h3>
+          <div class="form-group">
+            <label>Page Title <span class="form-hint">50–60 chars ideal</span></label>
+            <input type="text" id="seoTitle" class="form-input" placeholder="Eritrean Info — Your Complete Guide to Eritrea" maxlength="70"/>
+            <div class="seo-char" id="seoTitleCount">0 / 60</div>
+          </div>
+          <div class="form-group">
+            <label>Meta Description <span class="form-hint">140–160 chars ideal</span></label>
+            <textarea id="seoDesc" class="form-textarea" rows="3" maxlength="200" placeholder="Complete public information about Eritrea…"></textarea>
+            <div class="seo-char" id="seoDescCount">0 / 160</div>
+          </div>
+          <div class="form-group"><label>Keywords</label><input type="text" id="seoKeywords" class="form-input" placeholder="Eritrea, Tigrinya, Asmara, East Africa…"/></div>
+        </div>
+        <div class="card">
+          <h3>📱 Social Sharing (OG)</h3>
+          <div class="form-group"><label>OG Title</label><input type="text" id="seoOgTitle" class="form-input" placeholder="Eritrean Info"/></div>
+          <div class="form-group"><label>OG Description</label><textarea id="seoOgDesc" class="form-textarea" rows="2" placeholder="Your complete guide to Eritrea…"></textarea></div>
+          <div class="form-group"><label>OG Image URL <span class="form-hint">1200×630 px</span></label><input type="url" id="seoOgImage" class="form-input" placeholder="https://…"/></div>
+          <div class="form-group"><label>Twitter Card</label><select id="seoTwitterCard" class="form-input"><option value="summary_large_image">Large Image</option><option value="summary">Small Card</option></select></div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <h3>👁 Google Preview</h3>
+          <div class="seo-preview">
+            <div class="seo-preview-favicon">🇪🇷</div>
+            <div class="seo-preview-text">
+              <div class="seo-preview-title" id="seoPreviewTitle">Page Title</div>
+              <div class="seo-preview-url">eritrean-info.web.app</div>
+              <div class="seo-preview-desc" id="seoPreviewDesc">Meta description will appear here…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ AUDIT LOG ══ -->
+    <div class="page" id="page-auditlog">
+      <div class="page-hd">
+        <div><h1>Audit Log</h1><p class="page-sub">Complete record of all admin actions</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="search" id="auditSearch" class="form-input" placeholder="Filter actions…" style="width:200px"/>
+          <button class="btn-sm" id="exportAuditBtn">📥 Export CSV</button>
+          <button class="btn-sm" id="refreshAuditBtn">⟳ Refresh</button>
+        </div>
+      </div>
+      <div class="stat-row" style="margin-bottom:20px">
+        <div class="stat-card" style="--accent:#6366f1"><div class="stat-ico">📋</div><div class="stat-body"><div class="stat-num" id="auditStatTotal">—</div><div class="stat-lbl">Total Actions</div></div></div>
+        <div class="stat-card" style="--accent:#10b981"><div class="stat-ico">📅</div><div class="stat-body"><div class="stat-num" id="auditStatToday">—</div><div class="stat-lbl">Today</div></div></div>
+        <div class="stat-card" style="--accent:#f59e0b"><div class="stat-ico">👤</div><div class="stat-body"><div class="stat-num" id="auditStatAdmins">—</div><div class="stat-lbl">Active Admins</div></div></div>
+      </div>
+      <div id="auditList" class="audit-list"><p class="empty-msg">Click Audit Log to load records.</p></div>
+    </div>
+
+
+<!-- ══ REVENUE CHART (injected into Monetize page) ══ -->
+<!-- chart inserted via JS into existing monetize card -->
 
 <!-- Sidebar overlay for mobile -->
 <div id="sidebarOverlay" class="sidebar-overlay" hidden></div>

@@ -958,3 +958,129 @@ body.dark .toast { background: #1e1e2e; color: #e2e8f0; }
   font-size: .75rem;
   padding: 5px 10px;
 }
+
+/* ══════════════════════════════════════════════
+   NEW ADMIN FEATURES — STYLES
+══════════════════════════════════════════════ */
+
+/* ── EC CONTENT MANAGER ── */
+.ec-panel { margin-top: 16px; }
+.ec-form { margin-bottom: 16px; }
+.ec-form-title { margin: 0 0 14px; font-size: .95rem; font-weight: 700; }
+.ec-list { display: flex; flex-direction: column; gap: 10px; }
+.ec-item {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+  transition: border-color .2s;
+}
+.ec-item:hover { border-color: var(--accent); }
+.ec-item-img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.ec-item-body { flex: 1; min-width: 0; }
+.ec-item-title { font-weight: 700; font-size: .88rem; color: var(--text); margin-bottom: 4px; }
+.ec-item-meta { font-size: .72rem; color: var(--text-dim); margin-bottom: 4px; }
+.ec-item-summary { font-size: .78rem; color: var(--text-dim); line-height: 1.5; }
+.ec-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.ec-del-btn { padding: 5px 9px !important; font-size: .75rem !important; }
+.ec-tag {
+  display: inline-block; padding: 1px 8px;
+  background: rgba(99,102,241,.15); color: var(--accent);
+  border-radius: 20px; font-size: .68rem; font-weight: 600;
+}
+.ec-gallery-grid { margin-top: 8px; }
+.ec-gallery-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.ec-gallery-card {
+  position: relative; border-radius: 8px; overflow: hidden;
+  background: var(--card2); border: 1px solid var(--border);
+}
+.ec-gallery-card img { width: 100%; height: 110px; object-fit: cover; display: block; }
+.ec-gallery-cap { font-size: .68rem; color: var(--text-dim); padding: 5px 8px; }
+.ec-gallery-del {
+  position: absolute; top: 5px; right: 5px;
+  background: rgba(0,0,0,.6); border: none; border-radius: 5px;
+  color: #fff; cursor: pointer; padding: 3px 7px; font-size: .75rem;
+  opacity: 0; transition: opacity .2s;
+}
+.ec-gallery-card:hover .ec-gallery-del { opacity: 1; }
+
+/* ── NEWSLETTER ── */
+/* reuses .user-row, .user-avatar, .user-info, .user-name, .user-meta, .user-actions */
+
+/* ── APP VERSIONS ── */
+.versions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.version-card { }
+.version-card-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.version-app-ico { font-size: 1.6rem; line-height: 1; }
+.version-app-name { font-weight: 700; font-size: .9rem; }
+.version-app-url { font-size: .72rem; color: var(--text-dim); }
+
+/* ── COUPONS ── */
+.coupon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-top: 4px; }
+.coupon-card {
+  background: var(--card); border: 2px dashed var(--border);
+  border-radius: 12px; padding: 16px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.coupon-expired { opacity: .55; }
+.coupon-code { font-size: 1.2rem; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
+.coupon-discount { font-size: 1rem; font-weight: 700; color: #10b981; }
+.coupon-note { font-size: .72rem; color: var(--text-dim); }
+.coupon-meta { font-size: .72rem; color: var(--text-dim); }
+.coupon-bar-wrap { height: 4px; background: rgba(255,255,255,.07); border-radius: 2px; overflow: hidden; }
+.coupon-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s; }
+.coupon-actions { display: flex; gap: 6px; margin-top: 6px; }
+
+/* ── STORAGE ── */
+.storage-tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.storage-tbl th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-dim); font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; }
+.storage-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+.storage-tbl tr:last-child td { border-bottom: none; }
+.storage-tbl tr:hover td { background: rgba(255,255,255,.025); }
+
+/* ── SEO MANAGER ── */
+.form-hint { font-size: .72rem; color: var(--text-dim); font-weight: 400; margin-left: 4px; }
+.seo-char { font-size: .7rem; color: var(--text-dim); margin-top: 4px; text-align: right; }
+.seo-preview {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px; margin-top: 10px;
+}
+.seo-preview-favicon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+.seo-preview-text { flex: 1; }
+.seo-preview-title { font-size: 1rem; color: #3367d6; font-weight: 600; margin-bottom: 2px; }
+.seo-preview-url { font-size: .72rem; color: #006621; margin-bottom: 4px; }
+.seo-preview-desc { font-size: .8rem; color: var(--text-dim); line-height: 1.5; }
+
+/* ── REVENUE CHART ── */
+.rev-chart {
+  display: flex; align-items: flex-end; gap: 6px;
+  height: 90px; margin: 16px 0 4px;
+  padding-bottom: 20px; position: relative;
+}
+.rev-chart::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 20px;
+  height: 1px; background: var(--border);
+}
+.rev-chart-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 2px; }
+.rev-chart-val { font-size: .6rem; color: var(--text-dim); white-space: nowrap; }
+.rev-chart-bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+.rev-chart-bar {
+  width: 100%; min-height: 3px; background: var(--accent);
+  border-radius: 3px 3px 0 0; transition: height .4s ease;
+}
+.rev-chart-lbl { font-size: .58rem; color: var(--text-dim); white-space: nowrap; margin-top: 4px; }
+
+/* ── AUDIT LOG ── */
+.audit-list { display: flex; flex-direction: column; gap: 0; }
+.audit-row {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 10px 2px; border-bottom: 1px solid var(--border);
+}
+.audit-row:last-child { border-bottom: none; }
+.audit-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0; margin-top: 5px;
+}
+.audit-body { flex: 1; }
+.audit-action { font-size: .83rem; color: var(--text); font-weight: 500; }
+.audit-meta { font-size: .7rem; color: var(--text-dim); margin-top: 2px; }

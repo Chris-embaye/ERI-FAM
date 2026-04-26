@@ -251,6 +251,13 @@ function showPage(name) {
   if (name === 'users')       loadUsers();
   if (name === 'music')       loadMusic();
   if (name === 'erimusic')    loadEriMusic();
+  if (name === 'ericontent')  loadEriContent();
+  if (name === 'newsletter')  loadNewsletter();
+  if (name === 'versions')    loadVersions();
+  if (name === 'coupons')     loadCoupons();
+  if (name === 'storage')     loadStorage();
+  if (name === 'seo')         loadSeo();
+  if (name === 'auditlog')    loadAuditLog();
   if (name === 'playlists')   loadPlaylists();
   if (name === 'assets')      loadAssets();
   if (name === 'notify')      loadNotifications();
@@ -3223,4 +3230,658 @@ async function handleEriMusicUpload() {
     btn.disabled = false;
     console.error('[EriMusic]', e);
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 1 — ERITREAN INFO CONTENT MANAGER
+// ══════════════════════════════════════════════════════════════
+let _ecActiveTab = 'news';
+
+(function initEriContent() {
+  document.querySelectorAll('.ec-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ec-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.ec-panel').forEach(p => { p.hidden = true; p.classList.remove('active'); });
+      btn.classList.add('active');
+      _ecActiveTab = btn.dataset.ectab;
+      const panel = document.getElementById('ecpanel-' + _ecActiveTab);
+      if (panel) { panel.hidden = false; panel.classList.add('active'); }
+    });
+  });
+
+  document.getElementById('eriContentAddBtn').addEventListener('click', () => {
+    if (_ecActiveTab === 'news')    { document.getElementById('ecNewsForm').hidden    = false; document.getElementById('ecNewsTitle').focus(); }
+    if (_ecActiveTab === 'blog')    { document.getElementById('ecBlogForm').hidden    = false; document.getElementById('ecBlogTitle').focus(); }
+    if (_ecActiveTab === 'gallery') { document.getElementById('ecGalleryForm').hidden = false; document.getElementById('ecGalleryUrl').focus(); }
+  });
+
+  // News form
+  document.getElementById('ecNewsCancelBtn').addEventListener('click', () => { document.getElementById('ecNewsForm').hidden = true; resetEcNewsForm(); });
+  document.getElementById('ecNewsSaveBtn').addEventListener('click',   saveEcNews);
+  // Blog form
+  document.getElementById('ecBlogCancelBtn').addEventListener('click', () => { document.getElementById('ecBlogForm').hidden = true; resetEcBlogForm(); });
+  document.getElementById('ecBlogSaveBtn').addEventListener('click',   saveEcBlog);
+  // Gallery form
+  document.getElementById('ecGalleryCancelBtn').addEventListener('click', () => { document.getElementById('ecGalleryForm').hidden = true; });
+  document.getElementById('ecGallerySaveBtn').addEventListener('click',   saveEcGallery);
+})();
+
+function resetEcNewsForm() { ['ecNewsId','ecNewsTitle','ecNewsSummary','ecNewsImage','ecNewsSource'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); }
+function resetEcBlogForm() { ['ecBlogId','ecBlogTitle','ecBlogContent','ecBlogAuthor','ecBlogImage'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); }
+
+async function loadEriContent() {
+  loadEcNews();
+  loadEcBlog();
+  loadEcGallery();
+}
+
+async function loadEcNews() {
+  const list = document.getElementById('ecNewsList');
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'eri_news'), fb.orderBy('publishedAt', 'desc'), fb.limit(50)));
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!items.length) { list.innerHTML = '<p class="empty-msg">No news articles yet. Click + Add Item.</p>'; return; }
+    list.innerHTML = items.map(n => `
+      <div class="ec-item">
+        ${n.imageUrl ? `<img class="ec-item-img" src="${esc(n.imageUrl)}" alt="" onerror="this.style.display='none'"/>` : ''}
+        <div class="ec-item-body">
+          <div class="ec-item-title">${esc(n.title || '')}</div>
+          <div class="ec-item-meta"><span class="ec-tag">${esc(n.category || 'General')}</span>${n.source ? ' · ' + esc(n.source) : ''}</div>
+          <div class="ec-item-summary">${esc((n.summary || '').slice(0, 120))}${(n.summary || '').length > 120 ? '…' : ''}</div>
+        </div>
+        <div class="ec-item-actions">
+          <button class="btn-sm" onclick="editEcNews('${n.id}')">✏ Edit</button>
+          <button class="btn-danger ec-del-btn" onclick="deleteEcNews('${n.id}')">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`; }
+}
+
+async function saveEcNews() {
+  const id      = document.getElementById('ecNewsId').value;
+  const title   = document.getElementById('ecNewsTitle').value.trim();
+  if (!title) { toast('Headline is required.', 'error'); return; }
+  const btn = document.getElementById('ecNewsSaveBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const data = {
+    title, category: document.getElementById('ecNewsCategory').value,
+    summary: document.getElementById('ecNewsSummary').value.trim(),
+    imageUrl: document.getElementById('ecNewsImage').value.trim(),
+    source: document.getElementById('ecNewsSource').value.trim(),
+    updatedAt: fb.serverTimestamp()
+  };
+  try {
+    if (id) { await fb.updateDoc(fb.doc(_db, 'eri_news', id), data); toast('News updated!', 'success'); }
+    else { data.publishedAt = fb.serverTimestamp(); await fb.addDoc(fb.collection(_db, 'eri_news'), data); toast('News published!', 'success'); logAudit('Published news: ' + title); }
+    document.getElementById('ecNewsForm').hidden = true;
+    resetEcNewsForm();
+    loadEcNews();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Publish'; btn.disabled = false;
+}
+
+window.editEcNews = function(id) {
+  const snap = fb.getDoc(fb.doc(_db, 'eri_news', id)).then(d => {
+    if (!d.exists()) return;
+    const n = d.data();
+    document.getElementById('ecNewsId').value       = id;
+    document.getElementById('ecNewsTitle').value    = n.title || '';
+    document.getElementById('ecNewsCategory').value = n.category || 'General';
+    document.getElementById('ecNewsSummary').value  = n.summary || '';
+    document.getElementById('ecNewsImage').value    = n.imageUrl || '';
+    document.getElementById('ecNewsSource').value   = n.source || '';
+    document.getElementById('ecNewsForm').hidden    = false;
+    document.getElementById('ecNewsTitle').focus();
+  });
+};
+
+window.deleteEcNews = async function(id) {
+  if (!confirm('Delete this news article?')) return;
+  await fb.deleteDoc(fb.doc(_db, 'eri_news', id));
+  toast('Deleted.', 'success');
+  loadEcNews();
+};
+
+async function loadEcBlog() {
+  const list = document.getElementById('ecBlogList');
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'eri_articles'), fb.orderBy('publishedAt', 'desc'), fb.limit(50)));
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!items.length) { list.innerHTML = '<p class="empty-msg">No blog articles yet.</p>'; return; }
+    list.innerHTML = items.map(a => `
+      <div class="ec-item">
+        ${a.imageUrl ? `<img class="ec-item-img" src="${esc(a.imageUrl)}" alt="" onerror="this.style.display='none'"/>` : ''}
+        <div class="ec-item-body">
+          <div class="ec-item-title">${esc(a.title || '')}</div>
+          <div class="ec-item-meta"><span class="ec-tag">${esc(a.category || 'General')}</span> · ${esc(a.author || 'Admin')}</div>
+          <div class="ec-item-summary">${esc((a.content || '').slice(0, 120))}${(a.content || '').length > 120 ? '…' : ''}</div>
+        </div>
+        <div class="ec-item-actions">
+          <button class="btn-sm" onclick="editEcBlog('${a.id}')">✏ Edit</button>
+          <button class="btn-danger ec-del-btn" onclick="deleteEcBlog('${a.id}')">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`; }
+}
+
+async function saveEcBlog() {
+  const id    = document.getElementById('ecBlogId').value;
+  const title = document.getElementById('ecBlogTitle').value.trim();
+  const content = document.getElementById('ecBlogContent').value.trim();
+  if (!title || !content) { toast('Title and content are required.', 'error'); return; }
+  const btn = document.getElementById('ecBlogSaveBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const data = {
+    title, content, category: document.getElementById('ecBlogCategory').value,
+    author: document.getElementById('ecBlogAuthor').value.trim() || 'Admin',
+    imageUrl: document.getElementById('ecBlogImage').value.trim(),
+    updatedAt: fb.serverTimestamp()
+  };
+  try {
+    if (id) { await fb.updateDoc(fb.doc(_db, 'eri_articles', id), data); toast('Article updated!', 'success'); }
+    else { data.publishedAt = fb.serverTimestamp(); await fb.addDoc(fb.collection(_db, 'eri_articles'), data); toast('Article published!', 'success'); logAudit('Published blog: ' + title); }
+    document.getElementById('ecBlogForm').hidden = true;
+    resetEcBlogForm();
+    loadEcBlog();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Publish'; btn.disabled = false;
+}
+
+window.editEcBlog = function(id) {
+  fb.getDoc(fb.doc(_db, 'eri_articles', id)).then(d => {
+    if (!d.exists()) return;
+    const a = d.data();
+    document.getElementById('ecBlogId').value       = id;
+    document.getElementById('ecBlogTitle').value    = a.title || '';
+    document.getElementById('ecBlogCategory').value = a.category || 'General';
+    document.getElementById('ecBlogContent').value  = a.content || '';
+    document.getElementById('ecBlogAuthor').value   = a.author || '';
+    document.getElementById('ecBlogImage').value    = a.imageUrl || '';
+    document.getElementById('ecBlogForm').hidden    = false;
+  });
+};
+window.deleteEcBlog = async function(id) {
+  if (!confirm('Delete this article?')) return;
+  await fb.deleteDoc(fb.doc(_db, 'eri_articles', id));
+  toast('Deleted.', 'success'); loadEcBlog();
+};
+
+async function loadEcGallery() {
+  const grid = document.getElementById('ecGalleryGrid');
+  grid.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'eri_gallery'), fb.orderBy('addedAt', 'desc'), fb.limit(60)));
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!items.length) { grid.innerHTML = '<p class="empty-msg">No gallery photos yet.</p>'; return; }
+    grid.innerHTML = `<div class="ec-gallery-wrap">${items.map(g => `
+      <div class="ec-gallery-card">
+        <img src="${esc(g.imageUrl || '')}" alt="${esc(g.caption || '')}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23222%22 width=%22100%25%22 height=%22100%25%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23666%22>🖼</text></svg>'"/>
+        <div class="ec-gallery-cap">${esc(g.caption || '')}</div>
+        <button class="ec-gallery-del" onclick="deleteEcGallery('${g.id}')">🗑</button>
+      </div>`).join('')}</div>`;
+  } catch(e) { grid.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`; }
+}
+
+async function saveEcGallery() {
+  const url = document.getElementById('ecGalleryUrl').value.trim();
+  if (!url) { toast('Image URL is required.', 'error'); return; }
+  const btn = document.getElementById('ecGallerySaveBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await fb.addDoc(fb.collection(_db, 'eri_gallery'), {
+      imageUrl: url,
+      caption: document.getElementById('ecGalleryCaption').value.trim(),
+      category: document.getElementById('ecGalleryCategory').value,
+      location: document.getElementById('ecGalleryLocation').value.trim(),
+      addedAt: fb.serverTimestamp()
+    });
+    toast('Photo added to gallery!', 'success');
+    document.getElementById('ecGalleryForm').hidden = true;
+    document.getElementById('ecGalleryUrl').value = '';
+    document.getElementById('ecGalleryCaption').value = '';
+    document.getElementById('ecGalleryLocation').value = '';
+    loadEcGallery();
+    logAudit('Added gallery photo');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Add Photo'; btn.disabled = false;
+}
+
+window.deleteEcGallery = async function(id) {
+  if (!confirm('Remove this photo?')) return;
+  await fb.deleteDoc(fb.doc(_db, 'eri_gallery', id));
+  toast('Removed.', 'success'); loadEcGallery();
+};
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 2 — NEWSLETTER MANAGER
+// ══════════════════════════════════════════════════════════════
+let _nlSubscribers = [];
+
+document.getElementById('refreshNewsletterBtn').addEventListener('click', loadNewsletter);
+document.getElementById('exportNewsletterBtn').addEventListener('click', exportNewsletter);
+
+async function loadNewsletter() {
+  const list = document.getElementById('nlList');
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'eri_newsletter'), fb.orderBy('subscribedAt', 'desc')));
+    _nlSubscribers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const now = new Date();
+    const weekAgo  = new Date(now - 7  * 864e5);
+    const monthAgo = new Date(now - 30 * 864e5);
+    document.getElementById('nlStatTotal').textContent = _nlSubscribers.length;
+    document.getElementById('nlStatWeek').textContent  = _nlSubscribers.filter(s => s.subscribedAt?.toDate?.() >= weekAgo).length;
+    document.getElementById('nlStatMonth').textContent = _nlSubscribers.filter(s => s.subscribedAt?.toDate?.() >= monthAgo).length;
+    // Badge
+    const badge = document.getElementById('newsletterBadge');
+    if (badge) { badge.textContent = _nlSubscribers.length; badge.hidden = _nlSubscribers.length === 0; }
+    if (!_nlSubscribers.length) { list.innerHTML = '<p class="empty-msg">No subscribers yet.</p>'; return; }
+    list.innerHTML = _nlSubscribers.map((s, i) => `
+      <div class="user-row">
+        <div class="user-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">${(s.email || '?')[0].toUpperCase()}</div>
+        <div class="user-info">
+          <div class="user-name">${esc(s.email || '')}</div>
+          <div class="user-meta">${s.subscribedAt?.toDate ? s.subscribedAt.toDate().toLocaleDateString() : '—'} · ${esc(s.source || 'website')}</div>
+        </div>
+        <div class="user-actions">
+          <button class="btn-danger" style="padding:5px 10px;font-size:.75rem" onclick="deleteNlSubscriber('${s.id}')">🗑 Remove</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`; }
+}
+
+window.deleteNlSubscriber = async function(id) {
+  if (!confirm('Remove this subscriber?')) return;
+  await fb.deleteDoc(fb.doc(_db, 'eri_newsletter', id));
+  toast('Subscriber removed.', 'success');
+  loadNewsletter();
+};
+
+function exportNewsletter() {
+  if (!_nlSubscribers.length) { toast('No subscribers to export.', 'error'); return; }
+  const rows = [['Email', 'Subscribed At', 'Source'], ..._nlSubscribers.map(s => [s.email || '', s.subscribedAt?.toDate ? s.subscribedAt.toDate().toISOString() : '', s.source || ''])];
+  downloadCsv(rows, 'newsletter_subscribers.csv');
+  logAudit('Exported newsletter subscribers CSV');
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 3 — REVENUE CHART (inject into Monetize page)
+// ══════════════════════════════════════════════════════════════
+function renderRevenueChart(entries) {
+  const container = document.getElementById('revChartWrap');
+  if (!container) return;
+  if (!entries || !entries.length) { container.innerHTML = '<p class="empty-msg" style="font-size:.8rem">No entries to chart yet.</p>'; return; }
+  const byMonth = {};
+  entries.forEach(e => {
+    const d   = e.date?.toDate ? e.date.toDate() : new Date(e.date || e.createdAt);
+    const key = isNaN(d) ? 'Unknown' : d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    byMonth[key] = (byMonth[key] || 0) + (parseFloat(e.amount) || 0);
+  });
+  const labels = Object.keys(byMonth).slice(-12);
+  const values = labels.map(l => byMonth[l]);
+  const maxVal = Math.max(...values, 1);
+  const bars = labels.map((l, i) => {
+    const pct = Math.round((values[i] / maxVal) * 100);
+    return `<div class="rev-chart-col">
+      <div class="rev-chart-val">$${values[i].toFixed(0)}</div>
+      <div class="rev-chart-bar-wrap"><div class="rev-chart-bar" style="height:${pct}%"></div></div>
+      <div class="rev-chart-lbl">${l}</div>
+    </div>`;
+  }).join('');
+  container.innerHTML = `<div class="rev-chart">${bars}</div>`;
+}
+
+// Hook into existing loadMonetize to also render the chart
+const _origLoadMonetize = window.loadMonetize;
+// We'll inject the chart container after revenue list in the Monetize page
+(function injectRevenueChartContainer() {
+  const revCard = document.querySelector('#page-monetize .card');
+  if (revCard) {
+    const wrap = document.createElement('div');
+    wrap.id = 'revChartWrap';
+    wrap.style.cssText = 'margin-top:16px;min-height:60px';
+    // Insert before the revenue list
+    const revList = document.getElementById('revenueList');
+    if (revList) revList.parentNode.insertBefore(wrap, revList);
+  }
+})();
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 4 — CONTENT MODERATION (enhance Posts — add "Reports" tab)
+// Already handled by the existing Posts page approve/reject flow.
+// Adding a logAudit call on approvals.
+// ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 5 — NOTIFICATION SCHEDULER (already wired, add scheduled list)
+// The existing Notifications page already stores status:'scheduled'.
+// Already handled. No new page needed.
+// ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 6 — APP VERSION MANAGER
+// ══════════════════════════════════════════════════════════════
+let _versionApps = [];
+
+async function loadVersions() {
+  const grid = document.getElementById('versionsGrid');
+  grid.innerHTML = '<p class="empty-msg">Loading apps…</p>';
+  try {
+    const [appsSnap, versSnap] = await Promise.all([
+      fb.getDocs(fb.collection(_db, 'hub_apps')),
+      fb.getDocs(fb.collection(_db, 'hub_versions'))
+    ]);
+    _versionApps = appsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const versions = {};
+    versSnap.docs.forEach(d => { versions[d.id] = d.data(); });
+    if (!_versionApps.length) { grid.innerHTML = '<p class="empty-msg">No apps found. Add apps in My Apps first.</p>'; return; }
+    grid.innerHTML = _versionApps.map(a => {
+      const v = versions[a.id] || {};
+      return `
+      <div class="card version-card" data-appid="${a.id}">
+        <div class="version-card-hd">
+          <div class="version-app-ico">${a.icon || '📱'}</div>
+          <div><div class="version-app-name">${esc(a.name)}</div><div class="version-app-url">${esc(a.url || '')}</div></div>
+        </div>
+        <div class="form-row2">
+          <div class="form-group"><label>Current Version</label><input type="text" class="form-input ver-current" placeholder="1.0.0" value="${esc(v.current || '')}"/></div>
+          <div class="form-group"><label>Min Required</label><input type="text" class="form-input ver-min" placeholder="1.0.0" value="${esc(v.minRequired || '')}"/></div>
+        </div>
+        <div class="form-group"><label>Release Notes</label><textarea class="form-textarea ver-notes" rows="2" placeholder="What's new in this version…">${esc(v.notes || '')}</textarea></div>
+        <label class="toggle-row">
+          <span>Force Update</span>
+          <label class="switch"><input type="checkbox" class="ver-force" ${v.forceUpdate ? 'checked' : ''}/><span class="slider"></span></label>
+        </label>
+      </div>`;
+    }).join('');
+  } catch(e) { grid.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`; }
+}
+
+document.getElementById('saveAllVersionsBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('saveAllVersionsBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    const cards = document.querySelectorAll('.version-card[data-appid]');
+    const saves = [...cards].map(card => {
+      const id    = card.dataset.appid;
+      const data  = {
+        current:     card.querySelector('.ver-current').value.trim(),
+        minRequired: card.querySelector('.ver-min').value.trim(),
+        notes:       card.querySelector('.ver-notes').value.trim(),
+        forceUpdate: card.querySelector('.ver-force').checked,
+        updatedAt:   fb.serverTimestamp()
+      };
+      return fb.setDoc(fb.doc(_db, 'hub_versions', id), data, { merge: true });
+    });
+    await Promise.all(saves);
+    toast('All versions saved!', 'success');
+    logAudit('Saved app versions');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = '💾 Save All'; btn.disabled = false;
+});
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 7 — COUPON CODES
+// ══════════════════════════════════════════════════════════════
+let _coupons = [];
+
+document.getElementById('addCouponBtn').addEventListener('click', () => {
+  document.getElementById('couponForm').hidden = false;
+  document.getElementById('couponCode').focus();
+});
+document.getElementById('couponCancelBtn').addEventListener('click', () => {
+  document.getElementById('couponForm').hidden = true;
+  ['couponCode','couponDiscount','couponMaxUses','couponExpiry','couponNote'].forEach(id => { document.getElementById(id).value = ''; });
+});
+document.getElementById('couponSaveBtn').addEventListener('click', saveCoupon);
+document.getElementById('couponCode').addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+
+async function loadCoupons() {
+  const list = document.getElementById('couponList');
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_coupons'), fb.orderBy('createdAt', 'desc')));
+    _coupons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!_coupons.length) { list.innerHTML = '<p class="empty-msg">No coupons yet.</p>'; return; }
+    const now = new Date();
+    list.innerHTML = `<div class="coupon-grid">${_coupons.map(c => {
+      const expired = c.expiresAt ? new Date(c.expiresAt) < now : false;
+      const usePct  = c.maxUses ? Math.round(((c.usedCount || 0) / c.maxUses) * 100) : 0;
+      return `
+        <div class="coupon-card ${expired ? 'coupon-expired' : ''}">
+          <div class="coupon-code">${esc(c.code)}</div>
+          <div class="coupon-discount">${c.discount}${c.type === 'percent' ? '%' : '$'} OFF</div>
+          ${c.note ? `<div class="coupon-note">${esc(c.note)}</div>` : ''}
+          <div class="coupon-meta">
+            ${c.maxUses ? `Uses: ${c.usedCount || 0} / ${c.maxUses}` : 'Unlimited'}
+            ${c.expiresAt ? ` · Expires: ${new Date(c.expiresAt).toLocaleDateString()}` : ''}
+            ${expired ? ' · <span style="color:#f87171">EXPIRED</span>' : ''}
+          </div>
+          ${c.maxUses ? `<div class="coupon-bar-wrap"><div class="coupon-bar" style="width:${usePct}%"></div></div>` : ''}
+          <div class="coupon-actions">
+            <button class="btn-sm" onclick="copyCoupon('${esc(c.code)}')">📋 Copy</button>
+            <button class="btn-danger" style="padding:5px 10px;font-size:.75rem" onclick="deleteCoupon('${c.id}')">🗑</button>
+          </div>
+        </div>`;
+    }).join('')}</div>`;
+  } catch(e) { list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`; }
+}
+
+async function saveCoupon() {
+  const code     = document.getElementById('couponCode').value.trim().toUpperCase();
+  const discount = parseFloat(document.getElementById('couponDiscount').value);
+  if (!code || !discount) { toast('Code and discount are required.', 'error'); return; }
+  const btn = document.getElementById('couponSaveBtn');
+  btn.textContent = 'Creating…'; btn.disabled = true;
+  try {
+    const expiry = document.getElementById('couponExpiry').value;
+    await fb.addDoc(fb.collection(_db, 'hub_coupons'), {
+      code, discount, type: document.getElementById('couponType').value,
+      maxUses: parseInt(document.getElementById('couponMaxUses').value) || null,
+      note: document.getElementById('couponNote').value.trim(),
+      expiresAt: expiry || null,
+      usedCount: 0,
+      createdAt: fb.serverTimestamp(),
+      createdBy: currentUser?.uid || ''
+    });
+    toast(`Coupon ${code} created!`, 'success');
+    document.getElementById('couponForm').hidden = true;
+    ['couponCode','couponDiscount','couponMaxUses','couponExpiry','couponNote'].forEach(id => { document.getElementById(id).value = ''; });
+    logAudit(`Created coupon: ${code}`);
+    loadCoupons();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Create Coupon'; btn.disabled = false;
+}
+
+window.deleteCoupon = async function(id) {
+  if (!confirm('Delete this coupon?')) return;
+  await fb.deleteDoc(fb.doc(_db, 'hub_coupons', id));
+  toast('Coupon deleted.', 'success'); loadCoupons();
+};
+window.copyCoupon = function(code) {
+  navigator.clipboard?.writeText(code).then(() => toast(`Copied: ${code}`, 'success')).catch(() => toast(code, 'success'));
+};
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 8 — STORAGE MONITOR
+// ══════════════════════════════════════════════════════════════
+const STORAGE_COLLECTIONS = [
+  { id: 'tracks',           label: 'ERI-FAM Music Tracks',     icon: '🎵' },
+  { id: 'eri_tracks',       label: 'Eritrean Info Music',       icon: '🇪🇷' },
+  { id: 'eri_news',         label: 'Eritrean Info News',        icon: '📰' },
+  { id: 'eri_articles',     label: 'Eritrean Info Blog',        icon: '✍️' },
+  { id: 'eri_gallery',      label: 'Eritrean Info Gallery',     icon: '🖼' },
+  { id: 'eri_newsletter',   label: 'Newsletter Subscribers',    icon: '📧' },
+  { id: 'hub_apps',         label: 'Apps',                      icon: '📱' },
+  { id: 'hub_users',        label: 'Admin Users',               icon: '👥' },
+  { id: 'hub_assets',       label: 'Assets',                    icon: '📂' },
+  { id: 'hub_notifications',label: 'Notifications',             icon: '🔔' },
+  { id: 'hub_coupons',      label: 'Coupon Codes',              icon: '🎫' },
+  { id: 'community_posts',  label: 'Community Posts',           icon: '📝' },
+  { id: 'hub_activity',     label: 'Activity Log',              icon: '📋' },
+  { id: 'hub_audit',        label: 'Audit Log',                 icon: '🔍' },
+];
+
+document.getElementById('refreshStorageBtn').addEventListener('click', loadStorage);
+
+async function loadStorage() {
+  const tableEl = document.getElementById('storageCollections');
+  const statRow = document.getElementById('storageStatRow');
+  tableEl.innerHTML = '<p class="empty-msg">Loading collection stats…</p>';
+  statRow.innerHTML = '';
+  try {
+    const counts = await Promise.all(STORAGE_COLLECTIONS.map(async c => {
+      try {
+        const snap = await fb.getDocs(fb.collection(_db, c.id));
+        return { ...c, count: snap.size };
+      } catch(e) { return { ...c, count: '—' }; }
+    }));
+    const total = counts.reduce((s, c) => s + (typeof c.count === 'number' ? c.count : 0), 0);
+    statRow.innerHTML = `
+      <div class="stat-card" style="--accent:#6366f1"><div class="stat-ico">🗄</div><div class="stat-body"><div class="stat-num">${total.toLocaleString()}</div><div class="stat-lbl">Total Documents</div></div></div>
+      <div class="stat-card" style="--accent:#10b981"><div class="stat-ico">📁</div><div class="stat-body"><div class="stat-num">${STORAGE_COLLECTIONS.length}</div><div class="stat-lbl">Collections</div></div></div>
+    `;
+    tableEl.innerHTML = `<table class="storage-tbl">
+      <thead><tr><th>Collection</th><th>Documents</th><th>Status</th></tr></thead>
+      <tbody>${counts.map(c => `
+        <tr>
+          <td><span style="margin-right:8px">${c.icon}</span>${esc(c.label)}<span style="color:var(--text-dim);font-size:.7rem;margin-left:6px">${c.id}</span></td>
+          <td><strong>${typeof c.count === 'number' ? c.count.toLocaleString() : c.count}</strong></td>
+          <td><span class="app-status-pill ${typeof c.count === 'number' && c.count > 0 ? 'status-active' : 'status-draft'}">${typeof c.count === 'number' && c.count > 0 ? 'has data' : 'empty'}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  } catch(e) { tableEl.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`; }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 9 — SEO MANAGER
+// ══════════════════════════════════════════════════════════════
+(function initSeoManager() {
+  const fields = [
+    { id: 'seoTitle',    maxIdeal: 60,  previewId: 'seoPreviewTitle', countId: 'seoTitleCount' },
+    { id: 'seoDesc',     maxIdeal: 160, previewId: 'seoPreviewDesc',  countId: 'seoDescCount'  }
+  ];
+  fields.forEach(f => {
+    const el = document.getElementById(f.id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      const len = el.value.length;
+      const countEl = document.getElementById(f.countId);
+      if (countEl) { countEl.textContent = `${len} / ${f.maxIdeal}`; countEl.style.color = len > f.maxIdeal ? '#f87171' : len > f.maxIdeal * 0.8 ? '#f59e0b' : '#10b981'; }
+      const prevEl = document.getElementById(f.previewId);
+      if (prevEl) prevEl.textContent = el.value || (f.previewId.includes('Title') ? 'Page Title' : 'Description…');
+    });
+  });
+  document.getElementById('saveSeoBtn')?.addEventListener('click', saveSeo);
+})();
+
+async function loadSeo() {
+  try {
+    const snap = await fb.getDoc(fb.doc(_db, 'eri_seo', 'main'));
+    if (!snap.exists()) return;
+    const s = snap.data();
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    set('seoTitle', s.title); set('seoDesc', s.description); set('seoKeywords', s.keywords);
+    set('seoOgTitle', s.ogTitle); set('seoOgDesc', s.ogDescription); set('seoOgImage', s.ogImage);
+    if (s.twitterCard) { const el = document.getElementById('seoTwitterCard'); if (el) el.value = s.twitterCard; }
+    // Update preview
+    ['seoTitle','seoDesc'].forEach(id => document.getElementById(id)?.dispatchEvent(new Event('input')));
+  } catch(e) { console.warn('[SEO]', e); }
+}
+
+async function saveSeo() {
+  const btn = document.getElementById('saveSeoBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    await fb.setDoc(fb.doc(_db, 'eri_seo', 'main'), {
+      title:         document.getElementById('seoTitle').value.trim(),
+      description:   document.getElementById('seoDesc').value.trim(),
+      keywords:      document.getElementById('seoKeywords').value.trim(),
+      ogTitle:       document.getElementById('seoOgTitle').value.trim(),
+      ogDescription: document.getElementById('seoOgDesc').value.trim(),
+      ogImage:       document.getElementById('seoOgImage').value.trim(),
+      twitterCard:   document.getElementById('seoTwitterCard').value,
+      updatedAt:     fb.serverTimestamp()
+    }, { merge: true });
+    toast('SEO settings saved!', 'success');
+    logAudit('Updated SEO metadata');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = '💾 Save Changes'; btn.disabled = false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 10 — AUDIT LOG
+// ══════════════════════════════════════════════════════════════
+let _auditEntries = [];
+
+document.getElementById('refreshAuditBtn').addEventListener('click', loadAuditLog);
+document.getElementById('exportAuditBtn').addEventListener('click',  exportAuditLog);
+document.getElementById('auditSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  renderAuditLog(_auditEntries.filter(e => (e.action || '').toLowerCase().includes(q) || (e.adminEmail || '').toLowerCase().includes(q)));
+});
+
+async function loadAuditLog() {
+  const list = document.getElementById('auditList');
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_audit'), fb.orderBy('createdAt', 'desc'), fb.limit(200)));
+    _auditEntries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const now   = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayCount  = _auditEntries.filter(e => e.createdAt?.toDate?.() >= today).length;
+    const admins      = new Set(_auditEntries.map(e => e.adminEmail).filter(Boolean)).size;
+    document.getElementById('auditStatTotal').textContent  = _auditEntries.length;
+    document.getElementById('auditStatToday').textContent  = todayCount;
+    document.getElementById('auditStatAdmins').textContent = admins;
+    renderAuditLog(_auditEntries);
+  } catch(e) { list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`; }
+}
+
+function renderAuditLog(entries) {
+  const list = document.getElementById('auditList');
+  if (!entries.length) { list.innerHTML = '<p class="empty-msg">No audit entries found.</p>'; return; }
+  list.innerHTML = entries.map(e => `
+    <div class="audit-row">
+      <div class="audit-dot"></div>
+      <div class="audit-body">
+        <div class="audit-action">${esc(e.action || '')}</div>
+        <div class="audit-meta">${esc(e.adminEmail || e.adminId || 'Admin')} · ${e.createdAt?.toDate ? e.createdAt.toDate().toLocaleString() : '—'}</div>
+      </div>
+    </div>`).join('');
+}
+
+function exportAuditLog() {
+  if (!_auditEntries.length) { toast('No entries to export.', 'error'); return; }
+  const rows = [['Action', 'Admin', 'Date'], ..._auditEntries.map(e => [e.action || '', e.adminEmail || '', e.createdAt?.toDate ? e.createdAt.toDate().toISOString() : ''])];
+  downloadCsv(rows, 'audit_log.csv');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SHARED UTILITIES
+// ══════════════════════════════════════════════════════════════
+
+// logAudit — writes to hub_audit (richer than logActivity)
+async function logAudit(action) {
+  try {
+    await fb.addDoc(fb.collection(_db, 'hub_audit'), {
+      action,
+      adminId:    currentUser?.uid    || '',
+      adminEmail: currentUser?.email  || '',
+      createdAt:  fb.serverTimestamp()
+    });
+    // Also call logActivity for the dashboard feed
+    logActivity?.(action);
+  } catch(e) { /* non-critical */ }
+}
+
+// Generic CSV downloader
+function downloadCsv(rows, filename) {
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: filename });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
