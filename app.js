@@ -35,6 +35,8 @@ const S = {
   volume: 0.8,
   currentTrack: null,
   filter: 'all',
+  artistFilter: '',    // '' = all artists
+  albumFilter: '',     // '' = all albums
   viewMode: 'grid',    // 'grid' | 'list'
   sleepTimer: null,
   crossfade: 0,
@@ -334,6 +336,11 @@ async function playTrack(track, queueTracks) {
   renderTracks();
   showMiniPlayer();
   updateQueueUI();
+  // Scroll the now-playing track into view in the library
+  setTimeout(() => {
+    const el = document.querySelector('.track-card.playing, .track-row.playing');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 80);
 
   // Mark recent
   const recent = JSON.parse(localStorage.getItem('erifam_recent') || '[]');
@@ -509,6 +516,23 @@ function updatePlayerUI() {
   }
   // Like button
   document.getElementById('likeBtn').classList.toggle('liked', S.likedIds.has(t.id));
+  // Track position (e.g. "4 / 18")
+  const posEl = document.getElementById('fpPosition');
+  if (posEl) posEl.textContent = S.queue.length > 1 ? `${S.queueIndex + 1} / ${S.queue.length}` : '';
+  // Up Next
+  const upNextEl = document.getElementById('fpUpNext');
+  if (upNextEl) {
+    const nextIdx = S.shuffle
+      ? (S.shuffleIndex + 1 < S.shuffleQueue.length ? S.shuffleQueue.indexOf(S.shuffleQueue[S.shuffleIndex + 1]) : -1)
+      : S.queueIndex + 1;
+    const nextItem = (nextIdx >= 0 && nextIdx < S.queue.length) ? S.queue[nextIdx] : null;
+    if (nextItem) {
+      upNextEl.textContent = `Up next: ${nextItem.title}`;
+      upNextEl.style.display = '';
+    } else {
+      upNextEl.style.display = 'none';
+    }
+  }
   updatePlayIcons();
   updateHeaderPlayState();
 }
@@ -528,15 +552,21 @@ function updateStats() {
   const filterRow = document.getElementById('filterRow');
   if (total > 0) { statsBar.style.display = ''; filterRow.style.display = ''; document.getElementById('emptyState').style.display = 'none'; }
   else           { statsBar.style.display = 'none'; filterRow.style.display = 'none'; document.getElementById('emptyState').style.display = ''; }
+  // Refresh artist/album selects — defined later in file, guard with typeof
+  if (typeof _populateFilterSelects === 'function') _populateFilterSelects();
 }
 
 // ── Render tracks ──────────────────────────────────────────────
 function getAllTracks() {
   const all = [...S.tracks, ...S.cloudTracks];
-  if (S.filter === 'local') return S.tracks;
-  if (S.filter === 'cloud') return S.cloudTracks;
-  if (S.filter === 'liked') return all.filter(t => S.likedIds.has(t.id));
-  return all;
+  let tracks;
+  if (S.filter === 'local') tracks = [...S.tracks];
+  else if (S.filter === 'cloud') tracks = [...S.cloudTracks];
+  else if (S.filter === 'liked') tracks = all.filter(t => S.likedIds.has(t.id));
+  else tracks = all;
+  if (S.artistFilter) tracks = tracks.filter(t => (t.artist || '') === S.artistFilter);
+  if (S.albumFilter)  tracks = tracks.filter(t => (t.album  || '') === S.albumFilter);
+  return tracks;
 }
 
 function renderTracks(search = '') {
@@ -906,7 +936,14 @@ document.querySelectorAll('.filter-chip').forEach(btn => {
     document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     S.filter = btn.getAttribute('data-filter');
+    // Reset secondary artist/album filters when switching main filter
+    S.artistFilter = ''; S.albumFilter = '';
+    const aSelect = document.getElementById('artistFilterSelect');
+    const bSelect  = document.getElementById('albumFilterSelect');
+    if (aSelect) aSelect.value = '';
+    if (bSelect)  bSelect.value = '';
     renderTracks(document.getElementById('searchInput').value.trim());
+    if (typeof _updateDeleteFilteredBtn === 'function') _updateDeleteFilteredBtn();
   });
 });
 
@@ -1279,6 +1316,7 @@ function renderAlbums() {
     <div class="lib-album-card" data-album="${esc(a.name)}">
       <div class="lib-album-art">
         ${a.artwork ? `<img src="${esc(a.artwork)}" alt="" loading="lazy" />` : '💿'}
+        <button class="album-art-edit-btn" data-album="${esc(a.name)}" title="Change artwork" aria-label="Change album artwork">📷</button>
       </div>
       <div class="lib-album-info">
         <div class="lib-album-title">${esc(a.name)}</div>
@@ -1286,13 +1324,49 @@ function renderAlbums() {
       </div>
     </div>`).join('');
   el.querySelectorAll('.lib-album-card').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('.album-art-edit-btn')) return; // handled separately
       const name  = card.getAttribute('data-album');
       const album = albums.find(a => a.name === name);
       if (album) openAlbumDetail(album);
     });
   });
+  el.querySelectorAll('.album-art-edit-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      _pendingArtAlbum = btn.getAttribute('data-album');
+      document.getElementById('albumArtInput').click();
+    });
+  });
 }
+
+// Album art upload
+let _pendingArtAlbum = null;
+document.getElementById('albumArtInput')?.addEventListener('change', async function() {
+  const file = this.files[0];
+  this.value = '';
+  if (!file || !_pendingArtAlbum) return;
+  const albumName = _pendingArtAlbum;
+  _pendingArtAlbum = null;
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const dataUrl = e.target.result;
+    // Update all tracks in this album in IDB and in memory
+    const targets = [...S.tracks, ...S.cloudTracks].filter(t => (t.album || '') === albumName);
+    for (const t of targets) {
+      t.artwork = dataUrl;
+      if (S.tracks.find(lt => lt.id === t.id)) {
+        const stored = await idbGet('tracks', t.id);
+        if (stored) { stored.artwork = dataUrl; await idbPut('tracks', stored); }
+      }
+    }
+    renderAlbums();
+    renderTracks();
+    toast('🖼 Album artwork updated!');
+  };
+  reader.readAsDataURL(file);
+});
 
 function openAlbumDetail(album) {
   const panel = document.getElementById('libtab-albums');
@@ -2870,17 +2944,19 @@ document.getElementById('applyLangBtn').addEventListener('click', () => {
 
 // ── 3D HERO · MOOD · AMBIENT · TILT ───────────────────────────
 
-// Hero greeting based on time
-(function() {
+// Hero greeting based on time + stored username
+function updateHeroGreeting() {
   const h = new Date().getHours();
-  const greet =
+  const base =
     h < 5  ? '🌙 Night Owl Mode' :
     h < 12 ? '☀️ Good Morning' :
     h < 17 ? '👋 Good Afternoon' :
     h < 21 ? '🌆 Good Evening' : '🌙 Good Night';
+  const name = localStorage.getItem('erifam_username') || '';
   const el = document.getElementById('heroGreeting');
-  if (el) el.textContent = greet;
-})();
+  if (el) el.textContent = name ? `${base}, ${name}!` : base;
+}
+updateHeroGreeting();
 
 // Hero quick buttons
 document.getElementById('heroPlayBtn')?.addEventListener('click', () => {
@@ -2928,7 +3004,7 @@ const _moodObserver = new MutationObserver(() => {
 const _tg = document.getElementById('trackGrid');
 if (_tg) _moodObserver.observe(_tg, { childList: true });
 
-// Ambient background colour cycle
+// Ambient background colour cycle (paused when tab is hidden to save battery)
 const _ambientBg = document.getElementById('ambientBg');
 const _ambientPalette = [
   ['rgba(200,145,74,.15)',  'rgba(99,102,241,.12)'],
@@ -2937,7 +3013,7 @@ const _ambientPalette = [
   ['rgba(16,185,129,.11)', 'rgba(200,145,74,.12)'],
   ['rgba(6,182,212,.12)',  'rgba(139,92,246,.10)'],
 ];
-let _ambIdx = 0;
+let _ambIdx = 0, _ambInterval = null;
 function _cycleAmbient() {
   if (!_ambientBg) return;
   const [a, b] = _ambientPalette[_ambIdx % _ambientPalette.length];
@@ -2946,10 +3022,15 @@ function _cycleAmbient() {
     `radial-gradient(ellipse at 70% 75%, ${b} 0%, transparent 65%)`;
   _ambIdx++;
 }
+function _startAmbient() { if (!_ambInterval) _ambInterval = setInterval(_cycleAmbient, 6000); }
+function _stopAmbient()  { clearInterval(_ambInterval); _ambInterval = null; }
 _cycleAmbient();
-setInterval(_cycleAmbient, 6000);
+_startAmbient();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) _stopAmbient(); else _startAmbient();
+});
 
-// 3D card tilt on desktop (mouse hover)
+// 3D card tilt on desktop (mouse hover) — passive to avoid blocking scroll
 let _tiltRaf = null;
 document.addEventListener('mousemove', e => {
   cancelAnimationFrame(_tiltRaf);
@@ -2965,7 +3046,7 @@ document.addEventListener('mousemove', e => {
     card.style.transform = `perspective(700px) rotateY(${dx*8}deg) rotateX(${-dy*8}deg) scale(1.04) translateZ(10px)`;
     card.style.boxShadow = `${-dx*10}px ${dy*10}px 36px rgba(0,0,0,.65), 0 0 0 1px rgba(200,145,74,.28)`;
   });
-});
+}, { passive: true });
 document.addEventListener('mouseleave', () => {
   document.querySelectorAll('.track-card').forEach(c => { c.style.transform = ''; c.style.boxShadow = ''; });
 }, true);
@@ -3106,3 +3187,224 @@ document.getElementById('updateDismissBtn')?.addEventListener('click', () => {
   const banner = document.getElementById('updateBanner');
   if (banner) banner.style.display = 'none';
 });
+
+// ── USERNAME SYSTEM ────────────────────────────────────────────
+function _saveUsername(name) {
+  const trimmed = name.trim();
+  if (trimmed) localStorage.setItem('erifam_username', trimmed);
+  else localStorage.removeItem('erifam_username');
+  updateHeroGreeting();
+  const settingEl = document.getElementById('settingUsername');
+  if (settingEl) settingEl.textContent = trimmed || 'Not set';
+}
+
+function _showUsernameModal() {
+  const modal = document.getElementById('usernameModal');
+  if (!modal) return;
+  const input = document.getElementById('usernameInput');
+  if (input) input.value = localStorage.getItem('erifam_username') || '';
+  modal.style.display = 'flex';
+  setTimeout(() => input?.focus(), 100);
+}
+
+document.getElementById('usernameSaveBtn')?.addEventListener('click', () => {
+  _saveUsername(document.getElementById('usernameInput')?.value || '');
+  localStorage.setItem('erifam_username_seen', '1');
+  document.getElementById('usernameModal').style.display = 'none';
+});
+document.getElementById('usernameSkipBtn')?.addEventListener('click', () => {
+  localStorage.setItem('erifam_username_seen', '1');
+  document.getElementById('usernameModal').style.display = 'none';
+});
+document.getElementById('usernameInput')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('usernameSaveBtn')?.click();
+});
+document.getElementById('changeNameBtn')?.addEventListener('click', _showUsernameModal);
+
+// Show username in settings on load
+(function() {
+  const name = localStorage.getItem('erifam_username') || '';
+  const el = document.getElementById('settingUsername');
+  if (el) el.textContent = name || 'Not set';
+})();
+
+// Show welcome modal on first visit (after a short delay so app loads first)
+if (!localStorage.getItem('erifam_username') && !localStorage.getItem('erifam_username_seen')) {
+  setTimeout(_showUsernameModal, 1200);
+}
+
+// ── ARTIST / ALBUM FILTER SELECTS ─────────────────────────────
+function _populateFilterSelects() {
+  const all = [...S.tracks, ...S.cloudTracks];
+  const artists = [...new Set(all.map(t => t.artist || '').filter(Boolean))].sort();
+  const albums  = [...new Set(all.map(t => t.album  || '').filter(Boolean))].sort();
+
+  const aSelect = document.getElementById('artistFilterSelect');
+  const bSelect = document.getElementById('albumFilterSelect');
+  if (!aSelect || !bSelect) return;
+
+  const prevArtist = S.artistFilter;
+  const prevAlbum  = S.albumFilter;
+
+  aSelect.innerHTML = '<option value="">All Artists</option>' +
+    artists.map(a => `<option value="${esc(a)}"${a === prevArtist ? ' selected' : ''}>${esc(a)}</option>`).join('');
+  bSelect.innerHTML = '<option value="">All Albums</option>' +
+    albums.map(a => `<option value="${esc(a)}"${a === prevAlbum ? ' selected' : ''}>${esc(a)}</option>`).join('');
+
+  // Show "Delete Filtered" button whenever a secondary filter is active
+  _updateDeleteFilteredBtn();
+}
+
+function _updateDeleteFilteredBtn() {
+  const btn = document.getElementById('deleteFilteredBtn');
+  if (!btn) return;
+  const active = S.artistFilter || S.albumFilter || S.filter !== 'all';
+  const n = getAllTracks().filter(t => S.tracks.find(lt => lt.id === t.id)).length;
+  btn.style.display = (active && n > 0) ? '' : 'none';
+  btn.textContent = `🗑 Delete Filtered (${n})`;
+}
+
+document.getElementById('artistFilterSelect')?.addEventListener('change', function() {
+  S.artistFilter = this.value;
+  renderTracks();
+  _updateDeleteFilteredBtn();
+});
+document.getElementById('albumFilterSelect')?.addEventListener('change', function() {
+  S.albumFilter = this.value;
+  renderTracks();
+  _updateDeleteFilteredBtn();
+});
+
+// ── DELETE FILTERED TRACKS ────────────────────────────────────
+document.getElementById('deleteFilteredBtn')?.addEventListener('click', async () => {
+  const localTracks = getAllTracks().filter(t => S.tracks.find(lt => lt.id === t.id));
+  if (!localTracks.length) { toast('No local tracks to delete in this filter'); return; }
+  const n = localTracks.length;
+  if (!confirm(`Delete ${n} local track${n > 1 ? 's' : ''}? This cannot be undone.`)) return;
+  for (const t of localTracks) await deleteTrack(t.id);
+  S.artistFilter = ''; S.albumFilter = '';
+  const aSelect = document.getElementById('artistFilterSelect');
+  const bSelect = document.getElementById('albumFilterSelect');
+  if (aSelect) aSelect.value = '';
+  if (bSelect) bSelect.value = '';
+  _populateFilterSelects();
+  renderTracks();
+  toast(`🗑 Deleted ${n} track${n > 1 ? 's' : ''}`);
+});
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (document.activeElement?.isContentEditable) return;
+
+  switch(e.key) {
+    case ' ':
+      e.preventDefault();
+      if (S.currentTrack) togglePlay();
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      nextTrack();
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      prevTrack();
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      S.volume = Math.min(1, S.volume + 0.05);
+      audio.volume = S.volume;
+      document.getElementById('volSlider').value = S.volume * 100;
+      idbPut('settings', { key: 'volume', value: S.volume }).catch(() => {});
+      toast(`🔊 ${Math.round(S.volume * 100)}%`);
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      S.volume = Math.max(0, S.volume - 0.05);
+      audio.volume = S.volume;
+      document.getElementById('volSlider').value = S.volume * 100;
+      idbPut('settings', { key: 'volume', value: S.volume }).catch(() => {});
+      toast(`🔉 ${Math.round(S.volume * 100)}%`);
+      break;
+    case 'l': case 'L':
+      if (S.currentTrack) document.getElementById('likeBtn')?.click();
+      break;
+    case 'm': case 'M':
+      audio.muted = !audio.muted;
+      toast(audio.muted ? '🔇 Muted' : '🔊 Unmuted');
+      break;
+    case 'f': case 'F':
+      document.getElementById('shuffleBtn')?.click();
+      break;
+    case 'r': case 'R':
+      document.getElementById('repeatBtn')?.click();
+      break;
+    case '?':
+      _toggleKeyboardModal();
+      break;
+  }
+});
+
+function _toggleKeyboardModal() {
+  const m = document.getElementById('keyboardModal');
+  if (!m) return;
+  m.style.display = m.style.display === 'none' ? 'flex' : 'none';
+}
+document.getElementById('keyboardModalClose')?.addEventListener('click', () => {
+  const m = document.getElementById('keyboardModal');
+  if (m) m.style.display = 'none';
+});
+document.getElementById('keyboardModal')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) { e.currentTarget.style.display = 'none'; }
+});
+document.getElementById('kbdHelpBtn')?.addEventListener('click', _toggleKeyboardModal);
+
+// ── ABOUT SECTION (settings panel) ────────────────────────
+(async function loadAboutSection() {
+  const socialDefs = [
+    ['instagram', '📸', 'Instagram', 'instagram.com'],
+    ['tiktok',    '🎵', 'TikTok',    'tiktok.com'],
+    ['youtube',   '▶️', 'YouTube',   'youtube.com'],
+    ['facebook',  '👥', 'Facebook',  'facebook.com'],
+    ['twitter',   '🐦', 'Twitter/X', 'x.com'],
+    ['telegram',  '✈️', 'Telegram',  't.me'],
+  ];
+  try {
+    const [appMod, fsMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+    ]);
+    const app  = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
+    const db   = fsMod.getFirestore(app);
+    const snap = await fsMod.getDoc(fsMod.doc(db, 'hub_settings', 'about'));
+    const empty = document.getElementById('settingsAboutEmpty');
+    if (!snap.exists()) { if (empty) empty.textContent = 'Contact info coming soon.'; return; }
+    const d = snap.data();
+    const hasSomething = d.description || d.email || d.phone || d.website ||
+      Object.values(d.socials || {}).some(Boolean);
+    if (!hasSomething) { if (empty) empty.textContent = 'Contact info coming soon.'; return; }
+    if (empty) empty.style.display = 'none';
+    const wrap = document.getElementById('settingsAbout');
+    if (wrap) wrap.style.display = '';
+    const descEl = document.getElementById('settingsAboutDesc');
+    if (descEl) descEl.textContent = d.description || '';
+    const contactsEl = document.getElementById('settingsAboutContacts');
+    if (contactsEl) contactsEl.innerHTML = [
+      d.email   && `<a href="mailto:${d.email}" class="about-contact-link">✉️ ${d.email}</a>`,
+      d.phone   && `<a href="tel:${d.phone}"   class="about-contact-link">📞 ${d.phone}</a>`,
+      d.website && `<a href="${d.website}" target="_blank" rel="noopener" class="about-contact-link">🌐 Website</a>`,
+    ].filter(Boolean).join('');
+    const socialsEl = document.getElementById('settingsAboutSocials');
+    if (socialsEl) socialsEl.innerHTML = socialDefs
+      .filter(([key]) => d.socials?.[key])
+      .map(([key, ico, label, domain]) => {
+        const h = d.socials[key];
+        const url = h.startsWith('http') ? h : `https://${domain}/${h.replace(/^@/, '')}`;
+        return `<a href="${url}" target="_blank" rel="noopener" class="about-social-btn">${ico} ${label}</a>`;
+      }).join('');
+  } catch(e) {
+    const empty = document.getElementById('settingsAboutEmpty');
+    if (empty) empty.textContent = 'Contact info coming soon.';
+  }
+})();

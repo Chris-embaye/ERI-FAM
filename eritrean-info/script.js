@@ -1103,3 +1103,130 @@ communityModalSubmit.addEventListener('click', async () => {
     communityModalSubmit.disabled = false;
   }
 });
+
+// ── ABOUT FOOTER ──────────────────────────────────────────
+(async function loadAboutFooter() {
+  const socialDefs = [
+    ['instagram', '📸', 'Instagram', 'instagram.com'],
+    ['tiktok',    '🎵', 'TikTok',    'tiktok.com'],
+    ['youtube',   '▶️', 'YouTube',   'youtube.com'],
+    ['facebook',  '👥', 'Facebook',  'facebook.com'],
+    ['twitter',   '🐦', 'Twitter/X', 'x.com'],
+    ['telegram',  '✈️', 'Telegram',  't.me'],
+  ];
+  try {
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const app  = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    const db   = getFirestore(app);
+    const snap = await getDoc(doc(db, 'hub_settings', 'about'));
+    if (!snap.exists()) return;
+    const d = snap.data();
+
+    // Update brand
+    const nameEl = document.getElementById('aboutFooterName');
+    const descEl = document.getElementById('aboutFooterDesc');
+    const logoEl = document.getElementById('aboutFooterLogo');
+    if (d.name && nameEl) nameEl.textContent = d.name;
+    if (d.description && descEl) descEl.textContent = d.description;
+    if (d.logo && logoEl) {
+      logoEl.innerHTML = `<img src="${d.logo}" alt="${d.name || 'Logo'}" style="width:80px;height:80px;border-radius:20px;object-fit:cover;border:3px solid rgba(255,255,255,0.2)"/>`;
+    }
+
+    // Contact links
+    const contactLinks = [
+      d.email   && `<a href="mailto:${d.email}" class="about-footer-link">✉️ ${d.email}</a>`,
+      d.phone   && `<a href="tel:${d.phone}"   class="about-footer-link">📞 ${d.phone}</a>`,
+      d.website && `<a href="${d.website}" target="_blank" rel="noopener" class="about-footer-link">🌐 Website</a>`,
+    ].filter(Boolean);
+    if (contactLinks.length) {
+      const contactWrap = document.getElementById('aboutFooterContact');
+      const contactEl   = document.getElementById('aboutFooterContactLinks');
+      if (contactWrap) contactWrap.style.display = '';
+      if (contactEl)   contactEl.innerHTML = contactLinks.join('');
+    }
+
+    // Social links
+    const activeSocials = socialDefs.filter(([key]) => d.socials?.[key]);
+    if (activeSocials.length) {
+      const socialWrap = document.getElementById('aboutFooterSocial');
+      const socialEl   = document.getElementById('aboutFooterSocialLinks');
+      if (socialWrap) socialWrap.style.display = '';
+      if (socialEl) socialEl.innerHTML = activeSocials.map(([key, ico, label, domain]) => {
+        const h   = d.socials[key];
+        const url = h.startsWith('http') ? h : `https://${domain}/${h.replace(/^@/, '')}`;
+        return `<a href="${url}" target="_blank" rel="noopener" class="about-footer-social-btn">${ico}<span>${label}</span></a>`;
+      }).join('');
+    }
+  } catch(e) { console.warn('[About footer]', e); }
+})();
+
+// ── READING PROGRESS BAR ─────────────────────────────────
+const readingBar = document.getElementById('readingProgress');
+if (readingBar) {
+  window.addEventListener('scroll', () => {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    readingBar.style.width = total > 0 ? Math.min(100, Math.round((window.scrollY / total) * 100)) + '%' : '0%';
+  }, { passive: true });
+}
+
+// ── COPY FACT CARDS ON CLICK ─────────────────────────────
+(function initCopyFacts() {
+  function eriToast(msg) {
+    let t = document.getElementById('eriCopyToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'eriCopyToast';
+      t.className = 'eri-copy-toast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  document.querySelectorAll('.fact-card').forEach(card => {
+    card.style.cursor = 'pointer';
+    card.title = 'Click to copy';
+    card.addEventListener('click', () => {
+      const label = card.querySelector('.fact-label')?.textContent?.trim() || '';
+      const value = card.querySelector('.fact-value')?.textContent?.trim() || '';
+      navigator.clipboard?.writeText(`${label}: ${value}`).then(() => eriToast(`📋 Copied: ${label}`));
+    });
+  });
+})();
+
+// ── SECTION SHARE BUTTONS ────────────────────────────────
+(function initSectionShare() {
+  document.querySelectorAll('section[id]').forEach(section => {
+    if (!section.id || section.id === 'hero') return;
+    const heading = section.querySelector('h2, h3, .section-title, .sect-title');
+    if (!heading) return;
+    const btn = document.createElement('button');
+    btn.className = 'section-share-btn';
+    btn.innerHTML = '🔗';
+    btn.title = 'Copy link to this section';
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const url = `${location.origin}${location.pathname}#${section.id}`;
+      navigator.clipboard?.writeText(url).then(() => {
+        btn.innerHTML = '✓';
+        btn.style.color = '#10b981';
+        setTimeout(() => { btn.innerHTML = '🔗'; btn.style.color = ''; }, 1800);
+      });
+    });
+    heading.style.position = 'relative';
+    heading.appendChild(btn);
+  });
+})();
+
+// ── KEYBOARD SHORTCUT: '/' to focus world search ─────────
+document.addEventListener('keydown', e => {
+  if (e.key !== '/') return;
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  e.preventDefault();
+  const si = document.getElementById('worldSearchInput') || document.querySelector('.world-search input');
+  if (si) { si.focus(); si.select(); }
+});

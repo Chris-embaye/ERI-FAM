@@ -199,6 +199,7 @@
       <button class="stat-sync-btn" id="statSyncBtn">☁ Sync</button>
       <button class="stat-select-btn" id="selectAllBtn">Select All</button>
       <button class="stat-delete-btn" id="deleteSelBtn" style="display:none">🗑 Delete</button>
+      <button class="stat-delete-btn stat-del-filtered-btn" id="deleteFilteredBtn" style="display:none">🗑 Delete Filtered</button>
     </div>
 
     <!-- Mood chips -->
@@ -218,6 +219,8 @@
       <button class="filter-chip" data-filter="local">📱 Local</button>
       <button class="filter-chip" data-filter="cloud">☁ Cloud</button>
       <button class="filter-chip" data-filter="liked">❤ Liked</button>
+      <select id="artistFilterSelect" class="filter-select"><option value="">All Artists</option></select>
+      <select id="albumFilterSelect" class="filter-select"><option value="">All Albums</option></select>
       <div class="view-toggle-wrap">
         <button class="view-tog active" id="gridViewBtn" title="Grid">⊞</button>
         <button class="view-tog" id="listViewBtn" title="List">☰</button>
@@ -523,6 +526,10 @@
     <div class="fp-info">
       <h2 class="fp-title" id="fpTitle">Select a track</h2>
       <p class="fp-artist fp-artist-clickable" id="fpArtist">—</p>
+      <div class="fp-meta-row">
+        <span id="fpPosition" class="fp-position"></span>
+        <span id="fpUpNext" class="fp-up-next" style="display:none"></span>
+      </div>
     </div>
 
     <!-- Time display -->
@@ -674,6 +681,11 @@
   <div class="panel-hdr"><h3>⚙️ Settings</h3><button class="panel-close" id="settingsClose">✕</button></div>
   <div class="settings-body">
     <div class="settings-section">
+      <h4>Profile</h4>
+      <div class="setting-row"><span>Your Name</span><span id="settingUsername" style="font-weight:600;color:var(--accent)">Not set</span></div>
+      <button class="btn-setting" id="changeNameBtn">✏️ Change Name</button>
+    </div>
+    <div class="settings-section">
       <h4>Playback</h4>
       <label class="setting-row"><span>Crossfade</span><input type="range" id="crossfadeSlider" min="0" max="12" value="0" /><span id="crossfadeVal">0s</span></label>
       <label class="setting-row"><span>Normalize Volume</span><input type="checkbox" id="normalizeCheck" class="toggle" /></label>
@@ -738,6 +750,15 @@
     <div class="settings-section">
       <h4>Admin</h4>
       <button class="btn-setting btn-admin-go" id="goAdminBtn">🔐 Admin Panel</button>
+    </div>
+    <div class="settings-section" id="settingsAboutSection">
+      <h4>About &amp; Contact</h4>
+      <div id="settingsAbout" style="display:none">
+        <p id="settingsAboutDesc" class="about-desc-text"></p>
+        <div id="settingsAboutContacts" class="about-contacts"></div>
+        <div id="settingsAboutSocials" class="about-socials-row"></div>
+      </div>
+      <p id="settingsAboutEmpty" class="about-empty-text">Loading contact info…</p>
     </div>
   </div>
 </div>
@@ -925,6 +946,20 @@
   </div>
 </div>
 
+<!-- USERNAME WELCOME MODAL -->
+<div class="modal-overlay" id="usernameModal" style="display:none">
+  <div class="modal-box">
+    <div style="font-size:2.4rem;text-align:center;margin-bottom:8px">🎵</div>
+    <h3 style="text-align:center">Welcome to ERI-FAM</h3>
+    <p class="modal-sub" style="text-align:center">What should we call you?</p>
+    <input type="text" id="usernameInput" class="modal-input" placeholder="Your name (optional)" maxlength="40" />
+    <div class="modal-actions">
+      <button class="btn-primary" id="usernameSaveBtn">Let's Go! 🚀</button>
+      <button class="btn-secondary" id="usernameSkipBtn">Skip</button>
+    </div>
+  </div>
+</div>
+
 <!-- COMMUNITY SUBMISSION MODAL -->
 <div class="modal-overlay" id="communityModal" style="display:none">
   <div class="modal-box community-modal-box">
@@ -941,6 +976,34 @@
     </div>
   </div>
 </div>
+
+<!-- Album art upload input (shared, hidden) -->
+<input type="file" id="albumArtInput" accept="image/*" hidden />
+
+<!-- KEYBOARD SHORTCUTS MODAL -->
+<div class="modal-overlay" id="keyboardModal" style="display:none">
+  <div class="modal-box" style="max-width:420px">
+    <h3 style="margin-bottom:16px">⌨️ Keyboard Shortcuts</h3>
+    <div class="kbd-grid">
+      <span class="kbd">Space</span><span>Play / Pause</span>
+      <span class="kbd">←</span><span>Previous track</span>
+      <span class="kbd">→</span><span>Next track</span>
+      <span class="kbd">L</span><span>Like / Unlike current track</span>
+      <span class="kbd">M</span><span>Mute / Unmute</span>
+      <span class="kbd">F</span><span>Toggle Shuffle</span>
+      <span class="kbd">R</span><span>Cycle Repeat mode</span>
+      <span class="kbd">↑ / ↓</span><span>Volume up / down</span>
+      <span class="kbd">?</span><span>Show this help</span>
+      <span class="kbd">Esc</span><span>Close player / modal</span>
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn-primary" id="keyboardModalClose">Got it!</button>
+    </div>
+  </div>
+</div>
+
+<!-- KEYBOARD HELP FLOATING BUTTON -->
+<button class="kbd-help-btn" id="kbdHelpBtn" title="Keyboard shortcuts (?)">⌨</button>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>

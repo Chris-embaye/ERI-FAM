@@ -126,6 +126,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         <span>Analytics</span>
       </button>
+      <button class="sb-item" data-page="about">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>About Us</span>
+      </button>
       <button class="sb-item" data-page="settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Settings</span>
@@ -154,7 +158,21 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <span id="mobTitle">Dashboard</span>
-      <span></span>
+      <button class="mob-search-btn" id="mobSearchBtn" title="Search (Ctrl+K)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
+    </div>
+
+    <!-- GLOBAL SEARCH OVERLAY -->
+    <div class="gsearch-overlay" id="gsearchOverlay" hidden>
+      <div class="gsearch-box">
+        <div class="gsearch-input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="gsearchInput" class="gsearch-input" placeholder="Search users, tracks, apps, posts…" autocomplete="off"/>
+          <kbd class="gsearch-kbd">Esc</kbd>
+        </div>
+        <div id="gsearchResults" class="gsearch-results"></div>
+      </div>
     </div>
 
     <!-- ══ DASHBOARD ══ -->
@@ -317,16 +335,24 @@
           <h1>Team &amp; Users</h1>
           <p class="page-sub">Manage who has access to your Hub</p>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm" id="exportUsersBtn">📥 Export CSV</button>
           <button class="btn-sm" id="bulkApproveBtn">✓ Approve All Pending</button>
           <button class="btn-primary" id="inviteBtn">+ Invite User</button>
         </div>
       </div>
+      <!-- User stats summary -->
+      <div class="user-stats-bar" id="userStatsBar" style="display:none">
+        <span class="ustat"><span id="uStatTotal">0</span> Total</span>
+        <span class="ustat ustat-approved"><span id="uStatApproved">0</span> Approved</span>
+        <span class="ustat ustat-pending"><span id="uStatPending">0</span> Pending</span>
+        <span class="ustat ustat-rejected"><span id="uStatRejected">0</span> Rejected</span>
+      </div>
       <div class="user-tabs">
-        <button class="utab active" data-utab="all">All</button>
-        <button class="utab" data-utab="pending">Pending <span class="utab-badge" id="pendingTabCount">0</span></button>
-        <button class="utab" data-utab="approved">Approved</button>
-        <button class="utab" data-utab="rejected">Rejected</button>
+        <button class="user-tab utab active" data-utab="all">All</button>
+        <button class="user-tab utab" data-utab="pending">Pending <span class="utab-badge" id="pendingTabCount">0</span></button>
+        <button class="user-tab utab" data-utab="approved">Approved</button>
+        <button class="user-tab utab" data-utab="rejected">Rejected</button>
       </div>
       <div id="userList" class="user-list">
         <p class="empty-msg">No users found.</p>
@@ -348,8 +374,16 @@
             <option value="title">Title A–Z</option>
             <option value="artist">Artist A–Z</option>
           </select>
+          <button class="btn-sm" id="exportTracksBtn">📥 CSV</button>
           <span id="musicCount" style="font-size:.82rem;color:var(--text-dim)"></span>
         </div>
+      </div>
+      <!-- Secondary filter bar -->
+      <div class="music-filter-bar" id="musicFilterBar" style="display:none">
+        <select id="musicArtistFilter" class="form-input music-filter-sel"><option value="">All Artists</option></select>
+        <select id="musicAlbumFilter"  class="form-input music-filter-sel"><option value="">All Albums</option></select>
+        <button class="btn-danger" id="musicDeleteFilteredBtn" style="display:none;padding:6px 14px;font-size:.8rem">🗑 Delete Filtered</button>
+        <span id="musicFilterCount" style="font-size:.78rem;color:var(--text-dim);margin-left:auto"></span>
       </div>
 
       <!-- Upload zone -->
@@ -589,13 +623,23 @@
           <h1>Community Posts</h1>
           <p class="page-sub">Review submissions and publish content to ERI-FAM</p>
         </div>
-        <button class="btn-primary" id="addPostBtn">+ New Post</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm" id="approveAllPostsBtn">✓ Approve All Pending</button>
+          <button class="btn-primary" id="addPostBtn">+ New Post</button>
+        </div>
+      </div>
+      <!-- Post stats bar -->
+      <div class="posts-stats-bar" id="postsStatsBar" style="display:none">
+        <span class="pstat pstat-pending">⏳ <span id="psCountPending">0</span> Pending</span>
+        <span class="pstat pstat-approved">✅ <span id="psCountApproved">0</span> Approved</span>
+        <span class="pstat pstat-rejected">❌ <span id="psCountRejected">0</span> Rejected</span>
+        <span class="pstat pstat-total">📄 <span id="psCountTotal">0</span> Total</span>
       </div>
       <div class="user-tabs">
-        <button class="utab active" data-ptab="pending">Pending <span class="utab-badge" id="pendingPostCount">0</span></button>
-        <button class="utab" data-ptab="approved">Approved</button>
-        <button class="utab" data-ptab="rejected">Rejected</button>
-        <button class="utab" data-ptab="all">All</button>
+        <button class="post-tab utab active" data-ptab="pending">Pending <span class="utab-badge" id="pendingPostCount">0</span></button>
+        <button class="post-tab utab" data-ptab="approved">Approved</button>
+        <button class="post-tab utab" data-ptab="rejected">Rejected</button>
+        <button class="post-tab utab" data-ptab="all">All</button>
       </div>
       <div id="postsList" class="posts-list">
         <p class="empty-msg">No posts yet.</p>
@@ -686,6 +730,54 @@ match /community_posts/{d} {
 }</pre>
           <a href="https://console.firebase.google.com/" target="_blank" class="btn-sm" style="display:inline-block;margin-top:12px;text-decoration:none">Open Firebase Console →</a>
         </div>
+      </div>
+    </div>
+
+    <!-- ══ ABOUT US ══ -->
+    <div class="page" id="page-about">
+      <div class="page-hd">
+        <div>
+          <h1>About Us</h1>
+          <div class="page-sub">Public info shown on ERI-FAM &amp; Eritrean Info — fill in once, it updates both apps automatically.</div>
+        </div>
+        <button class="btn-primary" id="saveAboutBtn">💾 Save Changes</button>
+      </div>
+      <div class="settings-grid">
+
+        <div class="card" style="grid-column:1/-1">
+          <h3>🎨 Brand / Identity</h3>
+          <div class="form-row2">
+            <div class="form-group"><label>Brand / App Name</label><input type="text" id="aboutName" class="form-input" placeholder="ERI-FAM" maxlength="80"/></div>
+            <div class="form-group"><label>Logo / Profile Photo URL <span style="color:var(--text-dim);font-weight:400">(optional)</span></label><input type="url" id="aboutLogo" class="form-input" placeholder="https://…"/></div>
+          </div>
+          <div class="form-group"><label>Description / Bio</label><textarea id="aboutDesc" class="form-textarea" rows="3" maxlength="500" placeholder="A short description about you or your app that people will see in the About section…"></textarea></div>
+        </div>
+
+        <div class="card">
+          <h3>📬 Contact Info</h3>
+          <div class="form-group"><label>Email</label><input type="email" id="aboutEmail" class="form-input" placeholder="contact@example.com"/></div>
+          <div class="form-group"><label>Phone / WhatsApp</label><input type="tel" id="aboutPhone" class="form-input" placeholder="+1 555 000 0000"/></div>
+          <div class="form-group"><label>Website</label><input type="url" id="aboutWebsite" class="form-input" placeholder="https://yoursite.com"/></div>
+        </div>
+
+        <div class="card">
+          <h3>📱 Social Media</h3>
+          <div class="form-group"><label>Instagram</label><input type="text" id="aboutInstagram" class="form-input" placeholder="@yourhandle or full URL"/></div>
+          <div class="form-group"><label>TikTok</label><input type="text" id="aboutTiktok" class="form-input" placeholder="@yourhandle or full URL"/></div>
+          <div class="form-group"><label>YouTube</label><input type="text" id="aboutYoutube" class="form-input" placeholder="Channel URL or @handle"/></div>
+          <div class="form-group"><label>Facebook</label><input type="text" id="aboutFacebook" class="form-input" placeholder="Page name or URL"/></div>
+          <div class="form-group"><label>Twitter / X</label><input type="text" id="aboutTwitter" class="form-input" placeholder="@yourhandle or full URL"/></div>
+          <div class="form-group"><label>Telegram</label><input type="text" id="aboutTelegram" class="form-input" placeholder="@username or t.me/…"/></div>
+        </div>
+
+        <div class="card" style="grid-column:1/-1">
+          <h3>👁 Live Preview</h3>
+          <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:16px">Roughly how the About section looks in the apps. Saves automatically when you click Save Changes.</p>
+          <div id="aboutPreview" class="about-preview-box">
+            <p style="color:var(--text-mute);font-size:.82rem">Fill in the fields above and click Save to see a preview.</p>
+          </div>
+        </div>
+
       </div>
     </div>
 

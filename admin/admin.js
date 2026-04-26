@@ -257,6 +257,7 @@ function showPage(name) {
   if (name === 'settings')    loadSettings();
   if (name === 'feedback')    loadFeedback();
   if (name === 'posts')       loadPosts();
+  if (name === 'about')       loadAbout();
 }
 
 // Sidebar toggle
@@ -601,9 +602,9 @@ document.getElementById('inviteModalCancel').addEventListener('click', () => doc
 document.getElementById('inviteModalSave').addEventListener('click',   doInviteUser);
 document.getElementById('inviteModal').addEventListener('click', e => { if (e.target === document.getElementById('inviteModal')) document.getElementById('inviteModal').hidden = true; });
 
-document.querySelectorAll('.utab').forEach(btn => {
+document.querySelectorAll('.user-tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.utab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.user-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeUserTab = btn.dataset.utab;
     renderUsers(allUsers, activeUserTab);
@@ -630,6 +631,15 @@ async function loadUsers() {
 }
 
 function renderUsers(users, tab) {
+  // Update stats bar
+  const bar = document.getElementById('userStatsBar');
+  if (bar && users.length) {
+    bar.style.display = 'flex';
+    document.getElementById('uStatTotal').textContent    = users.length;
+    document.getElementById('uStatApproved').textContent = users.filter(u => u.status === 'approved').length;
+    document.getElementById('uStatPending').textContent  = users.filter(u => u.status === 'pending').length;
+    document.getElementById('uStatRejected').textContent = users.filter(u => u.status === 'rejected').length;
+  }
   const filtered = tab === 'all' ? users : users.filter(u => u.status === tab);
   const list = document.getElementById('userList');
   if (!filtered.length) { list.innerHTML = '<p class="empty-msg">No users in this category.</p>'; return; }
@@ -642,6 +652,9 @@ function renderUsers(users, tab) {
          <button class="btn-reject"  onclick="rejectUser('${u.id}')">✕ Reject</button>`
       : u.status === 'approved' && !isSelf && !isSuper
       ? `<button class="btn-remove" onclick="removeUser('${u.id}')">Remove</button>`
+      : u.status === 'rejected'
+      ? `<button class="btn-approve" onclick="approveUser('${u.id}')">↩ Re-approve</button>
+         <button class="btn-sm" style="font-size:.72rem" onclick="moveToPending('${u.id}')">⏳ Move to Pending</button>`
       : '';
     const roleSelect = !isSuper && !isSelf && u.status === 'approved'
       ? `<select class="user-role-select" onchange="updateRole('${u.id}',this.value)">
@@ -650,18 +663,25 @@ function renderUsers(users, tab) {
            <option value="admin"   ${u.role==='admin'  ?'selected':''}>Admin</option>
          </select>`
       : '';
+    const joined = u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString() : '';
     return `
       <div class="user-row">
         <div class="user-ava">${initial}</div>
         <div class="user-info">
           <div class="user-name">${esc(u.name||u.email||'Unknown')}${isSelf?' <span style="font-size:.7rem;color:var(--text-mute)">(you)</span>':''}</div>
-          <div class="user-email">${esc(u.email||'')}</div>
+          <div class="user-email copy-on-click" title="Click to copy email" data-copy="${esc(u.email||'')}">${esc(u.email||'')}${joined ? ` <span style="color:var(--text-mute);font-size:.7rem">· joined ${joined}</span>` : ''}</div>
         </div>
         ${roleSelect}
         <span class="user-badge badge-${u.status}">${u.status}</span>
         <div class="user-actions">${actions}</div>
       </div>`;
   }).join('');
+  // Wire up copy-on-click for emails
+  list.querySelectorAll('.copy-on-click').forEach(el => {
+    el.addEventListener('click', () => {
+      navigator.clipboard.writeText(el.dataset.copy || '').then(() => toast('📋 Email copied!', 'success'));
+    });
+  });
 }
 
 window.approveUser = async function(uid) {
@@ -684,6 +704,13 @@ window.removeUser = async function(uid) {
   try {
     await fb.updateDoc(fb.doc(_db, 'hub_users', uid), { status: 'rejected' });
     toast('User removed.', 'warn');
+    loadUsers();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+window.moveToPending = async function(uid) {
+  try {
+    await fb.updateDoc(fb.doc(_db, 'hub_users', uid), { status: 'pending', approvedAt: null });
+    toast('User moved back to pending.', 'success');
     loadUsers();
   } catch(e) { toast('Error: ' + e.message, 'error'); }
 };
@@ -729,6 +756,8 @@ const musicDropZone    = document.getElementById('musicDropZone');
 const musicFileInput   = document.getElementById('musicFileInput');
 const musicFolderInput = document.getElementById('musicFolderInput');
 let allTracks = [];
+let _musicArtistFilter = '';
+let _musicAlbumFilter  = '';
 
 musicDropZone.addEventListener('click', e => { if (!e.target.closest('.link-btn')) musicFileInput.click(); });
 musicDropZone.addEventListener('dragover',  e => { e.preventDefault(); musicDropZone.classList.add('drag-active'); });
@@ -749,14 +778,67 @@ function getFilteredSortedTracks() {
         (t.artist||'').toLowerCase().includes(q) ||
         (t.album||'').toLowerCase().includes(q))
     : [...allTracks];
+  if (_musicArtistFilter) tracks = tracks.filter(t => (t.artist || '') === _musicArtistFilter);
+  if (_musicAlbumFilter)  tracks = tracks.filter(t => (t.album  || '') === _musicAlbumFilter);
   if (sort === 'title')  tracks.sort((a,b) => (a.title||'').localeCompare(b.title||''));
   if (sort === 'artist') tracks.sort((a,b) => (a.artist||'').localeCompare(b.artist||''));
   if (sort === 'oldest') tracks.sort((a,b) => (a.addedAt?.toMillis?.()??0) - (b.addedAt?.toMillis?.()??0));
   return tracks;
 }
 
-document.addEventListener('input',  e => { if (e.target.id === 'musicSearch') renderMusicTracks(getFilteredSortedTracks()); });
-document.addEventListener('change', e => { if (e.target.id === 'musicSort')   renderMusicTracks(getFilteredSortedTracks()); });
+function _populateAdminMusicFilters() {
+  const artists = [...new Set(allTracks.map(t => t.artist || '').filter(Boolean))].sort();
+  const albums  = [...new Set(allTracks.map(t => t.album  || '').filter(Boolean))].sort();
+  const aSelect = document.getElementById('musicArtistFilter');
+  const bSelect = document.getElementById('musicAlbumFilter');
+  if (!aSelect || !bSelect) return;
+  aSelect.innerHTML = '<option value="">All Artists</option>' +
+    artists.map(a => `<option value="${esc(a)}"${_musicArtistFilter === a ? ' selected' : ''}>${esc(a)}</option>`).join('');
+  bSelect.innerHTML = '<option value="">All Albums</option>' +
+    albums.map(a  => `<option value="${esc(a)}"${_musicAlbumFilter  === a ? ' selected' : ''}>${esc(a)}</option>`).join('');
+}
+
+function _updateMusicDeleteFilteredBtn() {
+  const btn = document.getElementById('musicDeleteFilteredBtn');
+  const cnt = document.getElementById('musicFilterCount');
+  if (!btn) return;
+  const active   = _musicArtistFilter || _musicAlbumFilter;
+  const filtered = getFilteredSortedTracks();
+  if (cnt) cnt.textContent = active ? `${filtered.length} track${filtered.length !== 1 ? 's' : ''} shown` : '';
+  btn.style.display = (active && filtered.length > 0) ? '' : 'none';
+  if (active) btn.textContent = `🗑 Delete Filtered (${filtered.length})`;
+}
+
+document.getElementById('musicArtistFilter').addEventListener('change', function() {
+  _musicArtistFilter = this.value;
+  renderMusicTracks(getFilteredSortedTracks());
+  _updateMusicDeleteFilteredBtn();
+});
+document.getElementById('musicAlbumFilter').addEventListener('change', function() {
+  _musicAlbumFilter = this.value;
+  renderMusicTracks(getFilteredSortedTracks());
+  _updateMusicDeleteFilteredBtn();
+});
+document.getElementById('musicDeleteFilteredBtn').addEventListener('click', async () => {
+  const toDelete = getFilteredSortedTracks();
+  if (!toDelete.length) return;
+  const filterDesc = [
+    _musicArtistFilter ? `artist: "${_musicArtistFilter}"` : '',
+    _musicAlbumFilter  ? `album: "${_musicAlbumFilter}"`   : '',
+  ].filter(Boolean).join(', ');
+  if (!confirm(`Delete ${toDelete.length} track${toDelete.length !== 1 ? 's' : ''} (${filterDesc})? This cannot be undone.`)) return;
+  try {
+    await Promise.all(toDelete.map(t => fb.deleteDoc(fb.doc(_db, 'tracks', t.id))));
+    toast(`🗑 Deleted ${toDelete.length} track${toDelete.length !== 1 ? 's' : ''}`, 'warn');
+    logActivity(`Bulk deleted ${toDelete.length} cloud track(s) (${filterDesc})`);
+    _musicArtistFilter = '';
+    _musicAlbumFilter  = '';
+    loadMusic();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+});
+
+document.addEventListener('input',  e => { if (e.target.id === 'musicSearch') { renderMusicTracks(getFilteredSortedTracks()); _updateMusicDeleteFilteredBtn(); } });
+document.addEventListener('change', e => { if (e.target.id === 'musicSort')   { renderMusicTracks(getFilteredSortedTracks()); _updateMusicDeleteFilteredBtn(); } });
 
 async function loadMusic() {
   const list = document.getElementById('musicTrackList');
@@ -765,7 +847,11 @@ async function loadMusic() {
     const snap = await fb.getDocs(fb.query(fb.collection(_db, 'tracks'), fb.orderBy('addedAt', 'desc')));
     allTracks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     document.getElementById('musicCount').textContent = allTracks.length + ' track' + (allTracks.length !== 1 ? 's' : '');
-    renderMusicTracks();
+    const filterBar = document.getElementById('musicFilterBar');
+    if (filterBar) filterBar.style.display = allTracks.length ? 'flex' : 'none';
+    _populateAdminMusicFilters();
+    _updateMusicDeleteFilteredBtn();
+    renderMusicTracks(getFilteredSortedTracks());
   } catch(e) {
     list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`;
   }
@@ -1623,7 +1709,7 @@ async function loadAnalytics() {
       fb.getDocs(fb.collection(_db, 'hub_users')),
       fb.getDocs(fb.query(fb.collection(_db, 'tracks'), fb.orderBy('plays', 'desc'), fb.limit(10))),
       fb.getDocs(fb.collection(_db, 'hub_promotions')),
-      fb.getDocs(fb.query(fb.collection(_db, 'hub_activity'), fb.orderBy('ts', 'desc'), fb.limit(10))),
+      fb.getDocs(fb.query(fb.collection(_db, 'hub_activity'), fb.orderBy('createdAt', 'desc'), fb.limit(10))),
       fb.getDocs(fb.collection(_db, 'app_sessions')).catch(() => ({ docs: [] })),
     ]);
 
@@ -1681,7 +1767,7 @@ async function loadAnalytics() {
     if (!acts.length) { actEl.innerHTML = '<p class="empty-msg">No activity logged yet.</p>'; }
     else {
       actEl.innerHTML = acts.map(a => {
-        const time = a.ts?.toDate ? timeAgo(a.ts.toDate()) : '';
+        const time = a.createdAt?.toDate ? timeAgo(a.createdAt.toDate()) : '';
         return `<div class="activity-item"><div class="act-dot"></div><div><div class="act-text">${esc(a.text)}</div><div class="act-time">${time}</div></div></div>`;
       }).join('');
     }
@@ -1734,15 +1820,34 @@ let activePostTab = 'pending';
 
 document.getElementById('addPostBtn').addEventListener('click', () => openPostModal());
 
+document.getElementById('approveAllPostsBtn')?.addEventListener('click', async () => {
+  const pending = allPosts.filter(p => p.status === 'pending');
+  if (!pending.length) { toast('No pending posts to approve.', 'warn'); return; }
+  if (!confirm(`Approve all ${pending.length} pending post${pending.length > 1 ? 's' : ''}?`)) return;
+  try {
+    await Promise.all(pending.map(p =>
+      fb.updateDoc(fb.doc(_db, 'community_posts', p.id), {
+        status: 'approved',
+        approvedAt: fb.serverTimestamp(),
+        approvedBy: currentUser.uid,
+      })
+    ));
+    toast(`✅ Approved ${pending.length} post${pending.length > 1 ? 's' : ''}!`, 'success');
+    logActivity(`Bulk approved ${pending.length} community post(s)`);
+    loadPosts();
+    loadPostsBadge();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+});
+
 const postModal = document.getElementById('postModal');
 document.getElementById('postModalClose').addEventListener('click',  () => { postModal.hidden = true; });
 document.getElementById('postModalCancel').addEventListener('click', () => { postModal.hidden = true; });
 document.getElementById('postModalSave').addEventListener('click',   savePost);
 postModal.addEventListener('click', e => { if (e.target === postModal) postModal.hidden = true; });
 
-document.querySelectorAll('.utab[data-ptab]').forEach(btn => {
+document.querySelectorAll('.post-tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.utab[data-ptab]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.post-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activePostTab = btn.dataset.ptab;
     renderPosts();
@@ -1804,10 +1909,23 @@ async function loadPosts() {
 
 function updatePostsBadge() {
   const pending  = allPosts.filter(p => p.status === 'pending').length;
+  const approved = allPosts.filter(p => p.status === 'approved').length;
+  const rejected = allPosts.filter(p => p.status === 'rejected').length;
   const badge    = document.getElementById('postsBadge');
   const tabCount = document.getElementById('pendingPostCount');
   if (badge)    { badge.textContent = pending; badge.hidden = pending === 0; }
   if (tabCount) tabCount.textContent = pending;
+  // Stats bar
+  const bar = document.getElementById('postsStatsBar');
+  if (bar && allPosts.length > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('psCountPending').textContent  = pending;
+    document.getElementById('psCountApproved').textContent = approved;
+    document.getElementById('psCountRejected').textContent = rejected;
+    document.getElementById('psCountTotal').textContent    = allPosts.length;
+  } else if (bar) {
+    bar.style.display = 'none';
+  }
 }
 
 function renderPosts() {
@@ -1846,8 +1964,15 @@ function renderPosts() {
             </div>
           </div>
           <div class="post-card-actions">
-            ${p.status !== 'approved' ? `<button class="btn-sm" style="background:rgba(16,185,129,.18);color:#10b981;border-color:rgba(16,185,129,.3)" onclick="approvePost('${p.id}')">✓ Approve</button>` : ''}
-            ${p.status === 'pending'  ? `<button class="btn-sm" style="background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25)" onclick="rejectPost('${p.id}')">✗ Reject</button>` : ''}
+            ${p.status === 'pending'
+              ? `<button class="btn-sm" style="background:rgba(16,185,129,.18);color:#10b981;border-color:rgba(16,185,129,.3)" onclick="approvePost('${p.id}')">✓ Approve</button>
+                 <button class="btn-sm" style="background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25)" onclick="rejectPost('${p.id}')">✗ Reject</button>`
+              : p.status === 'approved'
+              ? `<button class="btn-sm" style="background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25)" onclick="rejectPost('${p.id}')">↩ Unapprove</button>`
+              : p.status === 'rejected'
+              ? `<button class="btn-sm" style="background:rgba(16,185,129,.18);color:#10b981;border-color:rgba(16,185,129,.3)" onclick="approvePost('${p.id}')">↩ Re-approve</button>
+                 <button class="btn-sm" style="font-size:.72rem" onclick="pendingPost('${p.id}')">⏳ Pending</button>`
+              : ''}
             <button class="btn-sm" onclick="openPostModal('${p.id}')">✏ Edit</button>
             <button class="btn-sm" style="background:rgba(239,68,68,.1);color:#ef4444" onclick="deletePost('${p.id}')">🗑</button>
           </div>
@@ -1915,6 +2040,18 @@ async function savePost() {
   btn.textContent = 'Publish Post'; btn.disabled = false;
 }
 
+window.pendingPost = async function(id) {
+  try {
+    await fb.updateDoc(fb.doc(_db, 'community_posts', id), {
+      status: 'pending',
+      rejectedAt: null,
+    });
+    toast('Post moved back to pending.', 'success');
+    loadPosts();
+    loadPostsBadge();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
 window.approvePost = async function(id) {
   try {
     await fb.updateDoc(fb.doc(_db, 'community_posts', id), {
@@ -1952,6 +2089,193 @@ window.deletePost = async function(id) {
     loadPostsBadge();
   } catch(e) { toast('Error: ' + e.message, 'error'); }
 };
+
+// ── GLOBAL SEARCH (Ctrl+K) ────────────────────────────────
+(function initGlobalSearch() {
+  const overlay = document.getElementById('gsearchOverlay');
+  const input   = document.getElementById('gsearchInput');
+  const results = document.getElementById('gsearchResults');
+  if (!overlay || !input || !results) return;
+
+  function openSearch() { overlay.hidden = false; input.value = ''; results.innerHTML = ''; setTimeout(() => input.focus(), 50); }
+  function closeSearch() { overlay.hidden = true; }
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+    if (e.key === 'Escape' && !overlay.hidden) closeSearch();
+  });
+  document.getElementById('mobSearchBtn')?.addEventListener('click', openSearch);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeSearch(); });
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { results.innerHTML = '<p class="gsearch-hint">Start typing to search across users, tracks, apps, and posts…</p>'; return; }
+    const hits = [];
+    allUsers.filter(u => (u.name||u.email||'').toLowerCase().includes(q)).slice(0,4).forEach(u =>
+      hits.push({ icon:'👤', label: u.name||u.email, sub: u.email, action: () => { closeSearch(); showPage('users'); } })
+    );
+    allApps.filter(a => (a.name||a.url||'').toLowerCase().includes(q)).slice(0,4).forEach(a =>
+      hits.push({ icon:'📱', label: a.name, sub: a.url, action: () => { closeSearch(); showPage('apps'); } })
+    );
+    allTracks.filter(t => (t.title||t.artist||t.album||'').toLowerCase().includes(q)).slice(0,4).forEach(t =>
+      hits.push({ icon:'🎵', label: t.title||'Untitled', sub: `${t.artist||''} ${t.album ? '— '+t.album : ''}`.trim(), action: () => { closeSearch(); showPage('music'); } })
+    );
+    allPosts.filter(p => (p.title||p.body||'').toLowerCase().includes(q)).slice(0,3).forEach(p =>
+      hits.push({ icon:'📄', label: p.title||'(no title)', sub: `${p.status} · ${p.authorName||''}`, action: () => { closeSearch(); showPage('posts'); } })
+    );
+    allPromos.filter(p => (p.title||'').toLowerCase().includes(q)).slice(0,2).forEach(p =>
+      hits.push({ icon:'🎯', label: p.title, sub: `${p.type} · ${p.status}`, action: () => { closeSearch(); showPage('promotions'); } })
+    );
+    if (!hits.length) { results.innerHTML = '<p class="gsearch-hint">No results found.</p>'; return; }
+    results.innerHTML = hits.map((h, i) =>
+      `<button class="gsearch-item" data-idx="${i}">${h.icon} <span class="gsearch-item-label">${esc(h.label)}</span><span class="gsearch-item-sub">${esc(h.sub||'')}</span></button>`
+    ).join('');
+    results.querySelectorAll('.gsearch-item').forEach((btn, i) => btn.addEventListener('click', hits[i].action));
+  });
+
+  // Keyboard navigation in results
+  input.addEventListener('keydown', e => {
+    const items = [...results.querySelectorAll('.gsearch-item')];
+    const active = results.querySelector('.gsearch-item.focused');
+    const idx = active ? items.indexOf(active) : -1;
+    if (e.key === 'ArrowDown') { e.preventDefault(); const next = items[(idx + 1) % items.length]; active?.classList.remove('focused'); next?.classList.add('focused'); next?.scrollIntoView({ block:'nearest' }); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); const prev = items[(idx - 1 + items.length) % items.length]; active?.classList.remove('focused'); prev?.classList.add('focused'); prev?.scrollIntoView({ block:'nearest' }); }
+    if (e.key === 'Enter' && active) active.click();
+  });
+})();
+
+// ── CSV EXPORT ────────────────────────────────────────────
+function _downloadCSV(rows, filename) {
+  const csv  = rows.map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a    = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: filename });
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+document.getElementById('exportUsersBtn').addEventListener('click', () => {
+  if (!allUsers.length) { toast('No users loaded yet. Open the Users page first.', 'warn'); return; }
+  const rows = [['Name','Email','Role','Status','Joined']];
+  allUsers.forEach(u => rows.push([
+    u.name || '', u.email || '', u.role || '', u.status || '',
+    u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString() : ''
+  ]));
+  _downloadCSV(rows, `hub-users-${new Date().toISOString().slice(0,10)}.csv`);
+  toast('📥 Users CSV downloaded!', 'success');
+});
+
+document.getElementById('exportTracksBtn').addEventListener('click', () => {
+  if (!allTracks.length) { toast('No tracks loaded yet. Open the Music page first.', 'warn'); return; }
+  const rows = [['Title','Artist','Album','Duration','Plays','Added']];
+  allTracks.forEach(t => rows.push([
+    t.title || '', t.artist || '', t.album || '',
+    t.duration ? new Date(t.duration * 1000).toISOString().substr(11, 8).replace(/^0+:?/, '') : '',
+    t.plays || 0,
+    t.addedAt?.toDate ? t.addedAt.toDate().toLocaleDateString() : ''
+  ]));
+  _downloadCSV(rows, `hub-tracks-${new Date().toISOString().slice(0,10)}.csv`);
+  toast('📥 Tracks CSV downloaded!', 'success');
+});
+
+// ── ABOUT US ──────────────────────────────────────────────
+document.getElementById('saveAboutBtn').addEventListener('click', saveAbout);
+
+async function loadAbout() {
+  try {
+    const snap = await fb.getDoc(fb.doc(_db, 'hub_settings', 'about'));
+    if (!snap.exists()) return;
+    const d = snap.data();
+    document.getElementById('aboutName').value      = d.name        || '';
+    document.getElementById('aboutLogo').value      = d.logo        || '';
+    document.getElementById('aboutDesc').value      = d.description || '';
+    document.getElementById('aboutEmail').value     = d.email       || '';
+    document.getElementById('aboutPhone').value     = d.phone       || '';
+    document.getElementById('aboutWebsite').value   = d.website     || '';
+    document.getElementById('aboutInstagram').value = d.socials?.instagram || '';
+    document.getElementById('aboutTiktok').value    = d.socials?.tiktok    || '';
+    document.getElementById('aboutYoutube').value   = d.socials?.youtube   || '';
+    document.getElementById('aboutFacebook').value  = d.socials?.facebook  || '';
+    document.getElementById('aboutTwitter').value   = d.socials?.twitter   || '';
+    document.getElementById('aboutTelegram').value  = d.socials?.telegram  || '';
+    _renderAboutPreview(d);
+  } catch(e) { console.warn('[About]', e); }
+}
+
+async function saveAbout() {
+  const btn = document.getElementById('saveAboutBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const data = {
+    name:        document.getElementById('aboutName').value.trim(),
+    logo:        document.getElementById('aboutLogo').value.trim(),
+    description: document.getElementById('aboutDesc').value.trim(),
+    email:       document.getElementById('aboutEmail').value.trim(),
+    phone:       document.getElementById('aboutPhone').value.trim(),
+    website:     document.getElementById('aboutWebsite').value.trim(),
+    socials: {
+      instagram: document.getElementById('aboutInstagram').value.trim(),
+      tiktok:    document.getElementById('aboutTiktok').value.trim(),
+      youtube:   document.getElementById('aboutYoutube').value.trim(),
+      facebook:  document.getElementById('aboutFacebook').value.trim(),
+      twitter:   document.getElementById('aboutTwitter').value.trim(),
+      telegram:  document.getElementById('aboutTelegram').value.trim(),
+    },
+    updatedAt: fb.serverTimestamp(),
+  };
+  try {
+    await fb.setDoc(fb.doc(_db, 'hub_settings', 'about'), data, { merge: true });
+    toast('✅ About Us saved! Both apps will now show this info.', 'success');
+    logActivity('About Us page updated');
+    _renderAboutPreview(data);
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = '💾 Save Changes'; btn.disabled = false;
+}
+
+function _toSocialUrl(handle, domain) {
+  if (!handle) return '#';
+  if (handle.startsWith('http')) return handle;
+  return `https://${domain}/${handle.replace(/^@/, '')}`;
+}
+
+function _renderAboutPreview(d) {
+  const el = document.getElementById('aboutPreview');
+  if (!el) return;
+  const s = d.socials || {};
+  const socialDefs = [
+    [s.instagram, '📸', 'Instagram', 'instagram.com'],
+    [s.tiktok,    '🎵', 'TikTok',    'tiktok.com'],
+    [s.youtube,   '▶️', 'YouTube',   'youtube.com'],
+    [s.facebook,  '👥', 'Facebook',  'facebook.com'],
+    [s.twitter,   '🐦', 'Twitter/X', 'x.com'],
+    [s.telegram,  '✈️', 'Telegram',  't.me'],
+  ].filter(([h]) => h);
+  const socialHTML = socialDefs.map(([h, ico, label, domain]) =>
+    `<a href="${esc(_toSocialUrl(h, domain))}" target="_blank" class="about-prev-social">${ico} ${label}</a>`
+  ).join('');
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:18px;margin-bottom:18px;flex-wrap:wrap">
+      ${d.logo
+        ? `<img src="${esc(d.logo)}" alt="logo" style="width:72px;height:72px;border-radius:18px;object-fit:cover;border:2px solid var(--border2)"/>`
+        : `<div style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:2rem">🎵</div>`}
+      <div>
+        <div style="font-weight:800;font-size:1.15rem">${esc(d.name || 'ERI-FAM')}</div>
+        ${d.description ? `<div style="font-size:.84rem;color:var(--text-dim);margin-top:5px;max-width:400px;line-height:1.6">${esc(d.description)}</div>` : ''}
+      </div>
+    </div>
+    ${(d.email || d.phone || d.website) ? `<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+      ${d.email   ? `<a href="mailto:${esc(d.email)}"   style="font-size:.82rem;color:var(--accent)">✉️ ${esc(d.email)}</a>` : ''}
+      ${d.phone   ? `<a href="tel:${esc(d.phone)}"      style="font-size:.82rem;color:var(--accent)">📞 ${esc(d.phone)}</a>` : ''}
+      ${d.website ? `<a href="${esc(d.website)}" target="_blank" style="font-size:.82rem;color:var(--accent)">🌐 Website</a>` : ''}
+    </div>` : ''}
+    ${socialHTML ? `<div style="display:flex;gap:8px;flex-wrap:wrap">${socialHTML}</div>` : ''}`;
+}
+
+// ── ESCAPE KEY — close any open modal ─────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  ['appModal','trackModal','promoModal','playlistModal','postModal'].forEach(id => {
+    const m = document.getElementById(id);
+    if (m && !m.hidden) m.hidden = true;
+  });
+});
 
 // ── BOOT ──────────────────────────────────────────────────
 bootAuth();
