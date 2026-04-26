@@ -114,6 +114,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         <span>Feedback <span class="sb-badge" id="feedbackBadge" hidden>0</span></span>
       </button>
+      <button class="sb-item" data-page="posts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Posts <span class="sb-badge" id="postsBadge" hidden>0</span></span>
+      </button>
       <button class="sb-item" data-page="promotions">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 15 21 19 17 19"/><path d="M21 19 3 5"/><polyline points="3 9 3 5 7 5"/><path d="M3 5l18 14"/></svg>
         <span>Promotions</span>
@@ -578,6 +582,26 @@
       </div>
     </div>
 
+    <!-- ══ POSTS ══ -->
+    <div class="page" id="page-posts">
+      <div class="page-hd">
+        <div>
+          <h1>Community Posts</h1>
+          <p class="page-sub">Review submissions and publish content to ERI-FAM</p>
+        </div>
+        <button class="btn-primary" id="addPostBtn">+ New Post</button>
+      </div>
+      <div class="user-tabs">
+        <button class="utab active" data-ptab="pending">Pending <span class="utab-badge" id="pendingPostCount">0</span></button>
+        <button class="utab" data-ptab="approved">Approved</button>
+        <button class="utab" data-ptab="rejected">Rejected</button>
+        <button class="utab" data-ptab="all">All</button>
+      </div>
+      <div id="postsList" class="posts-list">
+        <p class="empty-msg">No posts yet.</p>
+      </div>
+    </div>
+
     <!-- ══ SETTINGS ══ -->
     <div class="page" id="page-settings">
       <div class="page-hd"><h1>Hub Settings</h1></div>
@@ -651,6 +675,14 @@
 }
 match /hub_activity/{d} {
   allow read, write: if request.auth != null;
+}
+match /app_sessions/{d} {
+  allow read, write: if true;
+}
+match /community_posts/{d} {
+  allow read: if true;
+  allow create: if true;
+  allow update, delete: if request.auth != null;
 }</pre>
           <a href="https://console.firebase.google.com/" target="_blank" class="btn-sm" style="display:inline-block;margin-top:12px;text-decoration:none">Open Firebase Console →</a>
         </div>
@@ -857,6 +889,45 @@ match /hub_activity/{d} {
     <div class="modal-actions">
       <button class="btn-secondary" id="playlistModalCancel">Cancel</button>
       <button class="btn-primary" id="playlistModalSave">Save Playlist</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Post -->
+<div class="modal-overlay" id="postModal" hidden>
+  <div class="modal" style="max-width:580px">
+    <div class="modal-hd">
+      <h3 id="postModalTitle">New Post</h3>
+      <button class="modal-x" id="postModalClose">✕</button>
+    </div>
+    <input type="hidden" id="postModalId"/>
+    <div class="form-group"><label>Title *</label><input type="text" id="postMTitle" class="form-input" placeholder="Post title…" maxlength="120"/></div>
+    <div class="form-group"><label>Content *</label><textarea id="postMBody" class="form-textarea" rows="5" placeholder="Write your post content here…" maxlength="2000"></textarea></div>
+    <div class="form-group">
+      <label>Image <span style="color:var(--text-dim);font-weight:400">(optional)</span></label>
+      <div style="display:flex;gap:8px">
+        <input type="url" id="postMImageUrl" class="form-input" placeholder="Paste image URL or upload →"/>
+        <label class="btn-sm" for="postMImageFile" style="cursor:pointer;padding:7px 12px;white-space:nowrap;display:flex;align-items:center">📷 Upload</label>
+        <input type="file" id="postMImageFile" accept="image/*" hidden/>
+      </div>
+      <div id="postMImagePreview" style="margin-top:8px;display:none">
+        <img id="postMImagePreviewImg" src="" style="max-height:120px;border-radius:8px;object-fit:cover;border:1px solid var(--border)"/>
+        <span id="postMImageStatus" style="font-size:.75rem;color:var(--text-dim);margin-left:8px;vertical-align:middle"></span>
+      </div>
+    </div>
+    <div class="form-group"><label>Tags <span style="color:var(--text-dim);font-weight:400">(comma separated)</span></label><input type="text" id="postMTags" class="form-input" placeholder="music, eritrea, community"/></div>
+    <div class="form-group"><label>Author Name</label><input type="text" id="postMAuthor" class="form-input" placeholder="Admin"/></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="postMStatus" class="form-input">
+        <option value="approved">✅ Approved — Public now</option>
+        <option value="pending">⏳ Pending — Needs review</option>
+        <option value="rejected">❌ Rejected</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="postModalCancel">Cancel</button>
+      <button class="btn-primary"   id="postModalSave">Publish Post</button>
     </div>
   </div>
 </div>

@@ -2418,6 +2418,8 @@ function switchView(viewName) {
     if (activeLibTab === 'artists')   renderArtists();
     if (activeLibTab === 'albums')    renderAlbums();
   }
+  // Load community posts on first visit
+  if (viewName === 'community') loadCommunityPosts();
 }
 
 document.querySelectorAll('.sb-nav-item').forEach(btn => {
@@ -2982,4 +2984,125 @@ document.addEventListener('fullscreenchange', () => {
   const isFs = !!document.fullscreenElement;
   btn.title = isFs ? 'Exit Fullscreen' : 'Fullscreen';
   btn.querySelector('svg')?.setAttribute('data-fs', isFs ? '1' : '0');
+});
+
+// ── COMMUNITY POSTS ────────────────────────────────────────
+let _communityLoaded = false;
+
+async function loadCommunityPosts() {
+  if (_communityLoaded) return; // only fetch once per session
+  _communityLoaded = true;
+  const grid = document.getElementById('communityPostsGrid');
+  if (!grid) return;
+  try {
+    await FB_READY;
+    if (!db) { grid.innerHTML = '<p class="empty-msg">Connect to internet to view posts.</p>'; return; }
+    const { getDocs, collection, query, where, orderBy, limit } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const snap = await getDocs(query(collection(db._db, 'community_posts'), where('status','==','approved'), orderBy('approvedAt','desc'), limit(30)));
+    if (snap.empty) { grid.innerHTML = '<p class="empty-msg">No community posts yet. Be the first to share!</p>'; return; }
+    grid.innerHTML = snap.docs.map(d => {
+      const p    = d.data();
+      const date = p.approvedAt?.toDate ? p.approvedAt.toDate().toLocaleDateString() : '';
+      const tags = (p.tags || []).map(t => `<span class="community-tag">${escHtml(t)}</span>`).join('');
+      const img  = p.imageUrl ? `<img class="community-post-img" src="${escHtml(p.imageUrl)}" alt="" loading="lazy" onerror="this.style.display='none'"/>` : '';
+      return `
+        <div class="community-post-card">
+          ${img}
+          <div class="community-post-body">
+            <div class="community-post-title">${escHtml(p.title || '')}</div>
+            <div class="community-post-text">${escHtml(p.body || '')}</div>
+            <div class="community-post-foot">
+              <div>
+                <div class="community-post-author">— ${escHtml(p.authorName || 'Community')}</div>
+                <div class="community-post-date">${date}</div>
+              </div>
+              ${tags ? `<div class="community-post-tags">${tags}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    if (grid) grid.innerHTML = '<p class="empty-msg">Could not load posts. Try again later.</p>';
+  }
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Community submission modal
+const communityModal = document.getElementById('communityModal');
+document.getElementById('communitySubmitBtn')?.addEventListener('click', () => {
+  communityModal.style.display = 'flex';
+  document.getElementById('cmTitle')?.focus();
+});
+document.getElementById('communityModalCancel')?.addEventListener('click', () => { communityModal.style.display = 'none'; });
+communityModal?.addEventListener('click', e => { if (e.target === communityModal) communityModal.style.display = 'none'; });
+
+document.getElementById('communityModalSubmit')?.addEventListener('click', async () => {
+  const title = document.getElementById('cmTitle')?.value.trim() || '';
+  const body  = document.getElementById('cmBody')?.value.trim()  || '';
+  if (!title) { toast('Please enter a title.'); return; }
+  const btn = document.getElementById('communityModalSubmit');
+  btn.textContent = 'Submitting…'; btn.disabled = true;
+  try {
+    await FB_READY;
+    if (!db) throw new Error('No connection');
+    const { addDoc, collection, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const tags = (document.getElementById('cmTags')?.value || '').split(',').map(t => t.trim()).filter(Boolean);
+    await addDoc(collection(db._db, 'community_posts'), {
+      title,
+      body,
+      imageUrl:      document.getElementById('cmImageUrl')?.value.trim() || '',
+      tags,
+      authorName:    document.getElementById('cmName')?.value.trim() || 'Anonymous',
+      authorContact: '',
+      status:        'pending',
+      source:        'community',
+      submittedAt:   serverTimestamp(),
+      approvedAt:    null,
+    });
+    communityModal.style.display = 'none';
+    // Clear fields
+    ['cmName','cmTitle','cmBody','cmImageUrl','cmTags'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    toast('Post submitted! It will appear after admin review.');
+  } catch(e) {
+    toast('Failed to submit. Check your connection.');
+  }
+  btn.textContent = 'Submit for Review'; btn.disabled = false;
+});
+
+// ── PWA AUTO-UPDATE ────────────────────────────────────────
+let _waitingSW = null;
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      newSW?.addEventListener('statechange', () => {
+        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+          _waitingSW = newSW;
+          const banner = document.getElementById('updateBanner');
+          if (banner) banner.style.display = 'flex';
+        }
+      });
+    });
+    // Check if there's already a waiting SW on page load
+    if (reg.waiting && navigator.serviceWorker.controller) {
+      _waitingSW = reg.waiting;
+      const banner = document.getElementById('updateBanner');
+      if (banner) banner.style.display = 'flex';
+    }
+  });
+}
+
+document.getElementById('updateNowBtn')?.addEventListener('click', () => {
+  if (_waitingSW) {
+    _waitingSW.postMessage('SKIP_WAITING');
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+  }
+});
+document.getElementById('updateDismissBtn')?.addEventListener('click', () => {
+  const banner = document.getElementById('updateBanner');
+  if (banner) banner.style.display = 'none';
 });

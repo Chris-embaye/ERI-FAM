@@ -669,3 +669,19 @@ body.dark {
   --shadow:    0 4px 24px rgba(0,0,0,0.1);
 }
 body.dark .toast { background: #1e1e2e; color: #e2e8f0; }
+
+/* ── COMMUNITY POSTS ──────────────────────────────── */
+.posts-list { display: flex; flex-direction: column; gap: 10px; }
+.post-review-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px; transition: background .15s;
+}
+.post-review-card:hover { background: var(--card2); }
+.post-card-inner { display: flex; gap: 14px; align-items: flex-start; }
+.post-card-actions {
+  display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .post-card-inner { flex-wrap: wrap; }
+  .post-card-actions { flex-direction: row; flex-wrap: wrap; }
+}

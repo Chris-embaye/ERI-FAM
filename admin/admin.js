@@ -205,6 +205,7 @@ async function bootAuth() {
       setupUserDisplay();
       loadDashboard();
       loadPendingBadge();
+      loadPostsBadge();
     } catch(err) {
       console.error('[HUB] Auth state error:', err);
       showAuthError('loginError', 'Error: ' + err.message);
@@ -255,6 +256,7 @@ function showPage(name) {
   if (name === 'promotions')  loadPromotions();
   if (name === 'settings')    loadSettings();
   if (name === 'feedback')    loadFeedback();
+  if (name === 'posts')       loadPosts();
 }
 
 // Sidebar toggle
@@ -1724,6 +1726,231 @@ const _origShowPage = showPage;
 window.showPage = function(name) {
   _origShowPage(name);
   if (name === 'analytics') loadAnalytics();
+};
+
+// ── COMMUNITY POSTS ──────────────────────────────────────
+let allPosts = [];
+let activePostTab = 'pending';
+
+document.getElementById('addPostBtn').addEventListener('click', () => openPostModal());
+
+const postModal = document.getElementById('postModal');
+document.getElementById('postModalClose').addEventListener('click',  () => { postModal.hidden = true; });
+document.getElementById('postModalCancel').addEventListener('click', () => { postModal.hidden = true; });
+document.getElementById('postModalSave').addEventListener('click',   savePost);
+postModal.addEventListener('click', e => { if (e.target === postModal) postModal.hidden = true; });
+
+document.querySelectorAll('.utab[data-ptab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.utab[data-ptab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activePostTab = btn.dataset.ptab;
+    renderPosts();
+  });
+});
+
+document.getElementById('postMImageFile').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  const preview  = document.getElementById('postMImagePreview');
+  const img      = document.getElementById('postMImagePreviewImg');
+  const statusEl = document.getElementById('postMImageStatus');
+  preview.style.display = 'block';
+  statusEl.textContent  = 'Uploading…';
+  img.style.opacity     = '0.4';
+  try {
+    const url = await uploadToCloudinary(file);
+    document.getElementById('postMImageUrl').value = url;
+    img.src           = url;
+    img.style.opacity = '1';
+    statusEl.textContent = 'Uploaded!';
+    setTimeout(() => { statusEl.textContent = ''; }, 2000);
+  } catch(e) {
+    statusEl.textContent = 'Failed: ' + e.message;
+    img.style.opacity = '1';
+  }
+  this.value = '';
+});
+
+document.getElementById('postMImageUrl').addEventListener('input', function() {
+  const url = this.value.trim();
+  const preview = document.getElementById('postMImagePreview');
+  const img     = document.getElementById('postMImagePreviewImg');
+  if (url) { preview.style.display = 'block'; img.src = url; }
+  else      { preview.style.display = 'none';  img.src = ''; }
+});
+
+async function loadPostsBadge() {
+  try {
+    const snap  = await fb.getDocs(fb.query(fb.collection(_db, 'community_posts'), fb.where('status','==','pending')));
+    const count = snap.size;
+    const badge = document.getElementById('postsBadge');
+    if (badge) { badge.textContent = count; badge.hidden = count === 0; }
+  } catch(e) {}
+}
+
+async function loadPosts() {
+  document.getElementById('postsList').innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'community_posts'), fb.orderBy('submittedAt', 'desc')));
+    allPosts   = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updatePostsBadge();
+    renderPosts();
+  } catch(e) {
+    document.getElementById('postsList').innerHTML =
+      `<p class="empty-msg">Error loading posts: ${esc(e.message)}. Add Firestore rules for community_posts (see Settings → Rules Helper).</p>`;
+  }
+}
+
+function updatePostsBadge() {
+  const pending  = allPosts.filter(p => p.status === 'pending').length;
+  const badge    = document.getElementById('postsBadge');
+  const tabCount = document.getElementById('pendingPostCount');
+  if (badge)    { badge.textContent = pending; badge.hidden = pending === 0; }
+  if (tabCount) tabCount.textContent = pending;
+}
+
+function renderPosts() {
+  const list  = document.getElementById('postsList');
+  const posts = activePostTab === 'all' ? allPosts : allPosts.filter(p => p.status === activePostTab);
+  if (!posts.length) {
+    list.innerHTML = `<p class="empty-msg">No ${activePostTab === 'all' ? '' : activePostTab + ' '}posts yet.</p>`;
+    return;
+  }
+  const statusColors = { approved: '#10b981', pending: '#f59e0b', rejected: '#ef4444' };
+  const statusIco    = { approved: '✅', pending: '⏳', rejected: '❌' };
+  list.innerHTML = posts.map(p => {
+    const time     = p.submittedAt?.toDate ? timeAgo(p.submittedAt.toDate()) : '';
+    const tags     = (p.tags || []).map(t => `<span class="promo-cta-badge">${esc(t)}</span>`).join(' ');
+    const imgThumb = p.imageUrl
+      ? `<img src="${esc(p.imageUrl)}" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border)"/>`
+      : '';
+    const communityTag = p.source === 'community'
+      ? '<span class="promo-cta-badge" style="background:rgba(99,102,241,.15);color:#818cf8">community</span>'
+      : '';
+    const sc = statusColors[p.status] || '#888';
+    return `
+      <div class="post-review-card" style="border-left:3px solid ${sc}">
+        <div class="post-card-inner">
+          ${imgThumb}
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-weight:700;font-size:.95rem">${esc(p.title || '(no title)')}</span>
+              <span style="font-size:.73rem;padding:2px 8px;border-radius:20px;background:${sc}22;color:${sc}">${statusIco[p.status]||''} ${esc(p.status)}</span>
+              ${communityTag}
+            </div>
+            <div style="font-size:.82rem;color:var(--text-dim);margin-bottom:6px;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(p.body || '(no content)')}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              ${tags}
+              <span style="font-size:.72rem;color:var(--text-mute)">by ${esc(p.authorName || 'Anonymous')} · ${time}</span>
+            </div>
+          </div>
+          <div class="post-card-actions">
+            ${p.status !== 'approved' ? `<button class="btn-sm" style="background:rgba(16,185,129,.18);color:#10b981;border-color:rgba(16,185,129,.3)" onclick="approvePost('${p.id}')">✓ Approve</button>` : ''}
+            ${p.status === 'pending'  ? `<button class="btn-sm" style="background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.25)" onclick="rejectPost('${p.id}')">✗ Reject</button>` : ''}
+            <button class="btn-sm" onclick="openPostModal('${p.id}')">✏ Edit</button>
+            <button class="btn-sm" style="background:rgba(239,68,68,.1);color:#ef4444" onclick="deletePost('${p.id}')">🗑</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+window.openPostModal = function(id) {
+  const p = id ? allPosts.find(x => x.id === id) : null;
+  document.getElementById('postModalTitle').textContent = p ? 'Edit Post' : 'New Post';
+  document.getElementById('postModalId').value   = p?.id       || '';
+  document.getElementById('postMTitle').value    = p?.title    || '';
+  document.getElementById('postMBody').value     = p?.body     || '';
+  document.getElementById('postMImageUrl').value = p?.imageUrl || '';
+  document.getElementById('postMTags').value     = (p?.tags || []).join(', ');
+  document.getElementById('postMAuthor').value   = p?.authorName || 'Admin';
+  document.getElementById('postMStatus').value   = p?.status   || 'approved';
+  const preview = document.getElementById('postMImagePreview');
+  const img     = document.getElementById('postMImagePreviewImg');
+  if (p?.imageUrl) { preview.style.display = 'block'; img.src = p.imageUrl; }
+  else             { preview.style.display = 'none';  img.src = ''; }
+  document.getElementById('postMImageStatus').textContent = '';
+  postModal.hidden = false;
+  document.getElementById('postMTitle').focus();
+};
+
+function openPostModal(id) { window.openPostModal(id); }
+
+async function savePost() {
+  const id    = document.getElementById('postModalId').value;
+  const title = document.getElementById('postMTitle').value.trim();
+  const body  = document.getElementById('postMBody').value.trim();
+  if (!title) { toast('Title is required.', 'error'); return; }
+  const btn  = document.getElementById('postModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const tags   = document.getElementById('postMTags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const status = document.getElementById('postMStatus').value;
+  const data   = {
+    title, body,
+    imageUrl:      document.getElementById('postMImageUrl').value.trim(),
+    tags,
+    authorName:    document.getElementById('postMAuthor').value.trim() || 'Admin',
+    status,
+    updatedAt:     fb.serverTimestamp(),
+  };
+  try {
+    if (id) {
+      if (status === 'approved') data.approvedAt = fb.serverTimestamp();
+      await fb.updateDoc(fb.doc(_db, 'community_posts', id), data);
+      toast('Post updated!', 'success');
+    } else {
+      data.source         = 'admin';
+      data.submittedAt    = fb.serverTimestamp();
+      data.approvedAt     = status === 'approved' ? fb.serverTimestamp() : null;
+      data.authorContact  = '';
+      await fb.addDoc(fb.collection(_db, 'community_posts'), data);
+      logActivity(`Post "${title}" created`);
+      toast('Post published!', 'success');
+    }
+    postModal.hidden = true;
+    loadPosts();
+    loadPostsBadge();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Publish Post'; btn.disabled = false;
+}
+
+window.approvePost = async function(id) {
+  try {
+    await fb.updateDoc(fb.doc(_db, 'community_posts', id), {
+      status:     'approved',
+      approvedAt: fb.serverTimestamp(),
+      approvedBy: currentUser.uid,
+    });
+    toast('Post approved and published!', 'success');
+    logActivity('Community post approved');
+    loadPosts();
+    loadPostsBadge();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+window.rejectPost = async function(id) {
+  try {
+    await fb.updateDoc(fb.doc(_db, 'community_posts', id), {
+      status:     'rejected',
+      rejectedAt: fb.serverTimestamp(),
+    });
+    toast('Post rejected.', 'warn');
+    loadPosts();
+    loadPostsBadge();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+window.deletePost = async function(id) {
+  const p = allPosts.find(x => x.id === id);
+  if (!confirm(`Delete "${p?.title || 'this post'}"? This cannot be undone.`)) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'community_posts', id));
+    toast('Post deleted.', 'warn');
+    logActivity(`Post "${p?.title}" deleted`);
+    loadPosts();
+    loadPostsBadge();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
 };
 
 // ── BOOT ──────────────────────────────────────────────────
