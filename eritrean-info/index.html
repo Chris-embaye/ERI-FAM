@@ -1695,6 +1695,72 @@
     </div>
   </section>
 
+  <!-- ═══ MUSIC PHONE WIDGET ═══ -->
+  <div id="musicPhoneWidget">
+    <button id="musicPhoneTab" class="music-phone-tab" title="Open ERI-FAM Music App">
+      <span class="mpt-icon">🎵</span>
+      <span class="mpt-label">Music</span>
+    </button>
+    <div id="musicPhoneFrame" class="music-phone-frame" hidden>
+      <div class="mpf-shell">
+        <div class="mpf-notch"></div>
+        <div class="mpf-screen">
+          <div class="mpf-statusbar">
+            <span class="mpf-time" id="mpfTime">9:41</span>
+            <span class="mpf-status-icons">📶 🔋</span>
+          </div>
+          <div class="mpf-header">
+            <span class="mpf-close-btn" id="mpfClose" role="button" tabindex="0" title="Close">✕</span>
+            <span class="mpf-app-title">ERI-FAM Music</span>
+            <span class="mpf-logo">🇪🇷</span>
+          </div>
+
+          <!-- Now Playing -->
+          <div class="mpf-now-playing">
+            <div class="mpf-disc-wrap">
+              <div class="mpf-disc" id="mpfDisc">
+                <span id="mpfDiscEmoji">🎵</span>
+              </div>
+            </div>
+            <div class="mpf-track-info">
+              <div class="mpf-track-title" id="mpfTrackTitle">Select a song</div>
+              <div class="mpf-track-artist" id="mpfTrackArtist">ERI-FAM Music</div>
+            </div>
+            <div class="mpf-progress-wrap">
+              <div class="mpf-progress-bar" id="mpfProgressBar">
+                <div class="mpf-progress-fill" id="mpfProgressFill"></div>
+              </div>
+              <div class="mpf-time-row">
+                <span id="mpfCurrent">0:00</span>
+                <span id="mpfDuration">0:00</span>
+              </div>
+            </div>
+            <div class="mpf-controls">
+              <button class="mpf-ctrl-btn" id="mpfPrev" title="Previous">⏮</button>
+              <button class="mpf-ctrl-btn mpf-play-btn" id="mpfPlay" title="Play/Pause">▶</button>
+              <button class="mpf-ctrl-btn" id="mpfNext" title="Next">⏭</button>
+            </div>
+            <div class="mpf-viz" id="mpfViz">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <!-- Playlist -->
+          <div class="mpf-playlist-header">
+            <span>🎶 Playlist</span>
+            <span id="mpfTrackCount" class="mpf-track-count">Loading…</span>
+          </div>
+          <div class="mpf-playlist" id="mpfPlaylist">
+            <div class="mpf-loading">Tap to open &amp; load music…</div>
+          </div>
+        </div>
+        <div class="mpf-home-bar"></div>
+      </div>
+    </div>
+  </div>
+  <audio id="mpfAudio" preload="metadata"></audio>
+  <!-- ═══ END MUSIC PHONE WIDGET ═══ -->
+
   <script src="firebase-config.js"></script>
   <script src="script.js"></script>
 </body>

@@ -1900,3 +1900,180 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
     });
   });
 })();
+
+// ── MUSIC PHONE WIDGET ───────────────────────────────────────────
+(function initMusicPhoneWidget() {
+  const tabBtn    = document.getElementById('musicPhoneTab');
+  const frame     = document.getElementById('musicPhoneFrame');
+  const closeBtn  = document.getElementById('mpfClose');
+  const mpfAudio  = document.getElementById('mpfAudio');
+  const playBtn   = document.getElementById('mpfPlay');
+  const prevBtn   = document.getElementById('mpfPrev');
+  const nextBtn   = document.getElementById('mpfNext');
+  const playlist  = document.getElementById('mpfPlaylist');
+  const progFill  = document.getElementById('mpfProgressFill');
+  const progBar   = document.getElementById('mpfProgressBar');
+  const curEl     = document.getElementById('mpfCurrent');
+  const durEl     = document.getElementById('mpfDuration');
+  const titleEl   = document.getElementById('mpfTrackTitle');
+  const artistEl  = document.getElementById('mpfTrackArtist');
+  const disc      = document.getElementById('mpfDisc');
+  const viz       = document.getElementById('mpfViz');
+  const countEl   = document.getElementById('mpfTrackCount');
+  const timeEl    = document.getElementById('mpfTime');
+
+  if (!tabBtn || !frame) return;
+
+  let tracks = [];
+  let currentIdx = -1;
+  let tracksLoaded = false;
+
+  // Clock in status bar
+  function updateClock() {
+    const now = new Date();
+    timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  // Open / close phone
+  tabBtn.addEventListener('click', () => {
+    const isHidden = frame.hidden;
+    frame.hidden = false;
+    if (isHidden) {
+      frame.removeAttribute('hidden');
+      if (!tracksLoaded) loadTracks();
+    } else {
+      frame.setAttribute('hidden', '');
+    }
+  });
+  closeBtn.addEventListener('click', () => frame.setAttribute('hidden', ''));
+  closeBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') frame.setAttribute('hidden', ''); });
+
+  // Load tracks from Firebase 'tracks' collection
+  async function loadTracks() {
+    tracksLoaded = true;
+    playlist.innerHTML = '<div class="mpf-loading">Loading music…</div>';
+    try {
+      const [appMod, fsMod] = await Promise.all([
+        import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+      ]);
+      const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
+      const db  = fsMod.getFirestore(app);
+      const snap = await fsMod.getDocs(
+        fsMod.query(
+          fsMod.collection(db, 'tracks'),
+          fsMod.orderBy('addedAt', 'desc'),
+          fsMod.limit(60)
+        )
+      );
+      tracks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderPlaylist();
+    } catch (err) {
+      playlist.innerHTML = '<div class="mpf-loading">Could not load music</div>';
+      console.warn('[MusicWidget]', err);
+    }
+  }
+
+  function safeHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderPlaylist() {
+    if (!tracks.length) {
+      playlist.innerHTML = '<div class="mpf-loading">No songs in library yet</div>';
+      countEl.textContent = '0 songs';
+      return;
+    }
+    countEl.textContent = tracks.length + ' songs';
+    playlist.innerHTML = tracks.map((t, i) =>
+      `<div class="mpf-track-row" data-idx="${i}">` +
+        `<span class="mpf-track-num">${i + 1}</span>` +
+        `<div class="mpf-track-row-info">` +
+          `<div class="mpf-track-row-title">${safeHtml(t.title || 'Unknown')}</div>` +
+          `<div class="mpf-track-row-artist">${safeHtml(t.artist || '')}</div>` +
+        `</div>` +
+      `</div>`
+    ).join('');
+    playlist.querySelectorAll('.mpf-track-row').forEach(row => {
+      row.addEventListener('click', () => playIdx(+row.dataset.idx));
+    });
+  }
+
+  function playIdx(idx) {
+    if (idx < 0 || idx >= tracks.length) return;
+    currentIdx = idx;
+    const t = tracks[idx];
+
+    titleEl.textContent  = t.title  || 'Unknown';
+    artistEl.textContent = t.artist || '';
+
+    // highlight row
+    playlist.querySelectorAll('.mpf-track-row').forEach((r, i) =>
+      r.classList.toggle('active', i === idx)
+    );
+    // scroll into view
+    const activeRow = playlist.querySelector('.mpf-track-row.active');
+    if (activeRow) activeRow.scrollIntoView({ block: 'nearest' });
+
+    if (!t.url) {
+      setPlayState(false);
+      return;
+    }
+    mpfAudio.src = t.url;
+    mpfAudio.play().catch(err => console.warn('[MusicWidget] play error', err));
+  }
+
+  function setPlayState(playing) {
+    playBtn.textContent = playing ? '⏸' : '▶';
+    disc.classList.toggle('spinning', playing);
+    viz.classList.toggle('active', playing);
+  }
+
+  // Controls
+  playBtn.addEventListener('click', () => {
+    if (currentIdx < 0 && tracks.length > 0) { playIdx(0); return; }
+    if (mpfAudio.paused) {
+      mpfAudio.play().catch(() => {});
+    } else {
+      mpfAudio.pause();
+    }
+  });
+  prevBtn.addEventListener('click', () => {
+    if (!tracks.length) return;
+    playIdx((currentIdx - 1 + tracks.length) % tracks.length);
+  });
+  nextBtn.addEventListener('click', () => {
+    if (!tracks.length) return;
+    playIdx((currentIdx + 1) % tracks.length);
+  });
+
+  // Audio events
+  mpfAudio.addEventListener('play',  () => setPlayState(true));
+  mpfAudio.addEventListener('pause', () => setPlayState(false));
+  mpfAudio.addEventListener('ended', () => {
+    if (tracks.length) playIdx((currentIdx + 1) % tracks.length);
+  });
+  mpfAudio.addEventListener('timeupdate', () => {
+    if (!mpfAudio.duration) return;
+    const pct = (mpfAudio.currentTime / mpfAudio.duration) * 100;
+    progFill.style.width = pct + '%';
+    curEl.textContent = fmtTime(mpfAudio.currentTime);
+    durEl.textContent = fmtTime(mpfAudio.duration);
+  });
+
+  // Click on progress bar to seek
+  progBar.addEventListener('click', e => {
+    if (!mpfAudio.duration) return;
+    const rect = progBar.getBoundingClientRect();
+    mpfAudio.currentTime = ((e.clientX - rect.left) / rect.width) * mpfAudio.duration;
+  });
+
+  function fmtTime(s) {
+    if (!isFinite(s)) return '0:00';
+    const m   = Math.floor(s / 60);
+    const sec = Math.floor(s % 60).toString().padStart(2, '0');
+    return `${m}:${sec}`;
+  }
+})();
