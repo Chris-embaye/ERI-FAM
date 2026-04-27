@@ -2840,7 +2840,7 @@ window.openTrackModal = function(id) {
 };
 
 const _origSaveTrack = saveTrack;
-async function saveTrack() {
+saveTrack = async function saveTrack() {
   const id      = document.getElementById('trackModalId').value;
   const title   = document.getElementById('trackTitle').value.trim();
   const artist  = document.getElementById('trackArtist').value.trim();
@@ -2884,7 +2884,7 @@ window.openPostModal = function(id) {
 
 // Patch savePost to include publishAt
 const _origSavePost = savePost;
-async function savePost() {
+savePost = async function savePost() {
   const id      = document.getElementById('postModalId').value;
   const title   = document.getElementById('postMTitle').value.trim();
   const body    = document.getElementById('postMBody').value.trim();
@@ -3056,7 +3056,7 @@ window._plRemoveTrack = function(idx) {
 
 // Patch savePlaylist to include trackIds
 const _origSavePlaylist = savePlaylist;
-async function savePlaylist() {
+savePlaylist = async function savePlaylist() {
   const id   = document.getElementById('playlistModalId').value;
   const name = document.getElementById('plName').value.trim();
   if (!name) { toast('Playlist name is required.', 'error'); return; }
