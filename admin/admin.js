@@ -391,14 +391,17 @@ function renderApps(apps) {
 }
 
 function populateAppSelects(apps) {
-  ['notifyTarget','assetAppFilter','promoTarget'].forEach(id => {
+  ['notifyTarget','promoTarget','sponsorTarget'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
-    const first = (id === 'notifyTarget' || id === 'promoTarget')
-      ? '<option value="all">📡 All Apps</option>'
-      : '<option value="">All Apps</option>';
-    sel.innerHTML = first + apps.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    sel.innerHTML = '<option value="all">📡 All Apps</option>' +
+      apps.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
   });
+  const assetSel = document.getElementById('assetAppFilter');
+  if (assetSel) {
+    assetSel.innerHTML = '<option value="">All Apps</option>' +
+      apps.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  }
 }
 
 // App modal
@@ -965,7 +968,7 @@ function getAudioDuration(file) {
 const trackModal = document.getElementById('trackModal');
 document.getElementById('trackModalClose').addEventListener('click',  () => trackModal.hidden = true);
 document.getElementById('trackModalCancel').addEventListener('click', () => trackModal.hidden = true);
-document.getElementById('trackModalSave').addEventListener('click',   saveTrack);
+document.getElementById('trackModalSave').onclick = () => saveTrack();
 trackModal.addEventListener('click', e => { if (e.target === trackModal) trackModal.hidden = true; });
 
 document.getElementById('trackCoverFile').addEventListener('change', async function() {
@@ -1603,7 +1606,7 @@ document.getElementById('addPlaylistBtn').addEventListener('click', () => openPl
 const playlistModal = document.getElementById('playlistModal');
 document.getElementById('playlistModalClose').addEventListener('click',  () => playlistModal.hidden = true);
 document.getElementById('playlistModalCancel').addEventListener('click', () => playlistModal.hidden = true);
-document.getElementById('playlistModalSave').addEventListener('click',   savePlaylist);
+document.getElementById('playlistModalSave').onclick = () => savePlaylist();
 playlistModal.addEventListener('click', e => { if (e.target === playlistModal) playlistModal.hidden = true; });
 
 async function loadPlaylists() {
@@ -1858,7 +1861,7 @@ document.getElementById('approveAllPostsBtn')?.addEventListener('click', async (
 const postModal = document.getElementById('postModal');
 document.getElementById('postModalClose').addEventListener('click',  () => { postModal.hidden = true; });
 document.getElementById('postModalCancel').addEventListener('click', () => { postModal.hidden = true; });
-document.getElementById('postModalSave').addEventListener('click',   savePost);
+document.getElementById('postModalSave').onclick = () => savePost();
 postModal.addEventListener('click', e => { if (e.target === postModal) postModal.hidden = true; });
 
 document.querySelectorAll('.post-tab').forEach(btn => {
@@ -2287,7 +2290,7 @@ function _renderAboutPreview(d) {
 // ── ESCAPE KEY — close any open modal ─────────────────────
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  ['appModal','trackModal','promoModal','playlistModal','postModal'].forEach(id => {
+  ['appModal','trackModal','promoModal','playlistModal','postModal','inviteModal','sectionModal'].forEach(id => {
     const m = document.getElementById(id);
     if (m && !m.hidden) m.hidden = true;
   });
@@ -2846,8 +2849,7 @@ async function saveTrack() {
   } catch(e) { toast('Error: ' + e.message, 'error'); }
   btn.textContent = 'Save Track'; btn.disabled = false;
 }
-// Re-wire the save button to the new function
-document.getElementById('trackModalSave').onclick = saveTrack;
+// trackModalSave onclick already set above; patched saveTrack is now live
 
 // ── SCHEDULED POSTS ───────────────────────────────────────
 // Show/hide publishAt field based on status selection
@@ -2910,7 +2912,7 @@ async function savePost() {
   } catch(e) { toast('Error: ' + e.message, 'error'); }
   btn.textContent = 'Publish Post'; btn.disabled = false;
 }
-document.getElementById('postModalSave').onclick = savePost;
+// postModalSave onclick already set above; patched savePost is now live
 
 // Show scheduled posts with clock icon in renderPosts patch
 const _origRenderPosts = renderPosts;
@@ -3074,7 +3076,7 @@ async function savePlaylist() {
   } catch(e) { toast('Error: ' + e.message, 'error'); }
   btn.textContent = 'Save Playlist'; btn.disabled = false;
 }
-document.getElementById('playlistModalSave').onclick = savePlaylist;
+// playlistModalSave onclick already set above; patched savePlaylist is now live
 
 // Add escape key for new modals
 document.addEventListener('keydown', e => {
@@ -4164,7 +4166,7 @@ const _origLoadPlaylistsB2 = loadPlaylists;
 loadPlaylists = async function() {
   await _origLoadPlaylistsB2();
   setTimeout(() => {
-    document.querySelectorAll('#playlistGrid .card').forEach(card => {
+    document.querySelectorAll('#playlistAdminGrid .app-card').forEach(card => {
       if (card.querySelector('.dup-btn')) return;
       const editBtn = card.querySelector('[onclick*="openPlaylistModal"]');
       if (!editBtn) return;
