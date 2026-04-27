@@ -15,7 +15,7 @@ let allApps         = [];
 let allPromos       = [];
 let activeUserTab   = 'all';
 
-const SUPER_ADMIN = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'embayechris@gmail.com';
+const SUPER_ADMIN = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'mebrahatom12@gmail.com';
 const FB_VER      = '10.12.2';
 
 // ── Firebase init (singleton promise) ────────────────────
@@ -85,11 +85,12 @@ async function doLogin() {
   if (!ready) { btn.textContent = 'Sign In'; btn.disabled = false; return; }
   try {
     await fb.signInWithEmailAndPassword(_auth, email, pass);
-    // onAuthStateChanged handles the rest
+    // Keep button in loading state — onAuthStateChanged will show the hub or an error
+    btn.textContent = 'Loading…';
   } catch(e) {
     showAuthError('loginError', friendlyAuthError(e.code));
+    btn.textContent = 'Sign In'; btn.disabled = false;
   }
-  btn.textContent = 'Sign In'; btn.disabled = false;
 }
 
 async function doRegister() {
@@ -197,19 +198,26 @@ async function bootAuth() {
         document.getElementById('authScreen').hidden = false;
         document.getElementById('hubApp').hidden     = true;
         switchAuthView('pending');
+        const btn = document.getElementById('loginBtn');
+        btn.textContent = 'Sign In'; btn.disabled = false;
         return;
       }
       console.log('[HUB] Access granted, loading hub');
       document.getElementById('authScreen').hidden = true;
       document.getElementById('hubApp').hidden     = false;
+      const btn = document.getElementById('loginBtn');
+      btn.textContent = 'Sign In'; btn.disabled = false;
       setupUserDisplay();
       loadDashboard();
       loadPendingBadge();
       loadPostsBadge();
     } catch(err) {
       console.error('[HUB] Auth state error:', err);
-      showAuthError('loginError', 'Error: ' + err.message);
+      showAuthError('loginError', 'Error loading your account: ' + err.message);
       document.getElementById('authScreen').hidden = false;
+      document.getElementById('hubApp').hidden     = true;
+      const btn = document.getElementById('loginBtn');
+      btn.textContent = 'Sign In'; btn.disabled = false;
     }
   });
 }

@@ -64,7 +64,22 @@
         <span class="logo-flag">🇪🇷</span>
         <span>Eritrean<strong>Info</strong></span>
       </a>
+        <!-- NAV CENTER: mini anthem player -->
+      <div class="nav-center" id="navCenter">
+        <div class="nav-anthem-mini" id="navAnthemMini">
+          <button class="nam-play" id="namPlay" title="Play / Pause National Anthem">▶</button>
+          <div class="nam-body">
+            <span class="nam-label">🇪🇷 National Anthem</span>
+            <div class="nam-track-wrap">
+              <div class="nam-track" id="namTrack"><div class="nam-fill" id="namFill"></div></div>
+              <span class="nam-time" id="namTime">0:00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="nav-right">
+        <button class="nav-search-btn" id="globalSearchBtn" title="Search everything" aria-label="Search">🔍</button>
         <button class="dark-toggle" id="darkToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
         <div class="lang-picker-wrap" id="langPickerWrap">
           <button class="lang-picker-btn" id="langPickerBtn" title="Choose language">🌐 <span id="currentLangLabel">EN</span></button>
@@ -121,6 +136,20 @@
         <a href="#holidays"     class="nav-dd-item">🗓️<span>Holidays</span></a>
         <a href="#blog"         class="nav-dd-item">📖<span>Blog</span></a>
         <a href="#quiz"         class="nav-dd-item">🏆<span>Quiz</span></a>
+        <a href="#fidel"        class="nav-dd-item">🔤<span>Alphabet</span></a>
+        <a href="#lessons"      class="nav-dd-item">📖<span>Lessons</span></a>
+        <a href="#proverbs"     class="nav-dd-item">💬<span>Proverbs</span></a>
+        <a href="#poetry"       class="nav-dd-item">📝<span>Poetry</span></a>
+        <a href="#facts"        class="nav-dd-item">🌟<span>Facts</span></a>
+        <a href="#sports-tracker" class="nav-dd-item">🚴<span>Sports</span></a>
+        <a href="#flag-explorer" class="nav-dd-item">🚩<span>Flag</span></a>
+        <a href="#diaspora-map" class="nav-dd-item">🌍<span>Diaspora</span></a>
+        <a href="#compare"      class="nav-dd-item">📊<span>Compare</span></a>
+        <a href="#prayer-times" class="nav-dd-item">🕌<span>Prayer</span></a>
+        <a href="#asmara-tour"  class="nav-dd-item">🏛️<span>Tour</span></a>
+        <a href="#cooking-videos" class="nav-dd-item">🎬<span>Videos</span></a>
+        <a href="#events"       class="nav-dd-item">📅<span>Events</span></a>
+        <a href="#directory"    class="nav-dd-item">📋<span>Directory</span></a>
       </div>
       <div class="nav-dd-footer">
         <button class="nav-dd-app-btn" id="navDownloadBtn">⬇️ Get App — Works Offline</button>
@@ -1907,6 +1936,427 @@
     <div class="op-list" id="offlineList"></div>
   </div>
   <button class="offline-fab" id="offlineFab" title="Saved offline sections" style="display:none">💾<span class="offline-fab-badge" id="offlineFabBadge">0</span></button>
+
+  <!-- ═══ GLOBAL SEARCH OVERLAY ═══ -->
+  <div class="global-search-overlay" id="globalSearchOverlay" hidden>
+    <div class="gso-backdrop" id="gsoBackdrop"></div>
+    <div class="gso-panel">
+      <div class="gso-bar">
+        <span class="gso-icon">🔍</span>
+        <input type="text" id="gsoInput" class="gso-input" placeholder="Search anything — history, culture, people, recipes, cities…" autocomplete="off" spellcheck="false" />
+        <button class="gso-close" id="gsoClose" title="Close">✕</button>
+      </div>
+      <div class="gso-quick">
+        <span class="gso-quick-label">Quick jump:</span>
+        <button class="gso-chip" data-section="history">📜 History</button>
+        <button class="gso-chip" data-section="culture">🎭 Culture</button>
+        <button class="gso-chip" data-section="recipes">🍽️ Recipes</button>
+        <button class="gso-chip" data-section="famous">⭐ Famous</button>
+        <button class="gso-chip" data-section="translator">🌐 Translate</button>
+        <button class="gso-chip" data-section="quiz">🏆 Quiz</button>
+        <button class="gso-chip" data-section="proverbs">💬 Proverbs</button>
+        <button class="gso-chip" data-section="fidel">🔤 Alphabet</button>
+      </div>
+      <div class="gso-results" id="gsoResults">
+        <div class="gso-results-hint">Start typing to search across all sections…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ HOLIDAY COUNTDOWN BAR ═══ -->
+  <div class="hcd-bar" id="hcdBar" style="display:none">
+    <div class="hcd-inner">
+      <span class="hcd-flag">🇪🇷</span>
+      <div class="hcd-text">
+        <span class="hcd-label" id="hcdLabel">Independence Day</span>
+        <span class="hcd-timer" id="hcdTimer">—</span>
+      </div>
+      <button class="hcd-close" id="hcdClose">✕</button>
+    </div>
+  </div>
+
+  <!-- ═══ MY ERITREA PIN BAR ═══ -->
+  <div class="my-eritrea-bar" id="myEritreaBar" style="display:none">
+    <div class="meb-inner">
+      <span class="meb-label">📌 My Eritrea</span>
+      <div class="meb-pins" id="mebPins"></div>
+      <button class="meb-edit" id="mebEdit" title="Customise pinned sections">✏️</button>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION: GE'EZ FIDEL ALPHABET ═══ -->
+  <section id="fidel">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">ፊደል</span>
+        <h2>Ge'ez Fidel Alphabet</h2>
+        <p>The ancient script of Tigrinya — learn the letters, then learn words written with them</p>
+      </div>
+      <!-- Tabs -->
+      <div class="fidel-tabs">
+        <button class="fidel-tab-btn active" data-ftab="alphabet">🔤 Alphabet (231 letters)</button>
+        <button class="fidel-tab-btn" data-ftab="words">📖 Words & Vocabulary</button>
+      </div>
+
+      <!-- Tab: Alphabet -->
+      <div class="fidel-tab-content active" id="ftab-alphabet">
+        <div class="fidel-controls">
+          <input type="text" id="fidelSearch" class="fidel-search" placeholder="Search letter (e.g. ሀ or Ha)…" />
+          <span class="fidel-hint">7 forms × 33 consonants = 231 characters</span>
+        </div>
+        <div class="fidel-table-wrap">
+          <div class="fidel-header-row">
+            <div class="fidel-hcell">Base</div>
+            <div class="fidel-hcell">—u</div>
+            <div class="fidel-hcell">—i</div>
+            <div class="fidel-hcell">—a</div>
+            <div class="fidel-hcell">—e</div>
+            <div class="fidel-hcell">—ə</div>
+            <div class="fidel-hcell">—o</div>
+          </div>
+          <div class="fidel-grid" id="fidelGrid"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Words -->
+      <div class="fidel-tab-content" id="ftab-words">
+        <input type="text" id="fidelWordsSearch" class="fidel-words-search" placeholder="Search words in Tigrinya or English…" />
+        <div id="fidelWordsContainer"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: TIGRINYA LESSONS ═══ -->
+  <section id="lessons">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">ትምህርቲ</span>
+        <h2>Tigrinya Language Lessons</h2>
+        <p>5 beginner lessons — Alphabet, Numbers, Colors, Days of the Week, Common Phrases</p>
+      </div>
+      <div class="lessons-progress-bar-wrap">
+        <div class="lessons-progress-bar" id="lessonsProgressBar"></div>
+        <span class="lessons-progress-label" id="lessonsProgressLabel">0 / 5 complete</span>
+      </div>
+      <div class="lessons-grid" id="lessonsGrid"></div>
+      <div class="lesson-modal-overlay" id="lessonModal" hidden>
+        <div class="lesson-modal-box">
+          <button class="lesson-modal-close" id="lessonModalClose">✕</button>
+          <div class="lesson-modal-body" id="lessonModalBody"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: PROVERBS LIBRARY ═══ -->
+  <section id="proverbs">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">ምስላ</span>
+        <h2>Eritrean Proverbs</h2>
+        <p>Ancient Tigrinya wisdom — a new proverb every day, plus the full library</p>
+      </div>
+      <div class="proverb-daily" id="proverbDaily"></div>
+      <div class="proverbs-list" id="proverbsList"></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: POETRY CORNER ═══ -->
+  <section id="poetry">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">ግጥሚ</span>
+        <h2>Eritrean Poetry Corner</h2>
+        <p>Famous Tigrinya poems with transliteration, translation, and audio reading</p>
+      </div>
+      <div class="poetry-grid" id="poetryGrid"></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: FACT GENERATOR ═══ -->
+  <section id="facts">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Did You Know?</span>
+        <h2>Eritrean Fact Generator</h2>
+        <p>Random fascinating facts about Eritrea — tap for a new one</p>
+      </div>
+      <div class="fact-gen-card" id="factGenCard">
+        <div class="fg-icon" id="fgIcon">🇪🇷</div>
+        <div class="fg-text" id="fgText">Loading a fact…</div>
+        <div class="fg-actions">
+          <button class="fg-btn" id="fgNext">🔀 New Fact</button>
+          <button class="fg-share" id="fgShare">📤 Share</button>
+        </div>
+        <div class="fg-counter" id="fgCounter"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: SPORTS TRACKER ═══ -->
+  <section id="sports-tracker">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Sports</span>
+        <h2>Eritrean Sports Tracker</h2>
+        <p>Cycling, running, football — Eritrea's world-class athletes</p>
+      </div>
+      <div class="sports-tabs">
+        <button class="sp-tab active" data-stab="cycling">🚴 Cycling</button>
+        <button class="sp-tab" data-stab="running">🏃 Running</button>
+        <button class="sp-tab" data-stab="football">⚽ Football</button>
+      </div>
+      <div class="sports-panel" id="sportsPanelCycling"></div>
+      <div class="sports-panel" id="sportsPanelRunning" hidden></div>
+      <div class="sports-panel" id="sportsPanelFootball" hidden></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: FLAG EXPLORER ═══ -->
+  <section id="flag-explorer">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">ባንዴራ</span>
+        <h2>Eritrean Flag Explorer</h2>
+        <p>Click each element of the flag to discover its meaning and history</p>
+      </div>
+      <div class="flag-explorer-wrap">
+        <div class="flag-svg-wrap" id="flagSvgWrap">
+          <svg class="flag-svg" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+            <!-- Green triangle -->
+            <polygon id="flagGreen" class="flag-zone" points="0,0 0,40 30,20" fill="#007A3D" data-zone="green"/>
+            <!-- Red triangle -->
+            <polygon id="flagRed" class="flag-zone" points="0,0 60,0 30,20" fill="#CE1126" data-zone="red"/>
+            <!-- Blue triangle -->
+            <polygon id="flagBlue" class="flag-zone" points="0,40 60,40 30,20" fill="#4189DD" data-zone="blue"/>
+            <!-- Olive wreath + camel circle (simplified) -->
+            <circle id="flagEmblem" class="flag-zone" cx="30" cy="20" r="7" fill="rgba(255,215,0,0.0)" stroke="gold" stroke-width="0.5" data-zone="emblem"/>
+            <text x="30" y="22.5" text-anchor="middle" font-size="7" fill="gold" style="pointer-events:none">🫒</text>
+          </svg>
+        </div>
+        <div class="flag-info-panel" id="flagInfoPanel">
+          <div class="fip-placeholder">← Click a colour or the emblem to learn its meaning</div>
+        </div>
+      </div>
+      <div class="flag-history-strip" id="flagHistoryStrip"></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: DIASPORA WORLD MAP ═══ -->
+  <section id="diaspora-map">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Diaspora</span>
+        <h2>Eritrean Diaspora World Map</h2>
+        <p>Where Eritreans live around the world — click a bubble to see the community</p>
+      </div>
+      <div id="diasporaMapEl" class="diaspora-map-el"></div>
+      <div class="diaspora-stats-row" id="diasporaStatsRow"></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: COUNTRY COMPARISON ═══ -->
+  <section id="compare">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Compare</span>
+        <h2>Compare Eritrea</h2>
+        <p>Side-by-side stats with any African nation</p>
+      </div>
+      <div class="compare-controls">
+        <select id="compareCountry" class="compare-select">
+          <option value="">— Select a country —</option>
+          <option value="ethiopia">Ethiopia</option>
+          <option value="sudan">Sudan</option>
+          <option value="djibouti">Djibouti</option>
+          <option value="somalia">Somalia</option>
+          <option value="kenya">Kenya</option>
+          <option value="egypt">Egypt</option>
+          <option value="ghana">Ghana</option>
+          <option value="nigeria">Nigeria</option>
+          <option value="southafrica">South Africa</option>
+          <option value="tanzania">Tanzania</option>
+        </select>
+      </div>
+      <div class="compare-table-wrap" id="compareTableWrap"></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: PRAYER TIMES ═══ -->
+  <section id="prayer-times">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">صلاة</span>
+        <h2>Daily Prayer Times</h2>
+        <p>Salah times for Asmara, Massawa &amp; Keren — updated daily</p>
+      </div>
+      <div class="prayer-city-tabs">
+        <button class="pct active" data-pcity="asmara">Asmara</button>
+        <button class="pct" data-pcity="massawa">Massawa</button>
+        <button class="pct" data-pcity="keren">Keren</button>
+      </div>
+      <div class="prayer-grid" id="prayerGrid">
+        <div class="prayer-loading">Loading prayer times…</div>
+      </div>
+      <div class="prayer-hijri" id="prayerHijri"></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: VIRTUAL ASMARA TOUR ═══ -->
+  <section id="asmara-tour">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Virtual Tour</span>
+        <h2>Virtual Asmara Art Deco Tour</h2>
+        <p>Walk through UNESCO-listed modernist buildings — Africa's "Città degli Italiani"</p>
+      </div>
+      <div class="tour-track" id="tourTrack"></div>
+      <div class="tour-detail-panel" id="tourDetailPanel" hidden></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: COOKING VIDEOS ═══ -->
+  <section id="cooking-videos">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Video</span>
+        <h2>Eritrean Cooking Videos</h2>
+        <p>Watch how traditional dishes are made — step by step</p>
+      </div>
+      <div class="cooking-video-grid" id="cookingVideoGrid"></div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: COMMUNITY EVENTS ═══ -->
+  <section id="events">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Events</span>
+        <h2>Diaspora Community Events</h2>
+        <p>Eritrean festivals, cultural nights &amp; memorials happening worldwide</p>
+      </div>
+      <div class="events-bar">
+        <select id="eventsCountryFilter" class="events-filter">
+          <option value="">All Countries</option>
+          <option value="us">🇺🇸 United States</option>
+          <option value="uk">🇬🇧 United Kingdom</option>
+          <option value="de">🇩🇪 Germany</option>
+          <option value="se">🇸🇪 Sweden</option>
+          <option value="au">🇦🇺 Australia</option>
+          <option value="ca">🇨🇦 Canada</option>
+          <option value="et">🇪🇹 Ethiopia</option>
+          <option value="sa">🇸🇦 Saudi Arabia</option>
+        </select>
+        <button class="events-add-btn" id="eventsAddBtn">+ Submit Event</button>
+      </div>
+      <div class="events-grid" id="eventsGrid"></div>
+      <div class="event-submit-modal" id="eventSubmitModal" hidden>
+        <div class="esm-box">
+          <button class="esm-close" id="esmClose">✕</button>
+          <h3>Submit a Community Event</h3>
+          <label>Event Name *</label><input id="esmName" class="esm-input" placeholder="e.g. Eritrean Independence Night"/>
+          <label>Date *</label><input id="esmDate" type="date" class="esm-input"/>
+          <label>City &amp; Country *</label><input id="esmLocation" class="esm-input" placeholder="e.g. Washington DC, USA"/>
+          <label>Description</label><textarea id="esmDesc" class="esm-textarea" rows="3" placeholder="Tell us about the event…"></textarea>
+          <label>Contact / Link</label><input id="esmLink" class="esm-input" placeholder="https://…"/>
+          <button class="esm-submit" id="esmSubmit">Submit for Review</button>
+          <p class="esm-note">Events are reviewed before appearing publicly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SECTION: BUSINESS DIRECTORY ═══ -->
+  <section id="directory">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Directory</span>
+        <h2>Eritrean Business &amp; NGO Directory</h2>
+        <p>Eritrean-owned businesses, restaurants, organisations &amp; community groups worldwide</p>
+      </div>
+      <div class="dir-filter-row">
+        <button class="dir-chip active" data-dcat="all">All</button>
+        <button class="dir-chip" data-dcat="food">🍽️ Food</button>
+        <button class="dir-chip" data-dcat="media">📺 Media</button>
+        <button class="dir-chip" data-dcat="ngo">🤝 NGOs</button>
+        <button class="dir-chip" data-dcat="health">🏥 Health</button>
+        <button class="dir-chip" data-dcat="legal">⚖️ Legal</button>
+        <button class="dir-chip" data-dcat="education">📚 Education</button>
+        <button class="dir-chip" data-dcat="sport">🏆 Sport</button>
+      </div>
+      <div class="dir-grid" id="dirGrid"></div>
+    </div>
+  </section>
+
+  <!-- ═══ LIVE RADIO WIDGET ═══ -->
+  <div class="radio-widget" id="radioWidget" style="display:none">
+    <div class="rw-bar" id="rwBar">
+      <button class="rw-toggle" id="rwToggle" title="Expand">📻 Eritrean Radio</button>
+      <button class="rw-play" id="rwPlay" title="Play / Pause">▶</button>
+    </div>
+    <div class="rw-panel" id="rwPanel" hidden>
+      <div class="rw-stations">
+        <button class="rw-station active" data-src="https://stream.zeno.fm/eritrea" data-name="Eri-FM">📡 Eri-FM</button>
+        <button class="rw-station" data-src="https://stream.zeno.fm/dimtsi-hafash" data-name="Dimtsi Hafash">📡 Dimtsi Hafash</button>
+        <button class="rw-station" data-src="" data-name="Custom">🔗 Custom URL</button>
+      </div>
+      <div class="rw-custom" id="rwCustom" hidden>
+        <input class="rw-url-input" id="rwUrlInput" placeholder="Paste stream URL…"/>
+        <button class="rw-url-set" id="rwUrlSet">▶ Play</button>
+      </div>
+      <div class="rw-now" id="rwNow">Ready to play</div>
+      <audio id="radioAudio" preload="none"></audio>
+    </div>
+  </div>
+
+  <!-- ═══ ACCESSIBILITY PANEL ═══ -->
+  <button class="a11y-fab" id="a11yFab" title="Accessibility Settings">♿</button>
+  <div class="a11y-panel" id="a11yPanel" hidden>
+    <div class="a11y-header">
+      <span>Accessibility</span>
+      <button class="a11y-close" id="a11yClose">✕</button>
+    </div>
+    <div class="a11y-row">
+      <span>Font Size</span>
+      <div class="a11y-font-btns">
+        <button class="a11y-sz" data-sz="sm">A</button>
+        <button class="a11y-sz active" data-sz="md">A</button>
+        <button class="a11y-sz" data-sz="lg">A</button>
+      </div>
+    </div>
+    <div class="a11y-row">
+      <span>High Contrast</span>
+      <label class="a11y-toggle-wrap">
+        <input type="checkbox" id="a11yContrast" />
+        <span class="a11y-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="a11y-row">
+      <span>Dyslexia Font</span>
+      <label class="a11y-toggle-wrap">
+        <input type="checkbox" id="a11yDyslexia" />
+        <span class="a11y-toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ═══ SHARE CARD MODAL ═══ -->
+  <div class="share-card-modal" id="shareCardModal" hidden>
+    <div class="scm-box">
+      <button class="scm-close" id="scmClose">✕</button>
+      <h3>🎨 Create Share Card</h3>
+      <canvas id="shareCanvas" class="share-canvas" width="600" height="315"></canvas>
+      <div class="scm-controls">
+        <select id="scmFact" class="scm-select">
+          <option value="">— Pick a fact —</option>
+        </select>
+        <input type="text" id="scmCustom" class="scm-input" placeholder="Or type your own text…" maxlength="140"/>
+        <button class="scm-render" id="scmRender">🎨 Generate Card</button>
+        <button class="scm-download" id="scmDownload">⬇️ Download PNG</button>
+        <button class="scm-share-btn" id="scmShareBtn">📤 Share</button>
+      </div>
+    </div>
+  </div>
 
   <!-- STORY VIEWER LAUNCH (gallery area) -->
   <script src="firebase-config.js"></script>

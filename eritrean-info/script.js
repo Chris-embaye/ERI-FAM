@@ -131,8 +131,24 @@ function showLightboxItem(index) {
   const item    = currentGalleryItems[index];
   const img     = item.querySelector('img');
   const caption = item.querySelector('.gallery-caption');
-  lightboxImg.src = img.src;
-  lightboxImg.alt = img.alt;
+  lightboxImg.style.opacity = '0';
+  lightboxImg.onerror = () => {
+    lightboxImg.style.opacity = '0';
+    lightboxCap.textContent = '⚠ Image could not load';
+    setTimeout(() => {
+      if (lightbox.classList.contains('open')) {
+        if (currentGalleryItems.length > 1) {
+          currentIndex = (currentIndex + 1) % currentGalleryItems.length;
+          showLightboxItem(currentIndex);
+        } else {
+          closeLightbox();
+        }
+      }
+    }, 1500);
+  };
+  lightboxImg.onload = () => { lightboxImg.style.opacity = '1'; };
+  lightboxImg.src = img ? img.src : '';
+  lightboxImg.alt = img ? img.alt : '';
   lightboxCap.textContent = caption ? caption.querySelector('h4').textContent + ' — ' + caption.querySelector('p').textContent : '';
 }
 
@@ -656,6 +672,141 @@ setTimeout(() => {
   }
 }, 6000);
 
+// ── FIDEL TABS ───────────────────────────────
+document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fidel-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.fidel-tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('ftab-' + btn.getAttribute('data-ftab'))?.classList.add('active');
+  });
+});
+
+// ── FIDEL WORDS & VOCABULARY ─────────────────
+(function initFidelWords() {
+  const WORDS = [
+    // Greetings
+    { cat:'Greetings', w:'ሰላም',      r:'Selam',       m:'Hello / Peace',               ex:'ሰላም! ከመይ ኣለካ? — Hello! How are you?' },
+    { cat:'Greetings', w:'ከመይ ኣለካ', r:'Kemey aleka', m:'How are you? (to a male)',     ex:'ሰላም! ከመይ ኣለካ?' },
+    { cat:'Greetings', w:'ሕሉፍ',      r:'Hluf',        m:'Fine / Good (reply)',          ex:'ሕሉፍ ኣለኹ — I am fine' },
+    { cat:'Greetings', w:'ኣቤ',       r:'Abe',         m:'Yes',                          ex:'ኣቤ፡ ርዱእ — Yes, understood' },
+    { cat:'Greetings', w:'ኣይፋሉን',    r:'Ayfalu',      m:'No',                          ex:'ኣይፋሉን፡ ሓሶት — No, that is false' },
+    { cat:'Greetings', w:'የቐንየለይ',   r:'Yekenyeley',  m:'Thank you',                    ex:'የቐንየለይ ብዙሕ — Thank you very much' },
+    { cat:'Greetings', w:'ስለምንታይ',   r:'Slemnita',    m:'Why',                          ex:'ስለምንታይ ምስ ናይ — Why is that?' },
+    { cat:'Greetings', w:'ምስ ሰናይ',   r:'Ms senay',   m:'Goodbye',                      ex:'ምስ ሰናይ ቁሩ — Goodbye, go well' },
+
+    // Family
+    { cat:'Family',    w:'ኣቦ',       r:'Abo',         m:'Father',                       ex:'ኣቦይ ሓኪም — My father is a doctor' },
+    { cat:'Family',    w:'ኣደ',       r:'Ade',         m:'Mother',                       ex:'ኣደይ ምሉእ — My mother is complete' },
+    { cat:'Family',    w:'ወዲ',       r:'Wedi',        m:'Son / Boy',                    ex:'ወዲ ሃገር — Son of the nation' },
+    { cat:'Family',    w:'ጓለይ',      r:'Gwaley',      m:'My daughter',                  ex:'ጓለይ ሕጂ ዓበይት — My daughter is grown now' },
+    { cat:'Family',    w:'ሓዉ',       r:'Hawu',        m:'Brother',                      ex:'ሓዉ ናይ — My brother' },
+    { cat:'Family',    w:'ሓፍቲ',      r:'Hafti',       m:'Sister',                       ex:'ሓፍተይ ፈቓር — My sister is kind' },
+    { cat:'Family',    w:'ስድራቤት',    r:'Sidra-bet',   m:'Family',                       ex:'ስድራቤትና ሓቢርና — Our family together' },
+    { cat:'Family',    w:'ሓዳር',      r:'Hadar',       m:'Marriage / Home',              ex:'ሓዳር ሰናይ — A good marriage' },
+
+    // Numbers
+    { cat:'Numbers',   w:'ሓደ',       r:'Hade',        m:'One (1)',                      ex:'ሓደ ሰብ — One person' },
+    { cat:'Numbers',   w:'ክልተ',      r:'Kilte',       m:'Two (2)',                      ex:'ክልተ ቀለምቲ — Two colors' },
+    { cat:'Numbers',   w:'ሰለስተ',     r:'Seleste',     m:'Three (3)',                    ex:'ሰለስተ ወለዶ — Three generations' },
+    { cat:'Numbers',   w:'ኣርባዕተ',    r:'Arbate',      m:'Four (4)',                     ex:'ኣርባዕተ ኣቅጻጽ — Four directions' },
+    { cat:'Numbers',   w:'ሓሙሽተ',     r:'Hamushte',    m:'Five (5)',                     ex:'ሓሙሽተ ዕጽፊ — Five times' },
+    { cat:'Numbers',   w:'ሽዱሽተ',     r:'Shdushte',    m:'Six (6)',                      ex:'ሽዱሽተ ወርሒ — Six months' },
+    { cat:'Numbers',   w:'ሸሞንተ',     r:'Shemonte',    m:'Eight (8)',                    ex:'ሸሞንተ ሰዓት — Eight hours' },
+    { cat:'Numbers',   w:'ዓሰርተ',     r:'Aserte',      m:'Ten (10)',                     ex:'ዓሰርተ ዓመት — Ten years' },
+    { cat:'Numbers',   w:'ሚእቲ',      r:'Mieti',       m:'One hundred (100)',            ex:'ሚእቲ ናቕፋ — One hundred Nakfa' },
+
+    // Nature & Places
+    { cat:'Nature',    w:'ባሕሪ',      r:'Bahri',       m:'Sea / Ocean',                  ex:'ባሕሪ ቀይሕ — The Red Sea' },
+    { cat:'Nature',    w:'ደጋ',       r:'Dega',        m:'Highland / Mountain plateau',  ex:'ደጋ ኤርትራ — The Eritrean highlands' },
+    { cat:'Nature',    w:'ምድሪ',      r:'Midri',       m:'Earth / Land',                 ex:'ምድሪ ኤርትራ — The land of Eritrea' },
+    { cat:'Nature',    w:'ሰማይ',      r:'Semay',       m:'Sky',                          ex:'ሰማይ ጸሊም — The sky is dark' },
+    { cat:'Nature',    w:'ማይ',       r:'May',         m:'Water',                        ex:'ማይ ሃቢ — Give me water' },
+    { cat:'Nature',    w:'ሓዊ',       r:'Hawi',        m:'Fire',                         ex:'ሓዊ ዓቢ — A big fire' },
+    { cat:'Nature',    w:'ፀሓይ',      r:'Tsehay',      m:'Sun',                          ex:'ፀሓይ ወጺኡ — The sun has risen' },
+    { cat:'Nature',    w:'ወርሒ',      r:'Werhi',       m:'Moon / Month',                 ex:'ወርሒ ምሉእ — Full moon' },
+    { cat:'Nature',    w:'ኣዶቦ',      r:'Adobo',       m:'Tree',                         ex:'ኣዶቦ ዓቢ — A big tree' },
+
+    // Food & Drink
+    { cat:'Food',      w:'እንጀራ',    r:'Injera',      m:'Injera — sour flatbread',      ex:'እንጀራ ምስ ጸብሒ — Injera with stew' },
+    { cat:'Food',      w:'ጸብሒ',      r:'Tsebhi',      m:'Stew / Sauce',                 ex:'ጸብሒ ደርሆ — Chicken stew' },
+    { cat:'Food',      w:'ቡን',       r:'Bun',         m:'Coffee (beans)',                ex:'ቡን ቀሪብካ — Brewing coffee' },
+    { cat:'Food',      w:'ሻሂ',       r:'Shahy',       m:'Tea',                          ex:'ሻሂ ምስ ሸኮር — Tea with sugar' },
+    { cat:'Food',      w:'ሽሮ',       r:'Shiro',       m:'Chickpea stew',                ex:'ሽሮ ምስ እንጀራ — Shiro with injera' },
+    { cat:'Food',      w:'ስጋ',       r:'Siga',        m:'Meat',                         ex:'ስጋ ዝርጋዕ — Minced meat' },
+    { cat:'Food',      w:'ዓሳ',       r:'Asa',         m:'Fish',                         ex:'ዓሳ ካብ ባሕሪ — Fish from the sea' },
+    { cat:'Food',      w:'ዳቦ',       r:'Dabo',        m:'Bread',                        ex:'ዳቦ ምሩቕ — Fresh bread' },
+
+    // Values & Identity
+    { cat:'Values',    w:'ናጽነት',     r:'Natsnet',     m:'Freedom / Independence',       ex:'ናጽነት ኤርትራ — Independence of Eritrea' },
+    { cat:'Values',    w:'ሃገር',      r:'Hager',       m:'Country / Homeland',           ex:'ሃገረ ኤርትራ — The State of Eritrea' },
+    { cat:'Values',    w:'ሰላም',      r:'Selam',       m:'Peace',                        ex:'ሰላም ኩሉ — Peace for all' },
+    { cat:'Values',    w:'ሓቂ',       r:'Haki',        m:'Truth',                        ex:'ሓቂ ዘናግፍ — Truth that speaks' },
+    { cat:'Values',    w:'ዓወት',      r:'Awet',        m:'Victory',                      ex:'ዓወት ንሓፋሽ! — Victory to the masses!' },
+    { cat:'Values',    w:'ፍቕሪ',      r:'Fiqri',       m:'Love',                         ex:'ፍቕሪ ሃገር — Love of country' },
+    { cat:'Values',    w:'ክብሪ',      r:'Kibri',       m:'Respect / Honor',              ex:'ክብሪ ዓቢ — Great honor' },
+    { cat:'Values',    w:'ሓቢርና',    r:'Habirna',     m:'Together / United',            ex:'ሓቢርና ንሰርሕ — Together we work' },
+  ];
+
+  const container = document.getElementById('fidelWordsContainer');
+  const searchEl  = document.getElementById('fidelWordsSearch');
+  if (!container) return;
+
+  function speakWord(word) {
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(word);
+    utt.lang = 'ti'; utt.rate = 0.8;
+    const voices = window.speechSynthesis.getVoices();
+    const v = voices.find(v => v.lang.startsWith('ti') || v.lang.startsWith('am'));
+    if (v) utt.voice = v;
+    window.speechSynthesis.speak(utt);
+  }
+
+  function renderWords(filter) {
+    const q = (filter || '').toLowerCase().trim();
+    const filtered = q ? WORDS.filter(w =>
+      w.w.includes(q) || w.r.toLowerCase().includes(q) || w.m.toLowerCase().includes(q)
+    ) : WORDS;
+
+    if (!filtered.length) {
+      container.innerHTML = '<p style="color:var(--text-muted);padding:20px 0">No words found. Try another search term.</p>';
+      return;
+    }
+
+    // Group by category
+    const cats = {};
+    filtered.forEach(w => {
+      if (!cats[w.cat]) cats[w.cat] = [];
+      cats[w.cat].push(w);
+    });
+
+    container.innerHTML = Object.entries(cats).map(([cat, words]) => `
+      <div class="fidel-category-label">${cat}</div>
+      <div class="fidel-words-grid">
+        ${words.map((w, i) => `
+          <div class="fidel-word-card" title="${w.ex}">
+            <div class="fwc-tigrinya">${w.w}</div>
+            <div class="fwc-roman">${w.r}</div>
+            <div class="fwc-meaning">${w.m}</div>
+            <div class="fwc-example">${w.ex}</div>
+            <button class="fwc-speak" data-word="${w.w}" title="Hear pronunciation">🔊</button>
+          </div>`).join('')}
+      </div>`).join('');
+
+    container.querySelectorAll('.fwc-speak').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        speakWord(btn.getAttribute('data-word'));
+        btn.textContent = '🔉';
+        setTimeout(() => { btn.textContent = '🔊'; }, 1500);
+      });
+    });
+  }
+
+  renderWords('');
+  if (searchEl) searchEl.addEventListener('input', () => renderWords(searchEl.value));
+})();
+
 // ── NATIONAL ANTHEM PLAYER ───────────────────
 const anthemAudio     = document.getElementById('anthemAudio');
 const anthemPlayBtn   = document.getElementById('anthemPlay');
@@ -683,8 +834,10 @@ function anthemFmt(s) {
 
 function anthemSetPlayIcon(playing) {
   const icon = playing ? '&#9646;&#9646;' : '&#9654;';
-  anthemPlayBtn.innerHTML    = icon;
-  anthemBarPlayBtn.innerHTML = icon;
+  if (anthemPlayBtn)    anthemPlayBtn.innerHTML    = icon;
+  if (anthemBarPlayBtn) anthemBarPlayBtn.innerHTML = icon;
+  const nb = document.getElementById('namPlay');
+  if (nb) nb.innerHTML = icon;
 }
 
 anthemAudio.addEventListener('play',  () => anthemSetPlayIcon(true));
@@ -711,6 +864,33 @@ anthemTrack.addEventListener('click', e => {
 
 anthemPlayBtn.addEventListener('click',    anthemTogglePlay);
 anthemBarPlayBtn.addEventListener('click', anthemTogglePlay);
+
+// ── Nav mini anthem player ──────────────────────────────
+const namPlayBtn = document.getElementById('namPlay');
+const namFill    = document.getElementById('namFill');
+const namTrack   = document.getElementById('namTrack');
+const namTime    = document.getElementById('namTime');
+
+if (namPlayBtn) namPlayBtn.addEventListener('click', anthemTogglePlay);
+
+anthemAudio.addEventListener('play',  () => { if (namPlayBtn) namPlayBtn.innerHTML = '&#9646;&#9646;'; });
+anthemAudio.addEventListener('pause', () => { if (namPlayBtn) namPlayBtn.innerHTML = '&#9654;'; });
+anthemAudio.addEventListener('ended', () => { if (namPlayBtn) namPlayBtn.innerHTML = '&#9654;'; });
+
+anthemAudio.addEventListener('timeupdate', () => {
+  if (!anthemAudio.duration) return;
+  const pct = (anthemAudio.currentTime / anthemAudio.duration) * 100;
+  if (namFill)  namFill.style.width  = pct + '%';
+  if (namTime)  namTime.textContent  = anthemFmt(anthemAudio.currentTime);
+});
+
+if (namTrack) {
+  namTrack.addEventListener('click', e => {
+    if (!anthemAudio.duration) return;
+    const r = namTrack.getBoundingClientRect();
+    anthemAudio.currentTime = ((e.clientX - r.left) / r.width) * anthemAudio.duration;
+  });
+}
 
 anthemBarToggle.addEventListener('click', () => {
   anthemExpanded = !anthemExpanded;
@@ -1297,14 +1477,166 @@ if (readingBar) {
   });
 })();
 
-// ── KEYBOARD SHORTCUT: '/' to focus world search ─────────
+// ── GLOBAL SEARCH OVERLAY ────────────────────────────────
+(function initGlobalSearch() {
+  const overlay   = document.getElementById('globalSearchOverlay');
+  const backdrop  = document.getElementById('gsoBackdrop');
+  const input     = document.getElementById('gsoInput');
+  const closeBtn  = document.getElementById('gsoClose');
+  const results   = document.getElementById('gsoResults');
+  const openBtn   = document.getElementById('globalSearchBtn');
+  if (!overlay || !input) return;
+
+  // Index of all sections with metadata for searching
+  const SECTION_INDEX = [
+    { id:'overview',         icon:'🏛️', title:'Overview of Eritrea',         desc:'Capital, population, area, and general facts' },
+    { id:'history',          icon:'📜', title:'History',                      desc:'Ancient kingdoms, Italian colonialism, independence war' },
+    { id:'geography',        icon:'🗺️', title:'Geography & Landscape',       desc:'Highlands, lowlands, Red Sea coast' },
+    { id:'regions',          icon:'🗾', title:'Regions of Eritrea',           desc:'Maekel, Debub, Anseba, Gash-Barka, Northern & Southern Red Sea' },
+    { id:'people',           icon:'👥', title:'People & Ethnic Groups',       desc:'9 ethnic groups: Tigrinya, Tigre, Saho, Afar, Kunama, Bilen, Nara, Rashaida, Hedareb' },
+    { id:'culture',          icon:'🎭', title:'Culture & Traditions',         desc:'Music, dance, art, coffee ceremony, festivals' },
+    { id:'recipes',          icon:'🍽️', title:'Eritrean Recipes',             desc:'Injera, tsebhi, zigni, kicha, shiro and more' },
+    { id:'economy',          icon:'💰', title:'Economy',                      desc:'Agriculture, mining, Red Sea ports, Nakfa currency' },
+    { id:'famous',           icon:'⭐', title:'Famous Eritreans',             desc:'Athletes, artists, politicians, scientists' },
+    { id:'artists',          icon:'🎵', title:'Eritrean Artists',             desc:'Abraham Afewerki, Helen Meles, musicians and performers' },
+    { id:'government',       icon:'⚖️', title:'Government & Politics',       desc:'President Isaias Afwerki, PFDJ, National Assembly' },
+    { id:'cultural-calendar',icon:'📅', title:'Cultural Calendar',            desc:'Eritrean holidays, festivals, and important dates' },
+    { id:'holidays',         icon:'🗓️', title:'Public Holidays',              desc:'Independence Day, Martyrs Day, Christmas, Eid' },
+    { id:'languages',        icon:'🗣️', title:'Languages of Eritrea',        desc:'Tigrinya, Tigre, Saho, Afar, Arabic, and more' },
+    { id:'gallery',          icon:'📸', title:'Photo Gallery',                desc:'Landscapes, cities, culture, and people of Eritrea' },
+    { id:'translator',       icon:'🌐', title:'Tigrinya Translator',          desc:'Translate between Tigrinya and English' },
+    { id:'tourism',          icon:'✈️', title:'Tourism Guide',                desc:'Asmara, Massawa, Dahlak Archipelago, Qohaito' },
+    { id:'blog',             icon:'📖', title:'Blog & Articles',              desc:'Stories, analysis, and features about Eritrea' },
+    { id:'quiz',             icon:'🏆', title:'Eritrea Knowledge Quiz',       desc:'Test your knowledge about Eritrea' },
+    { id:'community',        icon:'🤝', title:'Community Stories',            desc:'Diaspora stories, travel guides, community posts' },
+    { id:'fidel',            icon:'🔤', title:"Ge'ez Fidel Alphabet",         desc:'231 Tigrinya characters with pronunciation' },
+    { id:'lessons',          icon:'📖', title:'Tigrinya Lessons',             desc:'Alphabet, numbers, colors, days, common phrases' },
+    { id:'proverbs',         icon:'💬', title:'Eritrean Proverbs',            desc:'Ancient Tigrinya wisdom and sayings' },
+    { id:'poetry',           icon:'📝', title:'Eritrean Poetry',              desc:'Famous Tigrinya poems with translation' },
+    { id:'facts',            icon:'🌟', title:'Fact Generator',               desc:'Random fascinating facts about Eritrea' },
+    { id:'sports-tracker',   icon:'🚴', title:'Sports Tracker',              desc:'Cycling, running, football — Eritrean athletes' },
+    { id:'flag-explorer',    icon:'🚩', title:'Flag Explorer',                desc:'Eritrean flag history, colors, and symbolism' },
+    { id:'diaspora-map',     icon:'🌍', title:'Diaspora Map',                 desc:'Eritrean communities around the world' },
+    { id:'compare',          icon:'📊', title:'Country Comparisons',          desc:'Compare Eritrea to other nations' },
+    { id:'prayer-times',     icon:'🕌', title:'Prayer Times',                 desc:'Daily Islamic prayer times for Eritrea' },
+    { id:'asmara-tour',      icon:'🏛️', title:'Asmara Virtual Tour',          desc:'UNESCO Art Deco architecture, historic buildings' },
+    { id:'cooking-videos',   icon:'🎬', title:'Cooking Videos',               desc:'Video tutorials for Eritrean dishes' },
+    { id:'events',           icon:'📅', title:'Events & News',                desc:'Upcoming Eritrean community events' },
+    { id:'directory',        icon:'📋', title:'Directory',                    desc:'Eritrean businesses, services, and organizations' },
+    { id:'news',             icon:'📰', title:'Latest News',                  desc:'News and updates from Eritrea' },
+    { id:'eritrea-map',      icon:'🗺️', title:'Interactive Map',             desc:'Explore Eritrea on an interactive Leaflet map' },
+    { id:'world-search',     icon:'🌍', title:'World Search',                 desc:'Ask any question and get an AI-powered answer' },
+    { id:'quick-facts',      icon:'📌', title:'Quick Facts',                  desc:'Capital, population, area, currency, calling code' },
+  ];
+
+  function openGSO() {
+    overlay.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => input.focus(), 50);
+    showResults('');
+  }
+
+  function closeGSO() {
+    overlay.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+    input.value = '';
+  }
+
+  function highlight(text, query) {
+    if (!query) return text;
+    const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return text.replace(re, '<mark>$1</mark>');
+  }
+
+  function showResults(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      results.innerHTML = '<div class="gso-results-hint">Start typing to search across all sections…</div>';
+      return;
+    }
+    const matches = SECTION_INDEX.filter(s =>
+      s.title.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q)
+    );
+    if (!matches.length) {
+      results.innerHTML = '<div class="gso-no-results">No sections found for "<strong>' + query + '</strong>". Try another keyword.</div>';
+      return;
+    }
+    results.innerHTML = matches.map(s => `
+      <a class="gso-result-item" href="#${s.id}" tabindex="0">
+        <span class="gso-result-icon">${s.icon}</span>
+        <span class="gso-result-text">
+          <span class="gso-result-title">${highlight(s.title, query)}</span>
+          <span class="gso-result-desc">${highlight(s.desc, query)}</span>
+        </span>
+      </a>`).join('');
+
+    results.querySelectorAll('.gso-result-item').forEach(item => {
+      item.addEventListener('click', () => {
+        closeGSO();
+        const target = document.querySelector(item.getAttribute('href'));
+        if (target) {
+          setTimeout(() => {
+            const top = target.getBoundingClientRect().top + window.scrollY - 80;
+            window.scrollTo({ top, behavior: 'smooth' });
+          }, 80);
+        }
+      });
+    });
+  }
+
+  input.addEventListener('input', () => showResults(input.value));
+
+  // Quick-jump chips
+  document.querySelectorAll('.gso-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const sec = chip.getAttribute('data-section');
+      closeGSO();
+      const target = document.getElementById(sec);
+      if (target) {
+        setTimeout(() => {
+          const top = target.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }, 80);
+      }
+    });
+  });
+
+  if (openBtn)   openBtn.addEventListener('click', openGSO);
+  if (closeBtn)  closeBtn.addEventListener('click', closeGSO);
+  if (backdrop)  backdrop.addEventListener('click', closeGSO);
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeGSO();
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const first = results.querySelector('.gso-result-item');
+      if (first) first.focus();
+    }
+  });
+
+  results.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeGSO(); return; }
+    const items = [...results.querySelectorAll('.gso-result-item')];
+    const idx = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown' && idx < items.length - 1) { e.preventDefault(); items[idx + 1].focus(); }
+    if (e.key === 'ArrowUp')  {
+      e.preventDefault();
+      if (idx <= 0) input.focus();
+      else items[idx - 1].focus();
+    }
+  });
+
+  // Expose open function globally for keyboard shortcut
+  window.openGlobalSearch = openGSO;
+})();
+
+// ── KEYBOARD SHORTCUT: '/' to open global search ─────────
 document.addEventListener('keydown', e => {
   if (e.key !== '/') return;
   const tag = document.activeElement?.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   e.preventDefault();
-  const si = document.getElementById('worldSearchInput') || document.querySelector('.world-search input');
-  if (si) { si.focus(); si.select(); }
+  if (window.openGlobalSearch) window.openGlobalSearch();
 });
 
 // ── NEWS FEED ────────────────────────────────────────────
@@ -3124,11 +3456,27 @@ initRelatedSections();
     _progPct = 0;
 
     const story = _stories[_current];
-    svImg.src = story.src;
-    svCaption.textContent = story.caption;
+
+    // Hide img while loading; show placeholder if it fails
+    if (svImg) {
+      svImg.style.opacity = '0';
+      svImg.onerror = () => {
+        svImg.style.opacity = '0';
+        if (svCaption) svCaption.textContent = '⚠ Image could not load — press Esc to close';
+        // Auto-advance after 1.5s on error
+        clearInterval(_progId);
+        setTimeout(() => {
+          if (!viewer.hidden && _stories.length > 1) advanceSlide(1);
+          else if (!viewer.hidden && _stories.length <= 1) closeViewer();
+        }, 1500);
+      };
+      svImg.onload = () => { svImg.style.opacity = '1'; };
+      svImg.src = story.src;
+    }
+    if (svCaption) svCaption.textContent = story.caption;
     renderProgress();
 
-    // Animate current bar
+    // Animate current progress bar
     const fill = document.getElementById('svPF' + _current);
     _progId = setInterval(() => {
       _progPct += (100 / 50);
@@ -3141,7 +3489,11 @@ initRelatedSections();
 
   function openViewer() {
     collectStories();
-    if (!_stories.length) return;
+    if (!_stories.length) {
+      // No gallery images found — don't open a black screen
+      alert('No gallery images available to view as stories.');
+      return;
+    }
     viewer.hidden = false;
     document.body.style.overflow = 'hidden';
     showSlide(0);
@@ -3152,12 +3504,17 @@ initRelatedSections();
     clearInterval(_progId);
     viewer.hidden = true;
     document.body.style.overflow = '';
-    if (svImg) svImg.src = '';
+    if (svImg) { svImg.src = ''; svImg.style.opacity = '1'; }
   }
 
   if (svClose) svClose.addEventListener('click', closeViewer);
   if (svPrev)  svPrev.addEventListener('click', () => { clearInterval(_progId); advanceSlide(-1); });
   if (svNext)  svNext.addEventListener('click', () => { clearInterval(_progId); advanceSlide(1);  });
+
+  // Click dark area outside image to close
+  viewer.addEventListener('click', e => {
+    if (e.target === viewer || e.target.classList.contains('sv-slide')) closeViewer();
+  });
 
   // Keyboard
   document.addEventListener('keydown', e => {
