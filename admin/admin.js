@@ -163,45 +163,57 @@ async function bootAuth() {
       }
       console.log('[HUB] User signed in:', user.email);
       currentUser = user;
-      // Ensure super admin record exists
-      if (user.email.toLowerCase() === SUPER_ADMIN.toLowerCase()) {
-        console.log('[HUB] Super admin detected, writing record...');
-        await fb.setDoc(fb.doc(_db, 'hub_users', user.uid), {
+
+      const isSuperAdmin = user.email.toLowerCase() === SUPER_ADMIN.toLowerCase();
+
+      // Super admin: grant access immediately without depending on Firestore
+      if (isSuperAdmin) {
+        console.log('[HUB] Super admin — granting access directly');
+        currentUserData = {
+          email: user.email,
+          name:  user.displayName || 'Admin',
+          role:  'super_admin',
+          status:'approved'
+        };
+        // Write/update Firestore record in background (best-effort, don't block login)
+        fb.setDoc(fb.doc(_db, 'hub_users', user.uid), {
           email: user.email,
           name:  user.displayName || 'Admin',
           role:  'super_admin',
           status:'approved',
           createdAt: fb.serverTimestamp(),
           approvedAt: fb.serverTimestamp()
-        }, { merge: true });
-        console.log('[HUB] Super admin record saved');
-      }
-      console.log('[HUB] Reading user record from Firestore...');
-      const snap = await fb.getDoc(fb.doc(_db, 'hub_users', user.uid));
-      if (!snap.exists()) {
-        console.log('[HUB] No user record found, creating pending...');
-        await fb.setDoc(fb.doc(_db, 'hub_users', user.uid), {
-          email: user.email,
-          name:  user.displayName || user.email,
-          role:  'viewer',
-          status:'pending',
-          createdAt: fb.serverTimestamp(),
-          approvedAt: null
-        });
-        currentUserData = { role: 'viewer', status: 'pending' };
+        }, { merge: true }).catch(e => console.warn('[HUB] Super admin record write failed (non-critical):', e));
       } else {
-        currentUserData = snap.data();
-        console.log('[HUB] User data:', currentUserData);
+        // Non-super-admin: check Firestore record
+        console.log('[HUB] Reading user record from Firestore...');
+        const snap = await fb.getDoc(fb.doc(_db, 'hub_users', user.uid));
+        if (!snap.exists()) {
+          console.log('[HUB] No user record found, creating pending...');
+          await fb.setDoc(fb.doc(_db, 'hub_users', user.uid), {
+            email: user.email,
+            name:  user.displayName || user.email,
+            role:  'viewer',
+            status:'pending',
+            createdAt: fb.serverTimestamp(),
+            approvedAt: null
+          });
+          currentUserData = { role: 'viewer', status: 'pending' };
+        } else {
+          currentUserData = snap.data();
+          console.log('[HUB] User data:', currentUserData);
+        }
+        if (currentUserData.status !== 'approved') {
+          console.log('[HUB] User not approved, showing pending screen');
+          document.getElementById('authScreen').hidden = false;
+          document.getElementById('hubApp').hidden     = true;
+          switchAuthView('pending');
+          const btn = document.getElementById('loginBtn');
+          btn.textContent = 'Sign In'; btn.disabled = false;
+          return;
+        }
       }
-      if (currentUserData.status !== 'approved') {
-        console.log('[HUB] User not approved, showing pending screen');
-        document.getElementById('authScreen').hidden = false;
-        document.getElementById('hubApp').hidden     = true;
-        switchAuthView('pending');
-        const btn = document.getElementById('loginBtn');
-        btn.textContent = 'Sign In'; btn.disabled = false;
-        return;
-      }
+
       console.log('[HUB] Access granted, loading hub');
       document.getElementById('authScreen').hidden = true;
       document.getElementById('hubApp').hidden     = false;
