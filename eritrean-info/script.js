@@ -939,7 +939,7 @@ async function loadCommunityPosts() {
       const tags = Array.isArray(d.tags) ? d.tags.filter(Boolean) : [];
       const date = d.approvedAt?.toDate ? d.approvedAt.toDate().toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) : '';
       grid.insertAdjacentHTML('beforeend', `
-        <div class="community-post-card">
+        <div class="community-post-card" data-post-id="${doc.id}" data-upvotes="${d.upvotes || 0}">
           ${d.imageUrl ? `<div class="cp-img-wrap"><img src="${escHtml(d.imageUrl)}" alt="${escHtml(d.title)}" loading="lazy" /></div>` : ''}
           <div class="cp-body">
             <h3 class="cp-title">${escHtml(d.title)}</h3>
@@ -2435,13 +2435,6 @@ function renderBookmarkPanel() {
 
 // ── FEATURE 18: COMMUNITY STORIES VOTING ─────────────────────
 (function initCommunityVoting() {
-  let db;
-  try {
-    const { getFirestore, doc, getDoc, updateDoc, increment } = window.firebaseFirestore || {};
-    if (!getFirestore) { setTimeout(initCommunityVoting, 2000); return; }
-    db = getFirestore();
-  } catch(e) { /* Firebase not ready yet */ return; }
-
   const VOTED_KEY = 'eri_voted_posts';
   function getVoted() { return JSON.parse(localStorage.getItem(VOTED_KEY) || '[]'); }
   function markVoted(id) { const v = getVoted(); if (!v.includes(id)) { v.push(id); localStorage.setItem(VOTED_KEY, JSON.stringify(v)); } }
@@ -2449,11 +2442,13 @@ function renderBookmarkPanel() {
   async function upvotePost(id, btn) {
     if (getVoted().includes(id)) { return; }
     try {
-      const { doc: docRef, updateDoc: updDoc, increment: inc } = window.firebaseFirestore || {};
-      const { getFirestore: getFS } = window.firebaseFirestore || {};
-      if (!getFS) return;
-      const _db = getFS();
-      await updDoc(docRef(_db, 'community_posts', id), { upvotes: inc(1) });
+      const [appMod, fsMod] = await Promise.all([
+        import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+      ]);
+      const app  = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
+      const _db  = fsMod.getFirestore(app);
+      await fsMod.updateDoc(fsMod.doc(_db, 'community_posts', id), { upvotes: fsMod.increment(1) });
       markVoted(id);
       const cnt = btn.querySelector('.vote-count');
       if (cnt) cnt.textContent = parseInt(cnt.textContent || '0', 10) + 1;
@@ -2518,3 +2513,680 @@ function initRelatedSections() {
   });
 }
 initRelatedSections();
+
+// ════════════════════════════════════════════════════════════════
+//  ERITREAN INFO — BATCH 3 FEATURES  (11–20)
+// ════════════════════════════════════════════════════════════════
+
+// ── FEATURE 11: TIGRINYA WORD OF THE DAY ─────────────────────────
+(function initWordOfDay() {
+  const WORDS = [
+    { word: 'ሰላም', roman: 'Selam', meaning: 'Peace / Hello — the universal Tigrinya greeting', example: 'ሰላም! ከመይ ኣለኻ?' },
+    { word: 'ሃገር', roman: 'Hager', meaning: 'Country / Homeland', example: 'ሃገረ ኤርትራ — the State of Eritrea' },
+    { word: 'ፍቕሪ', roman: 'Fiqri', meaning: 'Love', example: 'ፍቕሪ ሃገር — love of country' },
+    { word: 'ጀጋኑ', roman: 'Jeganu', meaning: 'Heroes / Warriors', example: 'ጀጋኑ ኤርትራ — Heroes of Eritrea' },
+    { word: 'ብርሃን', roman: 'Birhan', meaning: 'Light', example: 'ብርሃን ናይ ሃገር — Light of the nation' },
+    { word: 'ሰብ', roman: 'Seb', meaning: 'Person / Human being', example: 'ሰብ ሃገር — a person of the country' },
+    { word: 'ቤት', roman: 'Bet', meaning: 'House / Home', example: 'ቤተ-ክርስቲያን — church (house of Christ)' },
+    { word: 'ማይ', roman: 'May', meaning: 'Water', example: 'ማይ ሂቡኒ — give me water' },
+    { word: 'ምድሪ', roman: 'Midri', meaning: 'Earth / Land / Ground', example: 'ምድሪ ኤርትራ — the land of Eritrea' },
+    { word: 'ዓወት', roman: 'Awet', meaning: 'Victory', example: 'ዓወት ንሓፋሽ! — Victory to the masses!' },
+    { word: 'ሰማይ', roman: 'Semay', meaning: 'Sky / Heaven', example: 'ሰማይ ጸሊም — the sky is dark' },
+    { word: 'ስድራቤት', roman: 'Sidra-bet', meaning: 'Family', example: 'ስድራቤተይ — my family' },
+    { word: 'ሓቂ', roman: 'Haki', meaning: 'Truth', example: 'ሓቂ ኣዘንቱ — speak the truth' },
+    { word: 'ተስፋ', roman: 'Tesfa', meaning: 'Hope', example: 'ተስፋ ኣይኮርዑን — don\'t lose hope' },
+    { word: 'ጥዕና', roman: 'Tiena', meaning: 'Health', example: 'ጥዕናኻ ይሓሉ — may your health be guarded' },
+    { word: 'ምህሮ', roman: 'Mihro', meaning: 'Education / Knowledge', example: 'ምህሮ ሓይሊ — education is power' },
+    { word: 'ጽጋብ', roman: 'Tsigab', meaning: 'Satisfaction / Fullness', example: 'ጽጋብ ሂቡና — he gave us satisfaction' },
+    { word: 'ዓለም', roman: 'Alem', meaning: 'World', example: 'ዓለም ሰፊሕ — the world is vast' },
+    { word: 'ናጽነት', roman: 'Natsnet', meaning: 'Freedom / Independence', example: 'ናጽነት ኤርትራ — Independence of Eritrea' },
+    { word: 'ኩራት', roman: 'Kurat', meaning: 'Pride', example: 'ኩራት ሃገር — pride of the country' },
+    { word: 'ኣቦ', roman: 'Abo', meaning: 'Father', example: 'ኣቦ ኤርትራ — father of Eritrea' },
+    { word: 'ኣደ', roman: 'Ade', meaning: 'Mother', example: 'ኣደ ኤርትራ — mother Eritrea' },
+    { word: 'ወዲ', roman: 'Wedi', meaning: 'Son / Child (male)', example: 'ወዲ ሃገር — son of the nation' },
+    { word: 'ልቢ', roman: 'Libi', meaning: 'Heart', example: 'ልቢ ሰብ — the human heart' },
+    { word: 'ፀሓይ', roman: 'Tsehay', meaning: 'Sun', example: 'ፀሓይ ወጺኡ — the sun has risen' },
+    { word: 'ሓዊ', roman: 'Hawi', meaning: 'Fire', example: 'ሓዊ ምጻር — kindling fire' },
+    { word: 'ክንፊ', roman: 'Kinfi', meaning: 'Wing', example: 'ክንፊ ሃገር — wing of the nation' },
+    { word: 'ጎደና', roman: 'Godena', meaning: 'Road / Path', example: 'ጎደና ሃገር — the road of the nation' },
+    { word: 'ወርሒ', roman: 'Werhi', meaning: 'Month / Moon', example: 'ወርሒ ምሉእ — full moon' },
+    { word: 'ዕዳጋ', roman: 'Idaga', meaning: 'Market', example: 'ዕዳጋ ኣስመራ — Asmara market' },
+  ];
+
+  const dayIdx = Math.floor(Date.now() / 86400000) % WORDS.length;
+  const word = WORDS[dayIdx];
+
+  const wodWord   = document.getElementById('wodWord');
+  const wodRoman  = document.getElementById('wodRoman');
+  const wodMeaning = document.getElementById('wodMeaning');
+  const wodSpeak  = document.getElementById('wodSpeak');
+  const widget    = document.getElementById('wordOfDayWidget');
+  if (!wodWord || !word) return;
+
+  wodWord.textContent    = word.word;
+  wodRoman.textContent   = word.roman;
+  wodMeaning.textContent = word.meaning;
+  if (widget) widget.title = 'Example: ' + word.example;
+
+  if (wodSpeak) {
+    wodSpeak.addEventListener('click', () => {
+      const utt = new SpeechSynthesisUtterance(word.word);
+      utt.lang = 'ti'; utt.rate = 0.8;
+      const voices = window.speechSynthesis.getVoices();
+      const v = voices.find(v => v.lang.startsWith('ti') || v.lang.startsWith('am'));
+      if (v) utt.voice = v;
+      window.speechSynthesis.speak(utt);
+    });
+  }
+})();
+
+
+// ── FEATURE 12: CURRENCY CONVERTER ───────────────────────────────
+(function initCurrencyConverter() {
+  const RATES = { USD: 0.0067, EUR: 0.0062, ETB: 0.77, SAR: 0.025 };
+
+  function convert() {
+    const amtEl = document.getElementById('cwAmount');
+    const dirEl = document.getElementById('cwDir');
+    const curEl = document.getElementById('cwCurrency');
+    const resEl = document.getElementById('cwResult');
+    if (!amtEl || !resEl) return;
+
+    const amt = parseFloat(amtEl.value) || 0;
+    const dir = dirEl ? dirEl.value : 'from';
+    const cur = curEl ? curEl.value : 'USD';
+    const rate = RATES[cur] || 0.0067;
+    const SYMBOLS = { USD: '$', EUR: '€', ETB: 'Br', SAR: '﷼' };
+    const sym = SYMBOLS[cur] || '';
+
+    if (dir === 'from') {
+      const result = (amt * rate).toFixed(2);
+      resEl.textContent = '= ' + sym + result + ' ' + cur;
+    } else {
+      const result = (amt / rate).toFixed(2);
+      resEl.textContent = '= ' + result + ' ERN';
+    }
+  }
+
+  ['cwAmount', 'cwDir', 'cwCurrency'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', convert);
+  });
+  convert();
+})();
+
+
+// ── FEATURE 13: ASMARA WEATHER WIDGET ────────────────────────────
+(function initWeatherWidget() {
+  const CACHE_KEY = 'eri_weather_cache';
+  const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+  const WEATHER_CODES = {
+    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+    45: '🌫️', 48: '🌫️',
+    51: '🌦️', 53: '🌦️', 55: '🌦️',
+    61: '🌧️', 63: '🌧️', 65: '🌧️',
+    71: '🌨️', 73: '🌨️', 75: '❄️',
+    80: '🌦️', 81: '🌧️', 82: '⛈️',
+    95: '⛈️', 96: '⛈️', 99: '⛈️',
+  };
+
+  async function fetchWeather() {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
+
+    const resp = await fetch(
+      'https://api.open-meteo.com/v1/forecast?latitude=15.3384&longitude=38.9318&current_weather=true&temperature_unit=celsius'
+    );
+    const json = await resp.json();
+    const data = json.current_weather;
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+    return data;
+  }
+
+  async function renderWeather() {
+    const tempEl = document.getElementById('wwTemp');
+    const iconEl = document.getElementById('wwIcon');
+    if (!tempEl) return;
+    try {
+      const w = await fetchWeather();
+      if (!w) return;
+      tempEl.textContent = Math.round(w.temperature) + '°C';
+      if (iconEl) iconEl.textContent = WEATHER_CODES[w.weathercode] || '🌡️';
+    } catch(e) {
+      if (tempEl) tempEl.textContent = '—°C';
+    }
+  }
+
+  renderWeather();
+})();
+
+
+// ── FEATURE 15: EMOJI REACTIONS ON COMMUNITY POSTS ───────────────
+(function initEmojiReactions() {
+  const REACT_KEY_PREFIX = 'eri_reactions_';
+  const EMOJIS = ['❤️', '👍', '🙏', '🇪🇷'];
+
+  function getUserReactions(postId) {
+    try { return JSON.parse(localStorage.getItem(REACT_KEY_PREFIX + postId) || '[]'); } catch(e) { return []; }
+  }
+  function saveUserReactions(postId, arr) {
+    localStorage.setItem(REACT_KEY_PREFIX + postId, JSON.stringify(arr));
+  }
+
+  async function toggleReaction(postId, emoji, btn) {
+    const userReacts = getUserReactions(postId);
+    const already = userReacts.includes(emoji);
+
+    if (already) {
+      userReacts.splice(userReacts.indexOf(emoji), 1);
+      btn.classList.remove('reacted');
+    } else {
+      userReacts.push(emoji);
+      btn.classList.add('reacted');
+    }
+    saveUserReactions(postId, userReacts);
+
+    // Update Firestore reaction count
+    try {
+      const [appMod, fsMod] = await Promise.all([
+        import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+      ]);
+      const app  = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
+      const _db  = fsMod.getFirestore(app);
+      const field = 'reactions.' + emoji.codePointAt(0).toString(16);
+      const delta = already ? fsMod.increment(-1) : fsMod.increment(1);
+      await fsMod.updateDoc(fsMod.doc(_db, 'community_posts', postId), { [field]: delta });
+    } catch(e) { /* graceful fail */ }
+
+    // Update count display
+    const countEl = btn.querySelector('.react-count');
+    if (countEl) {
+      const current = parseInt(countEl.textContent) || 0;
+      countEl.textContent = Math.max(0, current + (already ? -1 : 1));
+    }
+  }
+
+  function addReactionBar(card) {
+    if (card.querySelector('.reaction-bar')) return;
+    const postId = card.dataset.postId || card.getAttribute('data-id');
+    if (!postId) return;
+    const userReacts = getUserReactions(postId);
+
+    const bar = document.createElement('div');
+    bar.className = 'reaction-bar';
+    EMOJIS.forEach(emoji => {
+      const btn = document.createElement('button');
+      btn.className = 'react-btn' + (userReacts.includes(emoji) ? ' reacted' : '');
+      btn.innerHTML = emoji + ' <span class="react-count">0</span>';
+      btn.addEventListener('click', e => { e.stopPropagation(); toggleReaction(postId, emoji, btn); });
+      bar.appendChild(btn);
+    });
+    card.appendChild(bar);
+  }
+
+  const grid = document.getElementById('communityPostsGrid');
+  if (grid) {
+    new MutationObserver(() => {
+      grid.querySelectorAll('.community-post-card').forEach(addReactionBar);
+    }).observe(grid, { childList: true });
+    grid.querySelectorAll('.community-post-card').forEach(addReactionBar);
+  }
+})();
+
+
+// ── FEATURE 16: DEMOGRAPHICS DONUT CHART ─────────────────────────
+(function initDemographicsChart() {
+  const canvas = document.getElementById('demographicsChart');
+  if (!canvas) return;
+
+  const DATA = [
+    { label: 'Tigrinya',  pct: 55, color: '#007A3D' },
+    { label: 'Tigre',     pct: 30, color: '#4189DD' },
+    { label: 'Saho',      pct: 4,  color: '#CE1126' },
+    { label: 'Afar',      pct: 4,  color: '#f59e0b' },
+    { label: 'Kunama',    pct: 2,  color: '#8b5cf6' },
+    { label: 'Bilen',     pct: 2,  color: '#06b6d4' },
+    { label: 'Nara',      pct: 1,  color: '#ec4899' },
+    { label: 'Rashaida',  pct: 1,  color: '#f97316' },
+    { label: 'Others',    pct: 1,  color: '#64748b' },
+  ];
+
+  // Render legend
+  const legend = document.getElementById('demoLegend');
+  if (legend) {
+    legend.innerHTML = DATA.map(d =>
+      '<div class="demo-leg-item"><span class="demo-leg-dot" style="background:' + d.color + '"></span>' +
+      '<span class="demo-leg-label">' + d.label + '</span>' +
+      '<span class="demo-leg-pct">' + d.pct + '%</span></div>'
+    ).join('');
+  }
+
+  // Draw donut
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 8, r = R * 0.56;
+  let start = -Math.PI / 2;
+  const total = DATA.reduce((a, d) => a + d.pct, 0);
+
+  DATA.forEach(d => {
+    const slice = (d.pct / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R, start, start + slice);
+    ctx.closePath();
+    ctx.fillStyle = d.color;
+    ctx.fill();
+    start += slice;
+  });
+
+  // Hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg') || '#0d1117';
+  ctx.fill();
+
+  // Center text
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px Montserrat, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('9 Groups', cx, cy - 8);
+  ctx.font = '11px Montserrat, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.6)';
+  ctx.fillText('Ethnic', cx, cy + 10);
+})();
+
+
+// ── FEATURE 17: CULTURAL CALENDAR ────────────────────────────────
+(function initCulturalCalendar() {
+  const ERI_EVENTS = {
+    '01-01': { name: 'New Year (Gregorian)', type: 'national', icon: '🎆' },
+    '01-07': { name: 'Christmas (Orthodox — Lidat)', type: 'religious', icon: '⛪' },
+    '01-19': { name: 'Timkat — Epiphany (Orthodox)', type: 'religious', icon: '💧' },
+    '03-08': { name: "International Women's Day", type: 'national', icon: '♀️' },
+    '04-07': { name: 'Women\'s Fighters Day — Remembrance', type: 'national', icon: '🌹' },
+    '05-24': { name: 'Independence Day 🇪🇷 — Yom Selfi Natsnet', type: 'national', icon: '🎉' },
+    '06-20': { name: 'Martyrs\' Day — Sehid', type: 'national', icon: '🕯️' },
+    '09-01': { name: 'Armed Struggle Day — anniversary of 1961 uprising', type: 'national', icon: '⚔️' },
+    '09-27': { name: 'Meskel — Finding of the True Cross', type: 'religious', icon: '✝️' },
+    '11-01': { name: 'All Saints Day (Catholic)', type: 'religious', icon: '🕊️' },
+    '12-25': { name: 'Christmas (Western)', type: 'religious', icon: '🎄' },
+  };
+
+  let _calYear = new Date().getFullYear();
+  let _calMonth = new Date().getMonth(); // 0-based
+
+  function renderCal() {
+    const grid = document.getElementById('calGrid');
+    const label = document.getElementById('calMonthLabel');
+    if (!grid) return;
+
+    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    if (label) label.textContent = MONTH_NAMES[_calMonth] + ' ' + _calYear;
+
+    const firstDay = new Date(_calYear, _calMonth, 1).getDay(); // 0=Sun
+    const daysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
+    const today = new Date();
+
+    let html = '<div class="cal-weekdays">' +
+      ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => '<div class="cal-wday">' + d + '</div>').join('') +
+      '</div><div class="cal-days">';
+
+    // Empty cells before first day
+    for (let i = 0; i < firstDay; i++) html += '<div class="cal-day cal-day-empty"></div>';
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const mm = String(_calMonth + 1).padStart(2, '0');
+      const dd = String(d).padStart(2, '0');
+      const key = mm + '-' + dd;
+      const ev = ERI_EVENTS[key];
+      const isToday = (d === today.getDate() && _calMonth === today.getMonth() && _calYear === today.getFullYear());
+      const hasEvent = !!ev;
+      const evType = ev ? ev.type : '';
+      html += '<div class="cal-day' +
+        (isToday ? ' cal-today' : '') +
+        (hasEvent ? ' cal-has-event cal-ev-' + evType : '') +
+        '" data-key="' + key + '">' +
+        '<span class="cal-day-num">' + d + '</span>' +
+        (ev ? '<span class="cal-ev-dot" title="' + ev.name + '">' + ev.icon + '</span>' : '') +
+        '</div>';
+    }
+    html += '</div>';
+    grid.innerHTML = html;
+
+    // Click events
+    grid.querySelectorAll('.cal-has-event').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const key = cell.dataset.key;
+        const ev = ERI_EVENTS[key];
+        if (!ev) return;
+        const panel = document.getElementById('calEventPanel');
+        const content = document.getElementById('calEventContent');
+        if (!panel || !content) return;
+        content.innerHTML = '<div class="cal-ev-icon">' + ev.icon + '</div>' +
+          '<div class="cal-ev-name">' + ev.name + '</div>' +
+          '<div class="cal-ev-date">' + key.replace('-', '/') + '</div>' +
+          '<div class="cal-ev-type ' + ev.type + '">' + ev.type.toUpperCase() + '</div>';
+        panel.hidden = false;
+      });
+    });
+  }
+
+  document.getElementById('calPrev') && document.getElementById('calPrev').addEventListener('click', () => {
+    _calMonth--; if (_calMonth < 0) { _calMonth = 11; _calYear--; } renderCal();
+  });
+  document.getElementById('calNext') && document.getElementById('calNext').addEventListener('click', () => {
+    _calMonth++; if (_calMonth > 11) { _calMonth = 0; _calYear++; } renderCal();
+  });
+  document.getElementById('calEventClose') && document.getElementById('calEventClose').addEventListener('click', () => {
+    const panel = document.getElementById('calEventPanel');
+    if (panel) panel.hidden = true;
+  });
+
+  renderCal();
+})();
+
+
+// ── FEATURE 18: WEB SHARE API ─────────────────────────────────────
+(function initWebShare() {
+  const SHAREABLE = [
+    { id: 'overview',   title: 'Overview of Eritrea' },
+    { id: 'history',    title: 'History of Eritrea' },
+    { id: 'geography',  title: 'Geography of Eritrea' },
+    { id: 'culture',    title: 'Culture of Eritrea' },
+    { id: 'economy',    title: 'Economy of Eritrea' },
+    { id: 'government', title: 'Government of Eritrea' },
+    { id: 'famous',     title: 'Famous Eritreans' },
+    { id: 'tourism',    title: 'Eritrea Tourism Guide' },
+    { id: 'recipes',    title: 'Eritrean Recipes' },
+    { id: 'quiz',       title: 'Eritrea Knowledge Quiz' },
+  ];
+
+  function addShareBtn(sectionId, sectionTitle) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    const header = section.querySelector('.section-header');
+    if (!header || header.querySelector('.share-section-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'share-section-btn';
+    btn.title = 'Share this section';
+    btn.innerHTML = '🔗 Share';
+    btn.addEventListener('click', async () => {
+      const url = location.origin + location.pathname + '#' + sectionId;
+      const shareData = { title: sectionTitle + ' — Eritrean Info', text: 'Learn about ' + sectionTitle + ' on Eritrean Info', url };
+
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        try { await navigator.share(shareData); return; } catch(e) { if (e.name === 'AbortError') return; }
+      }
+      // Clipboard fallback
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.innerHTML = '🔗 Share'; }, 2000);
+      } catch(e) {
+        prompt('Copy this link:', url);
+      }
+    });
+    header.appendChild(btn);
+  }
+
+  SHAREABLE.forEach(s => addShareBtn(s.id, s.title));
+})();
+
+
+// ── FEATURE 19: OFFLINE READING MODE (IndexedDB) ─────────────────
+(function initOfflineReading() {
+  const DB_NAME = 'EritreanInfoOffline', DB_VER = 1, STORE = 'sections';
+  const SECTIONS = [
+    { id: 'overview', label: '🏛️ Overview' },
+    { id: 'history', label: '📜 History' },
+    { id: 'geography', label: '🗺️ Geography' },
+    { id: 'culture', label: '🎭 Culture' },
+    { id: 'economy', label: '💰 Economy' },
+    { id: 'government', label: '⚖️ Government' },
+    { id: 'people', label: '👥 People' },
+    { id: 'famous', label: '⭐ Famous' },
+    { id: 'tourism', label: '✈️ Tourism' },
+    { id: 'languages', label: '🗣️ Languages' },
+  ];
+
+  let _db = null;
+
+  function openDB() {
+    return new Promise((res, rej) => {
+      if (_db) return res(_db);
+      const req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = e => e.target.result.createObjectStore(STORE, { keyPath: 'id' });
+      req.onsuccess = e => { _db = e.target.result; res(_db); };
+      req.onerror   = e => rej(e);
+    });
+  }
+
+  async function getSaved() {
+    const db = await openDB();
+    return new Promise(res => {
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () => res(req.result || []);
+      req.onerror   = () => res([]);
+    });
+  }
+
+  async function saveSection(id, label) {
+    const section = document.getElementById(id);
+    if (!section) return;
+    const html = section.querySelector('.container') ? section.querySelector('.container').innerHTML : section.innerHTML;
+    const db = await openDB();
+    return new Promise(res => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put({ id, label, html, savedAt: new Date().toISOString() });
+      tx.oncomplete = res;
+    });
+  }
+
+  async function removeSection(id) {
+    const db = await openDB();
+    return new Promise(res => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(id);
+      tx.oncomplete = res;
+    });
+  }
+
+  async function updateFab() {
+    const saved = await getSaved();
+    const fab = document.getElementById('offlineFab');
+    const badge = document.getElementById('offlineFabBadge');
+    if (!fab) return;
+    if (saved.length > 0) {
+      fab.style.display = '';
+      if (badge) badge.textContent = saved.length;
+    } else {
+      fab.style.display = 'none';
+    }
+  }
+
+  async function renderOfflinePanel() {
+    const list = document.getElementById('offlineList');
+    if (!list) return;
+    const saved = await getSaved();
+    if (saved.length === 0) { list.innerHTML = '<p class="op-empty">No sections saved yet. Look for the 💾 button on section headers.</p>'; return; }
+    list.innerHTML = saved.map(s =>
+      '<div class="op-item"><a class="op-link" href="#' + s.id + '">' + s.label + '</a>' +
+      '<span class="op-date">' + new Date(s.savedAt).toLocaleDateString() + '</span>' +
+      '<button class="op-del" data-id="' + s.id + '">🗑</button></div>'
+    ).join('');
+    list.querySelectorAll('.op-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await removeSection(btn.dataset.id);
+        renderOfflinePanel();
+        updateFab();
+        updateSaveBtnStates();
+      });
+    });
+  }
+
+  async function updateSaveBtnStates() {
+    const saved = await getSaved();
+    const savedIds = saved.map(s => s.id);
+    document.querySelectorAll('.save-offline-btn').forEach(btn => {
+      const id = btn.dataset.sectionId;
+      btn.textContent = savedIds.includes(id) ? '✅ Saved' : '💾';
+      btn.classList.toggle('is-saved', savedIds.includes(id));
+    });
+  }
+
+  // Add save buttons to section headers
+  SECTIONS.forEach(s => {
+    const section = document.getElementById(s.id);
+    if (!section) return;
+    const header = section.querySelector('.section-header');
+    if (!header || header.querySelector('.save-offline-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'save-offline-btn';
+    btn.dataset.sectionId = s.id;
+    btn.textContent = '💾';
+    btn.title = 'Save for offline reading';
+    btn.addEventListener('click', async () => {
+      const isSaved = btn.classList.contains('is-saved');
+      if (isSaved) {
+        await removeSection(s.id);
+        btn.textContent = '💾';
+        btn.classList.remove('is-saved');
+      } else {
+        await saveSection(s.id, s.label);
+        btn.textContent = '✅ Saved';
+        btn.classList.add('is-saved');
+      }
+      updateFab();
+    });
+    header.appendChild(btn);
+  });
+
+  // FAB + panel
+  const fab  = document.getElementById('offlineFab');
+  const panel = document.getElementById('offlinePanel');
+  if (fab)  fab.addEventListener('click', () => { if (panel) { panel.hidden = false; renderOfflinePanel(); } });
+  const closeBtn = document.getElementById('offlinePanelClose');
+  if (closeBtn) closeBtn.addEventListener('click', () => { if (panel) panel.hidden = true; });
+
+  updateFab();
+  updateSaveBtnStates();
+})();
+
+
+// ── FEATURE 20: PHOTO STORY VIEWER ───────────────────────────────
+(function initStoryViewer() {
+  const viewer = document.getElementById('storyViewer');
+  if (!viewer) return;
+
+  const svImg       = document.getElementById('svImg');
+  const svCaption   = document.getElementById('svCaption');
+  const svProgressRow = document.getElementById('svProgressRow');
+  const svClose     = document.getElementById('svClose');
+  const svPrev      = document.getElementById('svPrev');
+  const svNext      = document.getElementById('svNext');
+
+  let _stories = [];
+  let _current = 0;
+  let _autoId  = null;
+  let _progId  = null;
+  let _progPct = 0;
+
+  function collectStories() {
+    _stories = [];
+    document.querySelectorAll('#galleryGrid .gallery-item').forEach(item => {
+      const img  = item.querySelector('img');
+      const cap  = item.querySelector('.gallery-caption');
+      if (!img || !img.src) return;
+      _stories.push({
+        src:     img.src,
+        caption: cap ? cap.querySelector('h4')?.textContent || '' : '',
+      });
+    });
+  }
+
+  function renderProgress() {
+    if (!svProgressRow) return;
+    svProgressRow.innerHTML = _stories.map((_, i) =>
+      '<div class="sv-prog-bar' + (i < _current ? ' sv-prog-done' : (i === _current ? ' sv-prog-active' : '')) + '"><div class="sv-prog-fill" id="svPF' + i + '"></div></div>'
+    ).join('');
+  }
+
+  function showSlide(idx) {
+    if (!_stories.length) return;
+    clearInterval(_autoId);
+    clearInterval(_progId);
+    _current = (idx + _stories.length) % _stories.length;
+    _progPct = 0;
+
+    const story = _stories[_current];
+    svImg.src = story.src;
+    svCaption.textContent = story.caption;
+    renderProgress();
+
+    // Animate current bar
+    const fill = document.getElementById('svPF' + _current);
+    _progId = setInterval(() => {
+      _progPct += (100 / 50);
+      if (fill) fill.style.width = Math.min(_progPct, 100) + '%';
+      if (_progPct >= 100) { clearInterval(_progId); advanceSlide(1); }
+    }, 100);
+  }
+
+  function advanceSlide(dir) { showSlide(_current + dir); }
+
+  function openViewer() {
+    collectStories();
+    if (!_stories.length) return;
+    viewer.hidden = false;
+    document.body.style.overflow = 'hidden';
+    showSlide(0);
+  }
+
+  function closeViewer() {
+    clearInterval(_autoId);
+    clearInterval(_progId);
+    viewer.hidden = true;
+    document.body.style.overflow = '';
+    if (svImg) svImg.src = '';
+  }
+
+  if (svClose) svClose.addEventListener('click', closeViewer);
+  if (svPrev)  svPrev.addEventListener('click', () => { clearInterval(_progId); advanceSlide(-1); });
+  if (svNext)  svNext.addEventListener('click', () => { clearInterval(_progId); advanceSlide(1);  });
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (viewer.hidden) return;
+    if (e.key === 'Escape') closeViewer();
+    if (e.key === 'ArrowRight') { clearInterval(_progId); advanceSlide(1); }
+    if (e.key === 'ArrowLeft')  { clearInterval(_progId); advanceSlide(-1); }
+  });
+
+  // Touch swipe
+  let _touchX = null;
+  viewer.addEventListener('touchstart', e => { _touchX = e.changedTouches[0].clientX; }, { passive: true });
+  viewer.addEventListener('touchend', e => {
+    if (_touchX === null) return;
+    const dx = e.changedTouches[0].clientX - _touchX;
+    if (Math.abs(dx) > 50) { clearInterval(_progId); advanceSlide(dx < 0 ? 1 : -1); }
+    _touchX = null;
+  });
+
+  // Add "View as Stories" button above the gallery
+  const gallerySection = document.getElementById('gallery');
+  if (gallerySection) {
+    const header = gallerySection.querySelector('.section-header');
+    if (header) {
+      const launchBtn = document.createElement('button');
+      launchBtn.className = 'story-launch-btn';
+      launchBtn.innerHTML = '📖 View as Stories';
+      launchBtn.addEventListener('click', openViewer);
+      header.appendChild(launchBtn);
+    }
+  }
+})();

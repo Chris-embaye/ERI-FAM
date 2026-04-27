@@ -79,6 +79,7 @@
         <span class="sb-label">HUB</span>
       </div>
       <button class="sb-toggle" id="sidebarToggle" title="Collapse sidebar">‹</button>
+      <button class="sb-theme-btn" id="themeToggleBtn" title="Toggle light/dark">🌙</button>
     </div>
 
     <nav class="sb-nav">
@@ -384,6 +385,22 @@
           <button class="btn-primary" id="inviteBtn">+ Invite User</button>
         </div>
       </div>
+      <!-- Bulk actions bar (shown when users selected) -->
+      <div class="user-bulk-bar" id="userBulkBar" style="display:none">
+        <span id="userBulkCount" class="bulk-count">0 selected</span>
+        <button class="btn-sm" id="bulkUserApprove">✓ Approve</button>
+        <button class="btn-sm" id="bulkUserReject">✕ Reject</button>
+        <select id="bulkUserRole" class="form-input" style="width:130px;padding:5px 8px;font-size:.8rem">
+          <option value="">Set Role…</option>
+          <option value="viewer">Viewer</option>
+          <option value="editor">Editor</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button class="btn-sm" id="bulkUserRoleApply">Apply Role</button>
+        <button class="btn-sm" id="bulkUserExport">📥 Export</button>
+        <button class="btn-sm" id="bulkUserClear">✕ Clear</button>
+      </div>
+
       <!-- User stats summary -->
       <div class="user-stats-bar" id="userStatsBar" style="display:none">
         <span class="ustat"><span id="uStatTotal">0</span> Total</span>
@@ -550,7 +567,14 @@
       </div>
       <div class="notify-layout">
         <div class="card" style="flex:0 0 380px">
-          <h3 style="margin-bottom:20px">Compose</h3>
+          <h3 style="margin-bottom:12px">Compose</h3>
+          <!-- Notification Templates -->
+          <div class="notif-templates" id="notifTemplates">
+            <div class="notif-tmpl-label">Quick Templates</div>
+            <div class="notif-tmpl-btns" id="notifTmplBtns"></div>
+            <button class="btn-sm" id="saveNotifTmplBtn" style="margin-top:6px;width:100%">💾 Save Current as Template</button>
+          </div>
+          <div style="border-top:1px solid var(--border);margin:14px 0"></div>
           <div class="form-group">
             <label>Target App</label>
             <select id="notifyTarget" class="form-input">
@@ -749,6 +773,19 @@
             <span class="revenue-total-num" id="revTotal">$0.00</span>
             <span class="revenue-total-lbl">total logged</span>
           </div>
+          <!-- Revenue goal -->
+          <div class="rev-goal-row" id="revGoalRow">
+            <div class="rev-goal-label-row">
+              <span class="rev-goal-lbl">Monthly Goal</span>
+              <span class="rev-goal-pct" id="revGoalPct"></span>
+            </div>
+            <div class="rev-goal-input-row">
+              <span style="color:var(--text-dim);font-size:.9rem">$</span>
+              <input type="number" id="revGoalInput" class="form-input" placeholder="e.g. 500" min="0" style="width:100px;padding:4px 8px"/>
+              <button class="btn-sm" id="revGoalSave">Set Goal</button>
+            </div>
+            <div class="rev-goal-bar-wrap"><div class="rev-goal-bar" id="revGoalBar"></div></div>
+          </div>
           <div id="revenueList" class="revenue-list">
             <p class="empty-msg">No revenue logged yet. Click + Log Payment to add.</p>
           </div>
@@ -798,6 +835,11 @@
         <span class="pstat pstat-rejected">❌ <span id="psCountRejected">0</span> Rejected</span>
         <span class="pstat pstat-total">📄 <span id="psCountTotal">0</span> Total</span>
       </div>
+      <!-- Post search -->
+      <div class="post-search-bar">
+        <input type="search" id="postSearch" class="form-input" placeholder="Search posts by title, author, status…" style="width:100%;max-width:400px"/>
+      </div>
+
       <div class="user-tabs">
         <button class="post-tab utab active" data-ptab="pending">Pending <span class="utab-badge" id="pendingPostCount">0</span></button>
         <button class="post-tab utab" data-ptab="approved">Approved</button>
@@ -1524,6 +1566,35 @@ match /community_posts/{d} {
 
 <!-- ══ REVENUE CHART (injected into Monetize page) ══ -->
 <!-- chart inserted via JS into existing monetize card -->
+
+<!-- USER PROFILE DRAWER -->
+<div class="profile-drawer-overlay" id="profileDrawerOverlay" hidden></div>
+<div class="profile-drawer" id="profileDrawer" hidden>
+  <div class="pd-header">
+    <div class="pd-avatar" id="pdAvatar">?</div>
+    <div class="pd-info">
+      <div class="pd-name" id="pdName">—</div>
+      <div class="pd-email" id="pdEmail">—</div>
+      <span class="pd-role-badge" id="pdRole">—</span>
+    </div>
+    <button class="modal-x" id="profileDrawerClose">✕</button>
+  </div>
+  <div class="pd-body">
+    <div class="pd-row"><span class="pd-lbl">Status</span><span class="pd-val" id="pdStatus">—</span></div>
+    <div class="pd-row"><span class="pd-lbl">Joined</span><span class="pd-val" id="pdJoined">—</span></div>
+    <div class="pd-row"><span class="pd-lbl">Posts</span><span class="pd-val" id="pdPostCount">—</span></div>
+    <div class="pd-row"><span class="pd-lbl">Feedback</span><span class="pd-val" id="pdFeedbackCount">—</span></div>
+    <div class="pd-row"><span class="pd-lbl">Last Login</span><span class="pd-val" id="pdLastLogin">—</span></div>
+  </div>
+  <div class="pd-actions">
+    <button class="btn-primary" id="pdApproveBtn">✓ Approve</button>
+    <button class="btn-danger" id="pdRejectBtn">✕ Reject</button>
+    <button class="btn-sm" id="pdViewPostsBtn">📄 View Posts</button>
+  </div>
+</div>
+
+<!-- WAVEFORM CANVAS (shared for all preview tracks) -->
+<canvas id="waveformCanvas" class="waveform-canvas" hidden width="200" height="40"></canvas>
 
 <!-- Sidebar overlay for mobile -->
 <div id="sidebarOverlay" class="sidebar-overlay" hidden></div>

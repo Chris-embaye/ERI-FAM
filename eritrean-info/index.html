@@ -117,6 +117,7 @@
         <a href="#regions"      class="nav-dd-item">🗾<span>Regions</span></a>
         <a href="#recipes"      class="nav-dd-item">🍽️<span>Recipes</span></a>
         <a href="#artists"      class="nav-dd-item">🎵<span>Artists</span></a>
+        <a href="#cultural-calendar" class="nav-dd-item">📅<span>Calendar</span></a>
         <a href="#holidays"     class="nav-dd-item">🗓️<span>Holidays</span></a>
         <a href="#blog"         class="nav-dd-item">📖<span>Blog</span></a>
         <a href="#quiz"         class="nav-dd-item">🏆<span>Quiz</span></a>
@@ -167,6 +168,41 @@
         <span class="otd-event" id="onThisDayEvent"></span>
       </div>
       <button class="otd-close" id="onThisDayClose" title="Dismiss">✕</button>
+    </div>
+  </div>
+
+  <!-- WEATHER WIDGET + WORD OF THE DAY (injected row) -->
+  <div class="hero-widgets-row" id="heroWidgetsRow">
+    <div class="weather-widget" id="weatherWidget">
+      <div class="ww-icon" id="wwIcon">🌡️</div>
+      <div class="ww-info">
+        <div class="ww-temp" id="wwTemp">—°C</div>
+        <div class="ww-city">Asmara</div>
+      </div>
+    </div>
+    <div class="word-of-day-widget" id="wordOfDayWidget">
+      <div class="wod-header"><span class="wod-tag">ትግርኛ</span><span class="wod-label">Word of the Day</span></div>
+      <div class="wod-word" id="wodWord">—</div>
+      <div class="wod-roman" id="wodRoman"></div>
+      <div class="wod-meaning" id="wodMeaning"></div>
+      <button class="wod-speak" id="wodSpeak" title="Hear pronunciation">🔊</button>
+    </div>
+    <div class="currency-widget" id="currencyWidget">
+      <div class="cw-header">💱 ERN Converter</div>
+      <div class="cw-row">
+        <input type="number" id="cwAmount" class="cw-input" value="100" min="0" step="1"/>
+        <select id="cwDir" class="cw-select">
+          <option value="from">ERN →</option>
+          <option value="to">→ ERN</option>
+        </select>
+        <select id="cwCurrency" class="cw-select">
+          <option value="USD">USD $</option>
+          <option value="EUR">EUR €</option>
+          <option value="ETB">ETB Br</option>
+          <option value="SAR">SAR ﷼</option>
+        </select>
+      </div>
+      <div class="cw-result" id="cwResult">= —</div>
     </div>
   </div>
 
@@ -291,6 +327,7 @@
   </section>
 
   <!-- OVERVIEW -->
+  <section id="overview">
     <div class="container">
       <div class="section-header">
         <span class="section-tag">About</span>
@@ -543,6 +580,15 @@
           <p>One of the smallest groups, living in the southwestern lowlands. They speak <strong>Nara</strong>, a Nilo-Saharan language. Like the Kunama, the Nara have a matrilineal social structure and practice a mix of animism, Christianity, and Islam.</p>
         </div>
       </div>
+      <!-- Demographics Chart -->
+      <div class="demographics-chart-wrap">
+        <h3 class="demo-chart-title">Ethnic Group Distribution</h3>
+        <div class="demo-chart-inner">
+          <canvas id="demographicsChart" width="240" height="240"></canvas>
+          <div class="demo-legend" id="demoLegend"></div>
+        </div>
+      </div>
+
       <div class="religion-section">
         <h3>Religions</h3>
         <div class="religion-grid">
@@ -931,6 +977,27 @@
           <h3>🌐 Foreign Relations</h3>
           <p>Eritrea is a member of the <strong>African Union, Arab League, and United Nations</strong>. Relations with Ethiopia normalized dramatically in 2018. Eritrea has close ties with Gulf states. Relations with Sudan, Djibouti, and some Western nations have been complex and varying.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CULTURAL CALENDAR -->
+  <section id="cultural-calendar">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Calendar</span>
+        <h2>Eritrean Cultural Calendar</h2>
+        <p>National holidays, historical anniversaries, and cultural events — month by month</p>
+      </div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" id="calPrev">‹</button>
+        <div class="cal-month-label" id="calMonthLabel"></div>
+        <button class="cal-nav-btn" id="calNext">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-event-panel" id="calEventPanel" hidden>
+        <button class="cal-ep-close" id="calEventClose">✕</button>
+        <div class="cal-ep-content" id="calEventContent"></div>
       </div>
     </div>
   </section>
@@ -1818,6 +1885,30 @@
   <!-- LEAFLET CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
+  <!-- PHOTO STORY VIEWER -->
+  <div class="story-viewer" id="storyViewer" hidden>
+    <div class="sv-progress-row" id="svProgressRow"></div>
+    <button class="sv-close" id="svClose">✕</button>
+    <button class="sv-nav sv-prev" id="svPrev">&#8249;</button>
+    <button class="sv-nav sv-next" id="svNext">&#8250;</button>
+    <div class="sv-slide" id="svSlide">
+      <img class="sv-img" id="svImg" alt="" />
+      <div class="sv-caption" id="svCaption"></div>
+    </div>
+    <button class="sv-launch-btn" id="svLaunch" title="Open story viewer">📖</button>
+  </div>
+
+  <!-- OFFLINE READING PANEL -->
+  <div class="offline-panel" id="offlinePanel" hidden>
+    <div class="op-header">
+      <span class="op-title">📖 Saved for Offline</span>
+      <button class="op-close" id="offlinePanelClose">✕</button>
+    </div>
+    <div class="op-list" id="offlineList"></div>
+  </div>
+  <button class="offline-fab" id="offlineFab" title="Saved offline sections" style="display:none">💾<span class="offline-fab-badge" id="offlineFabBadge">0</span></button>
+
+  <!-- STORY VIEWER LAUNCH (gallery area) -->
   <script src="firebase-config.js"></script>
   <script src="script.js"></script>
   <!-- LEAFLET JS -->

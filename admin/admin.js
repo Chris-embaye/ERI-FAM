@@ -673,7 +673,7 @@ function renderUsers(users, tab) {
       : '';
     const joined = u.createdAt?.toDate ? u.createdAt.toDate().toLocaleDateString() : '';
     return `
-      <div class="user-row">
+      <div class="user-row" data-uid="${u.id}">
         <div class="user-ava">${initial}</div>
         <div class="user-info">
           <div class="user-name">${esc(u.name||u.email||'Unknown')}${isSelf?' <span style="font-size:.7rem;color:var(--text-mute)">(you)</span>':''}</div>
@@ -4270,3 +4270,616 @@ loadDashboard = async function() {
   await _origLoadDashboardB2();
   setTimeout(initDashboardDrag, 500);
 };
+
+// ════════════════════════════════════════════════════════════════
+//  HUB — BATCH 3 FEATURES  (A–J)
+// ════════════════════════════════════════════════════════════════
+
+// ── FEATURE A: BULK USER ACTIONS ─────────────────────────────────
+(function initBulkUserActions() {
+  let _selectedUserIds = new Set();
+
+  function updateBulkBar() {
+    const bar = document.getElementById('userBulkBar');
+    const cnt = document.getElementById('userBulkCount');
+    if (!bar) return;
+    if (_selectedUserIds.size === 0) { bar.style.display = 'none'; return; }
+    bar.style.display = 'flex';
+    cnt.textContent = _selectedUserIds.size + ' selected';
+  }
+
+  // Patch renderUsers to inject checkboxes
+  const _origRenderUsers = renderUsers;
+  renderUsers = function(users, tab) {
+    if (users === undefined) users = allUsers;
+    _origRenderUsers(users, tab);
+    const list = document.getElementById('userList');
+    if (!list) return;
+    list.querySelectorAll('.user-row').forEach(row => {
+      if (row.querySelector('.user-bulk-cb')) return;
+      const uid = row.dataset.uid || row.getAttribute('data-uid');
+      if (!uid) return;
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'user-bulk-cb';
+      cb.checked = _selectedUserIds.has(uid);
+      cb.addEventListener('change', () => {
+        if (cb.checked) _selectedUserIds.add(uid);
+        else _selectedUserIds.delete(uid);
+        updateBulkBar();
+      });
+      row.insertBefore(cb, row.firstChild);
+    });
+    // "Select All" on header clicks or re-render clears stale selections
+    updateBulkBar();
+  };
+
+  // Wire up bulk action buttons
+  function withSelected(fn) {
+    const ids = [..._selectedUserIds];
+    if (!ids.length) return;
+    fn(ids);
+  }
+
+  document.getElementById('bulkUserApprove') && document.getElementById('bulkUserApprove').addEventListener('click', () => {
+    withSelected(async ids => {
+      for (const uid of ids) {
+        const u = allUsers.find(x => x.id === uid);
+        if (u && u.status !== 'approved') {
+          await fb.updateDoc(fb.doc(_db, 'hub_users', uid), { status: 'approved' });
+          logActivity('Bulk approved user: ' + (u.email || uid));
+        }
+      }
+      _selectedUserIds.clear(); updateBulkBar(); loadUsers(); toast('Approved ' + ids.length + ' users');
+    });
+  });
+
+  document.getElementById('bulkUserReject') && document.getElementById('bulkUserReject').addEventListener('click', () => {
+    withSelected(async ids => {
+      for (const uid of ids) {
+        const u = allUsers.find(x => x.id === uid);
+        if (u) {
+          await fb.updateDoc(fb.doc(_db, 'hub_users', uid), { status: 'rejected' });
+          logActivity('Bulk rejected user: ' + (u.email || uid));
+        }
+      }
+      _selectedUserIds.clear(); updateBulkBar(); loadUsers(); toast('Rejected ' + ids.length + ' users');
+    });
+  });
+
+  document.getElementById('bulkUserRoleApply') && document.getElementById('bulkUserRoleApply').addEventListener('click', () => {
+    const role = document.getElementById('bulkUserRole').value;
+    if (!role) { toast('Select a role first'); return; }
+    withSelected(async ids => {
+      for (const uid of ids) {
+        await fb.updateDoc(fb.doc(_db, 'hub_users', uid), { role });
+        logActivity('Bulk set role ' + role + ' for user ' + uid);
+      }
+      _selectedUserIds.clear(); updateBulkBar(); loadUsers(); toast('Role set for ' + ids.length + ' users');
+    });
+  });
+
+  document.getElementById('bulkUserExport') && document.getElementById('bulkUserExport').addEventListener('click', () => {
+    withSelected(ids => {
+      const sel = allUsers.filter(u => ids.includes(u.id));
+      const rows = [['Name','Email','Role','Status','Joined']];
+      sel.forEach(u => rows.push([u.displayName || '', u.email || '', u.role || '', u.status || '', u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString() : '']));
+      _downloadCSV(rows, 'users-selected-' + new Date().toISOString().slice(0,10) + '.csv');
+    });
+  });
+
+  document.getElementById('bulkUserClear') && document.getElementById('bulkUserClear').addEventListener('click', () => {
+    _selectedUserIds.clear();
+    document.querySelectorAll('.user-bulk-cb').forEach(cb => { cb.checked = false; });
+    updateBulkBar();
+  });
+})();
+
+
+// ── FEATURE B: USER PROFILE DRAWER ───────────────────────────────
+(function initUserProfileDrawer() {
+  const overlay = document.getElementById('profileDrawerOverlay');
+  const drawer  = document.getElementById('profileDrawer');
+  if (!overlay || !drawer) return;
+
+  let _currentDrawerUser = null;
+
+  function closeDrawer() { overlay.hidden = true; drawer.hidden = true; _currentDrawerUser = null; }
+  document.getElementById('profileDrawerClose').addEventListener('click', closeDrawer);
+  overlay.addEventListener('click', closeDrawer);
+
+  window.openUserProfileDrawer = async function(uid) {
+    const u = allUsers.find(x => x.id === uid);
+    if (!u) return;
+    _currentDrawerUser = u;
+    const initial = (u.displayName || u.email || '?')[0].toUpperCase();
+    document.getElementById('pdAvatar').textContent = initial;
+    document.getElementById('pdName').textContent   = u.displayName || '—';
+    document.getElementById('pdEmail').textContent  = u.email || '—';
+    const roleEl = document.getElementById('pdRole');
+    roleEl.textContent = u.role || 'viewer';
+    roleEl.className   = 'pd-role-badge role-' + (u.role || 'viewer');
+    document.getElementById('pdStatus').textContent   = u.status || '—';
+    document.getElementById('pdJoined').textContent   = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString() : '—';
+    document.getElementById('pdLastLogin').textContent = u.lastLogin ? timeAgo(u.lastLogin.toDate ? u.lastLogin.toDate() : new Date(u.lastLogin)) : '—';
+    document.getElementById('pdPostCount').textContent = '…';
+    document.getElementById('pdFeedbackCount').textContent = '…';
+    overlay.hidden = false; drawer.hidden = false;
+
+    // Async: count posts and feedback for this user
+    try {
+      const [postsSnap, fbSnap] = await Promise.all([
+        fb.getDocs(fb.query(fb.collection(_db, 'community_posts'), fb.where('userEmail', '==', u.email), fb.limit(200))),
+        fb.getDocs(fb.query(fb.collection(_db, 'feedback'), fb.where('userEmail', '==', u.email), fb.limit(200)))
+      ]);
+      document.getElementById('pdPostCount').textContent     = postsSnap.size;
+      document.getElementById('pdFeedbackCount').textContent = fbSnap.size;
+    } catch(e) {
+      document.getElementById('pdPostCount').textContent     = '—';
+      document.getElementById('pdFeedbackCount').textContent = '—';
+    }
+  };
+
+  document.getElementById('pdApproveBtn').addEventListener('click', async () => {
+    if (!_currentDrawerUser) return;
+    await fb.updateDoc(fb.doc(_db, 'hub_users', _currentDrawerUser.id), { status: 'approved' });
+    toast('User approved'); closeDrawer(); loadUsers();
+  });
+  document.getElementById('pdRejectBtn').addEventListener('click', async () => {
+    if (!_currentDrawerUser) return;
+    await fb.updateDoc(fb.doc(_db, 'hub_users', _currentDrawerUser.id), { status: 'rejected' });
+    toast('User rejected'); closeDrawer(); loadUsers();
+  });
+  document.getElementById('pdViewPostsBtn').addEventListener('click', () => {
+    closeDrawer();
+    showPage('posts');
+    setTimeout(() => {
+      const input = document.getElementById('postSearch');
+      if (input && _currentDrawerUser) { input.value = _currentDrawerUser.email || ''; input.dispatchEvent(new Event('input')); }
+    }, 300);
+  });
+
+  // Patch renderUsers rows to open drawer on click
+  const _origRenderUsersB = renderUsers;
+  renderUsers = function(users, tab) {
+    if (users === undefined) users = allUsers;
+    _origRenderUsersB(users, tab);
+    document.querySelectorAll('#userList .user-row').forEach(row => {
+      if (row.dataset.drawerWired) return;
+      row.dataset.drawerWired = '1';
+      const uid = row.dataset.uid || row.getAttribute('data-uid');
+      row.addEventListener('click', e => {
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.classList.contains('user-bulk-cb')) return;
+        if (uid) openUserProfileDrawer(uid);
+      });
+      row.style.cursor = 'pointer';
+    });
+  };
+})();
+
+
+// ── FEATURE C: POST SEARCH + FILTER ──────────────────────────────
+(function initPostSearch() {
+  const input = document.getElementById('postSearch');
+  if (!input) return;
+
+  const _origRenderPostsC = renderPosts;
+  let _allPostsForSearch = [];
+
+  const _origLoadPostsC = loadPosts;
+  loadPosts = async function() {
+    await _origLoadPostsC();
+    _allPostsForSearch = [...allPosts];
+  };
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { renderPosts(); return; }
+    const filtered = _allPostsForSearch.filter(p =>
+      (p.title || '').toLowerCase().includes(q) ||
+      (p.authorName || p.author || '').toLowerCase().includes(q) ||
+      (p.userEmail || '').toLowerCase().includes(q) ||
+      (p.status || '').toLowerCase().includes(q) ||
+      (p.body || p.content || '').toLowerCase().includes(q)
+    );
+    const backup = allPosts;
+    allPosts = filtered;
+    renderPosts();
+    allPosts = backup;
+  });
+})();
+
+
+// ── FEATURE D: NOTIFICATION TEMPLATES ────────────────────────────
+(function initNotifTemplates() {
+  const TMPL_KEY = 'hub_notif_templates';
+  const defaultTemplates = [
+    { name: '🎵 New Music', title: 'New Songs Added!', body: 'Check out the latest tracks in ERI-FAM — fresh music just dropped! 🎶' },
+    { name: '📅 Event', title: 'Upcoming Event', body: 'Don\'t miss it — join us for an exciting Eritrean event. Tap for details.' },
+    { name: '📢 Announcement', title: 'Important Update', body: 'We have an important update for all ERI-FAM users. Tap to learn more.' },
+    { name: '🎉 Milestone', title: 'Celebrating a Milestone!', body: 'We hit a big milestone thanks to YOU. Thank you for your support! 🙏' },
+  ];
+
+  function getTemplates() {
+    try { return JSON.parse(localStorage.getItem(TMPL_KEY)) || defaultTemplates; } catch(e) { return defaultTemplates; }
+  }
+  function saveTemplates(tmpls) { localStorage.setItem(TMPL_KEY, JSON.stringify(tmpls)); }
+
+  function renderTemplates() {
+    const container = document.getElementById('notifTmplBtns');
+    if (!container) return;
+    const tmpls = getTemplates();
+    container.innerHTML = '';
+    tmpls.forEach((t, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'notif-tmpl-btn';
+      btn.textContent = t.name;
+      btn.title = t.title + '\n' + t.body;
+      btn.addEventListener('click', () => {
+        const titleEl = document.getElementById('notifyTitle');
+        const bodyEl  = document.getElementById('notifyBody');
+        if (titleEl) titleEl.value = t.title;
+        if (bodyEl)  bodyEl.value  = t.body;
+      });
+      const del = document.createElement('button');
+      del.className = 'notif-tmpl-del';
+      del.textContent = '✕';
+      del.title = 'Delete template';
+      del.addEventListener('click', e => {
+        e.stopPropagation();
+        const ts = getTemplates();
+        ts.splice(i, 1);
+        saveTemplates(ts);
+        renderTemplates();
+      });
+      const wrap = document.createElement('div');
+      wrap.className = 'notif-tmpl-item';
+      wrap.appendChild(btn);
+      wrap.appendChild(del);
+      container.appendChild(wrap);
+    });
+  }
+
+  const saveBtn = document.getElementById('saveNotifTmplBtn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      const title = (document.getElementById('notifyTitle') || {}).value || '';
+      const body  = (document.getElementById('notifyBody')  || {}).value || '';
+      if (!title && !body) { toast('Fill in title/message first'); return; }
+      const name = prompt('Template name:', title.slice(0, 20) || 'My Template');
+      if (!name) return;
+      const ts = getTemplates();
+      ts.push({ name, title, body });
+      saveTemplates(ts);
+      renderTemplates();
+      toast('Template saved!');
+    });
+  }
+
+  renderTemplates();
+})();
+
+
+// ── FEATURE E: REVENUE GOALS ──────────────────────────────────────
+(function initRevenueGoals() {
+  const GOAL_KEY = 'hub_rev_goal';
+
+  function getGoal() { return parseFloat(localStorage.getItem(GOAL_KEY)) || 0; }
+  function saveGoal(v) { localStorage.setItem(GOAL_KEY, v); }
+
+  function updateGoalUI() {
+    const goal = getGoal();
+    const inputEl = document.getElementById('revGoalInput');
+    const pctEl   = document.getElementById('revGoalPct');
+    const barEl   = document.getElementById('revGoalBar');
+    if (inputEl) inputEl.value = goal || '';
+
+    if (goal <= 0) { if (pctEl) pctEl.textContent = ''; if (barEl) barEl.style.width = '0%'; return; }
+
+    const totalEl = document.getElementById('revTotal');
+    const totalStr = totalEl ? totalEl.textContent.replace(/[^0-9.]/g, '') : '0';
+    const total = parseFloat(totalStr) || 0;
+    const pct = Math.min(100, Math.round((total / goal) * 100));
+    if (pctEl) pctEl.textContent = pct + '%';
+    if (barEl) barEl.style.width = pct + '%';
+  }
+
+  const saveGoalBtn = document.getElementById('revGoalSave');
+  if (saveGoalBtn) {
+    saveGoalBtn.addEventListener('click', () => {
+      const v = parseFloat(document.getElementById('revGoalInput').value);
+      if (isNaN(v) || v < 0) { toast('Enter a valid goal amount'); return; }
+      saveGoal(v);
+      updateGoalUI();
+      toast('Goal saved — $' + v.toFixed(2));
+    });
+  }
+
+  // Re-run after revenue loads
+  const _origLoadMonetize = loadMonetize;
+  loadMonetize = async function() {
+    await _origLoadMonetize();
+    setTimeout(updateGoalUI, 600);
+  };
+
+  updateGoalUI();
+})();
+
+
+// ── FEATURE F: ACTIVITY TIMELINE (REAL-TIME) ─────────────────────
+(function initActivityTimeline() {
+  // Upgrade dashActivity to real-time subscription
+  const _origLoadDashF = loadDashboard;
+  loadDashboard = async function() {
+    await _origLoadDashF();
+    // Subscribe to hub_activity in real-time
+    try {
+      const q = fb.query(
+        fb.collection(_db, 'hub_activity'),
+        fb.orderBy('createdAt', 'desc'),
+        fb.limit(15)
+      );
+      fb.onSnapshot(q, snap => {
+        const list = document.getElementById('dashActivity');
+        if (!list) return;
+        if (snap.empty) { list.innerHTML = '<p class="empty-msg">No recent activity.</p>'; return; }
+        const ACTION_ICON = {
+          login: '🔐', logout: '🚪', create: '➕', update: '✏️', delete: '🗑',
+          approve: '✅', reject: '❌', upload: '📤', send: '📨', export: '📥',
+        };
+        list.innerHTML = snap.docs.map(d => {
+          const data = d.data();
+          const action = (data.action || '').toLowerCase();
+          const icon = Object.entries(ACTION_ICON).find(([k]) => action.includes(k))?.[1] || '📋';
+          const who = data.adminEmail ? data.adminEmail.split('@')[0] : 'Admin';
+          const when = data.createdAt ? timeAgo(data.createdAt.toDate()) : '';
+          return '<div class="activity-item timeline-item-rt">' +
+            '<span class="act-icon">' + icon + '</span>' +
+            '<div class="act-body">' +
+            '<span class="act-action">' + esc(data.action || '') + '</span>' +
+            '<span class="act-who">' + esc(who) + '</span>' +
+            '</div>' +
+            '<span class="act-time">' + esc(when) + '</span>' +
+            '</div>';
+        }).join('');
+      });
+    } catch(e) { /* Firestore rules may block; graceful fail */ }
+  };
+})();
+
+
+// ── FEATURE G: DARK ↔ LIGHT THEME TOGGLE ─────────────────────────
+(function initThemeToggle() {
+  const THEME_KEY = 'hub_theme';
+  const btn = document.getElementById('themeToggleBtn');
+  if (!btn) return;
+
+  function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme);
+    btn.textContent = theme === 'light' ? '🌙' : '☀️';
+    btn.title = theme === 'light' ? 'Switch to Dark mode' : 'Switch to Light mode';
+    localStorage.setItem(THEME_KEY, theme);
+  }
+
+  btn.addEventListener('click', () => {
+    const current = document.body.getAttribute('data-theme') || 'dark';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  // Restore saved preference
+  const saved = localStorage.getItem(THEME_KEY) || 'dark';
+  applyTheme(saved);
+})();
+
+
+// ── FEATURE H: DRAFT SCHEDULER ────────────────────────────────────
+(function initDraftScheduler() {
+  // Inject "Publish At" field into post modal
+  function injectScheduleField() {
+    const modal = document.getElementById('postModal') || document.querySelector('#page-posts .modal');
+    if (!modal || modal.querySelector('#postScheduledAt')) return;
+    // Find the status select or last form-group
+    const statusSel = modal.querySelector('select[id*="postStatus"], #postStatus');
+    if (!statusSel) return;
+    const fg = document.createElement('div');
+    fg.className = 'form-group';
+    fg.innerHTML = '<label>Schedule Publish At <span style="color:var(--text-dim);font-size:.75rem">(optional — leave blank to publish now)</span></label>' +
+      '<input type="datetime-local" id="postScheduledAt" class="form-input"/>';
+    statusSel.closest('.form-group') ? statusSel.closest('.form-group').after(fg) : modal.querySelector('.modal-body, .modal').appendChild(fg);
+  }
+
+  // Observe post modal opening
+  const obs = new MutationObserver(() => injectScheduleField());
+  const postPage = document.getElementById('page-posts');
+  if (postPage) obs.observe(postPage, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
+
+  // Patch savePost to respect schedule field
+  const _origSavePost = savePost;
+  if (typeof _origSavePost === 'function') {
+    savePost = async function() {
+      const schedEl = document.getElementById('postScheduledAt');
+      if (schedEl && schedEl.value) {
+        const schedTime = new Date(schedEl.value);
+        if (schedTime > new Date()) {
+          // Store scheduledAt on the post, set status=scheduled
+          window._pendingScheduledAt = fb.Timestamp ? fb.Timestamp.fromDate(schedTime) : schedTime.toISOString();
+          window._pendingScheduledStatus = 'scheduled';
+        }
+      }
+      await _origSavePost();
+      window._pendingScheduledAt = null;
+      window._pendingScheduledStatus = null;
+    };
+  }
+
+  // Auto-publish scheduler: check every 60 seconds
+  setInterval(async () => {
+    if (!_db || !fb.getDocs) return;
+    try {
+      const now = new Date();
+      const snap = await fb.getDocs(
+        fb.query(fb.collection(_db, 'community_posts'), fb.where('status', '==', 'scheduled'))
+      );
+      snap.docs.forEach(async d => {
+        const data = d.data();
+        const schedAt = data.scheduledAt;
+        if (!schedAt) return;
+        const schedDate = schedAt.toDate ? schedAt.toDate() : new Date(schedAt);
+        if (schedDate <= now) {
+          await fb.updateDoc(fb.doc(_db, 'community_posts', d.id), { status: 'approved' });
+          logActivity('Auto-published scheduled post: ' + (data.title || d.id));
+        }
+      });
+    } catch(e) { /* graceful fail */ }
+  }, 60000);
+})();
+
+
+// ── FEATURE I: PER-FILE UPLOAD PROGRESS ──────────────────────────
+(function initPerFileUploadProgress() {
+  const _origHandleMusicFiles = handleMusicFiles;
+  if (typeof _origHandleMusicFiles !== 'function') return;
+
+  handleMusicFiles = async function(files) {
+    if (!files || files.length === 0) return _origHandleMusicFiles(files);
+    if (files.length < 2) return _origHandleMusicFiles(files);
+
+    // Multi-file: show per-file status UI
+    const progEl = document.getElementById('musicUploadProgress');
+    const barEl  = document.getElementById('musicUpBar');
+    const statEl = document.getElementById('musicUpStatus');
+    if (!progEl) return _origHandleMusicFiles(files);
+
+    progEl.hidden = false;
+    const perFileList = document.getElementById('perFileList') || (() => {
+      const el = document.createElement('div');
+      el.id = 'perFileList';
+      el.className = 'per-file-list';
+      progEl.appendChild(el);
+      return el;
+    })();
+    perFileList.innerHTML = '';
+
+    const fileArr = Array.from(files);
+    let completed = 0;
+
+    for (let i = 0; i < fileArr.length; i++) {
+      const f = fileArr[i];
+      const row = document.createElement('div');
+      row.className = 'pf-row';
+      row.innerHTML = '<span class="pf-name">' + esc(f.name) + '</span><span class="pf-status">⏳</span>';
+      perFileList.appendChild(row);
+      const statusSpan = row.querySelector('.pf-status');
+
+      if (barEl) barEl.style.width = Math.round((i / fileArr.length) * 100) + '%';
+      if (statEl) statEl.textContent = 'Uploading ' + (i + 1) + ' / ' + fileArr.length + '…';
+
+      try {
+        await _origHandleMusicFiles([f]);
+        statusSpan.textContent = '✅';
+        statusSpan.style.color = '#10b981';
+        completed++;
+      } catch(e) {
+        statusSpan.textContent = '❌';
+        statusSpan.style.color = '#ef4444';
+      }
+    }
+
+    if (barEl) barEl.style.width = '100%';
+    if (statEl) statEl.textContent = completed + ' / ' + fileArr.length + ' files uploaded';
+    setTimeout(() => { progEl.hidden = true; perFileList.innerHTML = ''; }, 3000);
+  };
+})();
+
+
+// ── FEATURE J: MUSIC WAVEFORM VISUALIZER ─────────────────────────
+(function initWaveformVisualizer() {
+  let _waveAudioCtx = null;
+  let _waveAnalyser = null;
+  let _waveSource   = null;
+  let _waveRafId    = null;
+  const canvas = document.getElementById('waveformCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  function stopWave() {
+    if (_waveRafId) cancelAnimationFrame(_waveRafId);
+    _waveRafId = null;
+    if (_waveSource) { try { _waveSource.disconnect(); } catch(e) {} }
+    _waveSource = null;
+    canvas.hidden = true;
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function startWave(audioEl, anchorEl) {
+    if (!window.AudioContext && !window.webkitAudioContext) return;
+    if (!_waveAudioCtx) {
+      _waveAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      _waveAnalyser = _waveAudioCtx.createAnalyser();
+      _waveAnalyser.fftSize = 64;
+      _waveAnalyser.connect(_waveAudioCtx.destination);
+    }
+    if (_waveAudioCtx.state === 'suspended') _waveAudioCtx.resume();
+
+    if (_waveSource) { try { _waveSource.disconnect(); } catch(e) {} }
+    _waveSource = _waveAudioCtx.createMediaElementSource(audioEl);
+    _waveSource.connect(_waveAnalyser);
+
+    // Position canvas near the anchor element
+    if (anchorEl) {
+      const rect = anchorEl.getBoundingClientRect();
+      canvas.style.position = 'fixed';
+      canvas.style.top  = (rect.bottom + 4) + 'px';
+      canvas.style.left = rect.left + 'px';
+    }
+    canvas.hidden = false;
+
+    const bufLen = _waveAnalyser.frequencyBinCount;
+    const dataArr = new Uint8Array(bufLen);
+    const W = canvas.width, H = canvas.height;
+    const barW = W / bufLen;
+
+    function draw() {
+      _waveRafId = requestAnimationFrame(draw);
+      _waveAnalyser.getByteFrequencyData(dataArr);
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < bufLen; i++) {
+        const v = dataArr[i] / 255;
+        const h = v * H;
+        const hue = 260 - v * 80;
+        ctx.fillStyle = 'hsl(' + hue + ',70%,55%)';
+        ctx.fillRect(i * barW, H - h, barW - 1, h);
+      }
+    }
+    draw();
+  }
+
+  // Hook into preview-btn clicks after renderMusicTracks
+  const _origRMTJ = renderMusicTracks;
+  renderMusicTracks = function(tracks) {
+    if (tracks === undefined) tracks = allTracks;
+    _origRMTJ(tracks);
+
+    document.querySelectorAll('#musicTrackList .preview-btn').forEach(btn => {
+      if (btn.dataset.waveWired) return;
+      btn.dataset.waveWired = '1';
+      btn.addEventListener('click', () => {
+        // Check if currently playing (btn text toggled to ⏸ by preview feature)
+        setTimeout(() => {
+          const audio = _previewAudio;
+          if (audio && !audio.paused) {
+            startWave(audio, btn);
+          } else {
+            stopWave();
+          }
+        }, 100);
+      });
+    });
+  };
+
+  // Stop waveform when preview stops
+  const _chkStop = setInterval(() => {
+    const audio = _previewAudio;
+    if (!audio || audio.paused) stopWave();
+  }, 500);
+})();
