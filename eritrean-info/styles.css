@@ -3941,6 +3941,7 @@ html.dark .famous-title { color: #4ade80; }
   align-items: center;
   justify-content: center;
 }
+.story-viewer[hidden] { display: none; }
 .sv-progress-row {
   position: absolute;
   top: 12px; left: 12px; right: 12px;
