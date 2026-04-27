@@ -1193,6 +1193,7 @@ kbd {
   overflow-y: auto;
   animation: drawerSlide .2s ease;
 }
+.profile-drawer[hidden] { display: none; }
 @keyframes drawerSlide { from { transform: translateX(100%); } to { transform: translateX(0); } }
 .pd-header {
   display: flex;
