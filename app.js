@@ -2598,63 +2598,139 @@ async function ytvSearch(query) {
   status.textContent = '⏳ Searching…';
   grid.innerHTML = '';
 
-  // ── Official YouTube Data API v3 (most reliable, requires key) ──
+  const q = encodeURIComponent(query);
+
+  // ── Official YouTube Data API v3 (requires key) ──
   if (typeof YOUTUBE_API_KEY !== 'undefined' && YOUTUBE_API_KEY) {
     try {
       const res = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`,
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&q=${q}&key=${YOUTUBE_API_KEY}`,
         { signal: AbortSignal.timeout(8000) }
       );
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.items) && data.items.length) {
-          const results = data.items.map(v => ({
-            videoId: v.id.videoId,
-            title: v.snippet.title,
-            author: v.snippet.channelTitle,
-            lengthSeconds: 0,
-            viewCount: 0,
-            thumb: v.snippet.thumbnails?.medium?.url,
-          })).filter(v => v.videoId);
-          status.textContent = '';
-          ytvRenderResults(results);
-          return;
-        }
+        const results = (data.items || []).map(v => ({
+          videoId: v.id.videoId,
+          title: v.snippet.title,
+          author: v.snippet.channelTitle,
+          thumb: v.snippet.thumbnails?.medium?.url,
+        })).filter(v => v.videoId);
+        if (results.length) { status.textContent = ''; ytvRenderResults(results); return; }
       }
-    } catch { /* fall through to proxy */ }
+    } catch { /* fall through */ }
   }
 
-  // ── Fallback: CORS proxies + Piped API ──
-  const pipedUrl = `https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=videos`;
-  const attempts = [
-    () => fetch(pipedUrl, { signal: AbortSignal.timeout(6000) }),
-    () => fetch(`https://corsproxy.io/?${encodeURIComponent(pipedUrl)}`, { signal: AbortSignal.timeout(9000) }),
-    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(pipedUrl)}`, { signal: AbortSignal.timeout(9000) }),
+  // ── Parse helpers ──
+  const parsePiped = data => (data.items || [])
+    .filter(v => v.url && (v.type === 'stream' || v.type === 'video' || !v.type))
+    .map(v => ({
+      videoId: (v.url.split('v=')[1] || '').split('&')[0] || v.url.replace('/watch?v=', ''),
+      title:   v.title || '',
+      author:  v.uploaderName || v.author || '',
+      lengthSeconds: v.duration || 0,
+      viewCount: v.views || 0,
+      thumb: v.thumbnail || null,
+    })).filter(v => v.videoId && v.videoId.length > 5);
+
+  const parseInvidious = data => (Array.isArray(data) ? data : [])
+    .filter(v => v.type === 'video' && v.videoId)
+    .map(v => ({
+      videoId: v.videoId,
+      title:   v.title || '',
+      author:  v.author || '',
+      lengthSeconds: v.lengthSeconds || 0,
+      viewCount: v.viewCount || 0,
+      thumb: v.videoThumbnails?.find(t => t.quality === 'medium' || t.quality === 'mqdefault')?.url || null,
+    }));
+
+  // Race all Piped instances in parallel — first response wins
+  const pipedBases = [
+    'https://pipedapi.kavin.rocks',
+    'https://api.piped.yt',
+    'https://pipedapi.tokhmi.xyz',
+    'https://pipedapi.moomoo.me',
+    'https://piped-api.garudalinux.org',
+    'https://pa.il.shn.hk',
   ];
-  for (const attempt of attempts) {
-    try {
-      const res = await attempt();
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (!Array.isArray(data.items) || !data.items.length) continue;
-      const results = data.items
-        .filter(v => v.url && v.type === 'stream')
-        .map(v => ({
-          videoId: v.url.replace('/watch?v=', ''),
-          title: v.title,
-          author: v.uploaderName,
-          lengthSeconds: v.duration,
-          viewCount: v.views,
-        }))
-        .filter(v => v.videoId);
-      if (!results.length) continue;
-      status.textContent = '';
-      ytvRenderResults(results);
-      return;
-    } catch { /* try next */ }
-  }
+  try {
+    const results = await Promise.any(
+      pipedBases.map(base =>
+        fetch(`${base}/search?q=${q}&filter=videos`, { signal: AbortSignal.timeout(7000) })
+          .then(r => { if (!r.ok) throw new Error('not ok'); return r.json(); })
+          .then(data => { const r = parsePiped(data); if (!r.length) throw new Error('empty'); return r; })
+      )
+    );
+    status.textContent = '';
+    ytvRenderResults(results);
+    return;
+  } catch { /* all Piped instances failed, try Invidious */ }
 
-  status.textContent = '⚠ Search unavailable — add a YouTube API key in firebase-config.js';
+  // Race all Invidious instances in parallel
+  const invidiousBases = [
+    'https://inv.nadeko.net',
+    'https://invidious.io.lol',
+    'https://invidious.privacydev.net',
+    'https://iv.melmac.space',
+    'https://yt.drgnz.club',
+    'https://invidious.perennialte.ch',
+    'https://vid.puffyan.us',
+  ];
+  try {
+    const results = await Promise.any(
+      invidiousBases.map(base =>
+        fetch(`${base}/api/v1/search?q=${q}&type=video&page=1`, { signal: AbortSignal.timeout(7000) })
+          .then(r => { if (!r.ok) throw new Error('not ok'); return r.json(); })
+          .then(data => { const r = parseInvidious(data); if (!r.length) throw new Error('empty'); return r; })
+      )
+    );
+    status.textContent = '';
+    ytvRenderResults(results);
+    return;
+  } catch { /* all Invidious instances failed, try scraping */ }
+
+  // Last resort: scrape YouTube search HTML via CORS proxy
+  try {
+    const ytUrl = `https://www.youtube.com/results?search_query=${q}&sp=EgIQAQ%3D%3D`;
+    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(ytUrl)}`, { signal: AbortSignal.timeout(12000) });
+    if (res.ok) {
+      const html = await res.text();
+      const startIdx = html.indexOf('var ytInitialData = ');
+      if (startIdx !== -1) {
+        const jsonStart = startIdx + 'var ytInitialData = '.length;
+        // Walk forward to find the end of the JSON object
+        let depth = 0, i = jsonStart, inStr = false, esc = false;
+        for (; i < Math.min(html.length, jsonStart + 500000); i++) {
+          const c = html[i];
+          if (esc) { esc = false; continue; }
+          if (c === '\\' && inStr) { esc = true; continue; }
+          if (c === '"') { inStr = !inStr; continue; }
+          if (!inStr) {
+            if (c === '{') depth++;
+            else if (c === '}') { depth--; if (depth === 0) { i++; break; } }
+          }
+        }
+        const ytData = JSON.parse(html.slice(jsonStart, i));
+        const section = ytData?.contents?.twoColumnSearchResultsRenderer
+          ?.primaryContents?.sectionListRenderer?.contents?.[0]
+          ?.itemSectionRenderer?.contents || [];
+        const results = section
+          .filter(item => item.videoRenderer)
+          .map(item => {
+            const v = item.videoRenderer;
+            return {
+              videoId: v.videoId,
+              title:   v.title?.runs?.[0]?.text || '',
+              author:  v.ownerText?.runs?.[0]?.text || '',
+              thumb:   `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`,
+              viewCount: parseInt((v.viewCountText?.simpleText || '').replace(/\D/g,'') || '0'),
+            };
+          }).filter(v => v.videoId);
+        if (results.length) { status.textContent = ''; ytvRenderResults(results); return; }
+      }
+    }
+  } catch { /* scraping failed too */ }
+
+  status.textContent = '⚠ Could not load results — check your connection and try again';
 }
 
 function ytvRenderResults(results) {
