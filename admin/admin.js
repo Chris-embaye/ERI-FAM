@@ -286,6 +286,7 @@ function showPage(name) {
   if (name === 'feedback')    loadFeedback();
   if (name === 'posts')       loadPosts();
   if (name === 'about')       loadAbout();
+  if (name === 'analytics')   loadAnalytics();
 }
 
 // Sidebar toggle
@@ -482,6 +483,7 @@ async function deleteApp(id) {
     loadApps();
   } catch(e) { toast('Error: ' + e.message, 'error'); }
 }
+window.deleteApp = deleteApp;
 
 // ── EDITOR ────────────────────────────────────────────────
 document.getElementById('editorBack').addEventListener('click', () => showPage('apps'));
@@ -1838,12 +1840,8 @@ document.getElementById('bulkApproveBtn').addEventListener('click', async () => 
   });
 })();
 
-// Hook analytics into showPage
-const _origShowPage = showPage;
-window.showPage = function(name) {
-  _origShowPage(name);
-  if (name === 'analytics') loadAnalytics();
-};
+// Expose showPage on window (analytics is already called inside showPage)
+window.showPage = showPage;
 
 // ── COMMUNITY POSTS ──────────────────────────────────────
 let allPosts = [];
@@ -2494,6 +2492,7 @@ async function loadRevenue() {
     const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_revenue'), fb.orderBy('createdAt', 'desc'), fb.limit(30)));
     allRevenue = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderRevenue();
+    renderRevenueChart(allRevenue);
     _updateRevenueDashStat();
   } catch(e) {
     list.innerHTML = '<p class="empty-msg">Error loading revenue.</p>';
@@ -2557,13 +2556,13 @@ async function saveRevenueEntry() {
     source:    document.getElementById('revSource').value,
     date:      document.getElementById('revDate').value,
     note:      document.getElementById('revNote').value.trim(),
-    createdAt: fb.serverTimestamp(),
   };
   try {
     if (id) {
       await fb.updateDoc(fb.doc(_db, 'hub_revenue', id), data);
     } else {
-      data.loggedBy = currentUser.uid;
+      data.createdAt = fb.serverTimestamp();
+      data.loggedBy  = currentUser.uid;
       await fb.addDoc(fb.collection(_db, 'hub_revenue'), data);
       logActivity(`Revenue logged: $${amount} from ${data.source}`);
     }
@@ -3196,6 +3195,7 @@ async function deleteEriTrack(id) {
     toast('Delete failed: ' + e.message, 'error');
   }
 }
+window.deleteEriTrack = deleteEriTrack;
 
 async function handleEriMusicUpload() {
   const title  = document.getElementById('eriMusicTitle').value.trim();
@@ -3331,6 +3331,7 @@ async function saveEcNews() {
     summary: document.getElementById('ecNewsSummary').value.trim(),
     imageUrl: document.getElementById('ecNewsImage').value.trim(),
     source: document.getElementById('ecNewsSource').value.trim(),
+    status: 'published',
     updatedAt: fb.serverTimestamp()
   };
   try {
@@ -3343,19 +3344,18 @@ async function saveEcNews() {
   btn.textContent = 'Publish'; btn.disabled = false;
 }
 
-window.editEcNews = function(id) {
-  const snap = fb.getDoc(fb.doc(_db, 'eri_news', id)).then(d => {
-    if (!d.exists()) return;
-    const n = d.data();
-    document.getElementById('ecNewsId').value       = id;
-    document.getElementById('ecNewsTitle').value    = n.title || '';
-    document.getElementById('ecNewsCategory').value = n.category || 'General';
-    document.getElementById('ecNewsSummary').value  = n.summary || '';
-    document.getElementById('ecNewsImage').value    = n.imageUrl || '';
-    document.getElementById('ecNewsSource').value   = n.source || '';
-    document.getElementById('ecNewsForm').hidden    = false;
-    document.getElementById('ecNewsTitle').focus();
-  });
+window.editEcNews = async function(id) {
+  const d = await fb.getDoc(fb.doc(_db, 'eri_news', id));
+  if (!d.exists()) return;
+  const n = d.data();
+  document.getElementById('ecNewsId').value       = id;
+  document.getElementById('ecNewsTitle').value    = n.title || '';
+  document.getElementById('ecNewsCategory').value = n.category || 'General';
+  document.getElementById('ecNewsSummary').value  = n.summary || '';
+  document.getElementById('ecNewsImage').value    = n.imageUrl || '';
+  document.getElementById('ecNewsSource').value   = n.source || '';
+  document.getElementById('ecNewsForm').hidden    = false;
+  document.getElementById('ecNewsTitle').focus();
 };
 
 window.deleteEcNews = async function(id) {
@@ -3399,6 +3399,7 @@ async function saveEcBlog() {
     title, content, category: document.getElementById('ecBlogCategory').value,
     author: document.getElementById('ecBlogAuthor').value.trim() || 'Admin',
     imageUrl: document.getElementById('ecBlogImage').value.trim(),
+    status: 'published',
     updatedAt: fb.serverTimestamp()
   };
   try {
@@ -3411,18 +3412,17 @@ async function saveEcBlog() {
   btn.textContent = 'Publish'; btn.disabled = false;
 }
 
-window.editEcBlog = function(id) {
-  fb.getDoc(fb.doc(_db, 'eri_articles', id)).then(d => {
-    if (!d.exists()) return;
-    const a = d.data();
-    document.getElementById('ecBlogId').value       = id;
-    document.getElementById('ecBlogTitle').value    = a.title || '';
-    document.getElementById('ecBlogCategory').value = a.category || 'General';
-    document.getElementById('ecBlogContent').value  = a.content || '';
-    document.getElementById('ecBlogAuthor').value   = a.author || '';
-    document.getElementById('ecBlogImage').value    = a.imageUrl || '';
-    document.getElementById('ecBlogForm').hidden    = false;
-  });
+window.editEcBlog = async function(id) {
+  const d = await fb.getDoc(fb.doc(_db, 'eri_articles', id));
+  if (!d.exists()) return;
+  const a = d.data();
+  document.getElementById('ecBlogId').value       = id;
+  document.getElementById('ecBlogTitle').value    = a.title || '';
+  document.getElementById('ecBlogCategory').value = a.category || 'General';
+  document.getElementById('ecBlogContent').value  = a.content || '';
+  document.getElementById('ecBlogAuthor').value   = a.author || '';
+  document.getElementById('ecBlogImage').value    = a.imageUrl || '';
+  document.getElementById('ecBlogForm').hidden    = false;
 };
 window.deleteEcBlog = async function(id) {
   if (!confirm('Delete this article?')) return;
@@ -3457,6 +3457,7 @@ async function saveEcGallery() {
       caption: document.getElementById('ecGalleryCaption').value.trim(),
       category: document.getElementById('ecGalleryCategory').value,
       location: document.getElementById('ecGalleryLocation').value.trim(),
+      status: 'active',
       addedAt: fb.serverTimestamp()
     });
     toast('Photo added to gallery!', 'success');
@@ -3556,7 +3557,7 @@ function renderRevenueChart(entries) {
 }
 
 // Hook into existing loadMonetize to also render the chart
-const _origLoadMonetize = window.loadMonetize;
+const _origLoadMonetize = loadMonetize;
 // We'll inject the chart container after revenue list in the Monetize page
 (function injectRevenueChartContainer() {
   const revCard = document.querySelector('#page-monetize .card');

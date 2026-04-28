@@ -1348,7 +1348,7 @@ communityModalSubmit.addEventListener('click', async () => {
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
     ]);
-    const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
+    const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
     const db  = fsMod.getFirestore(app);
 
     const monSnap = await fsMod.getDoc(fsMod.doc(db, 'hub_settings', 'monetize'));

@@ -306,7 +306,7 @@ async function playTrack(track, queueTracks) {
 
   // Premium gating
   if (track.premium) {
-    showToast('🔒 This is Members Only content. Support us to unlock premium tracks!', 3500);
+    toast('🔒 This is Members Only content. Support us to unlock premium tracks!', 3500);
     const sec = document.getElementById('settingsSupportSection');
     if (sec && sec.style.display !== 'none') {
       document.getElementById('settingsPanel')?.classList.add('open');
@@ -1647,6 +1647,7 @@ async function syncCloud() {
   try {
     const snap = await db.getDocs(db.query(db.collection(db._db, 'tracks'), db.orderBy('addedAt', 'desc')));
     S.cloudTracks = snap.docs.map(d => ({ ...d.data(), id: d.id, type: 'cloud' }));
+    try { localStorage.setItem('erifam_cloud_cache', JSON.stringify(S.cloudTracks)); } catch(e) {}
     renderTracks(); updateStats();
     if (activeLibTab === 'songs')   renderSongs();
     if (activeLibTab === 'artists') renderArtists();
@@ -1777,6 +1778,18 @@ async function init() {
   initSwipeGestures();
   initNotificationListener();
   handlePlayParam();
+
+  // Load cached cloud tracks immediately so songs are visible before sync completes
+  const _cachedCloud = localStorage.getItem('erifam_cloud_cache');
+  if (_cachedCloud) {
+    try {
+      S.cloudTracks = JSON.parse(_cachedCloud);
+      renderTracks(); updateStats();
+      if (activeLibTab === 'songs')   renderSongs();
+      if (activeLibTab === 'artists') renderArtists();
+      if (activeLibTab === 'albums')  renderAlbums();
+    } catch(e) { localStorage.removeItem('erifam_cloud_cache'); }
+  }
 
   if (navigator.onLine) {
     syncCloud().then(() => {
@@ -3200,13 +3213,19 @@ document.getElementById('updateDismissBtn')?.addEventListener('click', () => {
 });
 
 // ── USERNAME SYSTEM ────────────────────────────────────────────
+function _updateSettingsProfile(name) {
+  const el = document.getElementById('settingUsername');
+  if (el) el.textContent = name || 'Guest';
+  const av = document.querySelector('.settings-avatar');
+  if (av) av.textContent = name ? name[0].toUpperCase() : '🎵';
+}
+
 function _saveUsername(name) {
   const trimmed = name.trim();
   if (trimmed) localStorage.setItem('erifam_username', trimmed);
   else localStorage.removeItem('erifam_username');
   updateHeroGreeting();
-  const settingEl = document.getElementById('settingUsername');
-  if (settingEl) settingEl.textContent = trimmed || 'Not set';
+  _updateSettingsProfile(trimmed);
 }
 
 function _showUsernameModal() {
@@ -3234,9 +3253,7 @@ document.getElementById('changeNameBtn')?.addEventListener('click', _showUsernam
 
 // Show username in settings on load
 (function() {
-  const name = localStorage.getItem('erifam_username') || '';
-  const el = document.getElementById('settingUsername');
-  if (el) el.textContent = name || 'Not set';
+  _updateSettingsProfile(localStorage.getItem('erifam_username') || '');
 })();
 
 // Show welcome modal on first visit (after a short delay so app loads first)
