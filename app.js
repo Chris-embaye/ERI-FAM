@@ -205,6 +205,36 @@ function savePlaybackState() {
     duration: t.duration || 0, type: t.type || 'local',
     url: t.type === 'cloud' ? t.url : null, mimeType: t.mimeType || 'audio/mpeg'
   }));
+  saveQueueState();
+}
+
+// ── Queue persistence ──────────────────────────────────────────
+function saveQueueState() {
+  try {
+    const ids = S.queue.map(t => t.id);
+    if (!ids.length) { localStorage.removeItem('erifam_queue_state'); return; }
+    localStorage.setItem('erifam_queue_state', JSON.stringify({
+      ids, idx: S.queueIndex, cid: S.currentTrack?.id
+    }));
+  } catch(e) {}
+}
+
+function restoreQueueState() {
+  try {
+    const raw = localStorage.getItem('erifam_queue_state');
+    if (!raw) return;
+    const { ids, idx, cid } = JSON.parse(raw);
+    if (!ids?.length) return;
+    const all = [...S.tracks, ...S.cloudTracks];
+    const restored = ids.map(id => all.find(t => t.id === id)).filter(Boolean);
+    if (!restored.length) return;
+    S.queue = restored;
+    S.queueIndex = Math.min(idx || 0, restored.length - 1);
+    if (cid && !S.currentTrack) {
+      const cur = restored.find(t => t.id === cid) || restored[S.queueIndex];
+      if (cur) { S.currentTrack = cur; updatePlayerUI(); showMiniPlayer(); }
+    }
+  } catch(e) { localStorage.removeItem('erifam_queue_state'); }
 }
 
 // ── Read file metadata ─────────────────────────────────────────
@@ -323,6 +353,7 @@ async function playTrack(track, queueTracks) {
     S.queue = queueTracks;
     S.queueIndex = queueTracks.indexOf(track);
     if (S.shuffle) buildShuffleQueue(track);
+    saveQueueState();
   }
 
   let src = track.type === 'cloud' ? track.url : await getBlobUrl(track);
@@ -786,7 +817,7 @@ function openTrackSheet(id) {
   document.getElementById('sheetPlay').onclick   = () => { playTrack(track, getAllTracks()); closeSheet(); };
   document.getElementById('sheetLike').onclick   = () => { toggleLike(id); closeSheet(); };
   document.getElementById('sheetAddPl').onclick  = () => { closeSheet(); openAddToPlaylist(id); };
-  document.getElementById('sheetQueue').onclick  = () => { S.queue.push(track); toast('Added to queue'); closeSheet(); };
+  document.getElementById('sheetQueue').onclick  = () => { S.queue.push(track); saveQueueState(); toast('Added to queue'); closeSheet(); };
   document.getElementById('sheetDelete').onclick = () => { deleteTrack(id); closeSheet(); };
   addCloudSheetActions(track);
   document.getElementById('sheetOverlay').classList.add('open');
@@ -1070,17 +1101,17 @@ document.getElementById('eqBtn').addEventListener('click', async () => {
   const savedTime  = audio.currentTime;
   try {
     initAudioCtx();
-    // Apply any pending EQ restore now that AudioContext exists
     if (pendingEqRestore) {
       pendingEqRestore.forEach((v, i) => { if (eqBands[i]) eqBands[i].gain.value = v; });
       pendingEqRestore = null;
     }
     if (audioCtx.state !== 'running') await audioCtx.resume();
   } catch(e) { console.warn('[AudioCtx]', e); }
-  // Restore playback if routing through AudioCtx paused the audio
-  if (wasPlaying && audio.paused) {
-    audio.currentTime = savedTime;
-    audio.play().catch(() => {});
+  // On mobile, routing audio through WebAudio can silently drop playback.
+  // Wait a tick for the re-routing to settle, then restore if needed.
+  if (wasPlaying) {
+    await new Promise(r => setTimeout(r, 120));
+    if (audio.paused) { audio.currentTime = savedTime; audio.play().catch(() => {}); }
   }
   openPanel('eqPanel');
 });
@@ -1791,6 +1822,9 @@ async function init() {
     } catch(e) { localStorage.removeItem('erifam_cloud_cache'); }
   }
 
+  // Restore queue with local + cached cloud tracks
+  restoreQueueState();
+
   if (navigator.onLine) {
     syncCloud().then(() => {
       // ── Step 4: Wire up audio for cloud tracks (available after sync) ──
@@ -1810,6 +1844,8 @@ async function init() {
           showMiniPlayer();
         }
       }
+      // Re-run queue restore now that fresh cloud tracks are available
+      restoreQueueState();
     }).catch(() => {});
     loadPromos();
     registerAppSession();
@@ -3712,11 +3748,13 @@ updateQueueUI = function() {
       const idx = parseInt(btn.getAttribute('data-qi'));
       S.queue.splice(idx, 1);
       if (S.queueIndex > idx) S.queueIndex--;
+      saveQueueState();
       updateQueueUI();
     });
   });
   document.getElementById('clearQueueBtn')?.addEventListener('click', () => {
     S.queue = []; S.queueIndex = 0;
+    saveQueueState();
     updateQueueUI();
     toast('Queue cleared');
   });

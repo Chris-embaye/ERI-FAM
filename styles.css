@@ -1962,7 +1962,32 @@ body.theme-glass .upload-zone { background: rgba(255,255,255,0.04); backdrop-fil
   background: var(--accent);
   box-shadow: 0 0 10px var(--accent), 0 0 20px rgba(200,145,74,.5);
 }
-.nav-item.active svg { filter: drop-shadow(0 0 5px var(--accent)); }
+.nav-item.active svg { filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 16px var(--accent)); }
+.nav-item.active span { color: var(--accent); text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent); }
+.nav-item.active::after {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -62%);
+  width: 52px; height: 52px; border-radius: 50%;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 68%);
+  opacity: 0.16; pointer-events: none; z-index: -1;
+  animation: navIconGlow 2.2s ease-in-out infinite alternate;
+}
+@keyframes navIconGlow {
+  from { opacity: 0.12; transform: translate(-50%, -62%) scale(0.9); }
+  to   { opacity: 0.22; transform: translate(-50%, -62%) scale(1.1); }
+}
+
+/* EQ panel as bottom sheet — slides up, doesn't cover full player */
+#eqPanel {
+  top: auto; bottom: 0; left: 0; right: 0;
+  max-height: 74vh;
+  transform: translateY(100%);
+  border-radius: 22px 22px 0 0;
+  z-index: 350;
+  box-shadow: 0 -8px 48px rgba(0,0,0,.8);
+}
+#eqPanel.open { transform: translateY(0); }
 
 .mini-player {
   background: rgba(16,16,18,.92) !important;
