@@ -56,7 +56,8 @@
     }
   ],
   "scope_extensions": [
-    { "origin": "https://chris-embaye.github.io" }
+    { "origin": "https://chris-embaye.github.io" },
+    { "origin": "https://eri-fam.firebaseapp.com" }
   ],
   "widgets": [
     {
@@ -64,9 +65,8 @@
       "short_name": "Truck-Log",
       "description": "Weekly revenue and trip stats at a glance",
       "tag": "truck-log-stats",
-      "template": "generic-json",
+      "ms_ac_template": "./widget-template.json",
       "data": "./widget-data.json",
-      "type": "application/json",
       "auth": false,
       "update": 86400,
       "icons": [
@@ -119,6 +119,20 @@
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Trip log — log and track loads"
+    },
+    {
+      "src": "screenshots/screen-wide-1.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Weekly performance overview"
+    },
+    {
+      "src": "screenshots/screen-wide-2.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Trip and expense log overview"
     }
   ],
   "icons": [
