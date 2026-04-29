@@ -2605,7 +2605,7 @@ window.addEventListener('message', e => {
     // YouTube iframe API sends info: state 0 = ended
     if (d.event === 'infoDelivery' && d.info?.playerState === 0) {
       if (ytState.repeat) {
-        ytvPlayIndex(ytState.currentIndex);
+        window.ytvPlayIndex(ytState.currentIndex);
       } else {
         ytvNext();
       }
@@ -2613,29 +2613,28 @@ window.addEventListener('message', e => {
   } catch { /* not JSON */ }
 });
 
-function ytvPlayIndex(idx) {
+window.ytvPlayIndex = function ytvPlayIndex(idx) {
   const q = ytState.queue;
   if (!q.length || idx < 0 || idx >= q.length) return;
   const v = q[idx];
   ytState.currentIndex = idx;
-  // highlight active card in grid
   document.querySelectorAll('.ytv-card').forEach((c, i) => c.classList.toggle('ytv-card-active', i === idx));
   ytvUpdateQueueCounter();
   window.ytvPlay(v.videoId, v.title, v.thumb || `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`, v.author);
-}
+};
 
 function ytvNext() {
   const q = ytState.queue;
   if (!q.length) return;
   const next = (ytState.currentIndex + 1) % q.length;
-  ytvPlayIndex(next);
+  window.ytvPlayIndex(next);
 }
 
 function ytvPrev() {
   const q = ytState.queue;
   if (!q.length) return;
   const prev = (ytState.currentIndex - 1 + q.length) % q.length;
-  ytvPlayIndex(prev);
+  window.ytvPlayIndex(prev);
 }
 
 function ytvUpdateQueueCounter() {
