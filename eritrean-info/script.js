@@ -149,7 +149,9 @@ function showLightboxItem(index) {
   lightboxImg.onload = () => { lightboxImg.style.opacity = '1'; };
   lightboxImg.src = img ? img.src : '';
   lightboxImg.alt = img ? img.alt : '';
-  lightboxCap.textContent = caption ? caption.querySelector('h4').textContent + ' — ' + caption.querySelector('p').textContent : '';
+  const h4 = caption?.querySelector('h4');
+  const p  = caption?.querySelector('p');
+  lightboxCap.textContent = h4 ? (h4.textContent + (p ? ' — ' + p.textContent : '')) : (p ? p.textContent : '');
 }
 
 function closeLightbox() {
@@ -231,15 +233,19 @@ copyBtn.addEventListener('click', () => {
 // Swap languages
 swapBtn.addEventListener('click', () => {
   const currentSource = sourceLangSel.value;
+  const currentTarget = targetLangSel ? targetLangSel.value : (currentSource === 'ti' ? 'en' : 'ti');
 
-  if (currentSource === 'ti') {
-    sourceLangSel.value = 'en';
-    sourceText.classList.remove('tigrinya-text');
-    sourceText.placeholder = 'Type English here...\n\nExample: Hello! How are you?';
-  } else {
+  // Swap source ↔ target dropdown values
+  if (targetLangSel) targetLangSel.value = currentSource;
+
+  if (currentTarget === 'ti') {
     sourceLangSel.value = 'ti';
     sourceText.classList.add('tigrinya-text');
     sourceText.placeholder = 'Type Tigrinya (ትግርኛ) here...\n\nExample: ሰላም! ከመይ ኣለካ?';
+  } else {
+    sourceLangSel.value = currentTarget;
+    sourceText.classList.remove('tigrinya-text');
+    sourceText.placeholder = 'Type here...';
   }
 
   // Move output text to input
@@ -261,7 +267,7 @@ async function translateText() {
   }
 
   const sourceLang = sourceLangSel.value;
-  const targetLang = sourceLang === 'ti' ? 'en' : 'ti';
+  const targetLang = targetLangSel ? targetLangSel.value : (sourceLang === 'ti' ? 'en' : 'ti');
 
   // Show loading
   translateBtn.disabled = true;
@@ -352,7 +358,7 @@ function renderHistory() {
     histTitle.style.cssText = 'font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;';
     histTitle.textContent = 'Recent Translations';
     histEl.appendChild(histTitle);
-    document.querySelector('.phrasebook').appendChild(histEl);
+    document.querySelector('.phrasebook')?.appendChild(histEl);
   }
 
   const items = histEl.querySelectorAll('.history-item');
@@ -459,6 +465,7 @@ installBtn.addEventListener('click', async () => {
 installDismiss.addEventListener('click', () => {
   installBanner.style.display = 'none';
   localStorage.setItem('pwa-dismissed', '1');
+  localStorage.setItem('pwa-dismissed-time', Date.now().toString());
 });
 
 // New modal "Install Now" button

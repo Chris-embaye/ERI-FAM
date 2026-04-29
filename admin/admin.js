@@ -568,7 +568,7 @@ function setupSectionDrag(sections) {
 window.toggleSection = function(idx) {
   if (!currentEditApp) return;
   const sects = [...(currentEditApp.sections || [])];
-  sects[idx] = { ...sects[idx], visible: sects[idx].visible === false };
+  sects[idx] = { ...sects[idx], visible: sects[idx].visible !== false ? false : true };
   currentEditApp.sections = sects;
   renderSections(sects);
 };
@@ -1110,12 +1110,17 @@ async function loadAssets() {
 }
 
 async function uploadToCloudinary(file, onProgress) {
+  const preset = (typeof CLOUDINARY_PRESET !== 'undefined') ? CLOUDINARY_PRESET : '';
+  const cloud  = (typeof CLOUDINARY_CLOUD  !== 'undefined') ? CLOUDINARY_CLOUD  : '';
+  if (!preset || !cloud) {
+    throw new Error('Cloudinary is not configured. Add CLOUDINARY_PRESET and CLOUDINARY_CLOUD to firebase-config.js.');
+  }
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_PRESET);
+  formData.append('upload_preset', preset);
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`);
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloud}/auto/upload`);
     xhr.upload.onprogress = e => { if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total); };
     xhr.onload = () => {
       const data = JSON.parse(xhr.responseText);
@@ -1829,16 +1834,22 @@ document.getElementById('bulkApproveBtn').addEventListener('click', async () => 
   } catch(e) { toast('Error: ' + e.message, 'error'); }
 });
 
-// ── DARK MODE ─────────────────────────────────────────────
+// ── DARK MODE (single source of truth — uses hub_theme key + data-theme attr) ──
 (function initDarkMode() {
-  const btn     = document.getElementById('darkModeBtn');
-  const isDark  = localStorage.getItem('hub_dark') === '1';
-  if (isDark) document.body.classList.add('dark');
+  const btn = document.getElementById('darkModeBtn');
+  if (!btn) return;
+  const isDark = (localStorage.getItem('hub_theme') || 'dark') !== 'light';
+  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
   btn.textContent = isDark ? '☀️' : '🌙';
   btn.addEventListener('click', () => {
-    const dark = document.body.classList.toggle('dark');
-    localStorage.setItem('hub_dark', dark ? '1' : '0');
-    btn.textContent = dark ? '☀️' : '🌙';
+    const current = document.body.getAttribute('data-theme') || 'dark';
+    const next    = current === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    localStorage.setItem('hub_theme', next);
+    btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    // Keep themeToggleBtn in sync
+    const tb = document.getElementById('themeToggleBtn');
+    if (tb) tb.textContent = next === 'light' ? '🌙' : '☀️';
   });
 })();
 
@@ -4673,27 +4684,26 @@ loadDashboard = async function() {
 })();
 
 
-// ── FEATURE G: DARK ↔ LIGHT THEME TOGGLE ─────────────────────────
+// ── SIDEBAR THEME TOGGLE (themeToggleBtn) — shares hub_theme key with darkModeBtn ──
 (function initThemeToggle() {
-  const THEME_KEY = 'hub_theme';
   const btn = document.getElementById('themeToggleBtn');
   if (!btn) return;
-
-  function applyTheme(theme) {
-    document.body.setAttribute('data-theme', theme);
-    btn.textContent = theme === 'light' ? '🌙' : '☀️';
-    btn.title = theme === 'light' ? 'Switch to Dark mode' : 'Switch to Light mode';
-    localStorage.setItem(THEME_KEY, theme);
-  }
+  // Sync initial icon from hub_theme (set by initDarkMode above)
+  const saved = localStorage.getItem('hub_theme') || 'dark';
+  btn.textContent = saved === 'light' ? '🌙' : '☀️';
+  btn.title = saved === 'light' ? 'Switch to Dark mode' : 'Switch to Light mode';
 
   btn.addEventListener('click', () => {
     const current = document.body.getAttribute('data-theme') || 'dark';
-    applyTheme(current === 'dark' ? 'light' : 'dark');
+    const next    = current === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    localStorage.setItem('hub_theme', next);
+    btn.textContent = next === 'light' ? '🌙' : '☀️';
+    btn.title = next === 'light' ? 'Switch to Dark mode' : 'Switch to Light mode';
+    // Keep darkModeBtn in sync
+    const db = document.getElementById('darkModeBtn');
+    if (db) db.textContent = next === 'dark' ? '☀️' : '🌙';
   });
-
-  // Restore saved preference
-  const saved = localStorage.getItem(THEME_KEY) || 'dark';
-  applyTheme(saved);
 })();
 
 

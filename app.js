@@ -499,6 +499,10 @@ function updateProgress() {
   document.getElementById('fpProgThumb').style.left   = pct + '%';
   document.getElementById('fpCurTime').textContent    = fmtTime(cur);
   document.getElementById('fpDuration').textContent   = fmtTime(dur);
+  const ct2 = document.getElementById('fpCurTime2');
+  const d2  = document.getElementById('fpDuration2');
+  if (ct2) ct2.textContent = fmtTime(cur);
+  if (d2)  d2.textContent  = fmtTime(dur);
 
   // Drive circular progress ring
   const ringFill = document.getElementById('fpRingFill');
@@ -914,7 +918,7 @@ document.getElementById('searchInput').addEventListener('input', e => {
   // Switch to search view
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelector('.nav-item[data-view="search"]').classList.add('active');
+  document.querySelector('.nav-item[data-view="search"]')?.classList.add('active');
   document.getElementById('view-search').classList.add('active');
 });
 
@@ -1253,7 +1257,7 @@ async function renderPlaylists() {
 }
 
 // ── Library tabs ───────────────────────────────────────────────
-let activeLibTab = 'playlists';
+let activeLibTab = 'songs';
 
 document.querySelectorAll('.lib-tab').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -2527,6 +2531,7 @@ document.getElementById('sidebarOpenBtn').addEventListener('click', openSidebar)
 document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
 sidebarOverlay.addEventListener('click', closeSidebar);
 
+window.switchView = switchView;
 function switchView(viewName) {
   localStorage.setItem('erifam_view', viewName);
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
