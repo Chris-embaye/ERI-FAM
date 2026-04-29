@@ -6,6 +6,7 @@ const ASSETS = [
   './js/screens/trips.js', './js/screens/fuel.js',
   './js/screens/more.js', './js/screens/dvir.js',
   './js/screens/detention.js', './js/screens/settings.js',
+  './js/screens/signin.js', './js/auth.js',
   'https://cdn.tailwindcss.com'
 ];
 
