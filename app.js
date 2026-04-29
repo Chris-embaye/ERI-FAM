@@ -2892,40 +2892,6 @@ document.getElementById('ytvAudioBtn').addEventListener('click', () => {
   }
 });
 
-// Try multiple sources to get a CORS-accessible audio stream URL
-async function ytvGetAudioUrl(videoId) {
-  // 1. Cobalt API — most reliable extractor, already used elsewhere in the app
-  try {
-    const r = await fetch('https://api.cobalt.tools/api/json', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        url: `https://www.youtube.com/watch?v=${videoId}`,
-        aFormat: 'best', isAudioOnly: true, filenamePattern: 'basic',
-      }),
-      signal: AbortSignal.timeout(9000),
-    });
-    if (r.ok) { const d = await r.json(); if (d.url) return d.url; }
-  } catch {}
-
-  // 2. Invidious /latest_version with local=true — proxied through Invidious server so CORS works
-  //    Use a tiny range-GET (1 byte) instead of HEAD because audio servers often reject HEAD
-  const invBases = [...new Set(
-    [ytState.invBase, 'https://inv.nadeko.net', 'https://invidious.io.lol', 'https://invidious.privacydev.net'].filter(Boolean)
-  )];
-  for (const base of invBases) {
-    for (const itag of [140, 251]) { // 140 = m4a (best compat), 251 = opus
-      try {
-        const url = `${base}/latest_version?id=${videoId}&itag=${itag}&local=true`;
-        const r   = await fetch(url, { headers: { Range: 'bytes=0-0' }, signal: AbortSignal.timeout(4000) });
-        if (r.ok || r.status === 206) return url;
-      } catch {}
-    }
-  }
-
-  return null;
-}
-
 async function ytvEnterAudioMode() {
   const videoId = ytState.videoId;
   if (!videoId) return;
@@ -2933,40 +2899,44 @@ async function ytvEnterAudioMode() {
   const wrap = document.getElementById('ytvFrameWrap');
   btn.textContent = '⏳'; btn.disabled = true;
 
-  const audioUrl = await ytvGetAudioUrl(videoId);
-
-  // Always collapse the video frame
-  document.getElementById('ytvFrame').src = '';
-  wrap.classList.add('audio-mode');
-  btn.classList.add('active');
-  btn.textContent = '🎵 Audio';
-  btn.disabled = false;
-
-  if (audioUrl) {
-    const ytTrack = {
-      id:      'yt_' + videoId,
-      title:   ytState.title  || 'YouTube',
-      artist:  ytState.author || 'YouTube',
-      album:   'YouTube',
-      artwork: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-      url: audioUrl, type: 'cloud',
-    };
-    await playTrack(ytTrack);
-    if (S.playing) {
-      ytState.audioMode = true;
-      toast('🎵 Background play ON — use lock screen / headphone controls');
-      return;
+  const base = ytState.invBase;
+  if (base) {
+    // Try to pull a direct audio stream URL from Invidious (itag 251=opus, 140=m4a)
+    for (const itag of [251, 140]) {
+      try {
+        const url = `${base}/latest_version?id=${videoId}&itag=${itag}&local=true`;
+        const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(4000) });
+        if (res.ok) {
+          // Silence the iframe, play through the native <audio> element
+          document.getElementById('ytvFrame').src = '';
+          wrap.classList.add('audio-mode');
+          const ytTrack = {
+            id:      'yt_' + videoId,
+            title:   ytState.title  || 'YouTube',
+            artist:  ytState.author || 'YouTube',
+            album:   'YouTube',
+            artwork: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+            url, type: 'cloud',
+          };
+          await playTrack(ytTrack);
+          ytState.audioMode = true;
+          btn.classList.add('active');
+          btn.textContent = '🎵 Audio';
+          btn.disabled = false;
+          toast('🎵 Background play ON — use lock screen or headphone controls');
+          return;
+        }
+      } catch { /* try next itag */ }
     }
   }
 
-  // Audio stream unavailable — CSS-collapse only
+  // Fallback: CSS collapse only (iframe audio may still pause in background)
+  wrap.classList.add('audio-mode');
   ytState.audioMode = false;
-  // Restore iframe so audio at least plays while visible
-  const frame = document.getElementById('ytvFrame');
-  frame.src = ytState.invBase
-    ? `${ytState.invBase}/embed/${videoId}?autoplay=1`
-    : `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1`;
-  toast('⚠ Background stream unavailable — audio plays while screen is on');
+  btn.classList.add('active');
+  btn.textContent = '🎵 Audio';
+  btn.disabled = false;
+  toast('🎵 Audio-only — note: may pause when app is backgrounded');
 }
 
 function ytvExitAudioMode() {
