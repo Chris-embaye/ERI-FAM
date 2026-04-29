@@ -14,9 +14,63 @@
   "dir": "ltr",
   "categories": ["business", "productivity", "utilities"],
   "prefer_related_applications": false,
+  "related_applications": [],
+  "iarc_rating_id": "",
   "launch_handler": {
     "client_mode": "navigate-existing"
   },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "note_taking": {
+    "new_note_url": "./"
+  },
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "application/json": [".json"],
+        "text/csv": [".csv"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+trucklog",
+      "url": "./?q=%s"
+    }
+  ],
+  "scope_extensions": [],
+  "widgets": [
+    {
+      "name": "Truck-Log",
+      "description": "Quick stats for your week",
+      "tag": "truck-log-widget",
+      "ms_ac_template": "./widget.json",
+      "data": "./widget-data.json",
+      "screenshots": [
+        {
+          "src": "screenshots/screen-mobile-1.png",
+          "sizes": "1080x1920",
+          "label": "Dashboard widget"
+        }
+      ],
+      "icons": [
+        { "src": "icon-192.png", "sizes": "192x192" }
+      ],
+      "backgrounds": [],
+      "definition": "./widget.json"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Log a Trip",
