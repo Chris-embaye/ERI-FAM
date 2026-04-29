@@ -374,12 +374,20 @@
           referrerpolicy="no-referrer-when-downgrade"></iframe>
       </div>
       <div class="ytv-bar">
-        <div class="ytv-bar-title" id="ytvBarTitle">—</div>
-        <div class="ytv-bar-author" id="ytvBarAuthor">—</div>
+        <div class="ytv-bar-info">
+          <div class="ytv-bar-title" id="ytvBarTitle">—</div>
+          <div class="ytv-bar-author" id="ytvBarAuthor">—</div>
+          <div class="ytv-queue-counter" id="ytvQueueCounter"></div>
+        </div>
+        <div class="ytv-bar-controls">
+          <button class="ytv-ctrl-btn" id="ytvPrevBtn" title="Previous video">&#9664;&#9664;</button>
+          <button class="ytv-ctrl-btn" id="ytvRepeatBtn" title="Repeat video">&#8635;</button>
+          <button class="ytv-ctrl-btn" id="ytvNextBtn" title="Next video">&#9654;&#9654;</button>
+        </div>
         <div class="ytv-bar-btns">
-          <button class="ytv-bar-btn" id="ytvAudioBtn" title="Audio-only mode">🎵 Audio</button>
+          <button class="ytv-bar-btn" id="ytvAudioBtn" title="Audio-only mode (keeps playing)">🎵 Audio</button>
           <button class="ytv-bar-btn" id="ytvPipBtn"   title="Picture-in-Picture">⧉ PiP</button>
-          <button class="ytv-bar-btn ytv-stop-btn" id="ytvCloseBtn">✕ Close</button>
+          <button class="ytv-bar-btn ytv-stop-btn" id="ytvCloseBtn">✕</button>
         </div>
       </div>
     </div>
@@ -492,7 +500,9 @@
     <div class="yt-float-title" id="ytFloatTitle">YouTube</div>
     <div class="yt-float-author" id="ytFloatAuthor"></div>
   </div>
+  <button class="yt-float-nav" id="ytFloatPrev" title="Previous">&#9664;</button>
   <button class="yt-float-open" id="ytFloatOpen">▶ Open</button>
+  <button class="yt-float-nav" id="ytFloatNext" title="Next">&#9654;</button>
   <button class="yt-float-close" id="ytFloatClose">✕</button>
 </div>
 

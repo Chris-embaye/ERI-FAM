@@ -2589,7 +2589,73 @@ document.querySelectorAll('.sb-grp-hd').forEach(btn => {
 });
 
 // ── YOUTUBE VANCED ────────────────────────────────────────────
-const ytState = { videoId: null, title: '', author: '', thumb: '', loaded: false };
+const ytState = {
+  videoId: null, title: '', author: '', thumb: '',
+  loaded: false,
+  queue: [],        // current search results
+  currentIndex: -1, // index of playing video in queue
+  repeat: false,    // loop current video
+};
+
+// Listen for YouTube iframe postMessage events (video ended, etc.)
+window.addEventListener('message', e => {
+  if (!e.data || typeof e.data !== 'string') return;
+  try {
+    const d = JSON.parse(e.data);
+    // YouTube iframe API sends info: state 0 = ended
+    if (d.event === 'infoDelivery' && d.info?.playerState === 0) {
+      if (ytState.repeat) {
+        ytvPlayIndex(ytState.currentIndex);
+      } else {
+        ytvNext();
+      }
+    }
+  } catch { /* not JSON */ }
+});
+
+function ytvPlayIndex(idx) {
+  const q = ytState.queue;
+  if (!q.length || idx < 0 || idx >= q.length) return;
+  const v = q[idx];
+  ytState.currentIndex = idx;
+  // highlight active card in grid
+  document.querySelectorAll('.ytv-card').forEach((c, i) => c.classList.toggle('ytv-card-active', i === idx));
+  ytvUpdateQueueCounter();
+  window.ytvPlay(v.videoId, v.title, v.thumb || `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`, v.author);
+}
+
+function ytvNext() {
+  const q = ytState.queue;
+  if (!q.length) return;
+  const next = (ytState.currentIndex + 1) % q.length;
+  ytvPlayIndex(next);
+}
+
+function ytvPrev() {
+  const q = ytState.queue;
+  if (!q.length) return;
+  const prev = (ytState.currentIndex - 1 + q.length) % q.length;
+  ytvPlayIndex(prev);
+}
+
+function ytvUpdateQueueCounter() {
+  const el = document.getElementById('ytvQueueCounter');
+  if (!el || !ytState.queue.length) return;
+  el.textContent = `${ytState.currentIndex + 1} / ${ytState.queue.length}`;
+}
+
+function ytvUpdateMediaSession() {
+  if (!('mediaSession' in navigator) || !ytState.videoId) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title:  ytState.title  || 'YouTube',
+    artist: ytState.author || '',
+    album:  'ERI-FAM · YouTube',
+    artwork: ytState.thumb ? [{ src: ytState.thumb, sizes: '480x360', type: 'image/jpeg' }] : [],
+  });
+  navigator.mediaSession.setActionHandler('previoustrack', ytvPrev);
+  navigator.mediaSession.setActionHandler('nexttrack',     ytvNext);
+  navigator.mediaSession.playbackState = 'playing';
+}
 
 async function ytvSearch(query) {
   const grid   = document.getElementById('ytvGrid');
@@ -2735,18 +2801,21 @@ async function ytvSearch(query) {
 
 function ytvRenderResults(results) {
   const grid = document.getElementById('ytvGrid');
-  if (!results.length) { grid.innerHTML = '<p class="ytv-empty">No results found.</p>'; return; }
-  grid.innerHTML = results.filter(v => v.videoId).map(v => {
+  const filtered = results.filter(v => v.videoId);
+  if (!filtered.length) { grid.innerHTML = '<p class="ytv-empty">No results found.</p>'; return; }
+  ytState.queue = filtered;
+  if (ytState.currentIndex >= filtered.length) ytState.currentIndex = -1;
+  grid.innerHTML = filtered.map((v, idx) => {
     const thumb = v.thumb || `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`;
     const dur   = v.lengthSeconds ? ytvFmtDur(v.lengthSeconds) : '';
     const views = v.viewCount     ? ytvFmtViews(v.viewCount)   : '';
-    const safeTitle  = (v.title  || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
-    const safeAuthor = (v.author || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+    const isActive = idx === ytState.currentIndex;
     return `
-      <div class="ytv-card" onclick="ytvPlay('${v.videoId}','${safeTitle}','${thumb}','${safeAuthor}')">
+      <div class="ytv-card${isActive ? ' ytv-card-active' : ''}" data-ytidx="${idx}" onclick="ytvPlayIndex(${idx})">
         <div class="ytv-thumb-wrap">
           <img class="ytv-thumb" src="${thumb}" alt="" loading="lazy" onerror="this.parentNode.style.background='#222'"/>
           ${dur ? `<span class="ytv-dur">${dur}</span>` : ''}
+          ${isActive ? '<span class="ytv-now-badge">▶ Now Playing</span>' : ''}
         </div>
         <div class="ytv-card-info">
           <div class="ytv-card-title">${esc(v.title || '')}</div>
@@ -2759,25 +2828,29 @@ function ytvRenderResults(results) {
 window.ytvPlay = function(videoId, title, thumb, author) {
   ytState.videoId = videoId;
   ytState.title   = title;
-  ytState.thumb   = thumb;
+  ytState.thumb   = thumb || `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
   ytState.author  = author;
 
   const frame  = document.getElementById('ytvFrame');
   const player = document.getElementById('ytvPlayer');
   const wrap   = document.getElementById('ytvFrameWrap');
 
-  frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1`;
-  wrap.classList.remove('audio-mode');
+  // Enable YouTube JS API via postMessage so we get state-change events for auto-advance
+  frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
   player.hidden = false;
   document.getElementById('ytvBarTitle').textContent  = title;
   document.getElementById('ytvBarAuthor').textContent = author;
-  document.getElementById('ytvAudioBtn').classList.remove('active');
 
   // Float player info
   document.getElementById('ytFloatTitle').textContent  = title;
   document.getElementById('ytFloatAuthor').textContent = author;
-  document.getElementById('ytFloatThumb').src          = thumb;
+  document.getElementById('ytFloatThumb').src          = ytState.thumb;
   document.getElementById('ytFloat').hidden            = true;
+
+  // Update queue counter
+  ytvUpdateQueueCounter();
+  // Register MediaSession so lock-screen / headphone controls work
+  ytvUpdateMediaSession();
 
   player.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
@@ -2788,14 +2861,19 @@ function ytvStop() {
   document.getElementById('ytvPlayer').hidden = true;
   document.getElementById('ytFloat').hidden   = true;
   ytState.videoId = null;
+  ytState.currentIndex = -1;
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+  document.querySelectorAll('.ytv-card').forEach(c => c.classList.remove('ytv-card-active'));
+  const counter = document.getElementById('ytvQueueCounter');
+  if (counter) counter.textContent = '';
 }
 
-// Audio-only mode — collapse the video frame, keep audio
+// Audio-only mode — collapse the video frame, keep audio running
 document.getElementById('ytvAudioBtn').addEventListener('click', () => {
   const wrap = document.getElementById('ytvFrameWrap');
   const on   = wrap.classList.toggle('audio-mode');
   document.getElementById('ytvAudioBtn').classList.toggle('active', on);
-  toast(on ? '🎵 Audio-only — video hidden, music keeps playing' : '📺 Video restored');
+  toast(on ? '🎵 Audio-only — video hidden, audio keeps playing in background' : '📺 Video restored');
 });
 
 // PiP — guide the user (iframe PiP is browser-native)
@@ -2805,9 +2883,20 @@ document.getElementById('ytvPipBtn').addEventListener('click', () => {
 
 document.getElementById('ytvCloseBtn').addEventListener('click', ytvStop);
 
+// Prev / Next / Repeat controls
+document.getElementById('ytvPrevBtn').addEventListener('click', ytvPrev);
+document.getElementById('ytvNextBtn').addEventListener('click', ytvNext);
+document.getElementById('ytvRepeatBtn').addEventListener('click', () => {
+  ytState.repeat = !ytState.repeat;
+  document.getElementById('ytvRepeatBtn').classList.toggle('active', ytState.repeat);
+  toast(ytState.repeat ? '🔂 Repeat ON — looping this video' : '🔂 Repeat OFF');
+});
+
 // Float player controls
 document.getElementById('ytFloatOpen').addEventListener('click',  () => switchView('youtube'));
 document.getElementById('ytFloatClose').addEventListener('click', ytvStop);
+document.getElementById('ytFloatPrev')?.addEventListener('click', ytvPrev);
+document.getElementById('ytFloatNext')?.addEventListener('click', ytvNext);
 
 // Search
 document.getElementById('ytvSearchBtn').addEventListener('click', () => {

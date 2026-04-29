@@ -168,7 +168,7 @@ async function bootAuth() {
 
       // Super admin: grant access immediately without depending on Firestore
       if (isSuperAdmin) {
-        console.log('[HUB] Super admin — granting access directly');
+        console.log('[HUB] C.E.O — granting access directly');
         currentUserData = {
           email: user.email,
           name:  user.displayName || 'Admin',
@@ -234,11 +234,13 @@ async function bootAuth() {
   });
 }
 
+const ROLE_LABELS = { super_admin: 'C.E.O', admin: 'Admin', editor: 'Editor', viewer: 'Viewer' };
+
 function setupUserDisplay() {
   const name     = currentUserData.name || currentUser.displayName || currentUser.email;
   const photoURL = currentUserData.photoURL || currentUser.photoURL || '';
   document.getElementById('sbUserName').textContent = name;
-  document.getElementById('sbUserRole').textContent = currentUserData.role.replace('_', ' ');
+  document.getElementById('sbUserRole').textContent = ROLE_LABELS[currentUserData.role] || currentUserData.role.replace('_', ' ');
   const avatarEl = document.getElementById('sbAvatar');
   if (photoURL) {
     avatarEl.innerHTML = `<img src="${photoURL}" alt="${esc(name)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>`;
@@ -1789,7 +1791,7 @@ async function loadAnalytics() {
     const roleColors = { super_admin: '#ef4444', admin: '#f59e0b', editor: '#6366f1', viewer: '#10b981' };
     roleEl.innerHTML = Object.entries(roles).map(([r, n]) => `
       <div class="an-bar-row">
-        <div class="an-bar-label">${r.replace('_',' ')}</div>
+        <div class="an-bar-label">${ROLE_LABELS[r] || r.replace('_',' ')}</div>
         <div class="an-bar-track"><div class="an-bar-fill" style="width:${Math.round(n/roleMax*100)}%;background:${roleColors[r]||'#6366f1'}"></div></div>
         <div class="an-bar-val">${n}</div>
       </div>`).join('');
@@ -4420,7 +4422,7 @@ loadDashboard = async function() {
     document.getElementById('pdName').textContent   = u.displayName || '—';
     document.getElementById('pdEmail').textContent  = u.email || '—';
     const roleEl = document.getElementById('pdRole');
-    roleEl.textContent = u.role || 'viewer';
+    roleEl.textContent = ROLE_LABELS[u.role] || u.role || 'Viewer';
     roleEl.className   = 'pd-role-badge role-' + (u.role || 'viewer');
     document.getElementById('pdStatus').textContent   = u.status || '—';
     document.getElementById('pdJoined').textContent   = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString() : '—';
