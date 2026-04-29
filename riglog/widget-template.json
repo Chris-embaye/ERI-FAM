@@ -4,16 +4,51 @@
   "version": "1.5",
   "body": [
     {
-      "type": "TextBlock",
-      "text": "Truck-Log",
-      "weight": "Bolder",
-      "size": "Medium"
-    },
+      "type": "Container",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "auto",
+              "items": [
+                {
+                  "type": "Image",
+                  "url": "https://chris-embaye.github.io/ERI-FAM/riglog/icon-192.png",
+                  "size": "Small"
+                }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "Truck-Log",
+                  "weight": "Bolder",
+                  "size": "Medium",
+                  "color": "Accent"
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "${description}",
+                  "wrap": true,
+                  "spacing": "None"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
     {
-      "type": "TextBlock",
-      "text": "${description}",
-      "wrap": true,
-      "color": "Accent"
+      "type": "Action.OpenUrl",
+      "title": "Open App",
+      "url": "https://chris-embaye.github.io/ERI-FAM/riglog/"
     }
   ]
 }
