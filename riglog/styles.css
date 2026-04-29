@@ -1,0 +1,67 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+
+.pb-safe { padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); }
+
+/* Force dark inputs everywhere */
+input, textarea, select {
+  background-color: rgb(17 24 39) !important;
+  color: white !important;
+  border-color: rgb(55 65 81) !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input::placeholder, textarea::placeholder { color: rgb(107 114 128); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: #EA580C !important; }
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 100px rgb(17 24 39) inset !important;
+  -webkit-text-fill-color: white !important;
+}
+select option { background-color: rgb(17 24 39); color: white; }
+
+/* Hide scrollbar */
+::-webkit-scrollbar { width: 0; background: transparent; }
+
+.nav-btn { transition: color 0.15s; min-width: 48px; }
+
+/* Shared card style for forms */
+.form-input {
+  width: 100%;
+  background: rgb(17 24 39);
+  color: white;
+  border: 1px solid rgb(55 65 81);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+}
+.form-input:focus { border-color: #EA580C; outline: none; }
+
+.btn-primary {
+  background: #EA580C;
+  color: black;
+  font-weight: 700;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.btn-ghost {
+  color: rgb(156 163 175);
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+/* DVIR item states */
+.dvir-ok    { background: rgba(21,128,61,0.2); border-color: rgb(21,128,61); }
+.dvir-defect { background: rgba(234,88,12,0.2); border-color: #EA580C; }
+.dvir-blank  { background: rgb(31 41 55); border-color: rgb(75 85 99); }
+
+/* Detention timer pulse */
+@keyframes pulse-orange {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.timer-active { animation: pulse-orange 2s ease-in-out infinite; }

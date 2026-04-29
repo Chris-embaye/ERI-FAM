@@ -1,0 +1,87 @@
+import { getDVIRs, getDetentionSessions, getActiveDetention, getSettings } from '../store.js';
+
+export function renderMore() {
+  const dvirs      = getDVIRs();
+  const sessions   = getDetentionSessions();
+  const active     = getActiveDetention();
+  const settings   = getSettings();
+
+  const lastDVIR = dvirs[0];
+  const lastDVIRDate = lastDVIR
+    ? new Date(lastDVIR.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null;
+
+  const totalDetentionClaims = sessions.reduce((s, d) => s + Number(d.value || 0), 0);
+
+  const html = `
+    <div class="flex flex-col h-full bg-black text-white">
+      <div class="px-4 pt-5 pb-4 border-b border-gray-800 shrink-0">
+        <h1 class="text-2xl font-black">More</h1>
+        <p class="text-xs text-gray-500">Tools & settings</p>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-3">
+
+        <!-- Detention -->
+        <button onclick="navigate('detention')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-3">
+              <div class="bg-orange-600/20 rounded-xl p-2.5">
+                <svg width="22" height="22" fill="none" stroke="#EA580C" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <p class="font-black">Detention Timer</p>
+                <p class="text-xs text-gray-500 mt-0.5">${active ? '🟢 Session active — tap to manage' : sessions.length > 0 ? `${sessions.length} sessions logged` : 'No sessions yet'}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              ${active ? `<span class="text-orange-600 font-bold text-xs">ACTIVE</span>` : totalDetentionClaims > 0 ? `<span class="text-green-400 font-bold text-sm">$${totalDetentionClaims.toFixed(0)}</span>` : ''}
+              <svg class="text-gray-600 mt-1 ml-auto" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+        </button>
+
+        <!-- DVIR -->
+        <button onclick="navigate('dvir')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-3">
+              <div class="bg-blue-600/20 rounded-xl p-2.5">
+                <svg width="22" height="22" fill="none" stroke="#3b82f6" viewBox="0 0 24 24" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+              </div>
+              <div>
+                <p class="font-black">Vehicle Inspection (DVIR)</p>
+                <p class="text-xs text-gray-500 mt-0.5">${lastDVIR ? `Last: ${lastDVIRDate}` : 'No inspections yet'}</p>
+              </div>
+            </div>
+            <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </button>
+
+        <!-- Settings -->
+        <button onclick="navigate('settings')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-3">
+              <div class="bg-gray-700/50 rounded-xl p-2.5">
+                <svg width="22" height="22" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </div>
+              <div>
+                <p class="font-black">Settings</p>
+                <p class="text-xs text-gray-500 mt-0.5">${settings.truckId} · $${settings.detentionRate}/hr detention</p>
+              </div>
+            </div>
+            <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </button>
+
+        <!-- About / version -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <p class="font-bold text-sm text-gray-300">RIGLOG</p>
+          <p class="text-xs text-gray-600 mt-0.5">Owner-operator toolkit · v1.0</p>
+          <p class="text-xs text-gray-700 mt-2">All data stored locally on this device. No account required.</p>
+        </div>
+
+      </div>
+    </div>`;
+
+  return { html, mount: null };
+}

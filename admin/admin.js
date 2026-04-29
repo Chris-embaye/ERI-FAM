@@ -280,6 +280,7 @@ function showPage(name) {
   if (name === 'storage')     loadStorage();
   if (name === 'seo')         loadSeo();
   if (name === 'auditlog')    loadAuditLog();
+  if (name === 'riglog')      loadRiglog();
   if (name === 'playlists')   loadPlaylists();
   if (name === 'assets')      loadAssets();
   if (name === 'notify')      loadNotifications();
@@ -4918,3 +4919,91 @@ loadDashboard = async function() {
     if (!audio || audio.paused) stopWave();
   }, 500);
 })();
+
+// ── RIGLOG ────────────────────────────────────────────────────────────────────
+let _riglogUsers = [];
+
+async function loadRiglog() {
+  const tbody  = document.getElementById('riglogUserTable');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Loading…</td></tr>';
+
+  try {
+    const snap = await fb.getDocs(
+      fb.query(fb.collection(_db, 'riglog_users'), fb.orderBy('createdAt', 'desc'))
+    );
+    _riglogUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-msg">Error: ${e.message}</td></tr>`;
+    return;
+  }
+
+  // Stats
+  const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString();
+  const weekNew = _riglogUsers.filter(u => (u.createdAt || '') > weekAgo).length;
+  const googleSignins = _riglogUsers.filter(u => u.email && !u.truckId && !u.name?.includes(' ')).length;
+  document.getElementById('rlStatTotal').textContent  = _riglogUsers.length;
+  document.getElementById('rlStatWeek').textContent   = weekNew;
+  document.getElementById('rlStatGoogle').textContent = googleSignins;
+
+  // Update sidebar badge
+  const badge = document.getElementById('riglogUserBadge');
+  if (badge) { badge.textContent = _riglogUsers.length; badge.hidden = _riglogUsers.length === 0; }
+
+  renderRiglogTable(_riglogUsers);
+
+  // Search
+  const searchEl = document.getElementById('riglogSearch');
+  if (searchEl && !searchEl.dataset.wired) {
+    searchEl.dataset.wired = '1';
+    searchEl.addEventListener('input', () => {
+      const q = searchEl.value.toLowerCase();
+      renderRiglogTable(q
+        ? _riglogUsers.filter(u => (u.name + u.email + u.truckId).toLowerCase().includes(q))
+        : _riglogUsers
+      );
+    });
+  }
+
+  // Export CSV
+  const exportBtn = document.getElementById('riglogExportBtn');
+  if (exportBtn && !exportBtn.dataset.wired) {
+    exportBtn.dataset.wired = '1';
+    exportBtn.addEventListener('click', () => {
+      const rows = [['Name','Email','Truck ID','Joined','UID']];
+      _riglogUsers.forEach(u => rows.push([
+        u.name || '', u.email || '', u.truckId || '',
+        u.createdAt ? u.createdAt.slice(0,10) : '', u.id
+      ]));
+      const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a    = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(blob),
+        download: `riglog-users-${new Date().toISOString().slice(0,10)}.csv`
+      });
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+}
+
+function renderRiglogTable(users) {
+  const tbody = document.getElementById('riglogUserTable');
+  if (!tbody) return;
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">No RIGLOG users yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => {
+    const joined   = u.createdAt ? u.createdAt.slice(0,10) : '—';
+    const provider = u.photoURL  ? '🔵 Google' : '📧 Email';
+    return `<tr>
+      <td>${esc(u.name  || '—')}</td>
+      <td>${esc(u.email || '—')}</td>
+      <td>${esc(u.truckId || '—')}</td>
+      <td>${joined}</td>
+      <td>${provider}</td>
+    </tr>`;
+  }).join('');
+}
+window.loadRiglog = loadRiglog;

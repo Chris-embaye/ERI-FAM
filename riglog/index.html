@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="RIGLOG">
+  <title>RIGLOG</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <link rel="icon" href="icon-512.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { orange: { 600: '#EA580C', 700: '#C2410C' } } } }
+    }
+  </script>
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey:            "AIzaSyCcvA7TBrkdsfXVSIT-J9U-asNsIKWvX2E",
+      authDomain:        "eri-fam.firebaseapp.com",
+      projectId:         "eri-fam",
+      storageBucket:     "eri-fam.firebasestorage.app",
+      messagingSenderId: "640644486226",
+      appId:             "1:640644486226:web:9a076e9775c58763cffb8b"
+    });
+  </script>
+</head>
+<body class="bg-black text-white overflow-hidden select-none">
+
+  <div id="app" class="flex flex-col max-w-md mx-auto bg-black" style="height:100dvh">
+    <main id="screen" class="flex-1 overflow-y-auto overscroll-contain"></main>
+
+    <nav id="bottom-nav" class="border-t border-gray-800 bg-black flex justify-around shrink-0 pb-safe">
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-orange-600" data-screen="dashboard">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span class="text-xs">Dashboard</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-gray-500" data-screen="expenses">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span class="text-xs">Expenses</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-gray-500" data-screen="trips">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        <span class="text-xs">Trips</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-gray-500" data-screen="fuel">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>
+        <span class="text-xs">Fuel</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-gray-500" data-screen="more">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+        <span class="text-xs">More</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Bottom-sheet modal -->
+  <div id="modal-overlay" class="hidden fixed inset-0 bg-black/80 z-50 flex items-end justify-center">
+    <div id="modal-content" class="bg-gray-900 rounded-t-2xl w-full max-w-md overflow-y-auto" style="max-height:92dvh"></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
