@@ -2596,6 +2596,7 @@ const ytState = {
   currentIndex: -1, // index of playing video in queue
   repeat: false,    // loop current video
   invBase: null,    // winning Invidious instance (set during search — used for ad-free embed)
+  audioMode: false, // true = playing via native <audio> element (real background play)
 };
 
 // Listen for YouTube iframe postMessage events (video ended, etc.)
@@ -2840,28 +2841,28 @@ window.ytvPlay = function(videoId, title, thumb, author) {
   const frame  = document.getElementById('ytvFrame');
   const player = document.getElementById('ytvPlayer');
 
-  // Ad-free: use the Invidious instance that responded during search, else youtube-nocookie.com
-  if (ytState.invBase) {
-    frame.src = `${ytState.invBase}/embed/${videoId}?autoplay=1`;
-  } else {
-    // youtube-nocookie.com — origin must NOT be encodeURIComponent'd inside the query string
-    frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${location.origin}`;
-  }
-  player.hidden = false;
+  // Always update info bar + float player
   document.getElementById('ytvBarTitle').textContent  = title;
   document.getElementById('ytvBarAuthor').textContent = author;
-
-  // Float player info
   document.getElementById('ytFloatTitle').textContent  = title;
   document.getElementById('ytFloatAuthor').textContent = author;
   document.getElementById('ytFloatThumb').src          = ytState.thumb;
   document.getElementById('ytFloat').hidden            = true;
-
-  // Update queue counter
   ytvUpdateQueueCounter();
-  // Register MediaSession so lock-screen / headphone controls work
-  ytvUpdateMediaSession();
 
+  if (ytState.audioMode) {
+    // Already in audio/background mode — extract audio for the new video
+    ytvEnterAudioMode();
+    player.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+
+  // Normal iframe embed — ad-free via Invidious when available
+  frame.src = ytState.invBase
+    ? `${ytState.invBase}/embed/${videoId}?autoplay=1`
+    : `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${location.origin}`;
+  player.hidden = false;
+  ytvUpdateMediaSession();
   player.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
@@ -2872,20 +2873,98 @@ function ytvStop() {
   document.getElementById('ytFloat').hidden   = true;
   ytState.videoId      = null;
   ytState.currentIndex = -1;
+  if (ytState.audioMode) { audio.pause(); audio.src = ''; S.playing = false; S.currentTrack = null; updatePlayIcons?.(); }
+  ytState.audioMode = false;
+  document.getElementById('ytvAudioBtn').classList.remove('active');
+  document.getElementById('ytvFrameWrap').classList.remove('audio-mode');
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
   document.querySelectorAll('.ytv-card').forEach(c => c.classList.remove('ytv-card-active'));
   const counter = document.getElementById('ytvQueueCounter');
   if (counter) counter.textContent = '';
-  // don't reset invBase — keep for next play from same search session
 }
 
-// Audio-only mode — collapse the video frame, keep audio running
+// Audio-only / Background play mode
 document.getElementById('ytvAudioBtn').addEventListener('click', () => {
-  const wrap = document.getElementById('ytvFrameWrap');
-  const on   = wrap.classList.toggle('audio-mode');
-  document.getElementById('ytvAudioBtn').classList.toggle('active', on);
-  toast(on ? '🎵 Audio-only — video hidden, audio keeps playing in background' : '📺 Video restored');
+  if (ytState.audioMode || document.getElementById('ytvAudioBtn').classList.contains('active')) {
+    ytvExitAudioMode();
+  } else {
+    ytvEnterAudioMode();
+  }
 });
+
+async function ytvEnterAudioMode() {
+  const videoId = ytState.videoId;
+  if (!videoId) return;
+  const btn  = document.getElementById('ytvAudioBtn');
+  const wrap = document.getElementById('ytvFrameWrap');
+  btn.textContent = '⏳'; btn.disabled = true;
+
+  const base = ytState.invBase;
+  if (base) {
+    // Try to pull a direct audio stream URL from Invidious (itag 251=opus, 140=m4a)
+    for (const itag of [251, 140]) {
+      try {
+        const url = `${base}/latest_version?id=${videoId}&itag=${itag}&local=true`;
+        const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(4000) });
+        if (res.ok) {
+          // Silence the iframe, play through the native <audio> element
+          document.getElementById('ytvFrame').src = '';
+          wrap.classList.add('audio-mode');
+          const ytTrack = {
+            id:      'yt_' + videoId,
+            title:   ytState.title  || 'YouTube',
+            artist:  ytState.author || 'YouTube',
+            album:   'YouTube',
+            artwork: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+            url, type: 'cloud',
+          };
+          await playTrack(ytTrack);
+          ytState.audioMode = true;
+          btn.classList.add('active');
+          btn.textContent = '🎵 Audio';
+          btn.disabled = false;
+          toast('🎵 Background play ON — use lock screen or headphone controls');
+          return;
+        }
+      } catch { /* try next itag */ }
+    }
+  }
+
+  // Fallback: CSS collapse only (iframe audio may still pause in background)
+  wrap.classList.add('audio-mode');
+  ytState.audioMode = false;
+  btn.classList.add('active');
+  btn.textContent = '🎵 Audio';
+  btn.disabled = false;
+  toast('🎵 Audio-only — note: may pause when app is backgrounded');
+}
+
+function ytvExitAudioMode() {
+  const videoId = ytState.videoId;
+  const wrap    = document.getElementById('ytvFrameWrap');
+  const frame   = document.getElementById('ytvFrame');
+  const btn     = document.getElementById('ytvAudioBtn');
+
+  wrap.classList.remove('audio-mode');
+  btn.classList.remove('active');
+
+  if (ytState.audioMode) {
+    // Stop native audio and clear track
+    audio.pause(); audio.src = '';
+    S.playing = false; S.currentTrack = null;
+    updatePlayIcons?.(); updateHeaderPlayState?.();
+    document.getElementById('miniPlayer')?.classList.remove('active');
+  }
+  ytState.audioMode = false;
+
+  // Restore iframe
+  if (videoId) {
+    frame.src = ytState.invBase
+      ? `${ytState.invBase}/embed/${videoId}?autoplay=1`
+      : `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${location.origin}`;
+  }
+  toast('📺 Video restored');
+}
 
 // PiP — guide the user (iframe PiP is browser-native)
 document.getElementById('ytvPipBtn').addEventListener('click', () => {
