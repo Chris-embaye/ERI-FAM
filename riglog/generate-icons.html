@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate RIGLOG Icons</title></head>
+<body style="font-family:sans-serif;padding:20px;background:#111;color:#fff">
+<h2>RIGLOG Icon Generator</h2>
+<p>Click each button to download the icon at the correct size.</p>
+<canvas id="c" hidden></canvas>
+<br>
+<button onclick="gen(192)" style="margin:8px;padding:10px 20px;background:#EA580C;color:black;font-weight:bold;border:none;border-radius:8px;cursor:pointer">Download icon-192.png</button>
+<button onclick="gen(512)" style="margin:8px;padding:10px 20px;background:#EA580C;color:black;font-weight:bold;border:none;border-radius:8px;cursor:pointer">Download icon-512.png</button>
+<br><br>
+<div id="preview"></div>
+<script>
+function gen(size) {
+  const c = document.getElementById('c');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const r = size * 0.12;
+
+  // Background
+  ctx.fillStyle = '#000000';
+  roundRect(ctx, 0, 0, size, size, r);
+  ctx.fill();
+
+  // Orange accent circle
+  ctx.fillStyle = '#EA580C';
+  ctx.beginPath();
+  ctx.arc(size * 0.5, size * 0.45, size * 0.32, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Truck icon (simplified white)
+  const s = size * 0.55;
+  const ox = (size - s) / 2;
+  const oy = (size - s) / 2;
+  ctx.fillStyle = '#000';
+  ctx.font = `bold ${size * 0.38}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🚛', size / 2, size * 0.42);
+
+  // "RIGLOG" text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold ${size * 0.14}px Arial Black, Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('RIGLOG', size / 2, size * 0.82);
+
+  // Download
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = `icon-${size}.png`;
+  a.click();
+
+  // Preview
+  const img = new Image();
+  img.src = a.href;
+  img.style = `width:${Math.min(size,200)}px;margin:8px;border-radius:16px`;
+  document.getElementById('preview').appendChild(img);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+</script>
+</body>
+</html>
