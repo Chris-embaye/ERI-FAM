@@ -1,4 +1,4 @@
-const CACHE = 'riglog-v1';
+const CACHE = 'truck-log-v1';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.json',
   './js/app.js', './js/store.js', './js/modal.js',

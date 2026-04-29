@@ -159,7 +159,7 @@ export function renderSettings() {
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href = url;
-      a.download = `riglog-export-${new Date().toISOString().slice(0,10)}.json`;
+      a.download = `truck-log-export-${new Date().toISOString().slice(0,10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
     });
@@ -176,7 +176,7 @@ export function renderSettings() {
 
     // ── Sign out ────────────────────────────────────────────────────────────
     container.querySelector('#signout-btn')?.addEventListener('click', async () => {
-      if (confirm('Sign out of RIGLOG?')) {
+      if (confirm('Sign out of Truck-Log?')) {
         await signOut();
         // auth state change → app.js re-renders to sign-in screen
       }

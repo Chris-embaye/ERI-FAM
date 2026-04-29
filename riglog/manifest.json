@@ -1,6 +1,6 @@
 {
-  "name": "RIGLOG",
-  "short_name": "RIGLOG",
+  "name": "Truck-Log",
+  "short_name": "Truck-Log",
   "description": "Owner-operator trucking toolkit — expenses, trips, fuel, detention timer & DVIR",
   "start_url": "./",
   "scope": "./",

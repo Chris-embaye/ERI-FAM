@@ -1,4 +1,4 @@
-// Firebase auth wrapper for RIGLOG
+// Firebase auth wrapper for Truck-Log
 // Uses the compat SDK loaded globally in index.html
 
 let _user = null;
@@ -66,7 +66,7 @@ export async function saveProfile(uid, data) {
   try {
     if (!window.firebase?.firestore) return;
     await firebase.firestore()
-      .collection('riglog_users').doc(uid)
+      .collection('truck_log_users').doc(uid)
       .set(data, { merge: true });
   } catch (e) {
     console.warn('Profile save failed:', e);
@@ -76,7 +76,7 @@ export async function saveProfile(uid, data) {
 export async function loadProfile(uid) {
   try {
     if (!window.firebase?.firestore) return null;
-    const doc = await firebase.firestore().collection('riglog_users').doc(uid).get();
+    const doc = await firebase.firestore().collection('truck_log_users').doc(uid).get();
     return doc.exists ? doc.data() : null;
   } catch (e) {
     return null;

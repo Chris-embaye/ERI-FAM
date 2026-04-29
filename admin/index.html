@@ -154,9 +154,9 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span>Users <span class="sb-badge" id="pendingBadge" hidden>0</span></span>
         </button>
-        <button class="sb-item" data-page="riglog">
+        <button class="sb-item" data-page="truck-log">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          <span>RIGLOG <span class="sb-badge" id="riglogUserBadge" hidden>0</span></span>
+          <span>Truck-Log <span class="sb-badge" id="trucklogUserBadge" hidden>0</span></span>
         </button>
       </div>
 
@@ -407,18 +407,18 @@
       </div>
     </div>
 
-    <!-- ══ RIGLOG ══ -->
-    <div class="page" id="page-riglog">
+    <!-- ══ TRUCK-LOG ══ -->
+    <div class="page" id="page-truck-log">
       <div class="page-hd">
         <div>
-          <h1>🚛 RIGLOG</h1>
+          <h1>🚛 Truck-Log</h1>
           <p class="page-sub">Owner-operator app — users, stats, and controls</p>
         </div>
-        <a id="riglogOpenBtn" href="../riglog/" target="_blank" class="btn-primary" style="text-decoration:none">Open App ↗</a>
+        <a id="trucklogOpenBtn" href="../riglog/" target="_blank" class="btn-primary" style="text-decoration:none">Open App ↗</a>
       </div>
 
       <!-- Stats row -->
-      <div class="stats-row" id="riglogStats" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+      <div class="stats-row" id="trucklogStats" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px">
         <div class="stat-card"><div class="stat-val" id="rlStatTotal">—</div><div class="stat-lbl">Total Users</div></div>
         <div class="stat-card"><div class="stat-val" id="rlStatWeek">—</div><div class="stat-lbl">Joined This Week</div></div>
         <div class="stat-card"><div class="stat-val" id="rlStatGoogle">—</div><div class="stat-lbl">Google Sign-ins</div></div>
@@ -426,9 +426,9 @@
 
       <!-- Search + export -->
       <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
-        <input type="search" id="riglogSearch" placeholder="Search users…"
+        <input type="search" id="trucklogSearch" placeholder="Search users…"
           style="flex:1;min-width:180px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.85rem">
-        <button class="btn-secondary" id="riglogExportBtn">Export CSV</button>
+        <button class="btn-secondary" id="trucklogExportBtn">Export CSV</button>
       </div>
 
       <!-- User table -->
@@ -443,7 +443,7 @@
               <th>Provider</th>
             </tr>
           </thead>
-          <tbody id="riglogUserTable">
+          <tbody id="trucklogUserTable">
             <tr><td colspan="5" class="empty-msg">Loading…</td></tr>
           </tbody>
         </table>

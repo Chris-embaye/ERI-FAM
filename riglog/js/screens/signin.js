@@ -23,7 +23,7 @@ export function renderSignIn() {
         <!-- Logo -->
         <div class="text-center mb-8">
           <div class="text-5xl mb-3">🚛</div>
-          <h1 class="text-3xl font-black tracking-tight">RIGLOG</h1>
+          <h1 class="text-3xl font-black tracking-tight">Truck-Log</h1>
           <p class="text-gray-500 text-sm mt-1">Owner-operator toolkit</p>
         </div>
 

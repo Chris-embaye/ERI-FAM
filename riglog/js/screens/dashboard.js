@@ -75,7 +75,7 @@ export function renderDashboard() {
         ${isEmpty ? `
           <div class="flex flex-col items-center justify-center py-16 space-y-4 text-center">
             <div class="text-6xl">🚛</div>
-            <h2 class="text-xl font-black">Welcome to RIGLOG</h2>
+            <h2 class="text-xl font-black">Welcome to Truck-Log</h2>
             <p class="text-gray-400 text-sm px-8">Log trips, track expenses, time detention, and inspect your truck — all in one place.</p>
             <div class="flex gap-3">
               <button onclick="navigate('trips')" class="bg-orange-600 text-black font-bold px-5 py-2.5 rounded-xl text-sm">Log First Trip</button>

@@ -280,7 +280,7 @@ function showPage(name) {
   if (name === 'storage')     loadStorage();
   if (name === 'seo')         loadSeo();
   if (name === 'auditlog')    loadAuditLog();
-  if (name === 'riglog')      loadRiglog();
+  if (name === 'truck-log')   loadTruckLog();
   if (name === 'playlists')   loadPlaylists();
   if (name === 'assets')      loadAssets();
   if (name === 'notify')      loadNotifications();
@@ -4920,19 +4920,19 @@ loadDashboard = async function() {
   }, 500);
 })();
 
-// ── RIGLOG ────────────────────────────────────────────────────────────────────
-let _riglogUsers = [];
+// ── TRUCK-LOG ─────────────────────────────────────────────────────────────────
+let _trucklogUsers = [];
 
-async function loadRiglog() {
-  const tbody  = document.getElementById('riglogUserTable');
+async function loadTruckLog() {
+  const tbody  = document.getElementById('trucklogUserTable');
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Loading…</td></tr>';
 
   try {
     const snap = await fb.getDocs(
-      fb.query(fb.collection(_db, 'riglog_users'), fb.orderBy('createdAt', 'desc'))
+      fb.query(fb.collection(_db, 'truck_log_users'), fb.orderBy('createdAt', 'desc'))
     );
-    _riglogUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    _trucklogUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty-msg">Error: ${e.message}</td></tr>`;
     return;
@@ -4940,38 +4940,38 @@ async function loadRiglog() {
 
   // Stats
   const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString();
-  const weekNew = _riglogUsers.filter(u => (u.createdAt || '') > weekAgo).length;
-  const googleSignins = _riglogUsers.filter(u => u.email && !u.truckId && !u.name?.includes(' ')).length;
-  document.getElementById('rlStatTotal').textContent  = _riglogUsers.length;
+  const weekNew = _trucklogUsers.filter(u => (u.createdAt || '') > weekAgo).length;
+  const googleSignins = _trucklogUsers.filter(u => u.email && !u.truckId && !u.name?.includes(' ')).length;
+  document.getElementById('rlStatTotal').textContent  = _trucklogUsers.length;
   document.getElementById('rlStatWeek').textContent   = weekNew;
   document.getElementById('rlStatGoogle').textContent = googleSignins;
 
   // Update sidebar badge
-  const badge = document.getElementById('riglogUserBadge');
-  if (badge) { badge.textContent = _riglogUsers.length; badge.hidden = _riglogUsers.length === 0; }
+  const badge = document.getElementById('trucklogUserBadge');
+  if (badge) { badge.textContent = _trucklogUsers.length; badge.hidden = _trucklogUsers.length === 0; }
 
-  renderRiglogTable(_riglogUsers);
+  renderTruckLogTable(_trucklogUsers);
 
   // Search
-  const searchEl = document.getElementById('riglogSearch');
+  const searchEl = document.getElementById('trucklogSearch');
   if (searchEl && !searchEl.dataset.wired) {
     searchEl.dataset.wired = '1';
     searchEl.addEventListener('input', () => {
       const q = searchEl.value.toLowerCase();
-      renderRiglogTable(q
-        ? _riglogUsers.filter(u => (u.name + u.email + u.truckId).toLowerCase().includes(q))
-        : _riglogUsers
+      renderTruckLogTable(q
+        ? _trucklogUsers.filter(u => (u.name + u.email + u.truckId).toLowerCase().includes(q))
+        : _trucklogUsers
       );
     });
   }
 
   // Export CSV
-  const exportBtn = document.getElementById('riglogExportBtn');
+  const exportBtn = document.getElementById('trucklogExportBtn');
   if (exportBtn && !exportBtn.dataset.wired) {
     exportBtn.dataset.wired = '1';
     exportBtn.addEventListener('click', () => {
       const rows = [['Name','Email','Truck ID','Joined','UID']];
-      _riglogUsers.forEach(u => rows.push([
+      _trucklogUsers.forEach(u => rows.push([
         u.name || '', u.email || '', u.truckId || '',
         u.createdAt ? u.createdAt.slice(0,10) : '', u.id
       ]));
@@ -4979,7 +4979,7 @@ async function loadRiglog() {
       const blob = new Blob([csv], { type: 'text/csv' });
       const a    = Object.assign(document.createElement('a'), {
         href: URL.createObjectURL(blob),
-        download: `riglog-users-${new Date().toISOString().slice(0,10)}.csv`
+        download: `truck-log-users-${new Date().toISOString().slice(0,10)}.csv`
       });
       a.click();
       URL.revokeObjectURL(a.href);
@@ -4987,11 +4987,11 @@ async function loadRiglog() {
   }
 }
 
-function renderRiglogTable(users) {
-  const tbody = document.getElementById('riglogUserTable');
+function renderTruckLogTable(users) {
+  const tbody = document.getElementById('trucklogUserTable');
   if (!tbody) return;
   if (!users.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">No RIGLOG users yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">No Truck-Log users yet.</td></tr>';
     return;
   }
   tbody.innerHTML = users.map(u => {
@@ -5006,4 +5006,4 @@ function renderRiglogTable(users) {
     </tr>`;
   }).join('');
 }
-window.loadRiglog = loadRiglog;
+window.loadTruckLog = loadTruckLog;

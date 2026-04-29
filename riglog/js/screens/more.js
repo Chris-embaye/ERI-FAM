@@ -75,7 +75,7 @@ export function renderMore() {
 
         <!-- About / version -->
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p class="font-bold text-sm text-gray-300">RIGLOG</p>
+          <p class="font-bold text-sm text-gray-300">Truck-Log</p>
           <p class="text-xs text-gray-600 mt-0.5">Owner-operator toolkit · v1.0</p>
           <p class="text-xs text-gray-700 mt-2">All data stored locally on this device. No account required.</p>
         </div>

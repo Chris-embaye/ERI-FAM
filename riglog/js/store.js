@@ -1,4 +1,4 @@
-// All localStorage operations for RIGLOG
+// All localStorage operations for Truck-Log
 
 const KEYS = {
   expenses: 'rl_expenses',
