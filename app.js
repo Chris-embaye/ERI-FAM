@@ -2595,6 +2595,7 @@ const ytState = {
   queue: [],        // current search results
   currentIndex: -1, // index of playing video in queue
   repeat: false,    // loop current video
+  invBase: null,    // winning Invidious instance (set during search — used for ad-free embed)
 };
 
 // Listen for YouTube iframe postMessage events (video ended, etc.)
@@ -2662,6 +2663,7 @@ async function ytvSearch(query) {
   if (!query.trim()) return;
   status.textContent = '⏳ Searching…';
   grid.innerHTML = '';
+  ytState.invBase = null; // reset per-search so we re-race for best instance
 
   const q = encodeURIComponent(query);
 
@@ -2745,13 +2747,18 @@ async function ytvSearch(query) {
       invidiousBases.map(base =>
         fetch(`${base}/api/v1/search?q=${q}&type=video&page=1`, { signal: AbortSignal.timeout(7000) })
           .then(r => { if (!r.ok) throw new Error('not ok'); return r.json(); })
-          .then(data => { const r = parseInvidious(data); if (!r.length) throw new Error('empty'); return r; })
+          .then(data => {
+            const r = parseInvidious(data);
+            if (!r.length) throw new Error('empty');
+            ytState.invBase = base; // remember for ad-free embed
+            return r;
+          })
       )
     );
     status.textContent = '';
     ytvRenderResults(results);
     return;
-  } catch { /* all Invidious instances failed, try scraping */ }
+  } catch { ytState.invBase = null; /* all Invidious instances failed, try scraping */ }
 
   // Last resort: scrape YouTube search HTML via CORS proxy
   try {
@@ -2832,10 +2839,14 @@ window.ytvPlay = function(videoId, title, thumb, author) {
 
   const frame  = document.getElementById('ytvFrame');
   const player = document.getElementById('ytvPlayer');
-  const wrap   = document.getElementById('ytvFrameWrap');
 
-  // Enable YouTube JS API via postMessage so we get state-change events for auto-advance
-  frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
+  // Ad-free: use the Invidious instance that responded during search, else youtube-nocookie.com
+  if (ytState.invBase) {
+    frame.src = `${ytState.invBase}/embed/${videoId}?autoplay=1`;
+  } else {
+    // youtube-nocookie.com — origin must NOT be encodeURIComponent'd inside the query string
+    frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${location.origin}`;
+  }
   player.hidden = false;
   document.getElementById('ytvBarTitle').textContent  = title;
   document.getElementById('ytvBarAuthor').textContent = author;
@@ -2859,12 +2870,13 @@ function ytvStop() {
   frame.src = '';
   document.getElementById('ytvPlayer').hidden = true;
   document.getElementById('ytFloat').hidden   = true;
-  ytState.videoId = null;
+  ytState.videoId      = null;
   ytState.currentIndex = -1;
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
   document.querySelectorAll('.ytv-card').forEach(c => c.classList.remove('ytv-card-active'));
   const counter = document.getElementById('ytvQueueCounter');
   if (counter) counter.textContent = '';
+  // don't reset invBase — keep for next play from same search session
 }
 
 // Audio-only mode — collapse the video frame, keep audio running
