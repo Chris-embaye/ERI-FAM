@@ -2595,7 +2595,7 @@ const ytState = {
   queue: [],        // current search results
   currentIndex: -1, // index of playing video in queue
   repeat: false,    // loop current video
-  invBase: null,    // winning Invidious instance (set during search — used for ad-free embed)
+  invBase: null,    // winning Invidious instance from search (used for audio extraction only)
   audioMode: false, // true = playing via native <audio> element (real background play)
 };
 
@@ -2751,7 +2751,7 @@ async function ytvSearch(query) {
           .then(data => {
             const r = parseInvidious(data);
             if (!r.length) throw new Error('empty');
-            ytState.invBase = base; // remember for ad-free embed
+            ytState.invBase = base; // remember for audio extraction in background mode
             return r;
           })
       )
@@ -2857,10 +2857,8 @@ window.ytvPlay = function(videoId, title, thumb, author) {
     return;
   }
 
-  // Normal iframe embed — ad-free via Invidious when available
-  frame.src = ytState.invBase
-    ? `${ytState.invBase}/embed/${videoId}?autoplay=1`
-    : `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${location.origin}`;
+  // Always embed via youtube-nocookie.com — Invidious embed pages show consent errors
+  frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${location.origin}`;
   player.hidden = false;
   ytvUpdateMediaSession();
   player.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2959,9 +2957,7 @@ function ytvExitAudioMode() {
 
   // Restore iframe
   if (videoId) {
-    frame.src = ytState.invBase
-      ? `${ytState.invBase}/embed/${videoId}?autoplay=1`
-      : `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${location.origin}`;
+    frame.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${location.origin}`;
   }
   toast('📺 Video restored');
 }
