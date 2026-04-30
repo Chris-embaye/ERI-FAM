@@ -1,38 +1,46 @@
 import { getExpenses, addExpense, deleteExpense, updateExpense, fmtMoney, fmtDate, today } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+import { resizeImage, scanReceipt } from '../receipt-scanner.js';
 
 let _filter = 'month';
 
 const CATEGORIES = ['Fuel', 'Repair', 'Toll', 'Lodging', 'Food', 'Parking', 'Scale', 'Insurance', 'Other'];
-
-const CAT_ICONS = {
+const CAT_ICONS  = {
   Fuel: '⛽', Repair: '🔧', Toll: '🛣️', Lodging: '🏨',
   Food: '🍔', Parking: '🅿️', Scale: '⚖️', Insurance: '🛡️', Other: '📋',
 };
 
-// ── Receipt image helpers ─────────────────────────────────────────────────────
+// ── Scan results card ─────────────────────────────────────────────────────────
 
-function resizeImage(file) {
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const img = new Image();
-      img.onload = () => {
-        const maxW = 400;
-        const scale = Math.min(1, maxW / img.width);
-        const canvas = document.createElement('canvas');
-        canvas.width  = Math.round(img.width  * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.55));
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+function renderExpenseScanResults(r) {
+  if (!r._found) return `
+    <p class="text-xs" style="color:rgba(148,163,184,0.5)">
+      Couldn't read the receipt clearly — fill the fields below manually.
+    </p>`;
+  const fmtDate2 = v => new Date(v + 'T12:00').toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  const rows = [
+    { label: 'Merchant',  display: r.merchant },
+    { label: 'Category',  display: r.category ? `${CAT_ICONS[r.category] || ''} ${r.category}` : null },
+    { label: 'Amount',    display: r.amount != null ? '$' + r.amount.toFixed(2) : null },
+    { label: 'Date',      display: r.date   != null ? fmtDate2(r.date)          : null },
+  ];
+  return `
+    <p class="text-xs font-bold mb-2" style="color:#4ade80">
+      ✓ ${r._found} field${r._found !== 1 ? 's' : ''} filled from receipt
+    </p>
+    <div>
+      ${rows.map(row => `
+        <div class="flex justify-between text-xs py-1.5" style="border-bottom:1px solid rgba(255,255,255,0.06)">
+          <span style="color:rgba(148,163,184,0.7)">${row.label}</span>
+          <span style="font-weight:${row.display ? 700 : 400};color:${row.display ? '#4ade80' : 'rgba(100,116,139,0.5)'}">
+            ${row.display || '—'}
+          </span>
+        </div>
+      `).join('')}
+    </div>`;
 }
 
-// ── Form builder ──────────────────────────────────────────────────────────────
+// ── Form HTML ─────────────────────────────────────────────────────────────────
 
 function expenseForm(existing = null) {
   const e = existing || {};
@@ -44,34 +52,38 @@ function expenseForm(existing = null) {
       </div>
       <form id="expense-form" class="space-y-4">
 
-        <!-- Receipt camera capture -->
+        <!-- Receipt scanner -->
         <div>
-          <label class="text-xs text-gray-400 block mb-1.5">Receipt Photo</label>
-          ${existing?.receiptPhoto ? `
-            <div id="receipt-preview-wrap" class="mb-2 relative">
-              <img id="receipt-preview" src="${existing.receiptPhoto}" class="receipt-preview" alt="Receipt">
-              <button type="button" id="receipt-clear" class="absolute top-2 right-2 bg-black/70 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-base leading-none">&times;</button>
+          <label class="text-xs text-gray-400 block mb-1.5">Receipt</label>
+          <div id="receipt-preview-wrap" class="${existing?.receiptPhoto ? '' : 'hidden'} mb-2 relative rounded-xl overflow-hidden"
+               style="background:#0d1117">
+            <img id="receipt-preview" src="${existing?.receiptPhoto || ''}"
+                 class="w-full" style="max-height:210px;object-fit:contain" alt="Receipt">
+            <button type="button" id="receipt-clear"
+              class="absolute top-2 right-2 bg-black/80 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-base leading-none">&times;</button>
+            <div id="scan-overlay" class="hidden absolute inset-0 flex flex-col items-center justify-center"
+                 style="background:rgba(0,0,0,0.82)">
+              <div class="text-3xl animate-pulse">📡</div>
+              <p class="text-sm font-bold mt-2" style="color:#67e8f9">Scanning receipt…</p>
+              <p class="text-xs mt-1" style="color:rgba(103,232,249,0.5)">This takes a few seconds</p>
             </div>
-          ` : `
-            <div id="receipt-preview-wrap" class="hidden mb-2 relative">
-              <img id="receipt-preview" src="" class="receipt-preview" alt="Receipt">
-              <button type="button" id="receipt-clear" class="absolute top-2 right-2 bg-black/70 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-base leading-none">&times;</button>
-            </div>
-          `}
+          </div>
           <label id="receipt-capture-label" class="receipt-cap-label" for="receipt-file-input">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
               <circle cx="12" cy="13" r="4"/>
             </svg>
-            Snap Receipt Photo
+            Scan Receipt
           </label>
           <input type="file" id="receipt-file-input" accept="image/*" capture="environment" class="hidden">
           <input type="hidden" id="receipt-photo-data" name="receiptPhoto" value="${existing?.receiptPhoto || ''}">
+          <div id="scan-results" class="hidden mt-2 rounded-xl p-3"
+               style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2)"></div>
         </div>
 
         <div>
           <label class="text-xs text-gray-400 block mb-1">Category</label>
-          <select name="category" class="form-input" required>
+          <select name="category" id="expense-category" class="form-input" required>
             ${CATEGORIES.map(c => `<option value="${c}" ${e.category === c ? 'selected' : ''}>${CAT_ICONS[c]} ${c}</option>`).join('')}
           </select>
         </div>
@@ -95,6 +107,68 @@ function expenseForm(existing = null) {
     </div>`;
 }
 
+// ── Scanner wiring ────────────────────────────────────────────────────────────
+
+function wireReceiptScanner(el) {
+  const fileInput   = el.querySelector('#receipt-file-input');
+  const previewWrap = el.querySelector('#receipt-preview-wrap');
+  const previewImg  = el.querySelector('#receipt-preview');
+  const photoData   = el.querySelector('#receipt-photo-data');
+  const overlay     = el.querySelector('#scan-overlay');
+  const results     = el.querySelector('#scan-results');
+  const scanLabel   = el.querySelector('#receipt-capture-label');
+  const clearBtn    = el.querySelector('#receipt-clear');
+  const amountEl    = el.querySelector('#expense-amount');
+  const dateEl      = el.querySelector('#expense-date');
+  const catEl       = el.querySelector('#expense-category');
+  const descEl      = el.querySelector('[name="description"]');
+
+  const RETAKE_SVG = `
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg> Retake Photo`;
+  const SCAN_SVG = `
+    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg> Scan Receipt`;
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const base64 = await resizeImage(file);
+    photoData.value = base64;
+    previewImg.src  = base64;
+    previewWrap.classList.remove('hidden');
+    scanLabel.innerHTML = RETAKE_SVG;
+    overlay.classList.remove('hidden');
+    results.classList.add('hidden');
+
+    const r = await scanReceipt(base64, 'expense');
+    overlay.classList.add('hidden');
+
+    // Auto-fill detected fields — don't overwrite if user already typed
+    if (r.amount   && !amountEl.value) amountEl.value = r.amount.toFixed(2);
+    if (r.date)                         dateEl.value   = r.date;
+    if (r.category && catEl)            catEl.value    = r.category;
+    if (r.merchant && descEl && !descEl.value) descEl.value = r.merchant;
+
+    results.innerHTML = renderExpenseScanResults(r);
+    results.classList.remove('hidden');
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    photoData.value = '';
+    previewImg.src  = '';
+    previewWrap.classList.add('hidden');
+    fileInput.value = '';
+    results.classList.add('hidden');
+    scanLabel.innerHTML = SCAN_SVG;
+  });
+}
+
 // ── Main render ───────────────────────────────────────────────────────────────
 
 export function renderExpenses() {
@@ -110,10 +184,9 @@ export function renderExpenses() {
   const monthExp   = allExpenses.filter(e => e.date?.startsWith(thisMonth));
   const monthTotal = monthExp.reduce((s, e) => s + Number(e.amount || 0), 0);
 
-  const expenses = _filter === 'month' ? monthExp
+  const expenses     = _filter === 'month' ? monthExp
     : _filter === 'last'  ? allExpenses.filter(e => e.date >= lastMonthStart && e.date < lastMonthEnd)
     : allExpenses;
-
   const displayTotal = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
 
   const html = `
@@ -128,7 +201,6 @@ export function renderExpenses() {
         </button>
       </div>
 
-      <!-- Filter pills -->
       <div class="flex gap-2 px-4 pt-3 pb-2 shrink-0">
         <button class="filter-pill ${_filter === 'month' ? 'active' : ''}" data-filter="month">This Month</button>
         <button class="filter-pill ${_filter === 'last'  ? 'active' : ''}" data-filter="last">Last Month</button>
@@ -144,8 +216,7 @@ export function renderExpenses() {
             <p class="text-gray-600 text-sm mt-1">${allExpenses.length === 0 ? 'Tap + to log your first one.' : 'Switch to All Time or add a new expense.'}</p>
           </div>
         ` : expenses.map(e => `
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex justify-between items-start"
-               data-id="${e.id}">
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex justify-between items-start" data-id="${e.id}">
             <div class="flex items-start gap-3 min-w-0">
               <span class="text-2xl mt-0.5">${CAT_ICONS[e.category] || '📋'}</span>
               <div class="min-w-0">
@@ -172,51 +243,11 @@ export function renderExpenses() {
       </div>
     </div>`;
 
-  function wireReceiptCapture(el) {
-    const fileInput    = el.querySelector('#receipt-file-input');
-    const previewWrap  = el.querySelector('#receipt-preview-wrap');
-    const previewImg   = el.querySelector('#receipt-preview');
-    const photoData    = el.querySelector('#receipt-photo-data');
-    const captureLabel = el.querySelector('#receipt-capture-label');
-
-    fileInput.addEventListener('change', async () => {
-      const file = fileInput.files[0];
-      if (!file) return;
-      const base64 = await resizeImage(file);
-      photoData.value = base64;
-      previewImg.src  = base64;
-      previewWrap.classList.remove('hidden');
-      captureLabel.innerHTML = `
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-        Retake Photo`;
-    });
-
-    el.querySelector('#receipt-clear').addEventListener('click', () => {
-      photoData.value = '';
-      previewImg.src  = '';
-      previewWrap.classList.add('hidden');
-      fileInput.value = '';
-      captureLabel.innerHTML = `
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-        Snap Receipt Photo`;
-    });
-  }
-
   function mount(container) {
     container.querySelectorAll('.filter-pill').forEach(btn => {
-      btn.addEventListener('click', () => {
-        _filter = btn.dataset.filter;
-        window.refresh();
-      });
+      btn.addEventListener('click', () => { _filter = btn.dataset.filter; window.refresh(); });
     });
 
-    // View full receipt
     window._viewReceipt = (id) => {
       const exp = getExpenses().find(e => e.id === id);
       if (!exp?.receiptPhoto) return;
@@ -233,7 +264,7 @@ export function renderExpenses() {
 
     container.querySelector('#add-expense-btn').addEventListener('click', () => {
       openModal(expenseForm(), el => {
-        wireReceiptCapture(el);
+        wireReceiptScanner(el);
         el.querySelector('#expense-form').addEventListener('submit', ev => {
           ev.preventDefault();
           const fd = new FormData(ev.target);
@@ -266,7 +297,7 @@ export function renderExpenses() {
         const existing = getExpenses().find(e => e.id === btn.dataset.id);
         if (!existing) return;
         openModal(expenseForm(existing), el => {
-          wireReceiptCapture(el);
+          wireReceiptScanner(el);
           el.querySelector('#expense-form').addEventListener('submit', ev => {
             ev.preventDefault();
             const fd = new FormData(ev.target);

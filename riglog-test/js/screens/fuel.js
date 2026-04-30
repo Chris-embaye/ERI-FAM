@@ -1,5 +1,39 @@
 import { getFuelLogs, addFuelLog, deleteFuelLog, updateFuelLog, fmtMoney, fmtDate, today } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+import { resizeImage, scanReceipt } from '../receipt-scanner.js';
+
+// ── Scan results card ─────────────────────────────────────────────────────────
+
+function renderFuelScanResults(r) {
+  if (!r._found) return `
+    <p class="text-xs" style="color:rgba(148,163,184,0.5)">
+      Couldn't read the receipt clearly — fill the fields below manually.
+    </p>`;
+  const fmtDate2 = v => new Date(v + 'T12:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  const rows = [
+    { label: 'Station',   display: r.station },
+    { label: 'Gallons',   display: r.gallons        != null ? r.gallons.toFixed(3) + ' gal'       : null },
+    { label: 'Price/Gal', display: r.pricePerGallon != null ? '$' + r.pricePerGallon.toFixed(3)   : null },
+    { label: 'Total',     display: r.total          != null ? '$' + r.total.toFixed(2)             : null },
+    { label: 'Date',      display: r.date           != null ? fmtDate2(r.date)                     : null },
+  ];
+  return `
+    <p class="text-xs font-bold mb-2" style="color:#4ade80">
+      ✓ ${r._found} field${r._found !== 1 ? 's' : ''} filled from receipt
+    </p>
+    <div>
+      ${rows.map(row => `
+        <div class="flex justify-between text-xs py-1.5" style="border-bottom:1px solid rgba(255,255,255,0.06)">
+          <span style="color:rgba(148,163,184,0.7)">${row.label}</span>
+          <span style="font-weight:${row.display ? 700 : 400};color:${row.display ? '#4ade80' : 'rgba(100,116,139,0.5)'}">
+            ${row.display || '—'}
+          </span>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+// ── Form HTML ─────────────────────────────────────────────────────────────────
 
 function fuelForm(existing = null) {
   const l = existing || {};
@@ -10,15 +44,45 @@ function fuelForm(existing = null) {
         <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
       </div>
       <form id="fuel-form" class="space-y-4">
+
+        <!-- Receipt scanner -->
+        <div>
+          <label class="text-xs text-gray-400 block mb-1.5">Receipt</label>
+          <div id="scan-preview-wrap" class="${l.receiptPhoto ? '' : 'hidden'} mb-2 relative rounded-xl overflow-hidden"
+               style="background:#0d1117">
+            <img id="scan-preview" src="${l.receiptPhoto || ''}"
+                 class="w-full" style="max-height:210px;object-fit:contain" alt="Receipt">
+            <button type="button" id="receipt-clear"
+              class="absolute top-2 right-2 bg-black/80 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-base leading-none">&times;</button>
+            <div id="scan-overlay" class="hidden absolute inset-0 flex flex-col items-center justify-center"
+                 style="background:rgba(0,0,0,0.82)">
+              <div class="text-3xl animate-pulse">📡</div>
+              <p class="text-sm font-bold mt-2" style="color:#67e8f9">Scanning receipt…</p>
+              <p class="text-xs mt-1" style="color:rgba(103,232,249,0.5)">This takes a few seconds</p>
+            </div>
+          </div>
+          <label id="scan-btn-label" class="receipt-cap-label" for="fuel-receipt-input">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            Scan Fuel Receipt
+          </label>
+          <input type="file" id="fuel-receipt-input" accept="image/*" capture="environment" class="hidden">
+          <input type="hidden" id="receipt-photo-data" name="receiptPhoto" value="${l.receiptPhoto || ''}">
+          <div id="scan-results" class="hidden mt-2 rounded-xl p-3"
+               style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2)"></div>
+        </div>
+
         <div>
           <label class="text-xs text-gray-400 block mb-1">Location / Station</label>
-          <input type="text" name="location" placeholder="Pilot Flying J, I-75 Exit 42"
+          <input type="text" name="location" id="fuel-location" placeholder="Pilot Flying J, I-75 Exit 42"
             class="form-input" value="${l.location || ''}" required>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-xs text-gray-400 block mb-1">Gallons</label>
-            <input type="number" id="fuel-gallons" name="gallons" step="0.01" min="0" placeholder="120.5"
+            <input type="number" id="fuel-gallons" name="gallons" step="0.001" min="0" placeholder="120.5"
               class="form-input" value="${l.gallons || ''}" required>
           </div>
           <div>
@@ -35,7 +99,7 @@ function fuelForm(existing = null) {
           </div>
           <div>
             <label class="text-xs text-gray-400 block mb-1">Date</label>
-            <input type="date" name="date" class="form-input" value="${l.date || today()}" required>
+            <input type="date" id="fuel-date" name="date" class="form-input" value="${l.date || today()}" required>
           </div>
         </div>
         <div id="fuel-total-preview" class="text-center py-1 text-gray-400 text-sm font-bold">
@@ -46,6 +110,8 @@ function fuelForm(existing = null) {
       </form>
     </div>`;
 }
+
+// ── MPG calculator ────────────────────────────────────────────────────────────
 
 function calcMPG(logs) {
   const withOdo = logs.filter(l => l.odometer);
@@ -59,6 +125,8 @@ function calcMPG(logs) {
   }
   return mpgMap;
 }
+
+// ── Main render ───────────────────────────────────────────────────────────────
 
 export function renderFuel() {
   const logs = getFuelLogs();
@@ -99,13 +167,17 @@ export function renderFuel() {
                 <p class="font-bold text-sm">⛽ ${l.location}</p>
                 <p class="text-xs text-gray-500 mt-0.5">${fmtDate(l.date)}</p>
               </div>
-              <div class="text-right shrink-0 ml-3">
+              <div class="flex items-center gap-2 shrink-0 ml-3">
+                ${l.receiptPhoto ? `
+                  <img src="${l.receiptPhoto}" class="receipt-thumb" alt="Receipt"
+                       onclick="window._viewFuelReceipt('${l.id}')">
+                ` : ''}
                 <p class="font-black text-base">${fmtMoney(total, 2)}</p>
               </div>
             </div>
             <div class="flex justify-between items-center mt-2">
               <div class="text-xs text-gray-500 space-x-3">
-                <span>${Number(l.gallons).toFixed(2)} gal</span>
+                <span>${Number(l.gallons).toFixed(3)} gal</span>
                 <span>${fmtMoney(l.pricePerGallon, 3)}/gal</span>
                 ${l.odometer ? `<span>📍 ${Number(l.odometer).toLocaleString()} mi</span>` : ''}
                 ${mpg ? `<span class="text-green-400">🌿 ${mpg} MPG</span>` : ''}
@@ -125,21 +197,99 @@ export function renderFuel() {
       </div>
     </div>`;
 
+  // ── Form wiring ─────────────────────────────────────────────────────────────
+
   function wireFuelForm(el, onSubmit) {
-    const gallonsInput = el.querySelector('#fuel-gallons');
-    const priceInput   = el.querySelector('#fuel-ppg');
-    const preview      = el.querySelector('#fuel-total-preview');
+    const gallonsEl  = el.querySelector('#fuel-gallons');
+    const ppgEl      = el.querySelector('#fuel-ppg');
+    const locationEl = el.querySelector('#fuel-location');
+    const dateEl     = el.querySelector('#fuel-date');
+    const previewEl  = el.querySelector('#fuel-total-preview');
+
     function updatePreview() {
-      const g = parseFloat(gallonsInput.value);
-      const p = parseFloat(priceInput.value);
-      preview.textContent = (g > 0 && p > 0) ? `Total: ${fmtMoney(g * p, 2)}` : '';
+      const g = parseFloat(gallonsEl.value);
+      const p = parseFloat(ppgEl.value);
+      previewEl.textContent = (g > 0 && p > 0) ? `Total: ${fmtMoney(g * p, 2)}` : '';
     }
-    gallonsInput.addEventListener('input', updatePreview);
-    priceInput.addEventListener('input', updatePreview);
+    gallonsEl.addEventListener('input', updatePreview);
+    ppgEl.addEventListener('input', updatePreview);
+
+    // Receipt scanner wiring
+    const fileInput   = el.querySelector('#fuel-receipt-input');
+    const previewWrap = el.querySelector('#scan-preview-wrap');
+    const previewImg  = el.querySelector('#scan-preview');
+    const photoData   = el.querySelector('#receipt-photo-data');
+    const overlay     = el.querySelector('#scan-overlay');
+    const results     = el.querySelector('#scan-results');
+    const scanLabel   = el.querySelector('#scan-btn-label');
+    const clearBtn    = el.querySelector('#receipt-clear');
+
+    const RETAKE_SVG = `
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg> Retake Photo`;
+    const SCAN_SVG = `
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg> Scan Fuel Receipt`;
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const base64 = await resizeImage(file);
+      photoData.value = base64;
+      previewImg.src  = base64;
+      previewWrap.classList.remove('hidden');
+      scanLabel.innerHTML = RETAKE_SVG;
+      overlay.classList.remove('hidden');
+      results.classList.add('hidden');
+
+      const r = await scanReceipt(base64, 'fuel');
+      overlay.classList.add('hidden');
+
+      // Auto-fill detected fields
+      if (r.gallons)        { gallonsEl.value  = r.gallons.toFixed(3);        updatePreview(); }
+      if (r.pricePerGallon) { ppgEl.value      = r.pricePerGallon.toFixed(3); updatePreview(); }
+      if (r.station && !locationEl.value) locationEl.value = r.station;
+      if (r.date)             dateEl.value = r.date;
+
+      results.innerHTML = renderFuelScanResults(r);
+      results.classList.remove('hidden');
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      photoData.value = '';
+      previewImg.src  = '';
+      previewWrap.classList.add('hidden');
+      fileInput.value = '';
+      results.classList.add('hidden');
+      scanLabel.innerHTML = SCAN_SVG;
+    });
+
     el.querySelector('#fuel-form').addEventListener('submit', onSubmit);
   }
 
+  // ── Mount ───────────────────────────────────────────────────────────────────
+
   function mount(container) {
+    window._viewFuelReceipt = (id) => {
+      const log   = getFuelLogs().find(l => l.id === id);
+      if (!log?.receiptPhoto) return;
+      const total = Number(log.total) || (Number(log.gallons) * Number(log.pricePerGallon));
+      openModal(`
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-3">
+            <p class="font-black">Receipt — ${log.location}</p>
+            <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
+          </div>
+          <img src="${log.receiptPhoto}" class="w-full rounded-xl" alt="Receipt">
+          <p class="text-xs text-gray-500 mt-2 text-center">${fmtDate(log.date)} · ${fmtMoney(total, 2)}</p>
+        </div>`, () => {});
+    };
+
     container.querySelector('#add-fuel-btn').addEventListener('click', () => {
       openModal(fuelForm(), el => {
         wireFuelForm(el, ev => {
@@ -148,12 +298,13 @@ export function renderFuel() {
           const gallons = parseFloat(fd.get('gallons'));
           const ppg     = parseFloat(fd.get('pricePerGallon'));
           addFuelLog({
-            location:      fd.get('location').trim(),
+            location:       fd.get('location').trim(),
             gallons,
             pricePerGallon: ppg,
-            total:         +(gallons * ppg).toFixed(2),
-            odometer:      fd.get('odometer') ? parseInt(fd.get('odometer')) : null,
-            date:          fd.get('date'),
+            total:          +(gallons * ppg).toFixed(2),
+            odometer:       fd.get('odometer') ? parseInt(fd.get('odometer')) : null,
+            date:           fd.get('date'),
+            receiptPhoto:   fd.get('receiptPhoto') || null,
           });
           closeModal();
           toast('Fuel stop saved ✓');
@@ -173,12 +324,13 @@ export function renderFuel() {
             const gallons = parseFloat(fd.get('gallons'));
             const ppg     = parseFloat(fd.get('pricePerGallon'));
             updateFuelLog(existing.id, {
-              location:      fd.get('location').trim(),
+              location:       fd.get('location').trim(),
               gallons,
               pricePerGallon: ppg,
-              total:         +(gallons * ppg).toFixed(2),
-              odometer:      fd.get('odometer') ? parseInt(fd.get('odometer')) : null,
-              date:          fd.get('date'),
+              total:          +(gallons * ppg).toFixed(2),
+              odometer:       fd.get('odometer') ? parseInt(fd.get('odometer')) : null,
+              date:           fd.get('date'),
+              receiptPhoto:   fd.get('receiptPhoto') || null,
             });
             closeModal();
             toast('Fuel stop updated ✓');
