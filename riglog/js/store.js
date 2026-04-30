@@ -11,7 +11,17 @@ const KEYS = {
 };
 
 const DEFAULTS = {
-  settings: { truckId: 'My Truck', detentionRate: 60, detentionGrace: 2, targetCPM: 0.50 },
+  settings: {
+    truckId: 'My Truck',
+    detentionRate: 60,
+    detentionGrace: 2,
+    targetCPM: 0.50,
+    dispatchPct: 0,          // % dispatcher/carrier takes off gross revenue
+    eldMonthly: 0,           // ELD subscription ($/month)
+    truckPaymentMonthly: 0,  // truck loan/lease ($/month)
+    insuranceMonthly: 0,     // insurance ($/month)
+    otherFixedMonthly: 0,    // other fixed monthly costs
+  },
 };
 
 function load(key) {

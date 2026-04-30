@@ -1,4 +1,4 @@
-import { getTrips, getExpenses, fmtMoney } from '../store.js';
+import { getTrips, getExpenses, getSettings, fmtMoney } from '../store.js';
 import { getCurrentUser } from '../auth.js';
 
 function daysAgo(n) {
@@ -35,6 +35,8 @@ function estTax(net) {
 export function renderDashboard() {
   const allTrips    = getTrips();
   const allExpenses = getExpenses();
+  const settings    = getSettings();
+  const dispatchPct = Number(settings.dispatchPct) || 0;
 
   const weekAgo      = daysAgo(7);
   const twoWeeksAgo  = daysAgo(14);
@@ -48,7 +50,8 @@ export function renderDashboard() {
   const ytdTrips     = allTrips.filter(t => t.date >= thisYearStart);
   const ytdExpenses  = allExpenses.filter(e => e.date >= thisYearStart);
 
-  const weekRevenue  = weekTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
+  const weekGross    = weekTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
+  const weekRevenue  = weekGross * (1 - dispatchPct / 100);
   const weekMiles    = weekTrips.reduce((s, t) => s + Number(t.miles || 0), 0);
   const weekHours    = weekTrips.reduce((s, t) => s + Number(t.durationHours || 0), 0);
   const weekExpTotal = weekExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
@@ -138,9 +141,12 @@ export function renderDashboard() {
 
         <!-- Weekly revenue hero card -->
         <div class="bg-gradient-to-br from-orange-600 to-orange-700 rounded-2xl p-5">
-          <p class="text-xs font-bold uppercase opacity-75 mb-1 tracking-wider">Weekly Revenue</p>
+          <p class="text-xs font-bold uppercase opacity-75 mb-1 tracking-wider">
+            Weekly ${dispatchPct > 0 ? 'Net Revenue (after ' + dispatchPct + '% dispatch)' : 'Revenue'}
+          </p>
           <p class="text-5xl font-black text-black">${fmtMoney(weekRevenue)}</p>
-          <p class="text-xs mt-2 text-black/70">${changeStr}</p>
+          ${dispatchPct > 0 ? `<p class="text-xs text-black/60 mt-0.5">Gross: ${fmtMoney(weekGross)} · Dispatch cut: ${fmtMoney(weekGross - weekRevenue)}</p>` : ''}
+          <p class="text-xs mt-1 text-black/70">${changeStr}</p>
         </div>
 
         <!-- Key metrics grid -->

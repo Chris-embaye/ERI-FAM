@@ -1,5 +1,5 @@
 import { getSettings, saveSettings } from '../store.js';
-import { getCurrentUser, signOut, saveProfile, loadProfile } from '../auth.js';
+import { getCurrentUser, signOut, saveProfile } from '../auth.js';
 
 export function renderSettings() {
   const s    = getSettings();
@@ -8,6 +8,12 @@ export function renderSettings() {
   const avatarLetter = user?.displayName
     ? user.displayName.trim()[0].toUpperCase()
     : user?.email?.[0].toUpperCase() ?? '?';
+
+  // Monthly fixed cost total for display
+  const monthlyFixed = (Number(s.eldMonthly) || 0)
+    + (Number(s.truckPaymentMonthly) || 0)
+    + (Number(s.insuranceMonthly) || 0)
+    + (Number(s.otherFixedMonthly) || 0);
 
   const html = `
     <div class="flex flex-col h-full bg-black text-white">
@@ -28,7 +34,7 @@ export function renderSettings() {
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
           <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Account</p>
           <div class="flex items-center gap-3 mb-4">
-            <div class="w-12 h-12 rounded-full bg-orange-600 flex items-center justify-center text-black font-black text-xl shrink-0">
+            <div class="w-12 h-12 rounded-full bg-orange-600 flex items-center justify-center text-black font-black text-xl shrink-0 overflow-hidden">
               ${user.photoURL
                 ? `<img src="${user.photoURL}" class="w-12 h-12 rounded-full object-cover" alt="">`
                 : avatarLetter}
@@ -36,7 +42,6 @@ export function renderSettings() {
             <div class="min-w-0">
               <p class="font-black truncate">${user.displayName || 'Driver'}</p>
               <p class="text-xs text-gray-500 truncate">${user.email}</p>
-              <p class="text-xs text-gray-600 mt-0.5">UID: ${user.uid.slice(0, 8)}…</p>
             </div>
           </div>
           <div class="space-y-2">
@@ -44,23 +49,96 @@ export function renderSettings() {
               <label class="text-xs text-gray-400 block mb-1">Display Name</label>
               <input type="text" id="profile-name" class="form-input" value="${user.displayName || ''}" placeholder="Your name">
             </div>
-            <button id="save-profile-btn" class="w-full bg-gray-800 text-white font-bold py-2.5 rounded-lg text-sm hover:bg-gray-700 transition">
-              Update Profile
+            <button id="save-profile-btn" class="w-full bg-gray-800 text-white font-bold py-2.5 rounded-lg text-sm">
+              Update Name
+            </button>
+            <button id="reset-pw-btn" class="w-full bg-gray-800/50 border border-gray-700 text-gray-400 font-bold py-2.5 rounded-lg text-sm">
+              Send Password Reset Email
             </button>
           </div>
         </div>
         ` : ''}
 
-        <!-- App settings form -->
         <form id="settings-form" class="space-y-4">
+
+          <!-- Truck -->
           <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
             <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Truck</p>
             <div>
-              <label class="text-xs text-gray-400 block mb-1">Truck Name / ID</label>
+              <label class="text-xs text-gray-400 block mb-1">Truck Name / Unit ID</label>
               <input type="text" name="truckId" class="form-input" value="${s.truckId || ''}" placeholder="My Truck">
             </div>
           </div>
 
+          <!-- Dispatch & Carrier -->
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
+            <div class="flex justify-between items-center">
+              <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Dispatch / Carrier</p>
+              ${Number(s.dispatchPct) > 0
+                ? `<span class="text-xs text-orange-500 font-bold">${s.dispatchPct}% off gross</span>`
+                : `<span class="text-xs text-gray-700">Owner-op (no cut)</span>`}
+            </div>
+            <div>
+              <label class="text-xs text-gray-400 block mb-1">Dispatcher / Carrier Fee (%)</label>
+              <input type="number" name="dispatchPct" step="0.5" min="0" max="50" class="form-input"
+                value="${s.dispatchPct || 0}" placeholder="0">
+              <p class="text-xs text-gray-600 mt-1">
+                Percentage taken off your gross load revenue before it reaches you.
+                ${Number(s.dispatchPct) > 0
+                  ? `On a $1,000 load you keep <span class="text-white font-bold">$${(1000 * (1 - Number(s.dispatchPct)/100)).toFixed(0)}</span>.`
+                  : 'Enter 0 if you book all loads yourself.'}
+              </p>
+            </div>
+          </div>
+
+          <!-- Monthly Fixed Costs -->
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
+            <div class="flex justify-between items-center">
+              <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Monthly Fixed Costs</p>
+              ${monthlyFixed > 0
+                ? `<span class="text-xs text-red-400 font-bold">$${monthlyFixed.toLocaleString()}/mo</span>`
+                : ''}
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-400 block mb-1">ELD Subscription ($/month)</label>
+              <input type="number" name="eldMonthly" step="1" min="0" class="form-input"
+                value="${s.eldMonthly || ''}" placeholder="e.g. 45">
+              <p class="text-xs text-gray-600 mt-1">Samsara, KeepTruckin, Motive, etc. — fully tax-deductible.</p>
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-400 block mb-1">Truck Payment / Lease ($/month)</label>
+              <input type="number" name="truckPaymentMonthly" step="1" min="0" class="form-input"
+                value="${s.truckPaymentMonthly || ''}" placeholder="e.g. 2800">
+              <p class="text-xs text-gray-600 mt-1">Interest portion is deductible; principal is not.</p>
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-400 block mb-1">Insurance ($/month)</label>
+              <input type="number" name="insuranceMonthly" step="1" min="0" class="form-input"
+                value="${s.insuranceMonthly || ''}" placeholder="e.g. 800">
+              <p class="text-xs text-gray-600 mt-1">Cargo, liability, physical damage — all deductible.</p>
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-400 block mb-1">Other Fixed Monthly ($/month)</label>
+              <input type="number" name="otherFixedMonthly" step="1" min="0" class="form-input"
+                value="${s.otherFixedMonthly || ''}" placeholder="e.g. 200">
+              <p class="text-xs text-gray-600 mt-1">Permits, memberships, phone, etc.</p>
+            </div>
+
+            ${monthlyFixed > 0 ? `
+            <div class="bg-gray-800 rounded-xl p-3 space-y-1.5 text-xs">
+              <p class="text-gray-400 font-bold">Annual fixed cost estimate</p>
+              <div class="flex justify-between"><span class="text-gray-500">Per month</span><span class="font-bold">$${monthlyFixed.toLocaleString()}</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Per year (12 mo)</span><span class="font-bold text-red-400">$${(monthlyFixed * 12).toLocaleString()}</span></div>
+              <div class="flex justify-between border-t border-gray-700 pt-1.5 mt-1.5"><span class="text-gray-500">Break-even revenue needed</span><span class="font-bold text-orange-500">$${(monthlyFixed * 12).toLocaleString()}/yr</span></div>
+            </div>
+            ` : ''}
+          </div>
+
+          <!-- Detention -->
           <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
             <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Detention</p>
             <div>
@@ -77,8 +155,9 @@ export function renderSettings() {
             </div>
           </div>
 
+          <!-- Cost targets -->
           <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Cost Targets</p>
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Profitability Targets</p>
             <div>
               <label class="text-xs text-gray-400 block mb-1">Target Cost / Mile ($)</label>
               <input type="number" name="targetCPM" step="0.01" min="0" class="form-input"
@@ -104,7 +183,7 @@ export function renderSettings() {
         <!-- Sign out -->
         ${user ? `
         <button id="signout-btn"
-          class="w-full bg-gray-900 border border-gray-800 text-gray-400 font-bold py-3 rounded-xl text-sm hover:border-red-900 hover:text-red-400 transition">
+          class="w-full bg-gray-900 border border-gray-800 text-gray-400 font-bold py-3 rounded-xl text-sm">
           Sign Out
         </button>` : ''}
 
@@ -113,22 +192,25 @@ export function renderSettings() {
     </div>`;
 
   function mount(container) {
-    // ── Settings form ───────────────────────────────────────────────────────
     container.querySelector('#settings-form').addEventListener('submit', e => {
       e.preventDefault();
       const fd = new FormData(e.target);
       saveSettings({
-        truckId:       fd.get('truckId').trim() || 'My Truck',
-        detentionRate: parseFloat(fd.get('detentionRate')) || 60,
-        detentionGrace: parseFloat(fd.get('detentionGrace')) || 2,
-        targetCPM:     parseFloat(fd.get('targetCPM')) || 0.50,
+        truckId:              fd.get('truckId').trim() || 'My Truck',
+        detentionRate:        parseFloat(fd.get('detentionRate'))        || 60,
+        detentionGrace:       parseFloat(fd.get('detentionGrace'))       || 2,
+        targetCPM:            parseFloat(fd.get('targetCPM'))            || 0.50,
+        dispatchPct:          parseFloat(fd.get('dispatchPct'))          || 0,
+        eldMonthly:           parseFloat(fd.get('eldMonthly'))           || 0,
+        truckPaymentMonthly:  parseFloat(fd.get('truckPaymentMonthly'))  || 0,
+        insuranceMonthly:     parseFloat(fd.get('insuranceMonthly'))     || 0,
+        otherFixedMonthly:    parseFloat(fd.get('otherFixedMonthly'))    || 0,
       });
       const btn = e.target.querySelector('[type=submit]');
       btn.textContent = 'Saved ✓';
-      setTimeout(() => { btn.textContent = 'Save Settings'; }, 1500);
+      setTimeout(() => { btn.textContent = 'Save Settings'; window.refresh(); }, 1200);
     });
 
-    // ── Update profile name ─────────────────────────────────────────────────
     container.querySelector('#save-profile-btn')?.addEventListener('click', async () => {
       const nameInput = container.querySelector('#profile-name');
       const name = nameInput.value.trim();
@@ -137,18 +219,27 @@ export function renderSettings() {
       btn.textContent = 'Saving…'; btn.disabled = true;
       try {
         await user.updateProfile({ displayName: name });
-        if (user.uid) {
-          await saveProfile(user.uid, { name, email: user.email });
-        }
+        if (user.uid) await saveProfile(user.uid, { name, email: user.email });
         btn.textContent = 'Updated ✓';
-        setTimeout(() => { btn.textContent = 'Update Profile'; btn.disabled = false; }, 1500);
-      } catch (err) {
-        btn.textContent = 'Error — try again';
-        btn.disabled = false;
+        setTimeout(() => { btn.textContent = 'Update Name'; btn.disabled = false; }, 1500);
+      } catch {
+        btn.textContent = 'Error — try again'; btn.disabled = false;
       }
     });
 
-    // ── Export ──────────────────────────────────────────────────────────────
+    container.querySelector('#reset-pw-btn')?.addEventListener('click', async () => {
+      if (!user?.email) return;
+      const btn = container.querySelector('#reset-pw-btn');
+      btn.textContent = 'Sending…'; btn.disabled = true;
+      try {
+        await firebase.auth().sendPasswordResetEmail(user.email);
+        btn.textContent = 'Email sent ✓';
+        setTimeout(() => { btn.textContent = 'Send Password Reset Email'; btn.disabled = false; }, 3000);
+      } catch {
+        btn.textContent = 'Error — try again'; btn.disabled = false;
+      }
+    });
+
     container.querySelector('#export-btn').addEventListener('click', () => {
       const data = {};
       ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_settings'].forEach(k => {
@@ -157,14 +248,11 @@ export function renderSettings() {
       if (user) data._account = { uid: user.uid, email: user.email, name: user.displayName };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url;
-      a.download = `truck-log-export-${new Date().toISOString().slice(0,10)}.json`;
+      const a    = Object.assign(document.createElement('a'), { href: url, download: `rig-log-export-${new Date().toISOString().slice(0,10)}.json` });
       a.click();
       URL.revokeObjectURL(url);
     });
 
-    // ── Clear data ──────────────────────────────────────────────────────────
     container.querySelector('#clear-btn').addEventListener('click', () => {
       if (confirm('Delete ALL local data? This cannot be undone.')) {
         ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_active_detention'].forEach(k => {
@@ -174,12 +262,8 @@ export function renderSettings() {
       }
     });
 
-    // ── Sign out ────────────────────────────────────────────────────────────
     container.querySelector('#signout-btn')?.addEventListener('click', async () => {
-      if (confirm('Sign out of Truck-Log?')) {
-        await signOut();
-        // auth state change → app.js re-renders to sign-in screen
-      }
+      if (confirm('Sign out?')) await signOut();
     });
   }
 

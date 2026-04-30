@@ -7,14 +7,6 @@ function setError(container, msg) {
   if (el) { el.textContent = msg; el.classList.toggle('hidden', !msg); }
 }
 
-function setLoading(container, loading) {
-  const btn = container.querySelector('#auth-submit');
-  if (btn) {
-    btn.disabled = loading;
-    btn.textContent = loading ? 'Please wait…' : btn.dataset.label;
-  }
-}
-
 export function renderSignIn() {
   const html = `
     <div class="flex flex-col h-full bg-black text-white overflow-y-auto">
@@ -23,20 +15,21 @@ export function renderSignIn() {
         <!-- Logo -->
         <div class="text-center mb-8">
           <div class="text-5xl mb-3">🚛</div>
-          <h1 class="text-3xl font-black tracking-tight">Truck-Log</h1>
+          <h1 class="text-3xl font-black tracking-tight">Rig Log</h1>
           <p class="text-gray-500 text-sm mt-1">Owner-operator toolkit</p>
         </div>
 
-        <!-- Tabs -->
-        <div class="flex bg-gray-900 rounded-xl p-1 mb-6 border border-gray-800">
+        <!-- Tabs (hidden when forgot-pw is active) -->
+        <div id="auth-tabs" class="flex bg-gray-900 rounded-xl p-1 mb-6 border border-gray-800">
           <button id="tab-signin" class="flex-1 py-2 rounded-lg text-sm font-bold bg-orange-600 text-black transition">Sign In</button>
           <button id="tab-signup" class="flex-1 py-2 rounded-lg text-sm font-bold text-gray-400 transition">Create Account</button>
         </div>
 
-        <!-- Error banner -->
+        <!-- Error / success banner -->
         <div id="auth-error" class="hidden bg-red-900/40 border border-red-700 text-red-300 text-sm rounded-xl px-4 py-3 mb-4"></div>
+        <div id="auth-success" class="hidden bg-green-900/40 border border-green-700 text-green-300 text-sm rounded-xl px-4 py-3 mb-4"></div>
 
-        <!-- Sign-in form -->
+        <!-- ── Sign-in form ── -->
         <form id="signin-form" class="space-y-3">
           <input type="email" name="email" placeholder="Email address"
             class="form-input w-full" autocomplete="email" required>
@@ -45,12 +38,12 @@ export function renderSignIn() {
           <button type="submit" id="auth-submit" data-label="Sign In"
             class="btn-primary mt-1">Sign In</button>
           <button type="button" id="forgot-btn"
-            class="w-full text-center text-xs text-gray-500 hover:text-orange-500 py-1">
+            class="w-full text-center text-sm text-orange-600 font-bold py-2 hover:text-orange-400 transition">
             Forgot password?
           </button>
         </form>
 
-        <!-- Sign-up form (hidden) -->
+        <!-- ── Sign-up form ── -->
         <form id="signup-form" class="space-y-3 hidden">
           <input type="text" name="displayName" placeholder="Your name"
             class="form-input w-full" autocomplete="name" required>
@@ -66,14 +59,28 @@ export function renderSignIn() {
             class="btn-primary mt-1">Create Account</button>
         </form>
 
-        <!-- Divider -->
-        <div class="flex items-center gap-3 my-5">
+        <!-- ── Forgot Password panel ── -->
+        <div id="forgot-panel" class="hidden space-y-4">
+          <div class="text-center mb-2">
+            <p class="text-base font-black">Reset Your Password</p>
+            <p class="text-xs text-gray-500 mt-1">We'll send a reset link to your email.</p>
+          </div>
+          <input type="email" id="forgot-email" placeholder="Email address"
+            class="form-input w-full" autocomplete="email">
+          <button id="forgot-send-btn" class="btn-primary">Send Reset Email</button>
+          <button id="forgot-back-btn" class="w-full text-center text-sm text-gray-500 font-bold py-2">
+            ← Back to Sign In
+          </button>
+        </div>
+
+        <!-- Divider (hidden on forgot panel) -->
+        <div id="auth-divider" class="flex items-center gap-3 my-5">
           <div class="flex-1 border-t border-gray-800"></div>
           <span class="text-xs text-gray-600">or</span>
           <div class="flex-1 border-t border-gray-800"></div>
         </div>
 
-        <!-- Google sign-in -->
+        <!-- Google sign-in (hidden on forgot panel) -->
         <button id="google-btn"
           class="w-full flex items-center justify-center gap-3 bg-gray-900 border border-gray-700 rounded-xl py-3 text-sm font-bold hover:border-gray-500 transition">
           <svg width="18" height="18" viewBox="0 0 24 24">
@@ -92,17 +99,26 @@ export function renderSignIn() {
     </div>`;
 
   function mount(container) {
-    const tabSignIn  = container.querySelector('#tab-signin');
-    const tabSignUp  = container.querySelector('#tab-signup');
-    const formSignIn = container.querySelector('#signin-form');
-    const formSignUp = container.querySelector('#signup-form');
+    const tabSignIn   = container.querySelector('#tab-signin');
+    const tabSignUp   = container.querySelector('#tab-signup');
+    const authTabs    = container.querySelector('#auth-tabs');
+    const formSignIn  = container.querySelector('#signin-form');
+    const formSignUp  = container.querySelector('#signup-form');
+    const forgotPanel = container.querySelector('#forgot-panel');
+    const divider     = container.querySelector('#auth-divider');
+    const googleBtn   = container.querySelector('#google-btn');
 
     function showSignIn() {
       tabSignIn.className = 'flex-1 py-2 rounded-lg text-sm font-bold bg-orange-600 text-black transition';
       tabSignUp.className = 'flex-1 py-2 rounded-lg text-sm font-bold text-gray-400 transition';
       formSignIn.classList.remove('hidden');
       formSignUp.classList.add('hidden');
+      forgotPanel.classList.add('hidden');
+      authTabs.classList.remove('hidden');
+      divider.classList.remove('hidden');
+      googleBtn.classList.remove('hidden');
       setError(container, '');
+      setSuccess(container, '');
     }
 
     function showSignUp() {
@@ -110,79 +126,93 @@ export function renderSignIn() {
       tabSignIn.className = 'flex-1 py-2 rounded-lg text-sm font-bold text-gray-400 transition';
       formSignUp.classList.remove('hidden');
       formSignIn.classList.add('hidden');
+      forgotPanel.classList.add('hidden');
+      authTabs.classList.remove('hidden');
+      divider.classList.remove('hidden');
+      googleBtn.classList.remove('hidden');
       setError(container, '');
+      setSuccess(container, '');
+    }
+
+    function showForgot() {
+      formSignIn.classList.add('hidden');
+      formSignUp.classList.add('hidden');
+      forgotPanel.classList.remove('hidden');
+      authTabs.classList.add('hidden');
+      divider.classList.add('hidden');
+      googleBtn.classList.add('hidden');
+      setError(container, '');
+      setSuccess(container, '');
+      // Pre-fill email from sign-in form if they typed one
+      const emailVal = formSignIn.querySelector('[name=email]')?.value;
+      if (emailVal) container.querySelector('#forgot-email').value = emailVal;
     }
 
     tabSignIn.addEventListener('click', showSignIn);
     tabSignUp.addEventListener('click', showSignUp);
 
-    // ── Sign-in form ──────────────────────────────────────────────
+    // ── Sign-in ────────────────────────────────────────────────────────
     formSignIn.addEventListener('submit', async e => {
       e.preventDefault();
-      const fd = new FormData(e.target);
+      const fd  = new FormData(e.target);
       const btn = formSignIn.querySelector('#auth-submit');
       btn.disabled = true; btn.textContent = 'Signing in…';
       setError(container, '');
       try {
         await signInEmail(fd.get('email'), fd.get('password'));
-        // auth state change handled by initAuth → window.refresh()
       } catch (err) {
         setError(container, friendlyError(err.code));
         btn.disabled = false; btn.textContent = btn.dataset.label;
       }
     });
 
-    // ── Sign-up form ──────────────────────────────────────────────
+    // ── Sign-up ────────────────────────────────────────────────────────
     formSignUp.addEventListener('submit', async e => {
       e.preventDefault();
       const fd  = new FormData(e.target);
       const btn = formSignUp.querySelector('#auth-submit-signup');
-
       if (fd.get('password') !== fd.get('confirm')) {
-        setError(container, 'Passwords do not match.');
-        return;
+        setError(container, 'Passwords do not match.'); return;
       }
       btn.disabled = true; btn.textContent = 'Creating account…';
       setError(container, '');
       try {
-        await signUpEmail(
-          fd.get('email'),
-          fd.get('password'),
-          fd.get('displayName').trim(),
-          fd.get('truckId').trim()
-        );
-        // auth state change → refresh
+        await signUpEmail(fd.get('email'), fd.get('password'), fd.get('displayName').trim(), fd.get('truckId').trim());
       } catch (err) {
         setError(container, friendlyError(err.code));
         btn.disabled = false; btn.textContent = btn.dataset.label;
       }
     });
 
-    // ── Google ────────────────────────────────────────────────────
-    container.querySelector('#google-btn').addEventListener('click', async () => {
+    // ── Google ─────────────────────────────────────────────────────────
+    googleBtn.addEventListener('click', async () => {
       setError(container, '');
       try {
         await signInGoogle();
       } catch (err) {
-        if (err.code !== 'auth/popup-closed-by-user') {
-          setError(container, friendlyError(err.code));
-        }
+        if (err.code !== 'auth/popup-closed-by-user') setError(container, friendlyError(err.code));
       }
     });
 
-    // ── Forgot password ───────────────────────────────────────────
-    container.querySelector('#forgot-btn').addEventListener('click', async () => {
-      const email = formSignIn.querySelector('[name=email]').value.trim();
-      if (!email) {
-        setError(container, 'Enter your email address first.');
-        return;
-      }
+    // ── Forgot password – show panel ───────────────────────────────────
+    container.querySelector('#forgot-btn').addEventListener('click', showForgot);
+    container.querySelector('#forgot-back-btn').addEventListener('click', showSignIn);
+
+    container.querySelector('#forgot-send-btn').addEventListener('click', async () => {
+      const email = container.querySelector('#forgot-email').value.trim();
+      if (!email) { setError(container, 'Enter your email address.'); return; }
+
+      const btn = container.querySelector('#forgot-send-btn');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      setError(container, '');
+
       try {
         await sendPasswordReset(email);
-        setError(container, '');
-        alert(`Password reset email sent to ${email}`);
+        btn.textContent = 'Email Sent ✓';
+        setSuccess(container, `Reset email sent to ${email}. Check your inbox (and spam folder).`);
       } catch (err) {
         setError(container, friendlyError(err.code));
+        btn.disabled = false; btn.textContent = 'Send Reset Email';
       }
     });
   }
@@ -190,16 +220,21 @@ export function renderSignIn() {
   return { html, mount };
 }
 
+function setSuccess(container, msg) {
+  const el = container.querySelector('#auth-success');
+  if (el) { el.textContent = msg; el.classList.toggle('hidden', !msg); }
+}
+
 function friendlyError(code) {
   const map = {
-    'auth/user-not-found':       'No account found with that email.',
-    'auth/wrong-password':       'Incorrect password.',
-    'auth/email-already-in-use': 'An account with that email already exists.',
-    'auth/invalid-email':        'Invalid email address.',
-    'auth/weak-password':        'Password must be at least 6 characters.',
-    'auth/too-many-requests':    'Too many attempts. Try again later.',
-    'auth/network-request-failed': 'Network error. Check your connection.',
-    'auth/invalid-credential':   'Invalid email or password.',
+    'auth/user-not-found':          'No account found with that email.',
+    'auth/wrong-password':          'Incorrect password.',
+    'auth/email-already-in-use':    'An account with that email already exists.',
+    'auth/invalid-email':           'Invalid email address.',
+    'auth/weak-password':           'Password must be at least 6 characters.',
+    'auth/too-many-requests':       'Too many attempts. Try again later.',
+    'auth/network-request-failed':  'Network error. Check your connection.',
+    'auth/invalid-credential':      'Invalid email or password.',
   };
   return map[code] || 'Something went wrong. Please try again.';
 }
