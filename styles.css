@@ -2360,19 +2360,53 @@ body.theme-galaxy .nav-item.active::before { background: var(--accent); box-shad
 }
 
 /* DJ waveform bars — heights driven by JS/AnalyserNode in real-time */
+/* ── DJ Visualizer Scene ──────────────────────────────────── */
+.fp-dj-scene {
+  width: 100%; margin-bottom: 16px; padding: 0 8px;
+  opacity: 0; transition: opacity 0.4s;
+  position: relative;
+  will-change: filter;
+}
+.fp-dj-scene.active { opacity: 1; }
+
+/* Peak-hold dots — sit inside the wave, one per bar slot */
+.fp-dj-peaks {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 64px; width: 100%;
+  position: absolute; bottom: 0; left: 0; right: 0;
+  pointer-events: none; z-index: 2;
+}
+.fp-dj-peak {
+  flex: 1; height: 2px; border-radius: 2px;
+  will-change: transform, background, box-shadow;
+  transform: translateY(0);
+  transition: transform 0.05s linear;
+}
+
+/* Main bars — align to bottom */
 .fp-dj-wave {
   display: flex; align-items: flex-end; gap: 3px;
-  height: 36px; width: 100%; margin-bottom: 16px;
-  padding: 0 8px; opacity: 0;
-  transition: opacity 0.4s;
+  height: 64px; width: 100%;
+  position: relative; z-index: 1;
 }
-.fp-dj-wave.active { opacity: 1; }
 .fp-dj-bar {
   flex: 1; border-radius: 3px 3px 1px 1px;
-  height: 4px; opacity: 0.4;
-  background: linear-gradient(to top, var(--accent-dk), var(--accent));
-  box-shadow: 0 0 6px var(--accent-glow);
-  will-change: height, opacity;
+  height: 3px; min-height: 3px;
+  will-change: height, background, box-shadow;
+}
+
+/* Mirror reflection below — flipped, faded */
+.fp-dj-reflect {
+  display: flex; align-items: flex-start; gap: 3px;
+  height: 24px; width: 100%;
+  transform: scaleY(-1);
+  opacity: 0.22;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6) 100%);
+  mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6) 100%);
+}
+.fp-dj-reflect .fp-dj-bar {
+  border-radius: 1px 1px 3px 3px;
+  will-change: height, background, box-shadow;
 }
 
 /* Beat pulse on album art ring — JS adds/removes class on each beat */

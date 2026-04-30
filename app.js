@@ -532,9 +532,9 @@ function updatePlayIcons() {
 function updateHeaderPlayState() {
   document.getElementById('appHeader').classList.toggle('music-playing', S.playing);
   const vinyl  = document.getElementById('fpVinyl');
-  const djWave = document.getElementById('fpDjWave');
-  if (vinyl)  vinyl.classList.toggle('spinning', S.playing);
-  if (djWave) djWave.classList.toggle('active', S.playing);
+  const djScene = document.getElementById('fpDjScene');
+  if (vinyl)   vinyl.classList.toggle('spinning', S.playing);
+  if (djScene) djScene.classList.toggle('active', S.playing);
 }
 
 function updatePlayerUI() {
@@ -1012,7 +1012,8 @@ document.getElementById('listViewBtn').addEventListener('click', () => {
 document.getElementById('miniPlayerExpand').addEventListener('click', e => { if (!e.target.closest('.mini-btn')) openPanel('fullPlayer'); });
 document.getElementById('miniPlay').addEventListener('click', e => {
   e.stopPropagation();
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  initAudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
   togglePlay();
 });
 document.getElementById('miniPrev').addEventListener('click', e => { e.stopPropagation(); prevTrack(); });
@@ -1021,7 +1022,8 @@ document.getElementById('miniNext').addEventListener('click', e => { e.stopPropa
 // ── Full Player ────────────────────────────────────────────────
 document.getElementById('fpClose').addEventListener('click', () => closePanel('fullPlayer'));
 document.getElementById('playBtn').addEventListener('click', () => {
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  initAudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
   togglePlay();
 });
 document.getElementById('prevBtn').addEventListener('click', prevTrack);
@@ -1966,39 +1968,86 @@ function stopVisualizer() {
 /* ── Audio-reactive DJ bars ──────────────────────────────────── */
 // Frequency bin indices picked to spread evenly across the spectrum (16 bands)
 const DJ_BINS = [2,3,5,7,9,11,14,18,22,27,33,40,48,56,60,63];
+// Hue per bar: bass=cyan(190) → mid=lime(110) → treble=red(5)
+const DJ_HUES = [192,186,178,168,158,146,132,118,103,86,68,50,34,22,12,5];
+const MAX_H = 62;
 let djBarRaf = null;
-const djSmooth = new Float32Array(16).fill(3); // smoothed heights
+const djSmooth = new Float32Array(16).fill(3);
+const djPeaks  = new Float32Array(16).fill(3);
+const djPeakHold = new Int16Array(16).fill(0);
 
 function startDjBars() {
   if (!analyserNode) return;
-  const bars = document.querySelectorAll('.fp-dj-bar');
+  const scene   = document.getElementById('fpDjScene');
+  const bars    = document.querySelectorAll('#fpDjWave .fp-dj-bar');
+  const mirrors = document.querySelectorAll('#fpDjReflect .fp-dj-bar');
+  const peaks   = document.querySelectorAll('#fpDjPeaks .fp-dj-peak');
   if (!bars.length) return;
   const buf = new Uint8Array(analyserNode.frequencyBinCount);
 
   function frame() {
     djBarRaf = requestAnimationFrame(frame);
     analyserNode.getByteFrequencyData(buf);
+
+    let bassEnergy = 0;
     bars.forEach((bar, i) => {
       const bin = Math.min(DJ_BINS[i] || i * 4, buf.length - 1);
-      const raw = (buf[bin] / 255) * 34;
-      // Fast attack, slow decay for that punchy DJ look
+      const raw = (buf[bin] / 255) * MAX_H;
       djSmooth[i] = raw > djSmooth[i]
-        ? raw * 0.65 + djSmooth[i] * 0.35
-        : raw * 0.08 + djSmooth[i] * 0.92;
+        ? raw * 0.7 + djSmooth[i] * 0.3   // fast attack
+        : raw * 0.07 + djSmooth[i] * 0.93; // slow decay
       const h = Math.max(3, djSmooth[i]);
-      bar.style.height = h + 'px';
-      bar.style.opacity = String(0.35 + (h / 34) * 0.65);
+      if (i < 4) bassEnergy += h / MAX_H;
+
+      // Peak tracking
+      if (h >= djPeaks[i]) { djPeaks[i] = h; djPeakHold[i] = 48; }
+      else if (djPeakHold[i] > 0) { djPeakHold[i]--; }
+      else { djPeaks[i] = Math.max(3, djPeaks[i] - 0.6); }
+
+      const hue = DJ_HUES[i];
+      const sat = 95 + (h / MAX_H) * 5;
+      const lit = 48 + (h / MAX_H) * 18;
+      const glow = (h / MAX_H) * 22;
+      const glowA = (h / MAX_H) * 0.75;
+      const css = `hsl(${hue},${sat}%,${lit}%)`;
+      const shadow = `0 0 ${glow}px hsla(${hue},100%,60%,${glowA}), 0 0 ${glow * 2}px hsla(${hue},100%,50%,${glowA * 0.35})`;
+
+      bar.style.height    = h + 'px';
+      bar.style.background = `linear-gradient(to top, hsl(${hue},100%,${lit - 12}%), ${css})`;
+      bar.style.boxShadow = shadow;
+
+      if (mirrors[i]) {
+        mirrors[i].style.height    = h + 'px';
+        mirrors[i].style.background = bar.style.background;
+        mirrors[i].style.boxShadow = `0 0 ${glow * 0.6}px hsla(${hue},100%,60%,${glowA * 0.4})`;
+      }
+      if (peaks[i]) {
+        peaks[i].style.transform  = `translateY(-${djPeaks[i]}px)`;
+        peaks[i].style.background = `hsl(${hue},100%,78%)`;
+        peaks[i].style.boxShadow  = `0 0 6px hsl(${hue},100%,70%)`;
+      }
     });
+
+    // Outer scene glow driven by bass energy
+    const eg = Math.min(1, bassEnergy / 3);
+    if (scene) scene.style.filter = eg > 0.05
+      ? `drop-shadow(0 0 ${eg * 18}px hsla(190,100%,55%,${eg * 0.7}))`
+      : 'none';
   }
   frame();
 }
 
 function stopDjBars() {
   if (djBarRaf) { cancelAnimationFrame(djBarRaf); djBarRaf = null; }
+  const scene = document.getElementById('fpDjScene');
+  if (scene) scene.style.filter = 'none';
   document.querySelectorAll('.fp-dj-bar').forEach(bar => {
-    bar.style.height = '4px';
-    bar.style.opacity = '0.4';
+    bar.style.height = '3px';
+    bar.style.background = '';
+    bar.style.boxShadow = '';
   });
+  document.querySelectorAll('.fp-dj-peak').forEach(p => { p.style.bottom = '3px'; });
+  djSmooth.fill(3); djPeaks.fill(3); djPeakHold.fill(0);
 }
 
 /* ── Beat detection for visual pulse ────────────────────────── */
