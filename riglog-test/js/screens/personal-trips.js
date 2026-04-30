@@ -1,8 +1,22 @@
 import { getPTrips, addPTrip, deletePTrip, updatePTrip, fmtDate, today } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+import { requestLocation, locationDeniedMsg } from '../permissions.js';
 
 let _filter = 'month';
 const PURPOSES = ['Commute','Errand','Work','Medical','Leisure','Road Trip','Other'];
+
+const LOC_ICON = `<svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.1 4.9C15.2 1 8.8 1 4.9 4.9S1 15.2 4.9 19.1l7.1 7.1 7.1-7.1c3.9-3.9 3.9-10.3 0-14.2z"/></svg>`;
+
+async function getCityFromCoords(lat, lon) {
+  try {
+    const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`);
+    const data = await res.json();
+    const a    = data.address || {};
+    const city = a.city || a.town || a.village || a.county || '';
+    const st   = a.state_code || (a.state ? a.state.slice(0, 2).toUpperCase() : '');
+    return st ? `${city}, ${st}` : city;
+  } catch { return null; }
+}
 
 function tripForm(existing = null) {
   const t = existing || {};
@@ -15,8 +29,13 @@ function tripForm(existing = null) {
       <form id="p-trip-form" class="space-y-4">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="text-xs text-gray-400 block mb-1">From</label>
-            <input type="text" name="origin" class="form-input" placeholder="Home" value="${t.origin || ''}">
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs text-gray-400">From</label>
+              <button type="button" id="p-use-location-btn" class="loc-btn">
+                ${LOC_ICON} My Location
+              </button>
+            </div>
+            <input type="text" id="p-trip-origin" name="origin" class="form-input" placeholder="Home" value="${t.origin || ''}">
           </div>
           <div>
             <label class="text-xs text-gray-400 block mb-1">To</label>
@@ -113,8 +132,32 @@ export function renderPersonalTrips() {
     container.querySelectorAll('.filter-pill').forEach(btn => {
       btn.addEventListener('click', () => { _filter = btn.dataset.filter; window.refresh(); });
     });
+    function wireLocBtn(el) {
+      const btn    = el.querySelector('#p-use-location-btn');
+      const origin = el.querySelector('#p-trip-origin');
+      if (!btn) return;
+      btn.addEventListener('click', async () => {
+        btn.innerHTML = `${LOC_ICON} Locating…`;
+        btn.disabled  = true;
+        const result  = await requestLocation();
+        if (result.error) {
+          btn.innerHTML = `${LOC_ICON} My Location`;
+          btn.disabled  = false;
+          toast(result.error === 'denied' ? locationDeniedMsg()
+            : result.error === 'unsupported' ? 'Location not supported on this device'
+            : 'Could not get location — try again', 'error');
+          return;
+        }
+        const city   = await getCityFromCoords(result.coords.latitude, result.coords.longitude);
+        origin.value = city || `${result.coords.latitude.toFixed(4)}, ${result.coords.longitude.toFixed(4)}`;
+        btn.innerHTML = `${LOC_ICON} ✓ Located`;
+        btn.disabled  = false;
+      });
+    }
+
     function openForm(existing=null) {
       openModal(tripForm(existing), el => {
+        wireLocBtn(el);
         el.querySelector('#p-trip-form').addEventListener('submit', ev => {
           ev.preventDefault();
           const fd = new FormData(ev.target);

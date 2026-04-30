@@ -1,33 +1,18 @@
 import { getTrips, addTrip, deleteTrip, updateTrip, getSettings, fmtMoney, fmtDate, today } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+import { requestLocation, locationDeniedMsg } from '../permissions.js';
 
 let _filter = 'month';
 
 // ── Geolocation helpers ───────────────────────────────────────────────────────
 
 async function getCityFromCoords(lat, lon) {
-  const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+  const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`);
   const data = await res.json();
   const a    = data.address || {};
   const city = a.city || a.town || a.village || a.county || '';
-  const state = a.state_code || (a.state ? a.state.substring(0, 2).toUpperCase() : '');
-  return state ? `${city}, ${state}` : city;
-}
-
-function getCurrentCity() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) { reject(new Error('Geolocation not supported')); return; }
-    navigator.geolocation.getCurrentPosition(
-      async pos => {
-        try {
-          const city = await getCityFromCoords(pos.coords.latitude, pos.coords.longitude);
-          resolve(city || 'Unknown location');
-        } catch { reject(new Error('Could not get city name')); }
-      },
-      err => reject(err),
-      { timeout: 10000, enableHighAccuracy: false }
-    );
-  });
+  const st   = a.state_code || (a.state ? a.state.slice(0, 2).toUpperCase() : '');
+  return st ? `${city}, ${st}` : city;
 }
 
 // ── Form builder ──────────────────────────────────────────────────────────────
@@ -282,22 +267,43 @@ export function renderTrips() {
     return result;
   }
 
+  const LOC_ICON = `<svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.1 4.9C15.2 1 8.8 1 4.9 4.9S1 15.2 4.9 19.1l7.1 7.1 7.1-7.1c3.9-3.9 3.9-10.3 0-14.2z"/></svg>`;
+
   function wireLocationBtn(el) {
     const btn    = el.querySelector('#use-location-btn');
     const origin = el.querySelector('#trip-origin');
     if (!btn) return;
 
     btn.addEventListener('click', async () => {
-      btn.textContent = 'Locating…';
-      btn.disabled = true;
+      btn.innerHTML = `${LOC_ICON} Locating…`;
+      btn.disabled  = true;
+
+      const result = await requestLocation();
+
+      if (result.error === 'denied' || result.error === 'unsupported') {
+        btn.innerHTML = `${LOC_ICON} My Location`;
+        btn.disabled  = false;
+        toast(result.error === 'unsupported'
+          ? 'Location not supported on this device'
+          : locationDeniedMsg(), 'error');
+        return;
+      }
+      if (result.error) {
+        btn.innerHTML = `${LOC_ICON} My Location`;
+        btn.disabled  = false;
+        toast('Could not get location — check signal and try again', 'error');
+        return;
+      }
+
       try {
-        const city = await getCurrentCity();
-        origin.value = city;
-        btn.textContent = '✓ Located';
-      } catch (err) {
-        btn.textContent = 'My Location';
-        btn.disabled = false;
-        toast(err.code === 1 ? 'Location permission denied' : 'Could not get location — enter manually', 'error');
+        const city  = await getCityFromCoords(result.coords.latitude, result.coords.longitude);
+        origin.value = city || `${result.coords.latitude.toFixed(4)}, ${result.coords.longitude.toFixed(4)}`;
+        btn.innerHTML = `${LOC_ICON} ✓ Located`;
+        btn.disabled  = false;
+      } catch {
+        origin.value = `${result.coords.latitude.toFixed(4)}, ${result.coords.longitude.toFixed(4)}`;
+        btn.innerHTML = `${LOC_ICON} ✓ Located`;
+        btn.disabled  = false;
       }
     });
   }
