@@ -1108,14 +1108,14 @@ document.getElementById('fpRingContainer').addEventListener('click', e => {
 });
 
 // ── Equalizer ─────────────────────────────────────────────────
-document.getElementById('eqBtn').addEventListener('click', async () => {
+document.getElementById('eqBtn').addEventListener('click', () => {
   try {
     initAudioCtx();
     if (pendingEqRestore) {
       pendingEqRestore.forEach((v, i) => { if (eqBands[i]) eqBands[i].gain.value = v; });
       pendingEqRestore = null;
     }
-    if (audioCtx.state !== 'running') await audioCtx.resume();
+    audioCtx.resume().catch(() => {});
   } catch(e) { console.warn('[AudioCtx]', e); }
   openPanel('eqPanel');
 });
@@ -2078,6 +2078,11 @@ audio.addEventListener('pause', () => {
   stopDjBars();
   stopBeatDetection();
 });
+
+// iOS safety net: resume AudioContext on any touch if the OS suspended it
+document.addEventListener('touchstart', () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+}, { passive: true });
 
 /* ════════════════════════════════════════════════════════════════
    FEATURE 3 — Swipe Gestures
