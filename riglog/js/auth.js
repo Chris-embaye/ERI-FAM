@@ -1,6 +1,8 @@
 // Firebase auth wrapper for Truck-Log
 // Uses the compat SDK loaded globally in index.html
 
+import { setCurrentUID, syncDown } from './store.js';
+
 let _user = null;
 let _ready = false;
 const _listeners = [];
@@ -25,13 +27,18 @@ export function initAuth() {
     return;
   }
 
-  firebase.auth().onAuthStateChanged(user => {
+  firebase.auth().onAuthStateChanged(async user => {
     _user = user;
+    if (user) {
+      setCurrentUID(user.uid);
+      await syncDown(user.uid);   // pulls cloud data on new device, pushes local on same device
+    } else {
+      setCurrentUID(null);
+    }
     if (!_ready) {
       _ready = true;
       _listeners.forEach(fn => fn(user));
     } else {
-      // Subsequent changes (sign out, etc.)
       window.refresh?.();
     }
   });

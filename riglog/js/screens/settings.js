@@ -172,6 +172,9 @@ export function renderSettings() {
         <!-- Data & export -->
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
           <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Data</p>
+          <button id="force-update-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
+            Force Update App
+          </button>
           <button id="export-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
             Export All Data (JSON)
           </button>
@@ -238,6 +241,20 @@ export function renderSettings() {
       } catch {
         btn.textContent = 'Error — try again'; btn.disabled = false;
       }
+    });
+
+    container.querySelector('#force-update-btn').addEventListener('click', async () => {
+      const btn = container.querySelector('#force-update-btn');
+      btn.textContent = 'Clearing cache…'; btn.disabled = true;
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      } catch {}
+      window.location.reload();
     });
 
     container.querySelector('#export-btn').addEventListener('click', () => {
