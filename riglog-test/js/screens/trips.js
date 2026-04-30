@@ -32,8 +32,36 @@ function getCurrentCity() {
 
 // ── Form builder ──────────────────────────────────────────────────────────────
 
+function stateMilesHtml(existingRows = []) {
+  const rows = existingRows.length > 0 ? existingRows : [];
+  return `
+    <div id="state-miles-rows" class="space-y-2">
+      ${rows.map((r, i) => stateRow(r.state, r.miles, i)).join('')}
+    </div>
+    <button type="button" id="add-state-row" class="loc-btn mt-2 w-full justify-center">
+      + Add State
+    </button>`;
+}
+
+let _rowCount = 0;
+function stateRow(state = '', miles = '', idx = null) {
+  const id = idx ?? _rowCount++;
+  return `
+    <div class="state-miles-row flex gap-2 items-center" data-row="${id}">
+      <input type="text" class="form-input state-input" placeholder="OH" maxlength="3"
+        value="${state}" style="width:64px;text-align:center;font-weight:700;text-transform:uppercase">
+      <input type="number" class="form-input miles-input flex-1" placeholder="Miles" min="0" step="1"
+        value="${miles}">
+      <button type="button" class="del-state-row text-gray-500 p-1.5" style="flex-shrink:0">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+}
+
 function tripForm(existing = null) {
+  _rowCount = 0;
   const t = existing || {};
+  const hasStateMiles = t.stateMiles?.length > 0;
   return `
     <div class="p-5">
       <div class="flex justify-between items-center mb-5">
@@ -94,6 +122,26 @@ function tripForm(existing = null) {
           <textarea name="notes" rows="2" placeholder="Optional notes..."
             class="form-input resize-none">${t.notes || ''}</textarea>
         </div>
+
+        <!-- IFTA State Miles (collapsible) -->
+        <div>
+          <button type="button" id="ifta-toggle"
+            style="display:flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:700;color:${hasStateMiles ? '#0891b2' : 'rgba(100,116,139,0.7)'};width:100%;padding:8px 0">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            State Miles (IFTA) ${hasStateMiles ? `· ${t.stateMiles.length} states` : '· optional'}
+            <svg id="ifta-chevron" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+              style="margin-left:auto;transition:transform 0.2s;transform:${hasStateMiles ? 'rotate(90deg)' : 'rotate(0deg)'}">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+          <div id="ifta-body" style="display:${hasStateMiles ? 'block' : 'none'};padding:4px 0 8px">
+            <p style="font-size:0.7rem;color:rgba(100,116,139,0.7);margin-bottom:8px;line-height:1.4">
+              Enter miles driven in each state/province. Used to auto-generate your quarterly IFTA report.
+            </p>
+            ${stateMilesHtml(t.stateMiles || [])}
+          </div>
+        </div>
+
         <button type="submit" class="btn-primary">${existing ? 'Save Changes' : 'Save Trip'}</button>
         <button type="button" onclick="closeModal()" class="btn-ghost">Cancel</button>
       </form>
@@ -187,6 +235,53 @@ export function renderTrips() {
       </div>
     </div>`;
 
+  function wireStateMiles(el) {
+    const toggle   = el.querySelector('#ifta-toggle');
+    const body     = el.querySelector('#ifta-body');
+    const chevron  = el.querySelector('#ifta-chevron');
+    const addBtn   = el.querySelector('#add-state-row');
+
+    toggle.addEventListener('click', () => {
+      const open = body.style.display === 'block';
+      body.style.display  = open ? 'none' : 'block';
+      chevron.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+      if (!open && addBtn && el.querySelector('#state-miles-rows').children.length === 0) addBtn.click();
+    });
+
+    addBtn.addEventListener('click', () => {
+      const rows = el.querySelector('#state-miles-rows');
+      rows.insertAdjacentHTML('beforeend', stateRow());
+      wireDelButtons(el);
+    });
+
+    wireDelButtons(el);
+
+    // Auto-uppercase state input
+    el.addEventListener('input', ev => {
+      if (ev.target.classList.contains('state-input')) {
+        const cur = ev.target.selectionStart;
+        ev.target.value = ev.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+        ev.target.setSelectionRange(cur, cur);
+      }
+    });
+  }
+
+  function wireDelButtons(el) {
+    el.querySelectorAll('.del-state-row').forEach(btn => {
+      btn.onclick = () => btn.closest('.state-miles-row').remove();
+    });
+  }
+
+  function collectStateMiles(el) {
+    const result = [];
+    el.querySelectorAll('.state-miles-row').forEach(row => {
+      const state = row.querySelector('.state-input').value.trim().toUpperCase();
+      const miles = parseFloat(row.querySelector('.miles-input').value);
+      if (state && miles > 0) result.push({ state, miles });
+    });
+    return result;
+  }
+
   function wireLocationBtn(el) {
     const btn    = el.querySelector('#use-location-btn');
     const origin = el.querySelector('#trip-origin');
@@ -218,6 +313,7 @@ export function renderTrips() {
     container.querySelector('#add-trip-btn').addEventListener('click', () => {
       openModal(tripForm(), el => {
         wireLocationBtn(el);
+        wireStateMiles(el);
         el.querySelector('#trip-form').addEventListener('submit', ev => {
           ev.preventDefault();
           const fd = new FormData(ev.target);
@@ -230,6 +326,7 @@ export function renderTrips() {
             date:          fd.get('date'),
             loadNum:       fd.get('loadNum').trim(),
             notes:         fd.get('notes').trim(),
+            stateMiles:    collectStateMiles(el),
           });
           closeModal();
           toast('Trip saved ✓');
@@ -244,6 +341,7 @@ export function renderTrips() {
         if (!existing) return;
         openModal(tripForm(existing), el => {
           wireLocationBtn(el);
+          wireStateMiles(el);
           el.querySelector('#trip-form').addEventListener('submit', ev => {
             ev.preventDefault();
             const fd = new FormData(ev.target);
@@ -256,6 +354,7 @@ export function renderTrips() {
               date:          fd.get('date'),
               loadNum:       fd.get('loadNum').trim(),
               notes:         fd.get('notes').trim(),
+              stateMiles:    collectStateMiles(el),
             });
             closeModal();
             toast('Trip updated ✓');

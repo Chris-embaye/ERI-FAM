@@ -5,24 +5,28 @@ import { renderExpenses }  from './screens/expenses.js';
 import { renderTrips }     from './screens/trips.js';
 import { renderFuel }      from './screens/fuel.js';
 import { renderMore }      from './screens/more.js';
-import { renderDVIR }      from './screens/dvir.js';
-import { renderDetention } from './screens/detention.js';
-import { renderSettings }  from './screens/settings.js';
-import { renderTax }       from './screens/tax.js';
+import { renderDVIR }        from './screens/dvir.js';
+import { renderDetention }   from './screens/detention.js';
+import { renderSettings }    from './screens/settings.js';
+import { renderTax }         from './screens/tax.js';
+import { renderMaintenance } from './screens/maintenance.js';
+import { renderIFTA }        from './screens/ifta.js';
 
 const SCREENS = {
-  dashboard: renderDashboard,
-  expenses:  renderExpenses,
-  trips:     renderTrips,
-  fuel:      renderFuel,
-  more:      renderMore,
-  dvir:      renderDVIR,
-  detention: renderDetention,
-  settings:  renderSettings,
-  tax:       renderTax,
+  dashboard:   renderDashboard,
+  expenses:    renderExpenses,
+  trips:       renderTrips,
+  fuel:        renderFuel,
+  more:        renderMore,
+  dvir:        renderDVIR,
+  detention:   renderDetention,
+  settings:    renderSettings,
+  tax:         renderTax,
+  maintenance: renderMaintenance,
+  ifta:        renderIFTA,
 };
 
-const MORE_SCREENS = new Set(['dvir', 'detention', 'settings', 'tax']);
+const MORE_SCREENS = new Set(['dvir', 'detention', 'settings', 'tax', 'maintenance', 'ifta']);
 
 const bottomNav = document.getElementById('bottom-nav');
 let screenCleanup = null;

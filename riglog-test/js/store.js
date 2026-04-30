@@ -64,6 +64,7 @@ const KEYS = {
   dvirs: 'rl_test_dvirs',
   detention: 'rl_test_detention',
   fuel: 'rl_test_fuel',
+  maintenance: 'rl_test_maintenance',
   settings: 'rl_test_settings',
   activeDetention: 'rl_test_active_detention',
 };
@@ -97,6 +98,8 @@ const DEFAULTS = {
     fuelType: 'diesel',
     // Tax
     perDiemRate: 80,
+    // Truck odometer (for maintenance due calculations)
+    currentOdometer: 0,
     // App
     compactMode: false,
     darkestMode: false,
@@ -245,6 +248,25 @@ export function deleteFuelLog(id) {
 
 export function updateFuelLog(id, data) {
   save('fuel', getFuelLogs().map(l => l.id === id ? { ...l, ...data } : l));
+}
+
+// ── Maintenance logs ──────────────────────────────────────────────────────────
+export const getMaintenanceLogs = () => load('maintenance');
+
+export function addMaintenanceLog(data) {
+  const list = getMaintenanceLogs();
+  const item = { id: genId(), date: today(), ...data };
+  list.unshift(item);
+  save('maintenance', list);
+  return item;
+}
+
+export function deleteMaintenanceLog(id) {
+  save('maintenance', getMaintenanceLogs().filter(m => m.id !== id));
+}
+
+export function updateMaintenanceLog(id, data) {
+  save('maintenance', getMaintenanceLogs().map(m => m.id === id ? { ...m, ...data } : m));
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────

@@ -135,6 +135,7 @@ export function renderSettings() {
               ${field('Truck Model', null, inp('truckModel', 'text', s.truckModel, 'placeholder="Cascadia"'))}
               ${field('Year', null, inp('truckYear', 'number', s.truckYear, 'placeholder="2022" min="1990" max="2030"'))}
               ${field('License Plate', null, inp('truckPlate', 'text', s.truckPlate, 'placeholder="ABC 1234"'))}
+              ${field('Current Odometer (mi)', null, inp('currentOdometer', 'number', s.currentOdometer || '', 'placeholder="487500" min="0" step="1"'))}
             </div>
             ${field('Home Base', 'Days away from home base qualify for per diem deductions.',
               inp('homeBase', 'text', s.homeBase, 'placeholder="Atlanta, GA"'))}
@@ -297,6 +298,7 @@ export function renderSettings() {
         targetMPG:           parseFloat(fd.get('targetMPG'))           || 6.5,
         fuelType:            fd.get('fuelType') || 'diesel',
         perDiemRate:         parseFloat(fd.get('perDiemRate'))         || 80,
+        currentOdometer:     parseFloat(fd.get('currentOdometer')) || 0,
         compactMode:         fd.get('compactMode') === 'on',
         darkestMode:         fd.get('darkestMode') === 'on',
       });
@@ -349,7 +351,7 @@ export function renderSettings() {
         'Removes all rl_test_* entries from localStorage. Cloud data is untouched.',
         'Clear Test Data',
         () => {
-          ['rl_test_expenses','rl_test_trips','rl_test_dvirs','rl_test_detention','rl_test_fuel','rl_test_settings','rl_test_active_detention']
+          ['rl_test_expenses','rl_test_trips','rl_test_dvirs','rl_test_detention','rl_test_fuel','rl_test_maintenance','rl_test_settings','rl_test_active_detention']
             .forEach(k => localStorage.removeItem(k));
           toast('Test data cleared ✓');
           window.navigate('dashboard');
@@ -360,10 +362,10 @@ export function renderSettings() {
     container.querySelector('#clear-btn').addEventListener('click', () => {
       confirmSheet(
         'Clear ALL data?',
-        'Deletes all test trips, expenses, fuel, DVIRs. Cannot be undone.',
+        'Deletes all test trips, expenses, fuel, DVIRs, maintenance. Cannot be undone.',
         'Clear Everything',
         async () => {
-          ['rl_test_expenses','rl_test_trips','rl_test_dvirs','rl_test_detention','rl_test_fuel','rl_test_settings','rl_test_active_detention']
+          ['rl_test_expenses','rl_test_trips','rl_test_dvirs','rl_test_detention','rl_test_fuel','rl_test_maintenance','rl_test_settings','rl_test_active_detention']
             .forEach(k => localStorage.removeItem(k));
           await clearCloudData();
           window.navigate('dashboard');
