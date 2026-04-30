@@ -66,20 +66,9 @@ const EQ_PRESETS = {
 
 function initAudioCtx() {
   if (audioCtx) return;
-  // After setup, kick off reactive bars if audio is already playing
-  Promise.resolve().then(() => {
-    if (S.playing && analyserNode) { startDjBars(); startBeatDetection(); }
-  });
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   gainNode = audioCtx.createGain();
   gainNode.gain.value = 1;
-  // Dynamics compressor — keeps loud parts from clipping, makes quieter tracks fuller
-  const compressor = audioCtx.createDynamicsCompressor();
-  compressor.threshold.value = -24;
-  compressor.knee.value = 30;
-  compressor.ratio.value = 8;
-  compressor.attack.value = 0.003;
-  compressor.release.value = 0.25;
   let prev = audioCtx.createMediaElementSource(audio);
   EQ_FREQS.forEach(freq => {
     const f = audioCtx.createBiquadFilter();
@@ -92,11 +81,10 @@ function initAudioCtx() {
     eqBands.push(f);
   });
   analyserNode = audioCtx.createAnalyser();
-  analyserNode.fftSize = 256; // higher resolution for reactive bars
+  analyserNode.fftSize = 256;
   analyserNode.smoothingTimeConstant = 0.8;
   prev.connect(gainNode);
-  gainNode.connect(compressor);
-  compressor.connect(analyserNode);
+  gainNode.connect(analyserNode);
   analyserNode.connect(audioCtx.destination);
 }
 
@@ -1024,8 +1012,7 @@ document.getElementById('listViewBtn').addEventListener('click', () => {
 document.getElementById('miniPlayerExpand').addEventListener('click', e => { if (!e.target.closest('.mini-btn')) openPanel('fullPlayer'); });
 document.getElementById('miniPlay').addEventListener('click', e => {
   e.stopPropagation();
-  if (!audioCtx) { try { initAudioCtx(); audioCtx.resume().catch(() => {}); } catch(e) {} }
-  else if (audioCtx.state === 'suspended') { audioCtx.resume().catch(() => {}); }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
   togglePlay();
 });
 document.getElementById('miniPrev').addEventListener('click', e => { e.stopPropagation(); prevTrack(); });
@@ -1034,9 +1021,7 @@ document.getElementById('miniNext').addEventListener('click', e => { e.stopPropa
 // ── Full Player ────────────────────────────────────────────────
 document.getElementById('fpClose').addEventListener('click', () => closePanel('fullPlayer'));
 document.getElementById('playBtn').addEventListener('click', () => {
-  // Init AudioContext early inside user gesture so EQ/visualizer are ready without cutting audio
-  if (!audioCtx) { try { initAudioCtx(); audioCtx.resume().catch(() => {}); } catch(e) {} }
-  else if (audioCtx.state === 'suspended') { audioCtx.resume().catch(() => {}); }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
   togglePlay();
 });
 document.getElementById('prevBtn').addEventListener('click', prevTrack);
@@ -1123,19 +1108,14 @@ document.getElementById('fpRingContainer').addEventListener('click', e => {
 });
 
 // ── Equalizer ─────────────────────────────────────────────────
-document.getElementById('eqBtn').addEventListener('click', () => {
+document.getElementById('eqBtn').addEventListener('click', async () => {
   try {
     initAudioCtx();
     if (pendingEqRestore) {
       pendingEqRestore.forEach((v, i) => { if (eqBands[i]) eqBands[i].gain.value = v; });
       pendingEqRestore = null;
     }
-    // Resume context synchronously inside user gesture so iOS doesn't block it
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume().then(() => {
-        if (S.playing && audio.paused) audio.play().catch(() => {});
-      });
-    }
+    if (audioCtx.state !== 'running') await audioCtx.resume();
   } catch(e) { console.warn('[AudioCtx]', e); }
   openPanel('eqPanel');
 });
