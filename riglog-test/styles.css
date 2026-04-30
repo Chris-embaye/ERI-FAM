@@ -497,6 +497,9 @@ select option { background-color: rgb(7,19,33); color: #e0f2fe; }
 }
 .loc-btn:disabled { opacity: 0.5; }
 
+/* ── Active nav icon color follows accent ─────────────────────── */
+.nav-btn.text-orange-600 { color: var(--accent-light) !important; }
+
 /* ── Theme color swatches ─────────────────────────────────────── */
 .color-swatch {
   width: 34px; height: 34px; border-radius: 50%;
