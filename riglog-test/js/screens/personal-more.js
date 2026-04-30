@@ -4,6 +4,7 @@ import {
   clearAppMode, fmtMoney, fmtDate, today,
 } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+import { ACCENT_PRESETS, BG_PRESETS, applyTheme, loadTheme, saveTheme } from '../theme.js';
 
 const CAR_SERVICES = [
   { key: 'oil',     label: 'Oil Change',       interval: 5000,  icon: '🛢',  color: '#f59e0b' },
@@ -73,6 +74,7 @@ function chevron() {
 
 export function renderPersonalMore() {
   const s     = getPSettings();
+  const theme = loadTheme();
   const maint = getPMaintenanceLogs();
   const odo   = Number(s.currentOdometer) || 0;
 
@@ -189,6 +191,27 @@ export function renderPersonalMore() {
           </div>`;
         }).join('')}
 
+        <!-- Appearance -->
+        <div class="glass-card" style="padding:16px;margin-bottom:10px">
+          <p style="font-size:0.58rem;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;color:rgba(167,139,250,0.85);margin-bottom:12px">🎨 Appearance</p>
+          <p class="settings-label">Accent Color</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;margin-bottom:14px">
+            ${ACCENT_PRESETS.map(p => `
+              <button type="button" class="color-swatch${theme.accentColor===p.id?' selected':''}" data-accent="${p.id}" title="${p.label}"
+                      style="background:${p.hex};${theme.accentColor===p.id?'outline:3px solid rgba(255,255,255,0.6);outline-offset:2px':''}"></button>
+            `).join('')}
+          </div>
+          <p class="settings-label">Background</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+            ${BG_PRESETS.map(p => `
+              <button type="button" class="bg-swatch${theme.bgTheme===p.id?' selected':''}" data-bg="${p.id}"
+                      style="background:${theme.bgTheme===p.id?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.04)'};border:1px solid ${theme.bgTheme===p.id?'rgba(255,255,255,0.3)':'rgba(255,255,255,0.08)'};color:${theme.bgTheme===p.id?'#fff':'rgba(148,163,184,0.7)'}">
+                ${p.label}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
         <!-- Switch mode -->
         <div class="glass-card" style="padding:14px;text-align:center;margin-top:8px">
           <p style="font-size:0.7rem;color:rgba(100,116,139,0.7);margin-bottom:10px">Want to track a commercial truck?</p>
@@ -201,6 +224,23 @@ export function renderPersonalMore() {
     </div>`;
 
   function mount(container) {
+    container.querySelectorAll('.color-swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = loadTheme();
+        saveTheme(btn.dataset.accent, t.bgTheme);
+        applyTheme(btn.dataset.accent, t.bgTheme);
+        window.refresh();
+      });
+    });
+    container.querySelectorAll('.bg-swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = loadTheme();
+        saveTheme(t.accentColor, btn.dataset.bg);
+        applyTheme(t.accentColor, btn.dataset.bg);
+        window.refresh();
+      });
+    });
+
     container.querySelector('#p-settings-form').addEventListener('submit', ev => {
       ev.preventDefault();
       const fd = new FormData(ev.target);

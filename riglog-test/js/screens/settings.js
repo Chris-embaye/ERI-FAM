@@ -1,6 +1,7 @@
 import { getSettings, saveSettings, clearCloudData, clearAppMode } from '../store.js';
 import { getCurrentUser, signOut, saveProfile } from '../auth.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+import { ACCENT_PRESETS, BG_PRESETS, applyTheme, loadTheme, saveTheme } from '../theme.js';
 
 function collectExportData(user) {
   const data = {};
@@ -63,8 +64,9 @@ function selField(name, value, options) {
 }
 
 export function renderSettings() {
-  const s    = getSettings();
-  const user = getCurrentUser();
+  const s     = getSettings();
+  const theme = loadTheme();
+  const user  = getCurrentUser();
 
   const avatarLetter = user?.displayName
     ? user.displayName.trim()[0].toUpperCase()
@@ -230,14 +232,30 @@ export function renderSettings() {
               <input type="checkbox" name="compactMode" id="compactModeToggle" class="toggle-checkbox" ${s.compactMode ? 'checked' : ''}>
               <span class="toggle-track"></span>
             </label>
-            <label class="toggle-row" style="margin-top:12px">
-              <span class="toggle-label">
-                <span class="font-semibold">Darkest Mode</span>
-                <span class="settings-hint" style="margin:0">Pure black backgrounds</span>
-              </span>
-              <input type="checkbox" name="darkestMode" id="darkestModeToggle" class="toggle-checkbox" ${s.darkestMode ? 'checked' : ''}>
-              <span class="toggle-track"></span>
-            </label>
+
+            <!-- Accent color -->
+            <div style="margin-top:16px">
+              <label class="settings-label">Accent Color</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                ${ACCENT_PRESETS.map(p => `
+                  <button type="button" class="color-swatch${theme.accentColor===p.id?' selected':''}" data-accent="${p.id}" title="${p.label}"
+                          style="background:${p.hex};${theme.accentColor===p.id?'outline:3px solid rgba(255,255,255,0.6);outline-offset:2px':''}"></button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Background theme -->
+            <div style="margin-top:12px">
+              <label class="settings-label">Background</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                ${BG_PRESETS.map(p => `
+                  <button type="button" class="bg-swatch${theme.bgTheme===p.id?' selected':''}" data-bg="${p.id}"
+                          style="background:${theme.bgTheme===p.id?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.04)'};border:1px solid ${theme.bgTheme===p.id?'rgba(255,255,255,0.3)':'rgba(255,255,255,0.08)'};color:${theme.bgTheme===p.id?'#fff':'rgba(148,163,184,0.7)'}">
+                    ${p.label}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
           `)}
 
           <button type="submit" class="save-btn-full">Save All Settings</button>
@@ -281,6 +299,24 @@ export function renderSettings() {
     </div>`;
 
   function mount(container) {
+
+    // Theme swatches — apply immediately on tap
+    container.querySelectorAll('.color-swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = loadTheme();
+        saveTheme(btn.dataset.accent, t.bgTheme);
+        applyTheme(btn.dataset.accent, t.bgTheme);
+        window.refresh();
+      });
+    });
+    container.querySelectorAll('.bg-swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = loadTheme();
+        saveTheme(t.accentColor, btn.dataset.bg);
+        applyTheme(t.accentColor, btn.dataset.bg);
+        window.refresh();
+      });
+    });
 
     container.querySelector('#settings-form').addEventListener('submit', e => {
       e.preventDefault();

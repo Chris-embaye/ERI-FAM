@@ -1,5 +1,6 @@
 import { initAuth, onAuthReady, getCurrentUser } from './auth.js';
 import { getAppMode }               from './store.js';
+import { applyTheme, loadTheme }    from './theme.js';
 import { renderSignIn }             from './screens/signin.js';
 import { renderRoleSelect }         from './screens/role-select.js';
 
@@ -158,6 +159,8 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+const _t = loadTheme(); applyTheme(_t.accentColor, _t.bgTheme);
+
 document.getElementById('screen').innerHTML = `
   <div class="flex items-center justify-center h-full">
     <div class="text-center space-y-4">
