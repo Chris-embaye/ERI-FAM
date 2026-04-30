@@ -15,7 +15,8 @@ let allApps         = [];
 let allPromos       = [];
 let activeUserTab   = 'all';
 
-const SUPER_ADMIN = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'mebrahatom12@gmail.com';
+const SUPER_ADMIN  = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'mebrahatom12@gmail.com';
+const SUPER_ADMINS = [SUPER_ADMIN, 'embayechris@gmail.com'];
 const FB_VER      = '10.12.2';
 
 // ── Firebase init (singleton promise) ────────────────────
@@ -110,7 +111,7 @@ async function doRegister() {
     // Check for pre-approved invite
     const invRef  = fb.doc(_db, 'hub_invitations', email.toLowerCase());
     const invSnap = await fb.getDoc(invRef);
-    const isSuperAdmin = email.toLowerCase() === SUPER_ADMIN.toLowerCase();
+    const isSuperAdmin = SUPER_ADMINS.includes(email.toLowerCase());
     const role   = isSuperAdmin ? 'super_admin' : (invSnap.exists() ? invSnap.data().role : 'viewer');
     const status = isSuperAdmin ? 'approved'    : (invSnap.exists() ? 'approved' : 'pending');
     await fb.setDoc(fb.doc(_db, 'hub_users', cred.user.uid), {
@@ -164,7 +165,7 @@ async function bootAuth() {
       console.log('[HUB] User signed in:', user.email);
       currentUser = user;
 
-      const isSuperAdmin = user.email.toLowerCase() === SUPER_ADMIN.toLowerCase();
+      const isSuperAdmin = SUPER_ADMINS.includes(user.email.toLowerCase());
 
       // Super admin: grant access immediately without depending on Firestore
       if (isSuperAdmin) {
