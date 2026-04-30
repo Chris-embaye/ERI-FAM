@@ -1,22 +1,4 @@
 // Shared receipt scanning module — lazy-loads Tesseract on first use
-import { checkCameraPermission, cameraDeniedMsg } from './permissions.js';
-
-// Wire a scan label so it checks camera permission before opening file picker.
-// Call this once per form after the DOM is ready.
-export function wireScanLabel(labelEl, fileInputEl, toastFn) {
-  if (!labelEl || !fileInputEl) return;
-  // Remove the `for` association so clicking the label doesn't auto-trigger input
-  labelEl.removeAttribute('for');
-  labelEl.style.cursor = 'pointer';
-  labelEl.addEventListener('click', async () => {
-    const state = await checkCameraPermission();
-    if (state === 'denied') {
-      toastFn(cameraDeniedMsg(), 'error');
-      return;
-    }
-    fileInputEl.click();
-  });
-}
 
 // ── Image resize ──────────────────────────────────────────────────────────────
 

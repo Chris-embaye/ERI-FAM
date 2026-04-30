@@ -90,7 +90,7 @@ export function renderMore() {
           `<svg width="22" height="22" fill="none" stroke="#4ade80" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 10h2l2-4 2 8 2-4h2"/></svg>`,
           'rgba(21,128,61,0.15)',
           'Tax Summary',
-          ytdRev > 0 ? `YTD ${year} · $${Math.round(ytdRev).toLocaleString()} revenue` : `YTD ${year} estimates & quarterly payments`,
+          `YTD ${year} · estimates &amp; quarterly payments`,
           '',
           "navigate('tax')"
         )}
