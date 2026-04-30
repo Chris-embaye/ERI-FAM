@@ -70,18 +70,36 @@ const KEYS = {
 
 const DEFAULTS = {
   settings: {
+    // Truck identity
     truckId: 'My Truck',
+    truckMake: '',
+    truckModel: '',
+    truckYear: '',
+    truckPlate: '',
+    driverType: 'OTR',
     homeBase: '',
-    detentionRate: 60,
-    detentionGrace: 2,
-    targetCPM: 0.50,
+    // Revenue targets
+    targetWeeklyRevenue: 0,
     targetRPM: 2.00,
+    targetCPM: 0.50,
+    // Dispatch
     dispatchPct: 0,
+    // Fixed monthly costs
     eldMonthly: 0,
     truckPaymentMonthly: 0,
     insuranceMonthly: 0,
     otherFixedMonthly: 0,
+    // Detention
+    detentionRate: 60,
+    detentionGrace: 2,
+    // Fuel
+    targetMPG: 6.5,
+    fuelType: 'diesel',
+    // Tax
     perDiemRate: 80,
+    // App
+    compactMode: false,
+    darkestMode: false,
   },
 };
 
