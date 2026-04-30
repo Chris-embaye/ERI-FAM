@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate Truck-Log Screenshots</title></head>
+<body style="font-family:sans-serif;padding:20px;background:#111;color:#fff">
+<h2>Truck-Log Screenshot Generator</h2>
+<p>Generates placeholder store screenshots (1080×1920). Download both, place them in the <code>screenshots/</code> folder.</p>
+<br>
+<button onclick="gen(1,'Dashboard','Weekly revenue\ntrip stats & expenses')" style="margin:8px;padding:10px 20px;background:#EA580C;color:black;font-weight:bold;border:none;border-radius:8px;cursor:pointer">Download screen-mobile-1.png</button>
+<button onclick="gen(2,'Trip Log','Log loads, track\nmiles & revenue')" style="margin:8px;padding:10px 20px;background:#EA580C;color:black;font-weight:bold;border:none;border-radius:8px;cursor:pointer">Download screen-mobile-2.png</button>
+<br><br>
+<div id="preview" style="display:flex;gap:16px;flex-wrap:wrap"></div>
+<canvas id="c" hidden></canvas>
+<script>
+function gen(n, title, subtitle) {
+  const c = document.getElementById('c');
+  const W = 1080, H = 1920;
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, W, H);
+
+  // Top status bar
+  ctx.fillStyle = '#111111';
+  ctx.fillRect(0, 0, W, 80);
+
+  // Orange hero bar
+  ctx.fillStyle = '#EA580C';
+  ctx.fillRect(0, 80, W, 320);
+
+  // App title in hero
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 90px Arial Black, Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Truck-Log', W/2, 200);
+
+  ctx.font = 'bold 52px Arial';
+  ctx.fillText(title, W/2, 310);
+
+  // Card placeholders
+  const cards = [
+    { y: 460, h: 260, label: subtitle },
+    { y: 760, h: 180, label: 'Cost / Mile    Rev / Hour' },
+    { y: 980, h: 180, label: 'Trips    Miles    Hours' },
+    { y: 1200, h: 220, label: 'Recent Trips' },
+    { y: 1460, h: 160, label: 'Expenses This Week' },
+  ];
+
+  cards.forEach(card => {
+    // Card background
+    ctx.fillStyle = '#1a1a1a';
+    roundRect(ctx, 60, card.y, W - 120, card.h, 36);
+    ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    roundRect(ctx, 60, card.y, W - 120, card.h, 36);
+    ctx.stroke();
+
+    // Card label
+    ctx.fillStyle = '#888888';
+    ctx.font = '40px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = card.label.split('\n');
+    lines.forEach((line, i) => {
+      ctx.fillText(line, W/2, card.y + card.h/2 + (i - (lines.length-1)/2) * 52);
+    });
+  });
+
+  // Bottom nav bar
+  ctx.fillStyle = '#111111';
+  ctx.fillRect(0, H - 160, W, 160);
+  const tabs = ['Dashboard','Trips','Expenses','Fuel','More'];
+  tabs.forEach((tab, i) => {
+    const x = W/10 + i * (W/5);
+    ctx.fillStyle = i === 0 ? '#EA580C' : '#555';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(tab, x, H - 80);
+  });
+
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = `screen-mobile-${n}.png`;
+  a.click();
+
+  const img = new Image();
+  img.src = a.href;
+  img.style = 'width:140px;border-radius:12px;border:1px solid #333';
+  document.getElementById('preview').appendChild(img);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+</script>
+</body>
+</html>

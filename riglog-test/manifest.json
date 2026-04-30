@@ -1,0 +1,146 @@
+{
+  "name": "RigLog TEST",
+  "short_name": "RigLog⚗",
+  "id": "/riglog-test/",
+  "description": "STAGING — test changes here before applying to the real app",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#000000",
+  "theme_color": "#0891b2",
+  "orientation": "portrait",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "utilities"],
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.chrisdrive.trucklog",
+      "id": "com.chrisdrive.trucklog"
+    }
+  ],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "note_taking": {
+    "new_note_url": "./"
+  },
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "application/json": [".json"],
+        "text/csv": [".csv"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+trucklog",
+      "url": "./?q=%s"
+    }
+  ],
+  "scope_extensions": [
+    { "origin": "https://eri-fam.firebaseapp.com" },
+    { "origin": "https://eri-fam.web.app" }
+  ],
+  "widgets": [
+    {
+      "name": "Truck-Log Quick Stats",
+      "short_name": "Truck-Log",
+      "description": "Weekly revenue and trip stats at a glance",
+      "tag": "truck-log-stats",
+      "ms_ac_template": "https://chris-embaye.github.io/ERI-FAM/riglog/widget-template.json",
+      "data": "https://chris-embaye.github.io/ERI-FAM/riglog/widget-data.json",
+      "auth": false,
+      "update": 86400,
+      "icons": [
+        {
+          "src": "https://chris-embaye.github.io/ERI-FAM/riglog/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ],
+      "screenshots": [
+        {
+          "src": "https://chris-embaye.github.io/ERI-FAM/riglog/screenshots/screen-mobile-1.png",
+          "sizes": "1080x1920",
+          "type": "image/png",
+          "label": "Dashboard widget"
+        }
+      ]
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log a Trip",
+      "short_name": "Trip",
+      "description": "Open the trip log to record a new load",
+      "url": "./#trips",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Add Expense",
+      "short_name": "Expense",
+      "description": "Quickly add a new expense",
+      "url": "./#expenses",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Detention Timer",
+      "short_name": "Detention",
+      "description": "Start or check detention timer",
+      "url": "./#detention",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/screen-mobile-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard — weekly revenue and trip stats"
+    },
+    {
+      "src": "screenshots/screen-mobile-2.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Trip log — log and track loads"
+    },
+    {
+      "src": "screenshots/screen-wide-1.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Weekly performance overview"
+    },
+    {
+      "src": "screenshots/screen-wide-2.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Trip and expense log overview"
+    }
+  ],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

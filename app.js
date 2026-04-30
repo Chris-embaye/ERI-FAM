@@ -66,9 +66,20 @@ const EQ_PRESETS = {
 
 function initAudioCtx() {
   if (audioCtx) return;
+  // After setup, kick off reactive bars if audio is already playing
+  Promise.resolve().then(() => {
+    if (S.playing && analyserNode) { startDjBars(); startBeatDetection(); }
+  });
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   gainNode = audioCtx.createGain();
   gainNode.gain.value = 1;
+  // Dynamics compressor — keeps loud parts from clipping, makes quieter tracks fuller
+  const compressor = audioCtx.createDynamicsCompressor();
+  compressor.threshold.value = -24;
+  compressor.knee.value = 30;
+  compressor.ratio.value = 8;
+  compressor.attack.value = 0.003;
+  compressor.release.value = 0.25;
   let prev = audioCtx.createMediaElementSource(audio);
   EQ_FREQS.forEach(freq => {
     const f = audioCtx.createBiquadFilter();
@@ -81,9 +92,11 @@ function initAudioCtx() {
     eqBands.push(f);
   });
   analyserNode = audioCtx.createAnalyser();
-  analyserNode.fftSize = 128;
+  analyserNode.fftSize = 256; // higher resolution for reactive bars
+  analyserNode.smoothingTimeConstant = 0.8;
   prev.connect(gainNode);
-  gainNode.connect(analyserNode);
+  gainNode.connect(compressor);
+  compressor.connect(analyserNode);
   analyserNode.connect(audioCtx.destination);
 }
 
@@ -1009,13 +1022,23 @@ document.getElementById('listViewBtn').addEventListener('click', () => {
 
 // ── Mini Player ────────────────────────────────────────────────
 document.getElementById('miniPlayerExpand').addEventListener('click', e => { if (!e.target.closest('.mini-btn')) openPanel('fullPlayer'); });
-document.getElementById('miniPlay').addEventListener('click', e => { e.stopPropagation(); togglePlay(); });
+document.getElementById('miniPlay').addEventListener('click', e => {
+  e.stopPropagation();
+  if (!audioCtx) { try { initAudioCtx(); audioCtx.resume().catch(() => {}); } catch(e) {} }
+  else if (audioCtx.state === 'suspended') { audioCtx.resume().catch(() => {}); }
+  togglePlay();
+});
 document.getElementById('miniPrev').addEventListener('click', e => { e.stopPropagation(); prevTrack(); });
 document.getElementById('miniNext').addEventListener('click', e => { e.stopPropagation(); nextTrack(); });
 
 // ── Full Player ────────────────────────────────────────────────
 document.getElementById('fpClose').addEventListener('click', () => closePanel('fullPlayer'));
-document.getElementById('playBtn').addEventListener('click', togglePlay);
+document.getElementById('playBtn').addEventListener('click', () => {
+  // Init AudioContext early inside user gesture so EQ/visualizer are ready without cutting audio
+  if (!audioCtx) { try { initAudioCtx(); audioCtx.resume().catch(() => {}); } catch(e) {} }
+  else if (audioCtx.state === 'suspended') { audioCtx.resume().catch(() => {}); }
+  togglePlay();
+});
 document.getElementById('prevBtn').addEventListener('click', prevTrack);
 document.getElementById('nextBtn').addEventListener('click', nextTrack);
 
@@ -1100,23 +1123,20 @@ document.getElementById('fpRingContainer').addEventListener('click', e => {
 });
 
 // ── Equalizer ─────────────────────────────────────────────────
-document.getElementById('eqBtn').addEventListener('click', async () => {
-  const wasPlaying = !audio.paused;
-  const savedTime  = audio.currentTime;
+document.getElementById('eqBtn').addEventListener('click', () => {
   try {
     initAudioCtx();
     if (pendingEqRestore) {
       pendingEqRestore.forEach((v, i) => { if (eqBands[i]) eqBands[i].gain.value = v; });
       pendingEqRestore = null;
     }
-    if (audioCtx.state !== 'running') await audioCtx.resume();
+    // Resume context synchronously inside user gesture so iOS doesn't block it
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().then(() => {
+        if (S.playing && audio.paused) audio.play().catch(() => {});
+      });
+    }
   } catch(e) { console.warn('[AudioCtx]', e); }
-  // On mobile, routing audio through WebAudio can silently drop playback.
-  // Wait a tick for the re-routing to settle, then restore if needed.
-  if (wasPlaying) {
-    await new Promise(r => setTimeout(r, 120));
-    if (audio.paused) { audio.currentTime = savedTime; audio.play().catch(() => {}); }
-  }
   openPanel('eqPanel');
 });
 document.getElementById('eqClose').addEventListener('click', () => closePanel('eqPanel'));
@@ -1131,7 +1151,16 @@ function buildEqSliders() {
       <span class="eq-band-label">${f >= 1000 ? (f/1000)+'k' : f}</span>
     </div>`).join('');
   container.querySelectorAll('input').forEach(inp => {
+    // On iOS/Android, touching a slider can suspend the AudioContext — resume it
+    const resumeCtx = () => {
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().then(() => { if (S.playing && audio.paused) audio.play().catch(() => {}); });
+      }
+    };
+    inp.addEventListener('touchstart', resumeCtx, { passive: true });
+    inp.addEventListener('pointerdown', resumeCtx);
     inp.addEventListener('input', () => {
+      resumeCtx();
       const idx = parseInt(inp.getAttribute('data-band'));
       if (eqBands[idx]) eqBands[idx].gain.value = parseFloat(inp.value);
       clearTimeout(eqSaveTimer);
@@ -1954,6 +1983,88 @@ function stopVisualizer() {
   }
 }
 
+/* ── Audio-reactive DJ bars ──────────────────────────────────── */
+// Frequency bin indices picked to spread evenly across the spectrum (16 bands)
+const DJ_BINS = [2,3,5,7,9,11,14,18,22,27,33,40,48,56,60,63];
+let djBarRaf = null;
+const djSmooth = new Float32Array(16).fill(3); // smoothed heights
+
+function startDjBars() {
+  if (!analyserNode) return;
+  const bars = document.querySelectorAll('.fp-dj-bar');
+  if (!bars.length) return;
+  const buf = new Uint8Array(analyserNode.frequencyBinCount);
+
+  function frame() {
+    djBarRaf = requestAnimationFrame(frame);
+    analyserNode.getByteFrequencyData(buf);
+    bars.forEach((bar, i) => {
+      const bin = Math.min(DJ_BINS[i] || i * 4, buf.length - 1);
+      const raw = (buf[bin] / 255) * 34;
+      // Fast attack, slow decay for that punchy DJ look
+      djSmooth[i] = raw > djSmooth[i]
+        ? raw * 0.65 + djSmooth[i] * 0.35
+        : raw * 0.08 + djSmooth[i] * 0.92;
+      const h = Math.max(3, djSmooth[i]);
+      bar.style.height = h + 'px';
+      bar.style.opacity = String(0.35 + (h / 34) * 0.65);
+    });
+  }
+  frame();
+}
+
+function stopDjBars() {
+  if (djBarRaf) { cancelAnimationFrame(djBarRaf); djBarRaf = null; }
+  document.querySelectorAll('.fp-dj-bar').forEach(bar => {
+    bar.style.height = '4px';
+    bar.style.opacity = '0.4';
+  });
+}
+
+/* ── Beat detection for visual pulse ────────────────────────── */
+let beatRaf = null, lastBeatTime = 0;
+const beatBuf = new Float32Array(5); // rolling bass average
+let beatBufIdx = 0, beatBufFull = false;
+
+function startBeatDetection() {
+  if (!analyserNode) return;
+  const buf = new Uint8Array(analyserNode.frequencyBinCount);
+
+  function detect() {
+    beatRaf = requestAnimationFrame(detect);
+    analyserNode.getByteFrequencyData(buf);
+    // Bass energy: bins 1-5 (~40–200 Hz)
+    const bass = (buf[1] + buf[2] + buf[3] + buf[4] + buf[5]) / (5 * 255);
+    beatBuf[beatBufIdx % 5] = bass;
+    beatBufIdx++;
+    if (beatBufIdx >= 5) beatBufFull = true;
+    const avg = beatBufFull
+      ? beatBuf.reduce((s, v) => s + v, 0) / 5
+      : bass;
+
+    const now = performance.now();
+    // Beat = current bass spike significantly above rolling average, min 250ms apart
+    if (bass > avg * 1.35 && bass > 0.4 && now - lastBeatTime > 250) {
+      lastBeatTime = now;
+      const ring = document.getElementById('fpRingContainer');
+      if (ring) {
+        ring.classList.remove('beat-pulse');
+        void ring.offsetWidth; // force reflow to restart animation
+        ring.classList.add('beat-pulse');
+      }
+    }
+    // Update energy CSS var for ambient glow
+    const energy = buf.reduce((s, v) => s + v, 0) / (buf.length * 255);
+    document.documentElement.style.setProperty('--beat-energy', energy.toFixed(3));
+  }
+  detect();
+}
+
+function stopBeatDetection() {
+  if (beatRaf) { cancelAnimationFrame(beatRaf); beatRaf = null; }
+  document.documentElement.style.setProperty('--beat-energy', '0');
+}
+
 document.getElementById('vizToggleBtn').addEventListener('click', async () => {
   const wasPlaying = !audio.paused;
   const savedTime  = audio.currentTime;
@@ -1978,8 +2089,15 @@ document.getElementById('vizToggleBtn').addEventListener('click', async () => {
   }
 });
 
-audio.addEventListener('play',  () => { if (vizActive) startVisualizer(); });
-audio.addEventListener('pause', () => stopVisualizer());
+audio.addEventListener('play',  () => {
+  if (vizActive) startVisualizer();
+  if (analyserNode) { startDjBars(); startBeatDetection(); }
+});
+audio.addEventListener('pause', () => {
+  stopVisualizer();
+  stopDjBars();
+  stopBeatDetection();
+});
 
 /* ════════════════════════════════════════════════════════════════
    FEATURE 3 — Swipe Gestures
@@ -2008,7 +2126,6 @@ function initSwipeGestures() {
    FEATURE 4 — Live Eritrean Radio
    ════════════════════════════════════════════════════════════════ */
 const RADIO_STATIONS = [
-  { id: 'hero', name: 'Hero Radio',     desc: 'Eritrean Music 24/7',                lang: 'Tigrinya', icon: '🎵', url: 'https://a2.asurahosting.com:6790/eritrea.mp3' },
   { id: 'etem', name: 'Eritrean Music', desc: 'Eritrean & Ethiopian Tigrigna Music', lang: 'Tigrinya', icon: '🎶', url: 'https://linuxfreelancer.com:8443/test.mp3' },
 ];
 
@@ -3664,6 +3781,91 @@ document.addEventListener('keydown', e => {
       break;
   }
 });
+
+/* ════════════════════════════════════════════════════════════════
+   KILL CODE — tap the header logo 5× to open secret PIN entry
+   Code "5455" grants master bypass stored in localStorage.
+   ════════════════════════════════════════════════════════════════ */
+(function initKillCode() {
+  let tapCount = 0, tapTimer = null;
+
+  const logoEl = document.querySelector('.header-logo') || document.querySelector('.header-title');
+  if (!logoEl) return;
+
+  logoEl.addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+    if (tapCount >= 5) {
+      tapCount = 0;
+      _showKillCodePrompt();
+    }
+  });
+
+  function _showKillCodePrompt() {
+    const overlay = document.createElement('div');
+    overlay.setAttribute('data-kill-overlay', '1');
+    overlay.innerHTML = `
+      <div class="kc-backdrop">
+        <div class="kc-card">
+          <div class="kc-glyph">⬡</div>
+          <div class="kc-title">MASTER ACCESS</div>
+          <div class="kc-sub">Enter bypass code</div>
+          <input class="kc-input" id="kcInput" type="password" maxlength="10"
+            placeholder="· · · ·" autocomplete="off" inputmode="numeric"/>
+          <div class="kc-msg" id="kcMsg"></div>
+          <div class="kc-btns">
+            <button class="kc-cancel" id="kcCancel">Cancel</button>
+            <button class="kc-submit" id="kcSubmit">ACCESS</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const input  = overlay.querySelector('#kcInput');
+    const msg    = overlay.querySelector('#kcMsg');
+    const submit = overlay.querySelector('#kcSubmit');
+    const cancel = overlay.querySelector('#kcCancel');
+
+    setTimeout(() => input.focus(), 80);
+
+    function tryCode() {
+      if (input.value === '5455') {
+        localStorage.setItem('erifam_master', '1');
+        msg.style.color = '#00ff88';
+        msg.textContent = '✓ Master access granted';
+        setTimeout(() => { overlay.remove(); toast('🔓 Master access active'); }, 800);
+      } else {
+        msg.style.color = '#ff4444';
+        msg.textContent = 'Invalid code — try again';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    submit.addEventListener('click', tryCode);
+    cancel.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay.firstElementChild && e.target === e.currentTarget) overlay.remove(); });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') tryCode(); });
+  }
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   NOW PLAYING — enhanced ambient glow driven by --beat-energy
+   ════════════════════════════════════════════════════════════════ */
+(function initNowPlayingFX() {
+  // When the full player opens, start beat detection if audio is playing
+  const fpPanel = document.getElementById('fullPlayer');
+  if (!fpPanel) return;
+
+  const observer = new MutationObserver(() => {
+    if (fpPanel.classList.contains('open')) {
+      if (S.playing && analyserNode && !beatRaf) startBeatDetection();
+      if (S.playing && analyserNode && !djBarRaf) startDjBars();
+    }
+  });
+  observer.observe(fpPanel, { attributes: true, attributeFilter: ['class'] });
+})();
 
 function _toggleKeyboardModal() {
   const m = document.getElementById('keyboardModal');

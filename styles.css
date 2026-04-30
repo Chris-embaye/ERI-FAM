@@ -591,12 +591,13 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
   text-align: center; width: 100%; margin-bottom: 6px; margin-top: 4px;
 }
 .fp-title {
-  font-size: 1.35rem; font-weight: 700; letter-spacing: -0.4px;
+  font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  color: #fff;
+  color: #fff; text-shadow: 0 2px 16px rgba(0,0,0,0.5);
 }
 .fp-artist {
-  font-size: 0.88rem; color: var(--text-sub); margin-top: 4px; font-weight: 500;
+  font-size: 0.9rem; color: var(--text-sub); margin-top: 5px; font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 /* Time display */
@@ -626,7 +627,8 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 .fp-ring-fill {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 3;
+  stroke-width: 3.5;
+  filter: drop-shadow(0 0 4px var(--accent-glow));
   stroke-linecap: round;
   stroke-dasharray: 867.08;
   stroke-dashoffset: 867.08;
@@ -640,6 +642,7 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
   position: absolute;
   inset: 8%;
   border-radius: 50%;
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.8);
   background: linear-gradient(145deg, #2C2C2E, #1C1C1E);
   display: flex; align-items: center; justify-content: center;
   font-size: 3.5rem; overflow: hidden;
@@ -2356,7 +2359,7 @@ body.theme-galaxy .nav-item.active::before { background: var(--accent); box-shad
   to   { transform: rotate(360deg); }
 }
 
-/* DJ waveform bars below ring */
+/* DJ waveform bars — heights driven by JS/AnalyserNode in real-time */
 .fp-dj-wave {
   display: flex; align-items: flex-end; gap: 3px;
   height: 36px; width: 100%; margin-bottom: 16px;
@@ -2366,31 +2369,65 @@ body.theme-galaxy .nav-item.active::before { background: var(--accent); box-shad
 .fp-dj-wave.active { opacity: 1; }
 .fp-dj-bar {
   flex: 1; border-radius: 3px 3px 1px 1px;
+  height: 4px; opacity: 0.4;
   background: linear-gradient(to top, var(--accent-dk), var(--accent));
   box-shadow: 0 0 6px var(--accent-glow);
-  animation: djWave 0.7s ease-in-out infinite alternate;
-  transform-origin: bottom;
+  will-change: height, opacity;
 }
-.fp-dj-bar:nth-child(1)  { animation-duration: 0.55s; animation-delay: 0.00s; }
-.fp-dj-bar:nth-child(2)  { animation-duration: 0.82s; animation-delay: 0.05s; }
-.fp-dj-bar:nth-child(3)  { animation-duration: 0.44s; animation-delay: 0.10s; }
-.fp-dj-bar:nth-child(4)  { animation-duration: 0.68s; animation-delay: 0.15s; }
-.fp-dj-bar:nth-child(5)  { animation-duration: 0.50s; animation-delay: 0.08s; }
-.fp-dj-bar:nth-child(6)  { animation-duration: 0.76s; animation-delay: 0.12s; }
-.fp-dj-bar:nth-child(7)  { animation-duration: 0.40s; animation-delay: 0.20s; }
-.fp-dj-bar:nth-child(8)  { animation-duration: 0.60s; animation-delay: 0.03s; }
-.fp-dj-bar:nth-child(9)  { animation-duration: 0.85s; animation-delay: 0.18s; }
-.fp-dj-bar:nth-child(10) { animation-duration: 0.48s; animation-delay: 0.07s; }
-.fp-dj-bar:nth-child(11) { animation-duration: 0.72s; animation-delay: 0.14s; }
-.fp-dj-bar:nth-child(12) { animation-duration: 0.38s; animation-delay: 0.22s; }
-.fp-dj-bar:nth-child(13) { animation-duration: 0.65s; animation-delay: 0.06s; }
-.fp-dj-bar:nth-child(14) { animation-duration: 0.90s; animation-delay: 0.16s; }
-.fp-dj-bar:nth-child(15) { animation-duration: 0.45s; animation-delay: 0.11s; }
-.fp-dj-bar:nth-child(16) { animation-duration: 0.78s; animation-delay: 0.09s; }
-@keyframes djWave {
-  from { height: 4px;  opacity: 0.5; }
-  to   { height: 34px; opacity: 1; }
+
+/* Beat pulse on album art ring — JS adds/removes class on each beat */
+@keyframes beat-pulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.042); filter: brightness(1.18) drop-shadow(0 0 20px var(--accent-glow)); }
+  100% { transform: scale(1); }
 }
+.fp-ring-container.beat-pulse { animation: beat-pulse 0.32s cubic-bezier(0.22,1,0.36,1); }
+
+/* Kill-code PIN overlay */
+[data-kill-overlay] { position: fixed; inset: 0; z-index: 10000; }
+.kc-backdrop {
+  width: 100%; height: 100%; background: rgba(0,0,0,0.93);
+  display: flex; align-items: center; justify-content: center;
+}
+.kc-card {
+  background: linear-gradient(160deg, #08080f 0%, #0d0d1e 100%);
+  border: 1px solid rgba(0,255,136,0.35); border-radius: 20px;
+  padding: 36px 28px; width: 88%; max-width: 320px;
+  text-align: center; box-shadow: 0 0 60px rgba(0,255,136,0.1), 0 24px 48px rgba(0,0,0,0.8);
+}
+.kc-glyph {
+  font-size: 2.8rem; color: #00ff88; margin-bottom: 8px;
+  animation: kc-glow 2s ease-in-out infinite;
+}
+@keyframes kc-glow {
+  0%,100% { text-shadow: 0 0 16px rgba(0,255,136,0.5); }
+  50%     { text-shadow: 0 0 36px rgba(0,255,136,0.95); }
+}
+.kc-title {
+  font-size: 0.68rem; font-weight: 900; letter-spacing: 4px;
+  color: #00ff88; text-transform: uppercase; margin-bottom: 4px;
+}
+.kc-sub { font-size: 0.78rem; color: rgba(255,255,255,0.38); margin-bottom: 24px; }
+.kc-input {
+  width: 100%; background: rgba(0,255,136,0.06); border: 1.5px solid rgba(0,255,136,0.3);
+  border-radius: 10px; padding: 14px; color: #00ff88; font-size: 1.5rem;
+  letter-spacing: 10px; text-align: center; margin-bottom: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.kc-input:focus { outline: none; border-color: #00ff88; box-shadow: 0 0 18px rgba(0,255,136,0.18); }
+.kc-msg { font-size: 0.75rem; min-height: 20px; margin-bottom: 16px; }
+.kc-btns { display: flex; gap: 10px; }
+.kc-cancel {
+  flex: 1; padding: 12px; background: transparent;
+  border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.45);
+  border-radius: 10px; font-weight: 600; font-size: 0.88rem;
+}
+.kc-submit {
+  flex: 1; padding: 12px; background: #00ff88; border: none;
+  color: #000; border-radius: 10px; font-weight: 900; letter-spacing: 1px;
+  font-size: 0.88rem; transition: background 0.15s, transform 0.1s;
+}
+.kc-submit:active { transform: scale(0.97); background: #00cc6a; }
 
 /* DJ label on full player */
 .fp-dj-label {

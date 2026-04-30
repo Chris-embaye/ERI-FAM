@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.chrisdrive.trucklog",
+    "sha256_cert_fingerprints": [
+      "B3:C2:1A:AE:CB:57:40:98:2C:BE:4B:7A:23:99:0F:82:26:7C:39:12:51:4C:78:63:BB:35:DA:59:EA:17:1D:44"
+    ]
+  }
+}]
