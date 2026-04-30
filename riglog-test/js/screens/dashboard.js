@@ -88,7 +88,7 @@ export function renderDashboard() {
   const truckLabel = [s.truckYear, s.truckMake, s.truckModel].filter(Boolean).join(' ') || s.truckId || 'My Truck';
 
   const html = `
-    <div class="flex flex-col h-full text-white" style="background:rgb(4 10 18)">
+    <div class="flex flex-col h-full text-white" style="background:rgb(4,10,18)">
 
       <!-- Header -->
       <div class="dash-header shrink-0">

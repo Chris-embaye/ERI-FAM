@@ -80,7 +80,7 @@ export function renderSettings() {
     : null;
 
   const html = `
-    <div class="flex flex-col h-full text-white" style="background:rgb(4 10 18)">
+    <div class="flex flex-col h-full text-white" style="background:rgb(4,10,18)">
 
       <!-- Header -->
       <div class="settings-header shrink-0">
