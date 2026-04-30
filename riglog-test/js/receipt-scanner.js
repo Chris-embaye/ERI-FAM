@@ -209,11 +209,66 @@ function parseExpenseReceipt(text) {
   return result;
 }
 
+// ── Trip / Rate-Con document parser ──────────────────────────────────────────
+
+function parseTripDocument(text) {
+  const result = {};
+
+  // Revenue — "Rate: $1,800.00", "Pay $1800", linehaul, flat rate
+  const rateRxs = [
+    /(?:rate|pay|revenue|linehaul|line\s*haul|gross|total\s*pay|flat\s*rate|offer(?:ed)?)[\s:$]*([1-9][0-9]{2,5}[.,][0-9]{2})/i,
+    /\$\s*([1-9][0-9]{2,5}[.,][0-9]{2})\b/,
+  ];
+  for (const rx of rateRxs) {
+    const m = text.match(rx);
+    if (m) {
+      const v = parseFloat(m[1].replace(',', ''));
+      if (v >= 50 && v <= 99999) { result.revenue = v; break; }
+    }
+  }
+
+  // Miles — "450 miles", "Total Miles: 312", "loaded 287 mi"
+  const mRxs = [
+    /(?:total\s*miles?|loaded\s*miles?|distance|mileage)[\s:]*([0-9]{2,4})\b/i,
+    /\b([0-9]{2,4})\s*(?:loaded\s*)?miles?\b/i,
+  ];
+  for (const rx of mRxs) {
+    const m = text.match(rx);
+    if (m) {
+      const v = parseInt(m[1]);
+      if (v >= 10 && v <= 9999) { result.miles = v; break; }
+    }
+  }
+
+  // Load / BOL / Order number
+  const bolRx = /(?:bol|bill\s*of\s*lading|load\s*(?:id|#|no\.?)?|order\s*#?|reference\s*#?|ref\s*#?|pro\s*#?|confirmation\s*#?)[\s:#]*([A-Z0-9][A-Z0-9\-]{2,18})/i;
+  const bm = text.match(bolRx);
+  if (bm) result.loadNum = bm[1].trim().toUpperCase();
+
+  // Date
+  result.date = extractDate(text);
+
+  // Origin — keywords then nearest City, ST pattern
+  const origRx = /(?:pick\s*up|pickup|origin|ship(?:ping)?\s*from|from|shipper|p\/u\b)[\s\S]{0,120}?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)[,\s]+([A-Z]{2})\b/i;
+  const om = text.match(origRx);
+  if (om) result.origin = `${om[1].trim()}, ${om[2].toUpperCase()}`;
+
+  // Destination
+  const destRx = /(?:deliver(?:y)?|destination|consignee|ship(?:ping)?\s*to|to\b|d\/o\b|drop\s*off)[\s\S]{0,120}?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)[,\s]+([A-Z]{2})\b/i;
+  const dm = text.match(destRx);
+  if (dm) result.destination = `${dm[1].trim()}, ${dm[2].toUpperCase()}`;
+
+  result._found = ['revenue','miles','loadNum','origin','destination','date'].filter(k => result[k] != null).length;
+  return result;
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export async function scanReceipt(dataUrl, mode) {
   const text = await runOCR(dataUrl);
   if (!text) return { _found: 0, _raw: null };
-  const parsed = mode === 'fuel' ? parseFuelReceipt(text) : parseExpenseReceipt(text);
+  const parsed = mode === 'fuel' ? parseFuelReceipt(text)
+               : mode === 'trip' ? parseTripDocument(text)
+               : parseExpenseReceipt(text);
   return { ...parsed, _raw: text };
 }

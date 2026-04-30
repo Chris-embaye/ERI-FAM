@@ -12,12 +12,13 @@ export async function getPermissionState(name) {
 
 export async function requestLocation(opts = {}) {
   if (!navigator.geolocation) return { error: 'unsupported' };
-  const state = await getPermissionState('geolocation');
-  if (state === 'denied') return { error: 'denied' };
+  // Call directly — let the OS show its permission dialog naturally.
+  // Pre-checking state with navigator.permissions can return stale 'denied'
+  // on some iOS/Android builds even when the user hasn't been asked yet.
   return new Promise(resolve => {
     navigator.geolocation.getCurrentPosition(
-      pos => resolve({ coords: pos.coords }),
-      err => resolve({ error: err.code === 1 ? 'denied' : 'failed' }),
+      pos  => resolve({ coords: pos.coords }),
+      err  => resolve({ error: err.code === 1 ? 'denied' : 'failed' }),
       { timeout: 12000, enableHighAccuracy: false, ...opts }
     );
   });

@@ -68,7 +68,7 @@ function fuelForm(existing = null) {
             </svg>
             Scan Fuel Receipt
           </label>
-          <input type="file" id="fuel-receipt-input" accept="image/*" capture="environment" class="hidden">
+          <input type="file" id="fuel-receipt-input" accept="image/*" class="hidden">
           <input type="hidden" id="receipt-photo-data" name="receiptPhoto" value="${l.receiptPhoto || ''}">
           <div id="scan-results" class="hidden mt-2 rounded-xl p-3"
                style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2)"></div>

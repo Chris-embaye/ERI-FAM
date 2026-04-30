@@ -1,6 +1,7 @@
 import { getTrips, addTrip, deleteTrip, updateTrip, getSettings, fmtMoney, fmtDate, today } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 import { requestLocation, locationDeniedMsg } from '../permissions.js';
+import { resizeImage, scanReceipt } from '../receipt-scanner.js';
 
 let _filter = 'month';
 
@@ -13,6 +14,38 @@ async function getCityFromCoords(lat, lon) {
   const city = a.city || a.town || a.village || a.county || '';
   const st   = a.state_code || (a.state ? a.state.slice(0, 2).toUpperCase() : '');
   return st ? `${city}, ${st}` : city;
+}
+
+// ── Scan results card ─────────────────────────────────────────────────────────
+
+function renderTripScanResults(r) {
+  if (!r._found) return `
+    <p class="text-xs" style="color:rgba(148,163,184,0.5)">
+      Couldn't read the document — fill the fields below manually.
+    </p>`;
+  const fmtD = v => new Date(v + 'T12:00').toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  const rows = [
+    { label: 'Origin',      display: r.origin },
+    { label: 'Destination', display: r.destination },
+    { label: 'Revenue',     display: r.revenue != null ? '$' + r.revenue.toFixed(2)       : null },
+    { label: 'Miles',       display: r.miles   != null ? r.miles.toLocaleString() + ' mi' : null },
+    { label: 'Load #',      display: r.loadNum },
+    { label: 'Date',        display: r.date ? fmtD(r.date) : null },
+  ];
+  return `
+    <p class="text-xs font-bold mb-2" style="color:#4ade80">
+      ✓ ${r._found} field${r._found !== 1 ? 's' : ''} read from document
+    </p>
+    <div>
+      ${rows.map(row => `
+        <div class="flex justify-between text-xs py-1.5" style="border-bottom:1px solid rgba(255,255,255,0.06)">
+          <span style="color:rgba(148,163,184,0.7)">${row.label}</span>
+          <span style="font-weight:${row.display ? 700 : 400};color:${row.display ? '#4ade80' : 'rgba(100,116,139,0.5)'}">
+            ${row.display || '—'}
+          </span>
+        </div>
+      `).join('')}
+    </div>`;
 }
 
 // ── Form builder ──────────────────────────────────────────────────────────────
@@ -54,6 +87,36 @@ function tripForm(existing = null) {
         <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
       </div>
       <form id="trip-form" class="space-y-4">
+
+        <!-- Rate Con / BOL scanner -->
+        <div>
+          <label class="text-xs text-gray-400 block mb-1.5">Rate Con / BOL <span style="color:rgba(100,116,139,0.5)">(optional)</span></label>
+          <div id="trip-scan-preview-wrap" class="${t.receiptPhoto ? '' : 'hidden'} mb-2 relative rounded-xl overflow-hidden"
+               style="background:#0d1117">
+            <img id="trip-scan-preview" src="${t.receiptPhoto || ''}"
+                 class="w-full" style="max-height:200px;object-fit:contain" alt="Document">
+            <button type="button" id="trip-receipt-clear"
+              class="absolute top-2 right-2 bg-black/80 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-base leading-none">&times;</button>
+            <div id="trip-scan-overlay" class="hidden absolute inset-0 flex flex-col items-center justify-center"
+                 style="background:rgba(0,0,0,0.82)">
+              <div class="text-3xl animate-pulse">📡</div>
+              <p class="text-sm font-bold mt-2" style="color:#67e8f9">Scanning document…</p>
+              <p class="text-xs mt-1" style="color:rgba(103,232,249,0.5)">This takes a few seconds</p>
+            </div>
+          </div>
+          <label id="trip-scan-label" class="receipt-cap-label" for="trip-doc-input">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <rect x="5" y="2" width="14" height="20" rx="2"/>
+              <line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/>
+            </svg>
+            Scan Rate Con / BOL
+          </label>
+          <input type="file" id="trip-doc-input" accept="image/*" class="hidden">
+          <input type="hidden" id="trip-doc-data" name="receiptPhoto" value="${t.receiptPhoto || ''}">
+          <div id="trip-scan-results" class="hidden mt-2 rounded-xl p-3"
+               style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2)"></div>
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <div class="flex justify-between items-center mb-1">
@@ -203,7 +266,10 @@ export function renderTrips() {
               </div>
             </div>
             <div class="flex justify-between items-center mt-2">
-              <span class="text-xs text-gray-500">${miles.toLocaleString()} miles</span>
+              <div class="flex items-center gap-2 text-xs text-gray-500">
+                <span>${miles.toLocaleString()} miles</span>
+                ${t.receiptPhoto ? `<img src="${t.receiptPhoto}" class="receipt-thumb" alt="Rate Con" onclick="window._viewTripDoc('${t.id}')">` : ''}
+              </div>
               <div class="flex gap-1">
                 <button class="edit-trip-btn text-gray-500 hover:text-white p-1" data-id="${t.id}">
                   <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -308,6 +374,64 @@ export function renderTrips() {
     });
   }
 
+  function wireTripScanner(el) {
+    const fileInput   = el.querySelector('#trip-doc-input');
+    const previewWrap = el.querySelector('#trip-scan-preview-wrap');
+    const previewImg  = el.querySelector('#trip-scan-preview');
+    const docData     = el.querySelector('#trip-doc-data');
+    const overlay     = el.querySelector('#trip-scan-overlay');
+    const results     = el.querySelector('#trip-scan-results');
+    const scanLabel   = el.querySelector('#trip-scan-label');
+    const clearBtn    = el.querySelector('#trip-receipt-clear');
+    const originEl    = el.querySelector('#trip-origin');
+    const destEl      = el.querySelector('[name="destination"]');
+    const milesEl     = el.querySelector('[name="miles"]');
+    const revenueEl   = el.querySelector('[name="revenue"]');
+    const loadNumEl   = el.querySelector('[name="loadNum"]');
+    const dateEl      = el.querySelector('[name="date"]');
+
+    const DOC_SVG    = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/></svg>`;
+    const RETAKE_SVG = `${DOC_SVG} Retake / Replace`;
+    const SCAN_SVG   = `${DOC_SVG} Scan Rate Con / BOL`;
+
+    if (!fileInput) return;
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const base64 = await resizeImage(file);
+      docData.value   = base64;
+      previewImg.src  = base64;
+      previewWrap.classList.remove('hidden');
+      scanLabel.innerHTML = RETAKE_SVG;
+      overlay.classList.remove('hidden');
+      results.classList.add('hidden');
+
+      const r = await scanReceipt(base64, 'trip');
+      overlay.classList.add('hidden');
+
+      if (r.origin      && originEl  && !originEl.value)  originEl.value  = r.origin;
+      if (r.destination && destEl    && !destEl.value)     destEl.value    = r.destination;
+      if (r.miles       && milesEl   && !milesEl.value)    milesEl.value   = r.miles;
+      if (r.revenue     && revenueEl && !revenueEl.value)  revenueEl.value = r.revenue.toFixed(2);
+      if (r.loadNum     && loadNumEl && !loadNumEl.value)  loadNumEl.value = r.loadNum;
+      if (r.date        && dateEl)                         dateEl.value    = r.date;
+
+      results.innerHTML = renderTripScanResults(r);
+      results.classList.remove('hidden');
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      docData.value   = '';
+      previewImg.src  = '';
+      previewWrap.classList.add('hidden');
+      fileInput.value = '';
+      results.classList.add('hidden');
+      scanLabel.innerHTML = SCAN_SVG;
+    });
+  }
+
   function mount(container) {
     container.querySelectorAll('.filter-pill').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -316,8 +440,23 @@ export function renderTrips() {
       });
     });
 
+    window._viewTripDoc = (id) => {
+      const trip = getTrips().find(t => t.id === id);
+      if (!trip?.receiptPhoto) return;
+      openModal(`
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-3">
+            <p class="font-black">Rate Con — ${trip.origin} → ${trip.destination}</p>
+            <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
+          </div>
+          <img src="${trip.receiptPhoto}" class="w-full rounded-xl" alt="Rate Con">
+          <p class="text-xs text-gray-500 mt-2 text-center">${fmtDate(trip.date)}</p>
+        </div>`, () => {});
+    };
+
     container.querySelector('#add-trip-btn').addEventListener('click', () => {
       openModal(tripForm(), el => {
+        wireTripScanner(el);
         wireLocationBtn(el);
         wireStateMiles(el);
         el.querySelector('#trip-form').addEventListener('submit', ev => {
@@ -333,6 +472,7 @@ export function renderTrips() {
             loadNum:       fd.get('loadNum').trim(),
             notes:         fd.get('notes').trim(),
             stateMiles:    collectStateMiles(el),
+            receiptPhoto:  fd.get('receiptPhoto') || null,
           });
           closeModal();
           toast('Trip saved ✓');
@@ -346,6 +486,7 @@ export function renderTrips() {
         const existing = getTrips().find(t => t.id === btn.dataset.id);
         if (!existing) return;
         openModal(tripForm(existing), el => {
+          wireTripScanner(el);
           wireLocationBtn(el);
           wireStateMiles(el);
           el.querySelector('#trip-form').addEventListener('submit', ev => {
@@ -361,6 +502,7 @@ export function renderTrips() {
               loadNum:       fd.get('loadNum').trim(),
               notes:         fd.get('notes').trim(),
               stateMiles:    collectStateMiles(el),
+              receiptPhoto:  fd.get('receiptPhoto') || null,
             });
             closeModal();
             toast('Trip updated ✓');
