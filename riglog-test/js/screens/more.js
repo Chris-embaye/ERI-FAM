@@ -1,4 +1,5 @@
 import { getDVIRs, getDetentionSessions, getActiveDetention, getSettings, getMaintenanceLogs } from '../store.js';
+import { toast } from '../modal.js';
 
 const chevron = `<svg width="16" height="16" fill="none" stroke="rgba(100,116,139,0.7)" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
 
@@ -157,61 +158,72 @@ export function renderMore() {
     </div>`;
 
   function mount(container) {
-    const rateEl  = container.querySelector('#lc-rate');
-    const milesEl = container.querySelector('#lc-miles');
-    const emptyEl = container.querySelector('#lc-empty');
-    const ppgEl   = container.querySelector('#lc-ppg');
-    const btn     = container.querySelector('#lc-btn');
-    const result  = container.querySelector('#lc-result');
-    const rpmOut  = container.querySelector('#lc-rpm-out');
-    const fuelOut = container.querySelector('#lc-fuel-out');
-    const netOut  = container.querySelector('#lc-net-out');
-    const verdict = container.querySelector('#lc-verdict');
-
+    const btn = container.querySelector('#lc-btn');
     if (!btn) return;
 
     btn.addEventListener('click', () => {
-      const rate      = parseFloat(rateEl.value)  || 0;
-      const loaded    = parseFloat(milesEl.value) || 0;
-      const empty     = parseFloat(emptyEl.value) || 0;
-      const ppg       = parseFloat(ppgEl.value)   || 3.99;
-      const mpg       = settings.targetMPG || 6.5;
-      const targetRPM = settings.targetRPM || 2.00;
-      const dispPct   = settings.dispatchPct || 0;
+      try {
+        const rateEl  = container.querySelector('#lc-rate');
+        const milesEl = container.querySelector('#lc-miles');
+        const emptyEl = container.querySelector('#lc-empty');
+        const ppgEl   = container.querySelector('#lc-ppg');
+        const result  = container.querySelector('#lc-result');
+        const rpmOut  = container.querySelector('#lc-rpm-out');
+        const fuelOut = container.querySelector('#lc-fuel-out');
+        const netOut  = container.querySelector('#lc-net-out');
+        const verdict = container.querySelector('#lc-verdict');
 
-      if (!rate || !loaded) return;
+        const rate   = parseFloat(rateEl?.value)  || 0;
+        const loaded = parseFloat(milesEl?.value) || 0;
+        const empty  = parseFloat(emptyEl?.value) || 0;
+        const ppg    = parseFloat(ppgEl?.value)   || 3.99;
 
-      const totalMiles  = loaded + empty;
-      const fuelCost    = (totalMiles / mpg) * ppg;
-      const netRevenue  = rate * (1 - dispPct / 100);
-      const rpm         = rate / loaded;
-      const net         = netRevenue - fuelCost;
+        if (!rate && !loaded) { toast('Enter Offered Rate and Loaded Miles', 'error'); return; }
+        if (!rate)            { toast('Enter the Offered Rate ($)', 'error'); return; }
+        if (!loaded)          { toast('Enter the Loaded Miles', 'error'); return; }
 
-      rpmOut.textContent  = `$${rpm.toFixed(2)}/mi`;
-      fuelOut.textContent = `-$${Math.round(fuelCost).toLocaleString()}`;
-      netOut.textContent  = (net < 0 ? '-$' : '$') + Math.abs(Math.round(net)).toLocaleString();
-      netOut.style.color  = net >= 0 ? '#4ade80' : '#f87171';
+        const cfg = getSettings();
+        const mpg       = Number(cfg?.targetMPG)   || 6.5;
+        const targetRPM = Number(cfg?.targetRPM)   || 2.00;
+        const dispPct   = Number(cfg?.dispatchPct) || 0;
 
-      const pctOfTarget = rpm / targetRPM;
-      let bg, border, text, icon;
-      if (pctOfTarget >= 1) {
-        bg = 'rgba(21,128,61,0.15)'; border = 'rgba(21,128,61,0.4)';
-        text = '#4ade80'; icon = '✓';
-        verdict.textContent = `${icon} TAKE IT — $${rpm.toFixed(2)}/mi beats your $${targetRPM.toFixed(2)} target`;
-      } else if (pctOfTarget >= 0.85) {
-        bg = 'rgba(251,191,36,0.1)'; border = 'rgba(251,191,36,0.3)';
-        text = '#fbbf24'; icon = '~';
-        verdict.textContent = `${icon} BORDERLINE — ${Math.round(pctOfTarget*100)}% of your $${targetRPM.toFixed(2)} target`;
-      } else {
-        bg = 'rgba(220,38,38,0.12)'; border = 'rgba(220,38,38,0.35)';
-        text = '#f87171'; icon = '✕';
-        verdict.textContent = `${icon} PASS — only $${rpm.toFixed(2)}/mi, need $${targetRPM.toFixed(2)}`;
+        const totalMiles = loaded + empty;
+        const fuelCost   = (totalMiles / mpg) * ppg;
+        const netRevenue = rate * (1 - dispPct / 100);
+        const rpm        = rate / loaded;
+        const net        = netRevenue - fuelCost;
+
+        if (rpmOut)  rpmOut.textContent  = `$${rpm.toFixed(2)}/mi`;
+        if (fuelOut) fuelOut.textContent = `-$${Math.round(fuelCost).toLocaleString()}`;
+        if (netOut) {
+          netOut.textContent = (net < 0 ? '-$' : '$') + Math.abs(Math.round(net)).toLocaleString();
+          netOut.style.color = net >= 0 ? '#4ade80' : '#f87171';
+        }
+
+        const pctOfTarget = rpm / targetRPM;
+        let bg, border, text, msg;
+        if (pctOfTarget >= 1) {
+          bg = 'rgba(21,128,61,0.15)'; border = 'rgba(21,128,61,0.4)'; text = '#4ade80';
+          msg = `✓ TAKE IT — $${rpm.toFixed(2)}/mi beats your $${targetRPM.toFixed(2)} target`;
+        } else if (pctOfTarget >= 0.85) {
+          bg = 'rgba(251,191,36,0.1)'; border = 'rgba(251,191,36,0.3)'; text = '#fbbf24';
+          msg = `~ BORDERLINE — ${Math.round(pctOfTarget * 100)}% of your $${targetRPM.toFixed(2)} target`;
+        } else {
+          bg = 'rgba(220,38,38,0.12)'; border = 'rgba(220,38,38,0.35)'; text = '#f87171';
+          msg = `✕ PASS — only $${rpm.toFixed(2)}/mi, need $${targetRPM.toFixed(2)}`;
+        }
+
+        if (result) {
+          result.style.background  = bg;
+          result.style.borderColor = border;
+          result.style.display     = 'block';
+        }
+        if (verdict) { verdict.textContent = msg; verdict.style.color = text; }
+        if (rpmOut)  rpmOut.style.color = text;
+      } catch (err) {
+        console.error('[lc-btn]', err);
+        toast('Calculator error — check your inputs', 'error');
       }
-      result.style.background  = bg;
-      result.style.borderColor = border;
-      verdict.style.color      = text;
-      rpmOut.style.color       = text;
-      result.style.display     = 'block';
     });
   }
 
