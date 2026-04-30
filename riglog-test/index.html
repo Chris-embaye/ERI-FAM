@@ -45,12 +45,19 @@
     window.__RIGLOG_TEST__ = true;
   </script>
 </head>
-<body class="bg-black text-white overflow-hidden select-none">
+<body class="text-white overflow-hidden select-none" style="background:rgb(4,10,18)">
 
-  <div id="app" class="flex flex-col max-w-md mx-auto bg-black" style="height:100dvh">
+  <!-- Ambient floating glow orbs — behind everything -->
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div id="app" class="flex flex-col max-w-md mx-auto" style="height:100dvh;background:transparent;position:relative;z-index:1">
     <main id="screen" class="flex-1 overflow-y-auto overscroll-contain"></main>
 
-    <nav id="bottom-nav" class="border-t border-gray-800 bg-black flex justify-around shrink-0 pb-safe">
+    <nav id="bottom-nav" class="rl-nav flex justify-around shrink-0 pb-safe">
       <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-orange-600" data-screen="dashboard">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         <span class="text-xs">Dashboard</span>
@@ -80,5 +87,30 @@
   </div>
 
   <script type="module" src="js/app.js"></script>
+
+  <script>
+    // 3D card tilt on touch — subtle perspective tilt follows finger
+    (function() {
+      let active = null;
+      document.addEventListener('touchstart', e => {
+        active = e.target.closest('.glass-card, .dash-hero-card');
+        if (active) active.style.transition = 'none';
+      }, { passive: true });
+      document.addEventListener('touchmove', e => {
+        if (!active) return;
+        const r = active.getBoundingClientRect();
+        const x = (e.touches[0].clientX - r.left) / r.width  - 0.5;
+        const y = (e.touches[0].clientY - r.top)  / r.height - 0.5;
+        active.style.transform =
+          `perspective(600px) rotateY(${x * 7}deg) rotateX(${-y * 7}deg) translateZ(6px)`;
+      }, { passive: true });
+      document.addEventListener('touchend', () => {
+        if (!active) return;
+        active.style.transition = 'transform 0.5s cubic-bezier(0.22,1,0.36,1)';
+        active.style.transform  = '';
+        active = null;
+      }, { passive: true });
+    })();
+  </script>
 </body>
 </html>
