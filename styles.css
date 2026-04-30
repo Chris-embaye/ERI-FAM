@@ -1145,7 +1145,8 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
   background: var(--accent);
 }
-.radio-card-icon { font-size: 1.8rem; }
+.radio-card-icon { font-size: 1.8rem; display: flex; align-items: center; justify-content: center; }
+.radio-card-icon .radio-logo-img { width: 90px; height: auto; border-radius: 10px; display: block; }
 .radio-card-name { font-size: 0.88rem; font-weight: 700; }
 .radio-card-desc { font-size: 0.71rem; color: var(--text-sub); }
 .radio-card-lang {
@@ -1159,7 +1160,8 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
   display: flex; align-items: center; gap: 14px;
 }
-.rnp-art { font-size: 2rem; flex-shrink: 0; }
+.rnp-art { font-size: 2rem; flex-shrink: 0; display: flex; align-items: center; }
+.rnp-art .radio-logo-img { width: 58px; height: auto; border-radius: 8px; }
 .rnp-info { flex: 1; min-width: 0; }
 .rnp-name { font-size: 0.92rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rnp-status { display: flex; align-items: center; gap: 5px; font-size: 0.71rem; color: var(--text-sub); margin-top: 3px; }
@@ -2137,6 +2139,11 @@ body.theme-glass .upload-zone { background: rgba(255,255,255,0.04); backdrop-fil
   font-size: 5.5rem; margin-bottom: 14px; position: relative; z-index: 1;
   filter: drop-shadow(0 0 32px rgba(139,92,246,0.8));
   animation: radioFloat 3.5s ease-in-out infinite;
+  display: flex; align-items: center; justify-content: center;
+}
+.radio-fs-icon .radio-logo-img {
+  width: 240px; height: auto; border-radius: 20px;
+  box-shadow: 0 0 40px rgba(139,92,246,0.5), 0 12px 48px rgba(0,0,0,0.6);
 }
 @keyframes radioFloat {
   0%,100% { transform: translateY(0px); }

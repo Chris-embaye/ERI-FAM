@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Eritrean Music Radio Logo</title>
+  <style>
+    body { margin: 0; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 24px; font-family: Arial, sans-serif; }
+    h2 { color: #D4A844; letter-spacing: 2px; font-size: 1rem; margin: 0; }
+    img { border-radius: 12px; }
+    button {
+      padding: 12px 28px; background: linear-gradient(135deg,#7c72ff,#a78bfa);
+      color: #fff; border: none; border-radius: 8px; font-size: 1rem;
+      cursor: pointer; font-weight: 600; letter-spacing: 1px;
+    }
+    button:hover { opacity: 0.9; }
+    canvas { display: none; }
+    p { color: #888; font-size: .8rem; margin: 0; }
+  </style>
+</head>
+<body>
+  <h2>ERITREAN MUSIC RADIO — LOGO PREVIEW</h2>
+  <img id="svgImg" src="radio-logo.svg" width="520" height="340" alt="Radio Logo"/>
+  <button onclick="savePng()">Download as PNG</button>
+  <p>Or right-click the image above → Save image as…</p>
+  <canvas id="c"></canvas>
+  <script>
+    function savePng() {
+      const img = document.getElementById('svgImg');
+      const canvas = document.getElementById('c');
+      canvas.width = 1040; canvas.height = 680;
+      const ctx = canvas.getContext('2d');
+      const hi = new Image();
+      hi.onload = () => {
+        ctx.drawImage(hi, 0, 0, 1040, 680);
+        const link = document.createElement('a');
+        link.download = 'eritrean-music-radio-logo.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+      hi.src = 'radio-logo.svg';
+    }
+  </script>
+</body>
+</html>

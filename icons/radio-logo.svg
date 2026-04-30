@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 340" width="520" height="340">
+  <defs>
+    <!-- 3D body gradient: light top-left → dark bottom-right -->
+    <linearGradient id="bodyTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#A0712A"/>
+      <stop offset="30%"  stop-color="#7A5218"/>
+      <stop offset="70%"  stop-color="#5C3C0D"/>
+      <stop offset="100%" stop-color="#3A2208"/>
+    </linearGradient>
+    <linearGradient id="bodyFace" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#8B6020"/>
+      <stop offset="50%"  stop-color="#6B4710"/>
+      <stop offset="100%" stop-color="#4A2F08"/>
+    </linearGradient>
+    <!-- Side face (right) for 3D extrusion -->
+    <linearGradient id="sideGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#3A2208"/>
+      <stop offset="100%" stop-color="#241405"/>
+    </linearGradient>
+    <!-- Bottom face for 3D extrusion -->
+    <linearGradient id="bottomGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#3A2208"/>
+      <stop offset="100%" stop-color="#1A0C02"/>
+    </linearGradient>
+    <!-- Display screen -->
+    <linearGradient id="displayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#5DDDD4"/>
+      <stop offset="40%"  stop-color="#2BB8AE"/>
+      <stop offset="100%" stop-color="#0D7A72"/>
+    </linearGradient>
+    <!-- Display glass sheen -->
+    <linearGradient id="displaySheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="rgba(255,255,255,0.25)"/>
+      <stop offset="50%"  stop-color="rgba(255,255,255,0.05)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    <!-- Big knob -->
+    <radialGradient id="knobBig" cx="35%" cy="30%" r="70%">
+      <stop offset="0%"   stop-color="#666"/>
+      <stop offset="40%"  stop-color="#333"/>
+      <stop offset="100%" stop-color="#111"/>
+    </radialGradient>
+    <!-- Small knob -->
+    <radialGradient id="knobSm" cx="35%" cy="30%" r="70%">
+      <stop offset="0%"   stop-color="#555"/>
+      <stop offset="100%" stop-color="#111"/>
+    </radialGradient>
+    <!-- Grille dot pattern -->
+    <pattern id="dots" x="0" y="0" width="9" height="9" patternUnits="userSpaceOnUse">
+      <circle cx="4.5" cy="4.5" r="2.2" fill="rgba(0,0,0,0.55)"/>
+    </pattern>
+    <!-- Gold metallic for brand text bg -->
+    <linearGradient id="goldBar" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#D4A844"/>
+      <stop offset="50%"  stop-color="#A07830"/>
+      <stop offset="100%" stop-color="#7A5220"/>
+    </linearGradient>
+    <!-- Antenna gradient -->
+    <linearGradient id="antennaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#C9A055"/>
+      <stop offset="50%"  stop-color="#E8C878"/>
+      <stop offset="100%" stop-color="#A07030"/>
+    </linearGradient>
+    <!-- Overall drop shadow -->
+    <filter id="dropShadow" x="-8%" y="-8%" width="125%" height="135%">
+      <feDropShadow dx="6" dy="10" stdDeviation="10" flood-color="rgba(0,0,0,0.65)"/>
+    </filter>
+    <filter id="innerGlow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- ─── GROUND SHADOW ─── -->
+  <ellipse cx="258" cy="338" rx="200" ry="9" fill="rgba(0,0,0,0.35)"/>
+
+  <!-- ─── 3D EXTRUSION FACES ─── -->
+  <!-- Right extrusion side -->
+  <path d="M430,28 L450,48 L450,298 L430,278 Z" fill="url(#sideGrad)"/>
+  <!-- Bottom extrusion -->
+  <path d="M30,278 L50,298 L450,298 L430,278 Z" fill="url(#bottomGrad)"/>
+
+  <!-- ─── MAIN BODY FACE ─── -->
+  <rect x="30" y="28" width="400" height="250" rx="18" fill="url(#bodyFace)" filter="url(#dropShadow)"/>
+
+  <!-- Body highlight (top-left gleam) -->
+  <ellipse cx="120" cy="80" rx="100" ry="50" fill="rgba(255,255,255,0.07)" transform="rotate(-15,120,80)"/>
+
+  <!-- Edge highlight top -->
+  <rect x="30" y="28" width="400" height="4" rx="2" fill="rgba(255,255,255,0.12)"/>
+  <!-- Edge highlight left -->
+  <rect x="30" y="28" width="4" height="250" rx="2" fill="rgba(255,255,255,0.10)"/>
+
+  <!-- ─── ANTENNA ─── -->
+  <rect x="370" y="2" width="7" height="80" rx="3.5" fill="url(#antennaGrad)"/>
+  <ellipse cx="373" cy="2" rx="5" ry="3" fill="#E8C878"/>
+
+  <!-- ─── FREQUENCY DISPLAY ─── -->
+  <!-- Display outer bezel -->
+  <rect x="44" y="40" width="315" height="66" rx="10" fill="#111"/>
+  <!-- Display screen -->
+  <rect x="47" y="43" width="309" height="60" rx="8" fill="url(#displayGrad)"/>
+  <!-- Frequency scale lines -->
+  <g stroke="rgba(255,255,255,0.25)" stroke-width="0.8">
+    <line x1="80"  y1="48" x2="80"  y2="98"/>
+    <line x1="115" y1="48" x2="115" y2="98"/>
+    <line x1="150" y1="48" x2="150" y2="98"/>
+    <line x1="185" y1="48" x2="185" y2="98"/>
+    <line x1="220" y1="48" x2="220" y2="98"/>
+    <line x1="255" y1="48" x2="255" y2="98"/>
+    <line x1="290" y1="48" x2="290" y2="98"/>
+    <line x1="325" y1="48" x2="325" y2="98"/>
+  </g>
+  <!-- Half-height ticks between -->
+  <g stroke="rgba(255,255,255,0.15)" stroke-width="0.6">
+    <line x1="97"  y1="55" x2="97"  y2="90"/>
+    <line x1="132" y1="55" x2="132" y2="90"/>
+    <line x1="167" y1="55" x2="167" y2="90"/>
+    <line x1="202" y1="55" x2="202" y2="90"/>
+    <line x1="237" y1="55" x2="237" y2="90"/>
+    <line x1="272" y1="55" x2="272" y2="90"/>
+    <line x1="307" y1="55" x2="307" y2="90"/>
+    <line x1="342" y1="55" x2="342" y2="90"/>
+  </g>
+  <!-- Frequency labels -->
+  <text x="80"  y="96" font-family="monospace" font-size="8" fill="rgba(255,255,255,0.55)" text-anchor="middle">88</text>
+  <text x="150" y="96" font-family="monospace" font-size="8" fill="rgba(255,255,255,0.55)" text-anchor="middle">96</text>
+  <text x="220" y="96" font-family="monospace" font-size="8" fill="rgba(255,255,255,0.55)" text-anchor="middle">FM</text>
+  <text x="290" y="96" font-family="monospace" font-size="8" fill="rgba(255,255,255,0.55)" text-anchor="middle">104</text>
+  <text x="345" y="96" font-family="monospace" font-size="8" fill="rgba(255,255,255,0.55)" text-anchor="middle">AM</text>
+  <!-- Needle indicator -->
+  <line x1="220" y1="43" x2="220" y2="99" stroke="#FF3B30" stroke-width="1.8"/>
+  <polygon points="216,43 224,43 220,51" fill="#FF3B30"/>
+  <!-- Display glass sheen -->
+  <rect x="47" y="43" width="309" height="30" rx="8" fill="url(#displaySheen)"/>
+  <!-- "My Stereo" badge (top-right of display) -->
+  <rect x="328" y="46" width="56" height="18" rx="4" fill="rgba(0,0,0,0.35)"/>
+  <text x="356" y="58" font-family="Arial" font-size="9" font-weight="bold" fill="#AAFFF5" text-anchor="middle">My Stereo</text>
+
+  <!-- ─── SPEAKER GRILLE ─── -->
+  <!-- Grille recessed bevel -->
+  <rect x="44" y="118" width="285" height="148" rx="8" fill="rgba(0,0,0,0.5)"/>
+  <rect x="46" y="120" width="281" height="144" rx="7" fill="#0D0D0D"/>
+  <!-- Dot pattern -->
+  <rect x="46" y="120" width="281" height="144" rx="7" fill="url(#dots)"/>
+  <!-- Grille shine -->
+  <rect x="46" y="120" width="281" height="30" rx="7" fill="rgba(255,255,255,0.03)"/>
+  <!-- Grille outer frame highlight -->
+  <rect x="44" y="118" width="285" height="148" rx="8" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+
+  <!-- Sound wave lines over grille (decorative) -->
+  <g stroke="rgba(93,221,212,0.18)" stroke-width="1.5" fill="none">
+    <path d="M 90 160 Q 100 148 110 160 Q 120 172 130 160"/>
+    <path d="M 85 160 Q 100 140 115 160 Q 130 180 145 160"/>
+    <path d="M 80 160 Q 100 132 120 160 Q 140 188 160 160"/>
+  </g>
+
+  <!-- ─── RIGHT CONTROL PANEL ─── -->
+  <rect x="339" y="118" width="82" height="148" rx="10" fill="rgba(0,0,0,0.22)"/>
+
+  <!-- BIG TUNING KNOB -->
+  <!-- Knob shadow -->
+  <circle cx="380" cy="168" r="35" fill="rgba(0,0,0,0.5)" transform="translate(3,4)"/>
+  <!-- Outer ring -->
+  <circle cx="380" cy="168" r="35" fill="#0D0D0D"/>
+  <circle cx="380" cy="168" r="33" fill="url(#knobBig)"/>
+  <!-- Ridged edge marks (8 ridges) -->
+  <g fill="rgba(255,255,255,0.18)">
+    <rect x="378" y="135" width="4" height="7" rx="2" transform="rotate(0,380,168)"/>
+    <rect x="378" y="135" width="4" height="7" rx="2" transform="rotate(45,380,168)"/>
+    <rect x="378" y="135" width="4" height="7" rx="2" transform="rotate(90,380,168)"/>
+    <rect x="378" y="135" width="4" height="7" rx="2" transform="rotate(135,380,168)"/>
+    <rect x="378" y="135" width="4" height="7" rx="2" transform="rotate(180,380,168)"/>
+    <rect x="378" y="135" width="4" height="7" rx="2" transform="rotate(225,380,168)"/>
+    <rect x="378" y="135" width="4" height="7" rx="2" transform="rotate(270,380,168)"/>
+    <rect x="378" y="135" width="4" height="7" rx="2" transform="rotate(315,380,168)"/>
+  </g>
+  <!-- Inner circle -->
+  <circle cx="380" cy="168" r="18" fill="#1A1A1A"/>
+  <circle cx="380" cy="168" r="14" fill="#222"/>
+  <!-- Center dot -->
+  <circle cx="380" cy="168" r="5" fill="#444"/>
+  <!-- Tuning indicator line -->
+  <line x1="380" y1="148" x2="380" y2="156" stroke="#FF3B30" stroke-width="2" stroke-linecap="round"/>
+  <!-- Knob highlight -->
+  <ellipse cx="371" cy="156" rx="9" ry="5" fill="rgba(255,255,255,0.13)" transform="rotate(-25,371,156)"/>
+
+  <!-- SMALL VOLUME KNOB -->
+  <!-- Shadow -->
+  <circle cx="380" cy="228" r="20" fill="rgba(0,0,0,0.5)" transform="translate(2,3)"/>
+  <circle cx="380" cy="228" r="20" fill="#0D0D0D"/>
+  <circle cx="380" cy="228" r="18" fill="url(#knobSm)"/>
+  <circle cx="380" cy="228" r="8"  fill="#1A1A1A"/>
+  <circle cx="380" cy="228" r="4"  fill="#333"/>
+  <!-- Small knob highlight -->
+  <ellipse cx="374" cy="222" rx="6" ry="3.5" fill="rgba(255,255,255,0.12)" transform="rotate(-25,374,222)"/>
+
+  <!-- ─── BRAND BAR ─── -->
+  <rect x="44" y="276" width="285" height="18" rx="4" fill="url(#goldBar)"/>
+  <text x="186" y="289"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="13" font-weight="bold"
+        fill="#FFF8E7" text-anchor="middle" letter-spacing="2"
+        style="text-shadow: 0 1px 2px rgba(0,0,0,0.6)">
+    Eritrean Music Radio
+  </text>
+
+  <!-- ─── CORNER SCREWS ─── -->
+  <g fill="#3A2208" stroke="#2A1804" stroke-width="0.8">
+    <circle cx="52" cy="48" r="5"/>
+    <line x1="49" y1="48" x2="55" y2="48" stroke="#1A0C02" stroke-width="1.2"/>
+    <line x1="52" y1="45" x2="52" y2="51" stroke="#1A0C02" stroke-width="1.2"/>
+    <circle cx="418" cy="48" r="5"/>
+    <line x1="415" y1="48" x2="421" y2="48" stroke="#1A0C02" stroke-width="1.2"/>
+    <line x1="418" y1="45" x2="418" y2="51" stroke="#1A0C02" stroke-width="1.2"/>
+    <circle cx="52" cy="262" r="5"/>
+    <line x1="49" y1="262" x2="55" y2="262" stroke="#1A0C02" stroke-width="1.2"/>
+    <line x1="52" y1="259" x2="52" y2="265" stroke="#1A0C02" stroke-width="1.2"/>
+    <circle cx="418" cy="262" r="5"/>
+    <line x1="415" y1="262" x2="421" y2="262" stroke="#1A0C02" stroke-width="1.2"/>
+    <line x1="418" y1="259" x2="418" y2="265" stroke="#1A0C02" stroke-width="1.2"/>
+  </g>
+
+  <!-- ─── OVERALL BODY EDGE BEVEL ─── -->
+  <rect x="30" y="28" width="400" height="250" rx="18"
+        fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+</svg>

@@ -2018,7 +2018,7 @@ function renderRadioGrid() {
   const grid = document.getElementById('radioGrid');
   grid.innerHTML = RADIO_STATIONS.map(s => `
     <div class="radio-card${currentStation?.id === s.id ? ' playing' : ''}" data-rid="${s.id}">
-      <div class="radio-card-icon">${s.icon}</div>
+      <div class="radio-card-icon"><img src="./icons/radio-logo.svg" alt="${esc(s.name)}" class="radio-logo-img"/></div>
       <div class="radio-card-name">${esc(s.name)}</div>
       <div class="radio-card-desc">${esc(s.desc)}</div>
       <div class="radio-card-lang">${esc(s.lang)}</div>
@@ -2035,7 +2035,6 @@ function renderRadioGrid() {
 
 function openRadioFullscreen() {
   if (!currentStation) return;
-  document.getElementById('radioFsIcon').textContent = currentStation.icon;
   document.getElementById('radioFsName').textContent = currentStation.name;
   document.getElementById('radioFsDesc').textContent = currentStation.desc;
   document.getElementById('radioFullscreen').style.display = 'flex';
