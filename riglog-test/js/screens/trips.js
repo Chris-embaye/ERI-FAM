@@ -104,14 +104,15 @@ function tripForm(existing = null) {
               <p class="text-xs mt-1" style="color:rgba(103,232,249,0.5)">This takes a few seconds</p>
             </div>
           </div>
-          <label id="trip-scan-label" class="receipt-cap-label" for="trip-doc-input">
+          <label id="trip-scan-label" class="receipt-cap-label">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <rect x="5" y="2" width="14" height="20" rx="2"/>
               <line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/>
             </svg>
             Scan Rate Con / BOL
           </label>
-          <input type="file" id="trip-doc-input" accept="image/*" class="hidden">
+          <input type="file" id="trip-doc-input" accept="image/*"
+                 style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none">
           <input type="hidden" id="trip-doc-data" name="receiptPhoto" value="${t.receiptPhoto || ''}">
           <div id="trip-scan-results" class="hidden mt-2 rounded-xl p-3"
                style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2)"></div>
@@ -344,20 +345,26 @@ export function renderTrips() {
       btn.innerHTML = `${LOC_ICON} Locating…`;
       btn.disabled  = true;
 
-      const result = await requestLocation();
+      // Short hint so the user knows to accept the OS dialog
+      const hint = setTimeout(() => toast('Allow location when your browser asks', 'info'), 1500);
+
+      const result = await requestLocation({ timeout: 15000 });
+      clearTimeout(hint);
 
       if (result.error === 'denied' || result.error === 'unsupported') {
         btn.innerHTML = `${LOC_ICON} My Location`;
         btn.disabled  = false;
-        toast(result.error === 'unsupported'
-          ? 'Location not supported on this device'
-          : locationDeniedMsg(), 'error');
+        if (result.error === 'unsupported') {
+          toast('Location not supported on this device', 'error');
+        } else {
+          toast(locationDeniedMsg(), 'error');
+        }
         return;
       }
       if (result.error) {
         btn.innerHTML = `${LOC_ICON} My Location`;
         btn.disabled  = false;
-        toast('Could not get location — check signal and try again', 'error');
+        toast('Could not get location — check GPS signal and try again', 'error');
         return;
       }
 
@@ -395,6 +402,9 @@ export function renderTrips() {
     const SCAN_SVG   = `${DOC_SVG} Scan Rate Con / BOL`;
 
     if (!fileInput) return;
+
+    // Explicit click — keeps user-gesture chain synchronous on iOS PWA
+    scanLabel.addEventListener('click', () => fileInput.click());
 
     fileInput.addEventListener('change', async () => {
       const file = fileInput.files[0];

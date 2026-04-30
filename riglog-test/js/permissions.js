@@ -26,24 +26,19 @@ export async function requestLocation(opts = {}) {
 
 export function locationDeniedMsg() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if (isIOS) {
-    return 'Location blocked. To enable: Settings → Privacy → Location Services → Safari → While Using App';
-  }
-  return 'Location blocked. Tap the 🔒 in your browser address bar → Site settings → Allow location.';
+  if (isIOS) return 'Location blocked — go to Settings → Privacy → Location Services → Safari (or RigLog) → Allow';
+  return 'Location blocked — tap the 🔒 in the address bar → Site settings → Allow location';
 }
 
 // ── Camera ────────────────────────────────────────────────────────────────────
 
 export async function checkCameraPermission() {
-  // Not all browsers support querying camera permission
   const state = await getPermissionState('camera');
   return state; // 'granted' | 'denied' | 'prompt'
 }
 
 export function cameraDeniedMsg() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if (isIOS) {
-    return 'Camera blocked. To enable: Settings → Privacy → Camera → your browser → Allow';
-  }
-  return 'Camera blocked. Tap the 🔒 in your browser address bar → Site settings → Allow camera.';
+  if (isIOS) return 'Camera blocked — go to Settings → Privacy → Camera → Safari (or RigLog) → Allow';
+  return 'Camera blocked — tap the 🔒 in the address bar → Site settings → Allow camera';
 }
