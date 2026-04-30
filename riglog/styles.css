@@ -65,3 +65,40 @@ select option { background-color: rgb(17 24 39); color: white; }
   50% { opacity: 0.6; }
 }
 .timer-active { animation: pulse-orange 2s ease-in-out infinite; }
+
+/* Receipt photo capture */
+.receipt-cap-label {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  background: rgb(31 41 55); border: 1.5px dashed rgb(55 65 81);
+  border-radius: 0.75rem; padding: 0.75rem; cursor: pointer;
+  color: rgb(156 163 175); font-size: 0.875rem; transition: border-color 0.15s, color 0.15s;
+}
+.receipt-cap-label:active { border-color: #EA580C; color: #EA580C; }
+.receipt-preview { width: 100%; border-radius: 0.625rem; border: 1px solid rgb(55 65 81); display: block; max-height: 200px; object-fit: contain; background: rgb(17 24 39); }
+.receipt-thumb { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; cursor: pointer; border: 1px solid rgb(55 65 81); flex-shrink: 0; }
+.scan-state { font-size: 0.7rem; text-align: center; color: #EA580C; padding: 0.25rem 0; margin-top: 4px; }
+
+/* DVIR section dividers */
+.dvir-section-header {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: rgb(107 114 128); font-weight: 800; padding: 0.75rem 0 0.25rem;
+  border-top: 1px solid rgb(31 41 55); margin-top: 0.5rem;
+}
+.dvir-section-header.first { border-top: none; padding-top: 0; margin-top: 0; }
+
+/* Tax screen */
+.tax-line {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.5rem 0; border-bottom: 1px solid rgb(31 41 55); font-size: 0.875rem;
+}
+.tax-bar-wrap { background: rgb(31 41 55); border-radius: 9999px; height: 5px; overflow: hidden; }
+.tax-bar { background: #EA580C; height: 5px; border-radius: 9999px; transition: width 0.4s ease; }
+
+/* Location button in trip form */
+.loc-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.7rem; color: #EA580C; padding: 3px 7px;
+  border: 1px solid rgba(234,88,12,0.4); border-radius: 0.4rem;
+  white-space: nowrap; font-weight: 700;
+}
+.loc-btn:disabled { opacity: 0.5; }

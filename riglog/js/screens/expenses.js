@@ -5,8 +5,72 @@ const CATEGORIES = ['Fuel', 'Repair', 'Toll', 'Lodging', 'Food', 'Parking', 'Sca
 
 const CAT_ICONS = {
   Fuel: '⛽', Repair: '🔧', Toll: '🛣️', Lodging: '🏨',
-  Food: '🍔', Parking: '🅿️', Scale: '⚖️', Insurance: '🛡️', Other: '📋'
+  Food: '🍔', Parking: '🅿️', Scale: '⚖️', Insurance: '🛡️', Other: '📋',
 };
+
+// ── Receipt image helpers ─────────────────────────────────────────────────────
+
+function resizeImage(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 400;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.55));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function runOCR(dataUrl) {
+  if (!window.Tesseract) return null;
+  try {
+    const { data: { text } } = await Tesseract.recognize(dataUrl, 'eng');
+    return text;
+  } catch {
+    return null;
+  }
+}
+
+function parseAmountFromText(text) {
+  if (!text) return null;
+  const lines = text.split('\n');
+  // Try to find a "total" line first
+  const totalLine = lines.find(l => /total|amount\s*due|balance\s*due|grand\s*total/i.test(l));
+  const searchIn = totalLine ? [totalLine, ...lines] : lines;
+  for (const line of searchIn) {
+    const m = line.match(/\$\s*(\d{1,4}[.,]\d{2})\b/);
+    if (m) return parseFloat(m[1].replace(',', '.'));
+  }
+  // Fallback: largest dollar amount found
+  const all = text.match(/\$\s*(\d{1,4}[.,]\d{2})/g);
+  if (all?.length) {
+    return Math.max(...all.map(a => parseFloat(a.replace(/[$\s,]/g, '').replace(',', '.'))));
+  }
+  return null;
+}
+
+function parseDateFromText(text) {
+  if (!text) return null;
+  const m = text.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
+  if (!m) return null;
+  const [, p1, p2, p3] = m;
+  const year = p3.length === 2 ? '20' + p3 : p3;
+  // MM/DD/YYYY assumed
+  const date = new Date(Number(year), Number(p1) - 1, Number(p2));
+  if (isNaN(date)) return null;
+  return date.toISOString().slice(0, 10);
+}
+
+// ── Form builder ──────────────────────────────────────────────────────────────
 
 function expenseForm(existing = null) {
   const e = existing || {};
@@ -17,6 +81,33 @@ function expenseForm(existing = null) {
         <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
       </div>
       <form id="expense-form" class="space-y-4">
+
+        <!-- Receipt camera capture -->
+        <div>
+          <label class="text-xs text-gray-400 block mb-1.5">Receipt Photo</label>
+          ${existing?.receiptPhoto ? `
+            <div id="receipt-preview-wrap" class="mb-2 relative">
+              <img id="receipt-preview" src="${existing.receiptPhoto}" class="receipt-preview" alt="Receipt">
+              <button type="button" id="receipt-clear" class="absolute top-2 right-2 bg-black/70 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-base leading-none">&times;</button>
+            </div>
+          ` : `
+            <div id="receipt-preview-wrap" class="hidden mb-2 relative">
+              <img id="receipt-preview" src="" class="receipt-preview" alt="Receipt">
+              <button type="button" id="receipt-clear" class="absolute top-2 right-2 bg-black/70 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-base leading-none">&times;</button>
+            </div>
+          `}
+          <label id="receipt-capture-label" class="receipt-cap-label" for="receipt-file-input">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            Snap Receipt Photo
+          </label>
+          <input type="file" id="receipt-file-input" accept="image/*" capture="environment" class="hidden">
+          <input type="hidden" id="receipt-photo-data" name="receiptPhoto" value="${existing?.receiptPhoto || ''}">
+          <p id="scan-status" class="scan-state hidden"></p>
+        </div>
+
         <div>
           <label class="text-xs text-gray-400 block mb-1">Category</label>
           <select name="category" class="form-input" required>
@@ -25,7 +116,7 @@ function expenseForm(existing = null) {
         </div>
         <div>
           <label class="text-xs text-gray-400 block mb-1">Amount ($)</label>
-          <input type="number" name="amount" step="0.01" min="0" placeholder="0.00"
+          <input type="number" id="expense-amount" name="amount" step="0.01" min="0" placeholder="0.00"
             class="form-input" value="${e.amount || ''}" required>
         </div>
         <div>
@@ -35,7 +126,7 @@ function expenseForm(existing = null) {
         </div>
         <div>
           <label class="text-xs text-gray-400 block mb-1">Date</label>
-          <input type="date" name="date" class="form-input" value="${e.date || today()}" required>
+          <input type="date" id="expense-date" name="date" class="form-input" value="${e.date || today()}" required>
         </div>
         <button type="submit" class="btn-primary mt-2">${existing ? 'Save Changes' : 'Add Expense'}</button>
         <button type="button" onclick="closeModal()" class="btn-ghost">Cancel</button>
@@ -43,19 +134,17 @@ function expenseForm(existing = null) {
     </div>`;
 }
 
+// ── Main render ───────────────────────────────────────────────────────────────
+
 export function renderExpenses() {
   const expenses = getExpenses();
 
-  // Group totals by category this month
-  const thisMonth = new Date().toISOString().slice(0, 7);
-  const monthExp  = expenses.filter(e => e.date && e.date.startsWith(thisMonth));
+  const thisMonth  = new Date().toISOString().slice(0, 7);
+  const monthExp   = expenses.filter(e => e.date?.startsWith(thisMonth));
   const monthTotal = monthExp.reduce((s, e) => s + Number(e.amount || 0), 0);
 
-  // This week total
-  const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
-  const weekTotal = expenses
-    .filter(e => e.date >= weekAgo)
-    .reduce((s, e) => s + Number(e.amount || 0), 0);
+  const weekAgo    = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  const weekTotal  = expenses.filter(e => e.date >= weekAgo).reduce((s, e) => s + Number(e.amount || 0), 0);
 
   const html = `
     <div class="flex flex-col h-full bg-black text-white">
@@ -69,7 +158,6 @@ export function renderExpenses() {
         </button>
       </div>
 
-      <!-- Week total banner -->
       ${weekTotal > 0 ? `
       <div class="mx-4 mt-4 bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex justify-between items-center">
         <span class="text-sm text-gray-400">This Week</span>
@@ -94,7 +182,8 @@ export function renderExpenses() {
                 <p class="text-xs text-gray-600 mt-0.5">${fmtDate(e.date)}</p>
               </div>
             </div>
-            <div class="flex items-start gap-3 shrink-0 ml-2">
+            <div class="flex items-start gap-2 shrink-0 ml-2">
+              ${e.receiptPhoto ? `<img src="${e.receiptPhoto}" class="receipt-thumb" alt="Receipt" onclick="window._viewReceipt('${e.id}')">` : ''}
               <span class="font-black text-base">${fmtMoney(e.amount, 2)}</span>
               <div class="flex flex-col gap-1">
                 <button class="edit-expense-btn text-gray-500 hover:text-white p-1" data-id="${e.id}">
@@ -111,17 +200,103 @@ export function renderExpenses() {
       </div>
     </div>`;
 
+  function wireReceiptCapture(el) {
+    const fileInput    = el.querySelector('#receipt-file-input');
+    const previewWrap  = el.querySelector('#receipt-preview-wrap');
+    const previewImg   = el.querySelector('#receipt-preview');
+    const photoData    = el.querySelector('#receipt-photo-data');
+    const scanStatus   = el.querySelector('#scan-status');
+    const amountInput  = el.querySelector('#expense-amount');
+    const dateInput    = el.querySelector('#expense-date');
+    const captureLabel = el.querySelector('#receipt-capture-label');
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      // Show preview immediately
+      const base64 = await resizeImage(file);
+      photoData.value = base64;
+      previewImg.src  = base64;
+      previewWrap.classList.remove('hidden');
+      captureLabel.innerHTML = `
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        Retake Photo`;
+
+      // Attempt OCR if Tesseract is available
+      if (window.Tesseract) {
+        scanStatus.textContent = 'Scanning receipt…';
+        scanStatus.classList.remove('hidden');
+
+        const text = await runOCR(base64);
+        if (text) {
+          const amt  = parseAmountFromText(text);
+          const date = parseDateFromText(text);
+
+          if (amt && !amountInput.value) {
+            amountInput.value = amt.toFixed(2);
+            scanStatus.textContent = `✓ Found amount: $${amt.toFixed(2)}${date ? ' and date' : ''}`;
+          } else if (amt) {
+            scanStatus.textContent = `✓ Receipt scanned`;
+          } else {
+            scanStatus.textContent = 'Scanned — enter amount manually';
+          }
+          if (date && dateInput) dateInput.value = date;
+        } else {
+          scanStatus.textContent = 'Photo saved — enter amount manually';
+        }
+      } else {
+        scanStatus.textContent = 'Photo saved for your records';
+        scanStatus.classList.remove('hidden');
+      }
+    });
+
+    el.querySelector('#receipt-clear').addEventListener('click', () => {
+      photoData.value = '';
+      previewImg.src  = '';
+      previewWrap.classList.add('hidden');
+      fileInput.value = '';
+      scanStatus.classList.add('hidden');
+      captureLabel.innerHTML = `
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        Snap Receipt Photo`;
+    });
+  }
+
   function mount(container) {
+    // View full receipt
+    window._viewReceipt = (id) => {
+      const exp = getExpenses().find(e => e.id === id);
+      if (!exp?.receiptPhoto) return;
+      openModal(`
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-3">
+            <p class="font-black">Receipt — ${exp.category}</p>
+            <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
+          </div>
+          <img src="${exp.receiptPhoto}" class="w-full rounded-xl" alt="Receipt">
+          <p class="text-xs text-gray-500 mt-2 text-center">${fmtDate(exp.date)} · ${fmtMoney(exp.amount, 2)}</p>
+        </div>`, () => {});
+    };
+
     container.querySelector('#add-expense-btn').addEventListener('click', () => {
       openModal(expenseForm(), el => {
+        wireReceiptCapture(el);
         el.querySelector('#expense-form').addEventListener('submit', ev => {
           ev.preventDefault();
           const fd = new FormData(ev.target);
           addExpense({
-            category: fd.get('category'),
-            amount: parseFloat(fd.get('amount')),
-            description: fd.get('description').trim(),
-            date: fd.get('date'),
+            category:     fd.get('category'),
+            amount:       parseFloat(fd.get('amount')),
+            description:  fd.get('description').trim(),
+            date:         fd.get('date'),
+            receiptPhoto: fd.get('receiptPhoto') || null,
           });
           closeModal();
           window.refresh();
@@ -143,14 +318,16 @@ export function renderExpenses() {
         const existing = getExpenses().find(e => e.id === btn.dataset.id);
         if (!existing) return;
         openModal(expenseForm(existing), el => {
+          wireReceiptCapture(el);
           el.querySelector('#expense-form').addEventListener('submit', ev => {
             ev.preventDefault();
             const fd = new FormData(ev.target);
             updateExpense(existing.id, {
-              category: fd.get('category'),
-              amount: parseFloat(fd.get('amount')),
-              description: fd.get('description').trim(),
-              date: fd.get('date'),
+              category:     fd.get('category'),
+              amount:       parseFloat(fd.get('amount')),
+              description:  fd.get('description').trim(),
+              date:         fd.get('date'),
+              receiptPhoto: fd.get('receiptPhoto') || null,
             });
             closeModal();
             window.refresh();

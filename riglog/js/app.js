@@ -8,6 +8,7 @@ import { renderMore }      from './screens/more.js';
 import { renderDVIR }      from './screens/dvir.js';
 import { renderDetention } from './screens/detention.js';
 import { renderSettings }  from './screens/settings.js';
+import { renderTax }       from './screens/tax.js';
 
 const SCREENS = {
   dashboard: renderDashboard,
@@ -18,9 +19,10 @@ const SCREENS = {
   dvir:      renderDVIR,
   detention: renderDetention,
   settings:  renderSettings,
+  tax:       renderTax,
 };
 
-const MORE_SCREENS = new Set(['dvir', 'detention', 'settings']);
+const MORE_SCREENS = new Set(['dvir', 'detention', 'settings', 'tax']);
 
 const bottomNav = document.getElementById('bottom-nav');
 let screenCleanup = null;

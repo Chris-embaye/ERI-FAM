@@ -1,23 +1,28 @@
-import { getDVIRs, getDetentionSessions, getActiveDetention, getSettings } from '../store.js';
+import { getDVIRs, getDetentionSessions, getActiveDetention, getSettings, getTrips, getExpenses } from '../store.js';
 
 export function renderMore() {
-  const dvirs      = getDVIRs();
-  const sessions   = getDetentionSessions();
-  const active     = getActiveDetention();
-  const settings   = getSettings();
+  const dvirs    = getDVIRs();
+  const sessions = getDetentionSessions();
+  const active   = getActiveDetention();
+  const settings = getSettings();
 
-  const lastDVIR = dvirs[0];
+  const lastDVIR     = dvirs[0];
   const lastDVIRDate = lastDVIR
     ? new Date(lastDVIR.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null;
 
   const totalDetentionClaims = sessions.reduce((s, d) => s + Number(d.value || 0), 0);
 
+  // YTD quick stats for tax card
+  const year      = new Date().getFullYear();
+  const yearStart = `${year}-01-01`;
+  const ytdRev = getTrips().filter(t => t.date >= yearStart).reduce((s, t) => s + Number(t.revenue || 0), 0);
+
   const html = `
     <div class="flex flex-col h-full bg-black text-white">
       <div class="px-4 pt-5 pb-4 border-b border-gray-800 shrink-0">
         <h1 class="text-2xl font-black">More</h1>
-        <p class="text-xs text-gray-500">Tools & settings</p>
+        <p class="text-xs text-gray-500">Tools &amp; settings</p>
       </div>
 
       <div class="flex-1 overflow-y-auto p-4 space-y-3">
@@ -50,7 +55,26 @@ export function renderMore() {
               </div>
               <div>
                 <p class="font-black">Vehicle Inspection (DVIR)</p>
-                <p class="text-xs text-gray-500 mt-0.5">${lastDVIR ? `Last: ${lastDVIRDate}` : 'No inspections yet'}</p>
+                <p class="text-xs text-gray-500 mt-0.5">${lastDVIR ? `Last: ${lastDVIRDate} · 37 check items` : '37 inspection items'}</p>
+              </div>
+            </div>
+            <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </button>
+
+        <!-- Tax Summary -->
+        <button onclick="navigate('tax')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-3">
+              <div class="bg-green-600/20 rounded-xl p-2.5">
+                <svg width="22" height="22" fill="none" stroke="#22c55e" viewBox="0 0 24 24" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                  <path d="M7 10h2l2-4 2 8 2-4h2"/>
+                </svg>
+              </div>
+              <div>
+                <p class="font-black">Tax Summary</p>
+                <p class="text-xs text-gray-500 mt-0.5">${ytdRev > 0 ? `YTD ${year} · $${Math.round(ytdRev).toLocaleString()} revenue` : `YTD ${year} estimates & quarterly payments`}</p>
               </div>
             </div>
             <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
@@ -73,11 +97,11 @@ export function renderMore() {
           </div>
         </button>
 
-        <!-- About / version -->
+        <!-- About -->
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p class="font-bold text-sm text-gray-300">Truck-Log</p>
-          <p class="text-xs text-gray-600 mt-0.5">Owner-operator toolkit · v1.0</p>
-          <p class="text-xs text-gray-700 mt-2">All data stored locally on this device. No account required.</p>
+          <p class="font-bold text-sm text-gray-300">Rig Log</p>
+          <p class="text-xs text-gray-600 mt-0.5">Owner-operator toolkit · v2.0</p>
+          <p class="text-xs text-gray-700 mt-2">All trip & expense data stored locally on this device.</p>
         </div>
 
       </div>

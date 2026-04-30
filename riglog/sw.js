@@ -1,4 +1,4 @@
-const CACHE = 'truck-log-v1';
+const CACHE = 'truck-log-v2';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.json',
   './js/app.js', './js/store.js', './js/modal.js',
@@ -6,8 +6,7 @@ const ASSETS = [
   './js/screens/trips.js', './js/screens/fuel.js',
   './js/screens/more.js', './js/screens/dvir.js',
   './js/screens/detention.js', './js/screens/settings.js',
-  './js/screens/signin.js', './js/auth.js',
-  'https://cdn.tailwindcss.com'
+  './js/screens/signin.js', './js/auth.js', './js/screens/tax.js',
 ];
 
 self.addEventListener('install', e => {

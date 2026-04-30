@@ -12,18 +12,41 @@ function monthStart() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
 }
 
+function yearStart() {
+  return `${new Date().getFullYear()}-01-01`;
+}
+
+// Estimate total tax (SE + rough federal) for YTD net income
+function estTax(net) {
+  if (net <= 0) return 0;
+  const se = net * 0.9235 * 0.153;
+  const agi = Math.max(0, net - se * 0.5 - 15000);
+  let fed = 0;
+  const brackets = [[11925,0.10],[48475,0.12],[103350,0.22],[197300,0.24],[Infinity,0.32]];
+  let prev = 0;
+  for (const [lim, rate] of brackets) {
+    if (agi <= prev) break;
+    fed += (Math.min(agi, lim) - prev) * rate;
+    prev = lim;
+  }
+  return se + fed;
+}
+
 export function renderDashboard() {
-  const allTrips = getTrips();
+  const allTrips    = getTrips();
   const allExpenses = getExpenses();
 
-  const weekAgo = daysAgo(7);
-  const twoWeeksAgo = daysAgo(14);
+  const weekAgo      = daysAgo(7);
+  const twoWeeksAgo  = daysAgo(14);
   const thisMonthStart = monthStart();
+  const thisYearStart  = yearStart();
 
   const weekTrips    = allTrips.filter(t => t.date >= weekAgo);
   const weekExpenses = allExpenses.filter(e => e.date >= weekAgo);
   const prevTrips    = allTrips.filter(t => t.date >= twoWeeksAgo && t.date < weekAgo);
   const monthTrips   = allTrips.filter(t => t.date >= thisMonthStart);
+  const ytdTrips     = allTrips.filter(t => t.date >= thisYearStart);
+  const ytdExpenses  = allExpenses.filter(e => e.date >= thisYearStart);
 
   const weekRevenue  = weekTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
   const weekMiles    = weekTrips.reduce((s, t) => s + Number(t.miles || 0), 0);
@@ -31,8 +54,14 @@ export function renderDashboard() {
   const weekExpTotal = weekExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
   const prevRevenue  = prevTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
 
-  const costPerMile  = weekMiles > 0 ? weekExpTotal / weekMiles : null;
-  const revPerHour   = weekHours > 0 ? weekRevenue / weekHours : null;
+  const ytdRevenue  = ytdTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
+  const ytdMiles    = ytdTrips.reduce((s, t) => s + Number(t.miles || 0), 0);
+  const ytdExpTotal = ytdExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const ytdNet      = Math.max(0, ytdRevenue - ytdExpTotal);
+  const ytdTaxEst   = estTax(ytdNet);
+
+  const costPerMile = weekMiles > 0 ? weekExpTotal / weekMiles : null;
+  const revPerHour  = weekHours > 0 ? weekRevenue / weekHours : null;
 
   const weekChange = prevRevenue > 0
     ? ((weekRevenue - prevRevenue) / prevRevenue * 100).toFixed(0)
@@ -42,7 +71,6 @@ export function renderDashboard() {
     ? `${Number(weekChange) >= 0 ? '↑' : '↓'} ${Math.abs(Number(weekChange))}% vs last week`
     : 'No prior week comparison';
 
-  // Best lane this month
   const bestLane = monthTrips
     .filter(t => Number(t.miles) > 0 && Number(t.revenue) > 0)
     .sort((a, b) => (Number(b.revenue) / Number(b.miles)) - (Number(a.revenue) / Number(a.miles)))[0];
@@ -75,7 +103,7 @@ export function renderDashboard() {
         ${isEmpty ? `
           <div class="flex flex-col items-center justify-center py-16 space-y-4 text-center">
             <div class="text-6xl">🚛</div>
-            <h2 class="text-xl font-black">Welcome to Truck-Log</h2>
+            <h2 class="text-xl font-black">Welcome to Rig Log</h2>
             <p class="text-gray-400 text-sm px-8">Log trips, track expenses, time detention, and inspect your truck — all in one place.</p>
             <div class="flex gap-3">
               <button onclick="navigate('trips')" class="bg-orange-600 text-black font-bold px-5 py-2.5 rounded-xl text-sm">Log First Trip</button>
@@ -83,6 +111,30 @@ export function renderDashboard() {
             </div>
           </div>
         ` : `
+
+        <!-- YTD Summary bar -->
+        ${ytdRevenue > 0 ? `
+        <button onclick="navigate('tax')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-left">
+          <div class="flex justify-between items-center mb-2">
+            <p class="text-xs font-bold uppercase tracking-wider text-gray-400">YTD ${new Date().getFullYear()}</p>
+            <span class="text-xs text-orange-600 font-bold">Tax Summary →</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p class="text-base font-black">${ytdRevenue >= 1000 ? '$'+(ytdRevenue/1000).toFixed(1)+'k' : fmtMoney(ytdRevenue)}</p>
+              <p class="text-xs text-gray-500">Revenue</p>
+            </div>
+            <div>
+              <p class="text-base font-black">${ytdMiles >= 1000 ? (ytdMiles/1000).toFixed(1)+'k' : ytdMiles.toLocaleString()}</p>
+              <p class="text-xs text-gray-500">Miles</p>
+            </div>
+            <div>
+              <p class="text-base font-black text-orange-600">${fmtMoney(ytdTaxEst)}</p>
+              <p class="text-xs text-gray-500">Est. Tax</p>
+            </div>
+          </div>
+        </button>
+        ` : ''}
 
         <!-- Weekly revenue hero card -->
         <div class="bg-gradient-to-br from-orange-600 to-orange-700 rounded-2xl p-5">
@@ -106,7 +158,6 @@ export function renderDashboard() {
         </div>
 
         ${bestLane ? `
-        <!-- Best lane -->
         <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
           <p class="text-xs text-gray-400 mb-2">Best Lane This Month</p>
           <p class="font-black text-lg">${bestLane.origin} → ${bestLane.destination}</p>
@@ -115,7 +166,6 @@ export function renderDashboard() {
         </div>
         ` : ''}
 
-        <!-- Quick stats -->
         <div class="grid grid-cols-3 gap-2">
           <div class="bg-gray-900 rounded-xl p-3 border border-gray-800 text-center">
             <p class="text-xl font-black">${weekTrips.length}</p>
@@ -132,7 +182,6 @@ export function renderDashboard() {
         </div>
 
         ${weekExpenses.length > 0 ? `
-        <!-- Weekly expense summary -->
         <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
           <div class="flex justify-between items-center mb-3">
             <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Expenses This Week</p>
@@ -148,7 +197,6 @@ export function renderDashboard() {
         </div>
         ` : ''}
 
-        <!-- Recent trips -->
         ${weekTrips.length > 0 ? `
         <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
           <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Recent Trips</p>
