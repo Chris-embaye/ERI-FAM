@@ -57,8 +57,14 @@ export async function syncDown(uid) {
   }
 }
 
+// App mode — 'trucking' | 'personal'
+export function getAppMode()    { return localStorage.getItem('rl_test_mode') || null; }
+export function setAppMode(m)   { localStorage.setItem('rl_test_mode', m); }
+export function clearAppMode()  { localStorage.removeItem('rl_test_mode'); }
+
 // TEST ENVIRONMENT — uses separate storage keys so test data never touches production
 const KEYS = {
+  // Trucking
   expenses: 'rl_test_expenses',
   trips: 'rl_test_trips',
   dvirs: 'rl_test_dvirs',
@@ -67,9 +73,23 @@ const KEYS = {
   maintenance: 'rl_test_maintenance',
   settings: 'rl_test_settings',
   activeDetention: 'rl_test_active_detention',
+  // Personal vehicle
+  pTrips:    'rl_test_p_trips',
+  pFuel:     'rl_test_p_fuel',
+  pExpenses: 'rl_test_p_expenses',
+  pMaint:    'rl_test_p_maintenance',
+  pSettings: 'rl_test_p_settings',
 };
 
 const DEFAULTS = {
+  pSettings: {
+    vehicleNickname: 'My Car',
+    vehicleMake: '', vehicleModel: '', vehicleYear: '', vehiclePlate: '',
+    fuelType: 'gas',
+    targetMPG: 30,
+    tankSize: 15,
+    currentOdometer: 0,
+  },
   settings: {
     // Truck identity
     truckId: 'My Truck',
@@ -274,6 +294,34 @@ export function deleteMaintenanceLog(id) {
 export function updateMaintenanceLog(id, data) {
   save('maintenance', getMaintenanceLogs().map(m => m.id === id ? { ...m, ...data } : m));
 }
+
+// ── Personal trips ────────────────────────────────────────────────────────────
+export const getPTrips = () => load('pTrips');
+export function addPTrip(data)        { const list = getPTrips(); const item = { id: genId(), date: today(), ...data }; list.unshift(item); save('pTrips', list); return item; }
+export function deletePTrip(id)       { save('pTrips', getPTrips().filter(t => t.id !== id)); }
+export function updatePTrip(id, data) { save('pTrips', getPTrips().map(t => t.id === id ? { ...t, ...data } : t)); }
+
+// ── Personal fuel ─────────────────────────────────────────────────────────────
+export const getPFuelLogs = () => load('pFuel');
+export function addPFuelLog(data)        { const list = getPFuelLogs(); const item = { id: genId(), date: today(), ...data }; list.unshift(item); save('pFuel', list); return item; }
+export function deletePFuelLog(id)       { save('pFuel', getPFuelLogs().filter(l => l.id !== id)); }
+export function updatePFuelLog(id, data) { save('pFuel', getPFuelLogs().map(l => l.id === id ? { ...l, ...data } : l)); }
+
+// ── Personal expenses ─────────────────────────────────────────────────────────
+export const getPExpenses = () => load('pExpenses');
+export function addPExpense(data)        { const list = getPExpenses(); const item = { id: genId(), date: today(), ...data }; list.unshift(item); save('pExpenses', list); return item; }
+export function deletePExpense(id)       { save('pExpenses', getPExpenses().filter(e => e.id !== id)); }
+export function updatePExpense(id, data) { save('pExpenses', getPExpenses().map(e => e.id === id ? { ...e, ...data } : e)); }
+
+// ── Personal maintenance ──────────────────────────────────────────────────────
+export const getPMaintenanceLogs = () => load('pMaint');
+export function addPMaintenanceLog(data)        { const list = getPMaintenanceLogs(); const item = { id: genId(), date: today(), ...data }; list.unshift(item); save('pMaint', list); return item; }
+export function deletePMaintenanceLog(id)       { save('pMaint', getPMaintenanceLogs().filter(m => m.id !== id)); }
+export function updatePMaintenanceLog(id, data) { save('pMaint', getPMaintenanceLogs().map(m => m.id === id ? { ...m, ...data } : m)); }
+
+// ── Personal settings ─────────────────────────────────────────────────────────
+export const getPSettings = () => load('pSettings');
+export function savePSettings(data) { save('pSettings', { ...getPSettings(), ...data }); }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 export const getSettings = () => load('settings');
