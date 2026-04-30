@@ -55,7 +55,8 @@ export function renderDashboard() {
   const weekMiles    = weekTrips.reduce((s, t) => s + Number(t.miles || 0), 0);
   const weekHours    = weekTrips.reduce((s, t) => s + Number(t.durationHours || 0), 0);
   const weekExpTotal = weekExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
-  const prevRevenue  = prevTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
+  // Apply same dispatch % to prev week so the comparison is apples-to-apples
+  const prevRevenue  = prevTrips.reduce((s, t) => s + Number(t.revenue || 0), 0) * (1 - dispatchPct / 100);
 
   const ytdRevenue  = ytdTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
   const ytdMiles    = ytdTrips.reduce((s, t) => s + Number(t.miles || 0), 0);

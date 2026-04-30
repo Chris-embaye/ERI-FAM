@@ -41,7 +41,6 @@ function render() {
   const user = getCurrentUser();
   const container = document.getElementById('screen');
 
-  // ── Not signed in → show auth screen, hide nav ───────────────
   if (!user) {
     bottomNav.classList.add('hidden');
     const { html, mount } = renderSignIn();
@@ -50,7 +49,6 @@ function render() {
     return;
   }
 
-  // ── Signed in → show app ──────────────────────────────────────
   bottomNav.classList.remove('hidden');
 
   const screen = window.location.hash.slice(1) || 'dashboard';
@@ -60,7 +58,6 @@ function render() {
   container.innerHTML = html;
   if (mount) screenCleanup = mount(container, navigate) || null;
 
-  // Update nav active state
   const navScreen = MORE_SCREENS.has(screen) ? 'more' : screen;
   document.querySelectorAll('.nav-btn').forEach(btn => {
     const active = btn.dataset.screen === navScreen;
@@ -69,27 +66,46 @@ function render() {
   });
 }
 
-// ── Nav button clicks ─────────────────────────────────────────────────────────
+// ── Nav ───────────────────────────────────────────────────────────────────────
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => navigate(btn.dataset.screen));
 });
 
-// ── Modal overlay click-to-close ──────────────────────────────────────────────
 document.getElementById('modal-overlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) window.closeModal?.();
 });
 
-// ── Globals used by inline onclick handlers in templates ──────────────────────
 window.navigate = navigate;
 window.refresh  = render;
 
-// ── Register service worker ───────────────────────────────────────────────────
+// ── Service Worker + auto-update ──────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    // When a new SW is found, activate it immediately once installed
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker?.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          // New version is ready — skip waiting so it takes over now
+          newWorker.postMessage('SKIP_WAITING');
+        }
+      });
+    });
+
+    // Check for updates every time the page gains focus (returning to the tab/app)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+    });
+  }).catch(() => {});
+
+  // When the active SW changes (new one took over), reload to get fresh files
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!reloading) { reloading = true; window.location.reload(); }
+  });
 }
 
-// ── Boot: initialise Firebase auth, then render ───────────────────────────────
-// Show spinner while auth state is being determined
+// ── Boot ──────────────────────────────────────────────────────────────────────
 document.getElementById('screen').innerHTML = `
   <div class="flex items-center justify-center h-full">
     <div class="text-center space-y-4">

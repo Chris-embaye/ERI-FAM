@@ -1,4 +1,4 @@
-import { getTrips, addTrip, deleteTrip, fmtMoney, fmtDate, today } from '../store.js';
+import { getTrips, addTrip, deleteTrip, updateTrip, fmtMoney, fmtDate, today } from '../store.js';
 import { openModal, closeModal } from '../modal.js';
 
 // ── Geolocation helpers ───────────────────────────────────────────────────────
@@ -152,9 +152,14 @@ export function renderTrips() {
             </div>
             <div class="flex justify-between items-center mt-2">
               <span class="text-xs text-gray-500">${miles.toLocaleString()} miles</span>
-              <button class="del-trip-btn text-gray-600 hover:text-red-500 p-1" data-id="${t.id}">
-                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-              </button>
+              <div class="flex gap-1">
+                <button class="edit-trip-btn text-gray-500 hover:text-white p-1" data-id="${t.id}">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="del-trip-btn text-gray-600 hover:text-red-500 p-1" data-id="${t.id}">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                </button>
+              </div>
             </div>
             ${t.notes ? `<p class="text-xs text-gray-600 mt-1 italic">${t.notes}</p>` : ''}
           </div>`;
@@ -206,6 +211,32 @@ export function renderTrips() {
           });
           closeModal();
           window.refresh();
+        });
+      });
+    });
+
+    container.querySelectorAll('.edit-trip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const existing = getTrips().find(t => t.id === btn.dataset.id);
+        if (!existing) return;
+        openModal(tripForm(existing), el => {
+          wireLocationBtn(el);
+          el.querySelector('#trip-form').addEventListener('submit', ev => {
+            ev.preventDefault();
+            const fd = new FormData(ev.target);
+            updateTrip(existing.id, {
+              origin:        fd.get('origin').trim().toUpperCase(),
+              destination:   fd.get('destination').trim().toUpperCase(),
+              miles:         parseFloat(fd.get('miles')),
+              revenue:       parseFloat(fd.get('revenue')),
+              durationHours: fd.get('durationHours') ? parseFloat(fd.get('durationHours')) : null,
+              date:          fd.get('date'),
+              loadNum:       fd.get('loadNum').trim(),
+              notes:         fd.get('notes').trim(),
+            });
+            closeModal();
+            window.refresh();
+          });
         });
       });
     });

@@ -97,6 +97,10 @@ export function deleteTrip(id) {
   save('trips', getTrips().filter(t => t.id !== id));
 }
 
+export function updateTrip(id, data) {
+  save('trips', getTrips().map(t => t.id === id ? { ...t, ...data } : t));
+}
+
 // ── DVIRs ─────────────────────────────────────────────────────────────────────
 export const getDVIRs = () => load('dvirs');
 
@@ -106,6 +110,10 @@ export function addDVIR(data) {
   list.unshift(item);
   save('dvirs', list);
   return item;
+}
+
+export function deleteDVIR(id) {
+  save('dvirs', getDVIRs().filter(d => d.id !== id));
 }
 
 // ── Detention sessions ────────────────────────────────────────────────────────
@@ -121,6 +129,10 @@ export function addDetentionSession(data) {
 
 export function deleteDetentionSession(id) {
   save('detention', getDetentionSessions().filter(s => s.id !== id));
+}
+
+export function updateDetentionSession(id, data) {
+  save('detention', getDetentionSessions().map(s => s.id === id ? { ...s, ...data } : s));
 }
 
 export function getActiveDetention() {
@@ -149,6 +161,10 @@ export function addFuelLog(data) {
 
 export function deleteFuelLog(id) {
   save('fuel', getFuelLogs().filter(l => l.id !== id));
+}
+
+export function updateFuelLog(id, data) {
+  save('fuel', getFuelLogs().map(l => l.id === id ? { ...l, ...data } : l));
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────

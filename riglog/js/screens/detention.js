@@ -1,5 +1,5 @@
 import {
-  getDetentionSessions, addDetentionSession, deleteDetentionSession,
+  getDetentionSessions, addDetentionSession, deleteDetentionSession, updateDetentionSession,
   getActiveDetention, setActiveDetention,
   getSettings, fmtMoney, fmtDate
 } from '../store.js';
@@ -22,9 +22,43 @@ function startForm() {
       <form id="start-detention-form" class="space-y-4">
         <div>
           <label class="text-xs text-gray-400 block mb-1">Facility Name</label>
-          <input type="text" name="facility" placeholder="Savannah Port, Walmart DC..." class="form-input" required autofocus>
+          <input type="text" name="facility" placeholder="Savannah Port, Walmart DC..."
+            class="form-input" required autofocus>
         </div>
         <button type="submit" class="btn-primary">Start Timer</button>
+        <button type="button" onclick="closeModal()" class="btn-ghost">Cancel</button>
+      </form>
+    </div>`;
+}
+
+function editSessionForm(session) {
+  return `
+    <div class="p-5">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-xl font-black">Edit Session</h2>
+        <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
+      </div>
+      <form id="edit-session-form" class="space-y-4">
+        <div>
+          <label class="text-xs text-gray-400 block mb-1">Facility Name</label>
+          <input type="text" name="facility" class="form-input" value="${session.facility || ''}" required>
+        </div>
+        <div>
+          <label class="text-xs text-gray-400 block mb-1">Claimable Value ($)</label>
+          <input type="number" name="value" step="0.01" min="0" class="form-input"
+            value="${Number(session.value || 0).toFixed(2)}">
+          <p class="text-xs text-gray-600 mt-1">Override the auto-calculated detention charge if needed.</p>
+        </div>
+        <div>
+          <label class="text-xs text-gray-400 block mb-1">Date</label>
+          <input type="date" name="date" class="form-input" value="${session.date || ''}">
+        </div>
+        <div>
+          <label class="text-xs text-gray-400 block mb-1">Notes</label>
+          <textarea name="notes" rows="2" class="form-input resize-none"
+            placeholder="Optional notes...">${session.notes || ''}</textarea>
+        </div>
+        <button type="submit" class="btn-primary">Save Changes</button>
         <button type="button" onclick="closeModal()" class="btn-ghost">Cancel</button>
       </form>
     </div>`;
@@ -38,8 +72,7 @@ export function renderDetention() {
   const rate     = Number(settings.detentionRate) || 60;
 
   function calcValue(detentionMs) {
-    const hours = detentionMs / 3600000;
-    return +(hours * rate).toFixed(2);
+    return +((detentionMs / 3600000) * rate).toFixed(2);
   }
 
   const html = `
@@ -57,7 +90,7 @@ export function renderDetention() {
       <div class="flex-1 overflow-y-auto p-4 space-y-4">
 
         ${active ? `
-        <!-- Active session card -->
+        <!-- Active session -->
         <div class="bg-gradient-to-br from-orange-600 to-orange-700 rounded-2xl p-5 text-black">
           <p class="text-xs font-bold uppercase opacity-75 tracking-wider mb-1">⏱ Active Session</p>
           <p class="font-bold opacity-80 text-sm mb-2">${active.facility}</p>
@@ -77,7 +110,6 @@ export function renderDetention() {
             </div>
           </div>
         </div>
-
         <button id="end-session-btn" class="w-full bg-green-600 text-white font-black py-3 rounded-xl text-sm">
           End &amp; Save Session
         </button>
@@ -86,7 +118,7 @@ export function renderDetention() {
         </button>
         ` : `
         <!-- No active session -->
-        <div class="flex flex-col items-center justify-center py-8 text-center">
+        <div class="flex flex-col items-center justify-center py-6 text-center">
           <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full">
             <p class="text-4xl mb-3">⏱</p>
             <p class="font-black text-lg">No active session</p>
@@ -107,20 +139,26 @@ export function renderDetention() {
                 const detMs = Math.max(0, (s.durationMs || 0) - graceMs);
                 const val   = s.value != null ? Number(s.value) : calcValue(detMs);
                 return `
-                <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex justify-between items-start">
-                  <div>
-                    <p class="font-bold text-sm">${s.facility}</p>
-                    <p class="text-xs text-gray-500 mt-0.5">${fmtDate(s.date)}</p>
-                    <p class="text-xs text-gray-600 mt-0.5">
-                      Total: ${secsToDisplay((s.durationMs || 0) / 1000)} ·
-                      Detention: ${secsToDisplay(Math.max(0, (s.durationMs || 0) - graceMs) / 1000)}
-                    </p>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-black text-green-400">${fmtMoney(val, 2)}</span>
-                    <button class="del-session-btn text-gray-600 hover:text-red-500 p-1" data-id="${s.id}">
-                      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                    </button>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                  <div class="flex justify-between items-start">
+                    <div class="min-w-0 flex-1">
+                      <p class="font-bold text-sm">${s.facility}</p>
+                      <p class="text-xs text-gray-500 mt-0.5">${fmtDate(s.date)}</p>
+                      <p class="text-xs text-gray-600 mt-0.5">
+                        Total: ${secsToDisplay((s.durationMs || 0) / 1000)} ·
+                        Detention: ${secsToDisplay(Math.max(0, (s.durationMs || 0) - graceMs) / 1000)}
+                      </p>
+                      ${s.notes ? `<p class="text-xs text-gray-600 mt-1 italic">${s.notes}</p>` : ''}
+                    </div>
+                    <div class="flex items-start gap-2 shrink-0 ml-2">
+                      <span class="font-black text-green-400">${fmtMoney(val, 2)}</span>
+                      <button class="edit-session-btn text-gray-500 hover:text-white p-1" data-id="${s.id}">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button class="del-session-btn text-gray-600 hover:text-red-500 p-1" data-id="${s.id}">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                      </button>
+                    </div>
                   </div>
                 </div>`;
               }).join('')}
@@ -138,20 +176,18 @@ export function renderDetention() {
     if (active) {
       function updateTimer() {
         const elapsedMs  = Date.now() - new Date(active.startedAt).getTime();
-        const elapsedSec = elapsedMs / 1000;
         const detMs      = Math.max(0, elapsedMs - graceMs);
         const graceLeft  = Math.max(0, graceMs - elapsedMs);
-        const val        = calcValue(detMs);
 
         const elEl  = container.querySelector('#timer-elapsed');
         const grEl  = container.querySelector('#timer-grace');
         const dtEl  = container.querySelector('#timer-detention');
         const valEl = container.querySelector('#timer-value');
 
-        if (elEl)  elEl.textContent  = secsToDisplay(elapsedSec);
+        if (elEl)  elEl.textContent  = secsToDisplay(elapsedMs / 1000);
         if (grEl)  grEl.textContent  = graceLeft > 0 ? secsToDisplay(graceLeft / 1000) + ' left' : 'Expired';
         if (dtEl)  dtEl.textContent  = detMs > 0 ? secsToDisplay(detMs / 1000) : '—';
-        if (valEl) valEl.textContent = fmtMoney(val, 2);
+        if (valEl) valEl.textContent = fmtMoney(calcValue(detMs), 2);
       }
 
       updateTimer();
@@ -161,17 +197,14 @@ export function renderDetention() {
         clearInterval(timerInterval);
         const elapsedMs = Date.now() - new Date(active.startedAt).getTime();
         const detMs     = Math.max(0, elapsedMs - graceMs);
-        const val       = calcValue(detMs);
-        const date      = active.startedAt.slice(0, 10);
-
         addDetentionSession({
-          facility: active.facility,
-          date,
-          arrivedAt: active.startedAt,
-          departedAt: new Date().toISOString(),
-          durationMs: elapsedMs,
+          facility:    active.facility,
+          date:        active.startedAt.slice(0, 10),
+          arrivedAt:   active.startedAt,
+          departedAt:  new Date().toISOString(),
+          durationMs:  elapsedMs,
           detentionMs: detMs,
-          value: val,
+          value:       calcValue(detMs),
         });
         setActiveDetention(null);
         navigate('detention');
@@ -185,7 +218,6 @@ export function renderDetention() {
         }
       });
 
-      // Cleanup: clear interval when leaving screen
       return () => clearInterval(timerInterval);
 
     } else {
@@ -194,16 +226,34 @@ export function renderDetention() {
           el.querySelector('#start-detention-form').addEventListener('submit', ev => {
             ev.preventDefault();
             const fd = new FormData(ev.target);
-            setActiveDetention({
-              facility: fd.get('facility').trim(),
-              startedAt: new Date().toISOString(),
-            });
+            setActiveDetention({ facility: fd.get('facility').trim(), startedAt: new Date().toISOString() });
             closeModal();
             navigate('detention');
           });
         });
       });
     }
+
+    container.querySelectorAll('.edit-session-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const session = getDetentionSessions().find(s => s.id === btn.dataset.id);
+        if (!session) return;
+        openModal(editSessionForm(session), el => {
+          el.querySelector('#edit-session-form').addEventListener('submit', ev => {
+            ev.preventDefault();
+            const fd = new FormData(ev.target);
+            updateDetentionSession(session.id, {
+              facility: fd.get('facility').trim(),
+              value:    parseFloat(fd.get('value')) || 0,
+              date:     fd.get('date') || session.date,
+              notes:    fd.get('notes').trim(),
+            });
+            closeModal();
+            window.refresh();
+          });
+        });
+      });
+    });
 
     container.querySelectorAll('.del-session-btn').forEach(btn => {
       btn.addEventListener('click', () => {

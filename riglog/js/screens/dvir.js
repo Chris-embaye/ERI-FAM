@@ -1,4 +1,4 @@
-import { getDVIRs, addDVIR, fmtDate } from '../store.js';
+import { getDVIRs, addDVIR, deleteDVIR, fmtDate } from '../store.js';
 
 const DVIR_SECTIONS = [
   {
@@ -160,15 +160,20 @@ export function renderDVIR() {
                 return `
                 <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
                   <div class="flex justify-between items-start">
-                    <div>
+                    <div class="min-w-0 flex-1">
                       <p class="font-bold text-sm">${d.type === 'pre' ? '🌅 Pre-Trip' : '🌙 Post-Trip'}</p>
                       <p class="text-xs text-gray-500 mt-0.5">
                         ${fmtDate(d.date)}${d.odometer ? ` · ${Number(d.odometer).toLocaleString()} mi` : ''}${d.unit ? ` · Unit ${d.unit}` : ''}
                       </p>
                     </div>
-                    <div class="text-right text-xs space-y-0.5">
-                      <div><span class="text-green-400 font-bold">${oks.length}/${total} ✓</span></div>
-                      ${defects.length > 0 ? `<div><span class="text-orange-500 font-bold">${defects.length} defect${defects.length !== 1 ? 's' : ''}</span></div>` : ''}
+                    <div class="flex items-start gap-2 shrink-0 ml-2">
+                      <div class="text-right text-xs">
+                        <div><span class="text-green-400 font-bold">${oks.length}/${total} ✓</span></div>
+                        ${defects.length > 0 ? `<div><span class="text-orange-500 font-bold">${defects.length} !</span></div>` : ''}
+                      </div>
+                      <button class="del-dvir-btn text-gray-700 hover:text-red-500 p-1" data-id="${d.id}">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                      </button>
                     </div>
                   </div>
                   ${defects.length > 0 ? `
@@ -214,6 +219,15 @@ export function renderDVIR() {
     container.querySelector('#dvir-clear').addEventListener('click', () => {
       ALL_ITEMS.forEach(item => { stateMap[item.key] = null; });
       container.querySelectorAll('.dvir-item').forEach(el => applyState(el, null));
+    });
+
+    container.querySelectorAll('.del-dvir-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (confirm('Delete this inspection record?')) {
+          deleteDVIR(btn.dataset.id);
+          window.refresh();
+        }
+      });
     });
 
     container.querySelector('#dvir-submit').addEventListener('click', () => {
