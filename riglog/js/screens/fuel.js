@@ -1,5 +1,5 @@
 import { getFuelLogs, addFuelLog, deleteFuelLog, updateFuelLog, fmtMoney, fmtDate, today } from '../store.js';
-import { openModal, closeModal } from '../modal.js';
+import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 
 function fuelForm(existing = null) {
   const l = existing || {};
@@ -156,6 +156,7 @@ export function renderFuel() {
             date:          fd.get('date'),
           });
           closeModal();
+          toast('Fuel stop saved ✓');
           window.refresh();
         });
       });
@@ -180,6 +181,7 @@ export function renderFuel() {
               date:          fd.get('date'),
             });
             closeModal();
+            toast('Fuel stop updated ✓');
             window.refresh();
           });
         });
@@ -188,10 +190,11 @@ export function renderFuel() {
 
     container.querySelectorAll('.del-fuel-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (confirm('Delete this fuel log?')) {
+        confirmSheet('Delete this fuel stop?', 'This cannot be undone.', 'Delete', () => {
           deleteFuelLog(btn.dataset.id);
+          toast('Fuel stop deleted', 'info');
           window.refresh();
-        }
+        });
       });
     });
   }

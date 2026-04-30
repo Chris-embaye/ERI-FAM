@@ -1,5 +1,7 @@
 import { getTrips, addTrip, deleteTrip, updateTrip, fmtMoney, fmtDate, today } from '../store.js';
-import { openModal, closeModal } from '../modal.js';
+import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+
+let _filter = 'month';
 
 // ── Geolocation helpers ───────────────────────────────────────────────────────
 
@@ -101,12 +103,21 @@ function tripForm(existing = null) {
 // ── Main render ───────────────────────────────────────────────────────────────
 
 export function renderTrips() {
-  const trips = getTrips();
+  const allTrips = getTrips();
 
-  const thisMonthStart = new Date().toISOString().slice(0, 7) + '-01';
-  const monthTrips   = trips.filter(t => t.date >= thisMonthStart);
+  const now            = new Date();
+  const thisMonthStart = now.toISOString().slice(0, 7) + '-01';
+  const lastMonthDate  = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthStart = lastMonthDate.toISOString().slice(0, 7) + '-01';
+  const lastMonthEnd   = thisMonthStart;
+
+  const monthTrips   = allTrips.filter(t => t.date >= thisMonthStart);
   const monthRevenue = monthTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
   const monthMiles   = monthTrips.reduce((s, t) => s + Number(t.miles   || 0), 0);
+
+  const displayTrips = _filter === 'month' ? monthTrips
+    : _filter === 'last'  ? allTrips.filter(t => t.date >= lastMonthStart && t.date < lastMonthEnd)
+    : allTrips;
 
   const html = `
     <div class="flex flex-col h-full bg-black text-white">
@@ -120,20 +131,27 @@ export function renderTrips() {
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-4 space-y-3">
-        ${trips.length === 0 ? `
-          <div class="flex flex-col items-center justify-center py-20 text-center">
+      <!-- Filter pills -->
+      <div class="flex gap-2 px-4 pt-3 pb-2 shrink-0">
+        <button class="filter-pill ${_filter === 'month' ? 'active' : ''}" data-filter="month">This Month</button>
+        <button class="filter-pill ${_filter === 'last'  ? 'active' : ''}" data-filter="last">Last Month</button>
+        <button class="filter-pill ${_filter === 'all'   ? 'active' : ''}" data-filter="all">All Time</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
+        ${displayTrips.length === 0 ? `
+          <div class="flex flex-col items-center justify-center py-16 text-center">
             <div class="text-5xl mb-4">🚛</div>
-            <p class="text-gray-400">No trips logged yet.</p>
-            <p class="text-gray-600 text-sm mt-1">Tap + to log your first run.</p>
+            <p class="text-gray-400">${allTrips.length === 0 ? 'No trips logged yet.' : 'No trips this period.'}</p>
+            <p class="text-gray-600 text-sm mt-1">${allTrips.length === 0 ? 'Tap + to log your first run.' : 'Switch to All Time or add a new trip.'}</p>
           </div>
-        ` : trips.map(t => {
+        ` : displayTrips.map(t => {
           const miles   = Number(t.miles)   || 0;
           const rev     = Number(t.revenue) || 0;
           const rPerM   = miles > 0 ? rev / miles : 0;
 
-          const borderColor = rPerM >= 1.5 ? 'border-green-600' : rPerM >= 1.0 ? 'border-orange-600' : 'border-red-600';
-          const revenueColor = rPerM >= 1.5 ? 'text-green-400' : rPerM >= 1.0 ? 'text-orange-500' : 'text-red-400';
+          const borderColor  = rPerM >= 1.5 ? 'border-green-600' : rPerM >= 1.0 ? 'border-orange-600' : 'border-red-600';
+          const revenueColor = rPerM >= 1.5 ? 'text-green-400'   : rPerM >= 1.0 ? 'text-orange-500'   : 'text-red-400';
 
           return `
           <div class="bg-gray-900 border border-gray-800 border-l-4 ${borderColor} rounded-xl p-4" data-id="${t.id}">
@@ -183,16 +201,19 @@ export function renderTrips() {
       } catch (err) {
         btn.textContent = 'My Location';
         btn.disabled = false;
-        if (err.code === 1) {
-          alert('Location permission denied. Please allow location access in your browser settings.');
-        } else {
-          alert('Could not get location. Please enter manually.');
-        }
+        toast(err.code === 1 ? 'Location permission denied' : 'Could not get location — enter manually', 'error');
       }
     });
   }
 
   function mount(container) {
+    container.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _filter = btn.dataset.filter;
+        window.refresh();
+      });
+    });
+
     container.querySelector('#add-trip-btn').addEventListener('click', () => {
       openModal(tripForm(), el => {
         wireLocationBtn(el);
@@ -210,6 +231,7 @@ export function renderTrips() {
             notes:         fd.get('notes').trim(),
           });
           closeModal();
+          toast('Trip saved ✓');
           window.refresh();
         });
       });
@@ -235,6 +257,7 @@ export function renderTrips() {
               notes:         fd.get('notes').trim(),
             });
             closeModal();
+            toast('Trip updated ✓');
             window.refresh();
           });
         });
@@ -243,10 +266,11 @@ export function renderTrips() {
 
     container.querySelectorAll('.del-trip-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (confirm('Delete this trip?')) {
+        confirmSheet('Delete this trip?', 'This cannot be undone.', 'Delete', () => {
           deleteTrip(btn.dataset.id);
+          toast('Trip deleted', 'info');
           window.refresh();
-        }
+        });
       });
     });
   }

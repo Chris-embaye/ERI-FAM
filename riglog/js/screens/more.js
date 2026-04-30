@@ -100,8 +100,8 @@ export function renderMore() {
         <!-- About -->
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
           <p class="font-bold text-sm text-gray-300">Rig Log</p>
-          <p class="text-xs text-gray-600 mt-0.5">Owner-operator toolkit · v2.0</p>
-          <p class="text-xs text-gray-700 mt-2">All trip & expense data stored locally on this device.</p>
+          <p class="text-xs text-gray-600 mt-0.5">Owner-operator toolkit · v3.0</p>
+          <p class="text-xs text-gray-700 mt-2">Data synced to your account — accessible on all your devices.</p>
         </div>
 
       </div>

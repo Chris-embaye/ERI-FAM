@@ -3,7 +3,7 @@ import {
   getActiveDetention, setActiveDetention,
   getSettings, fmtMoney, fmtDate
 } from '../store.js';
-import { openModal, closeModal } from '../modal.js';
+import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 
 function secsToDisplay(secs) {
   const h = Math.floor(secs / 3600);
@@ -207,15 +207,16 @@ export function renderDetention() {
           value:       calcValue(detMs),
         });
         setActiveDetention(null);
+        toast('Session saved ✓');
         navigate('detention');
       });
 
       container.querySelector('#cancel-session-btn')?.addEventListener('click', () => {
-        if (confirm('Cancel this session without saving?')) {
+        confirmSheet('Cancel session?', 'Timer will be discarded and nothing saved.', 'Discard', () => {
           clearInterval(timerInterval);
           setActiveDetention(null);
           navigate('detention');
-        }
+        });
       });
 
       return () => clearInterval(timerInterval);
@@ -249,6 +250,7 @@ export function renderDetention() {
               notes:    fd.get('notes').trim(),
             });
             closeModal();
+            toast('Session updated ✓');
             window.refresh();
           });
         });
@@ -257,10 +259,11 @@ export function renderDetention() {
 
     container.querySelectorAll('.del-session-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (confirm('Delete this session?')) {
+        confirmSheet('Delete this session?', 'This cannot be undone.', 'Delete', () => {
           deleteDetentionSession(btn.dataset.id);
+          toast('Session deleted', 'info');
           window.refresh();
-        }
+        });
       });
     });
   }

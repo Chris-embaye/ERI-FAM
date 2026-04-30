@@ -1,5 +1,6 @@
-import { getSettings, saveSettings } from '../store.js';
+import { getSettings, saveSettings, clearCloudData } from '../store.js';
 import { getCurrentUser, signOut, saveProfile } from '../auth.js';
+import { confirmSheet, toast } from '../modal.js';
 
 export function renderSettings() {
   const s    = getSettings();
@@ -209,9 +210,8 @@ export function renderSettings() {
         insuranceMonthly:     parseFloat(fd.get('insuranceMonthly'))     || 0,
         otherFixedMonthly:    parseFloat(fd.get('otherFixedMonthly'))    || 0,
       });
-      const btn = e.target.querySelector('[type=submit]');
-      btn.textContent = 'Saved ✓';
-      setTimeout(() => { btn.textContent = 'Save Settings'; window.refresh(); }, 1200);
+      toast('Settings saved ✓');
+      window.refresh();
     });
 
     container.querySelector('#save-profile-btn')?.addEventListener('click', async () => {
@@ -271,12 +271,13 @@ export function renderSettings() {
     });
 
     container.querySelector('#clear-btn').addEventListener('click', () => {
-      if (confirm('Delete ALL local data? This cannot be undone.')) {
+      confirmSheet('Clear all data?', 'Deletes everything — trips, expenses, fuel, DVIRs — from this device and the cloud. Cannot be undone.', 'Clear Everything', async () => {
         ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_active_detention'].forEach(k => {
           localStorage.removeItem(k);
         });
+        await clearCloudData();
         window.navigate('dashboard');
-      }
+      });
     });
 
     container.querySelector('#signout-btn')?.addEventListener('click', async () => {

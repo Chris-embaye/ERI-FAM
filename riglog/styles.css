@@ -94,6 +94,15 @@ select option { background-color: rgb(17 24 39); color: white; }
 .tax-bar-wrap { background: rgb(31 41 55); border-radius: 9999px; height: 5px; overflow: hidden; }
 .tax-bar { background: #EA580C; height: 5px; border-radius: 9999px; transition: width 0.4s ease; }
 
+/* Filter pills on list screens */
+.filter-pill {
+  font-size: 0.72rem; font-weight: 700; padding: 0.28rem 0.85rem;
+  border-radius: 9999px; border: 1px solid rgb(55 65 81);
+  color: rgb(156 163 175); background: transparent; white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.filter-pill.active { background: #EA580C; border-color: #EA580C; color: #000; }
+
 /* Location button in trip form */
 .loc-btn {
   display: inline-flex; align-items: center; gap: 4px;

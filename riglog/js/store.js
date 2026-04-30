@@ -18,12 +18,28 @@ async function pushKey(key, val) {
   const db = getDB();
   if (!db) return;
   try {
+    // Strip base64 receipt photos — they're too large for Firestore's 1MB doc limit
+    const clean = key === 'expenses'
+      ? val.map(({ receiptPhoto, ...rest }) => rest)
+      : val;
     const payload = key === 'settings'
-      ? { settings: val, at: Date.now() }
-      : { items: val, at: Date.now() };
+      ? { settings: clean, at: Date.now() }
+      : { items: clean, at: Date.now() };
     await db.collection('rl_users').doc(_uid).collection('data').doc(key).set(payload);
   } catch (e) {
     console.warn('[rl] push failed', key, e.message);
+  }
+}
+
+export async function clearCloudData() {
+  if (!_uid) return;
+  const db = getDB();
+  if (!db) return;
+  try {
+    const snap = await db.collection('rl_users').doc(_uid).collection('data').get();
+    await Promise.all(snap.docs.map(d => d.ref.delete()));
+  } catch (e) {
+    console.warn('[rl] clearCloudData failed', e.message);
   }
 }
 

@@ -1,5 +1,7 @@
 import { getExpenses, addExpense, deleteExpense, updateExpense, fmtMoney, fmtDate, today } from '../store.js';
-import { openModal, closeModal } from '../modal.js';
+import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+
+let _filter = 'month';
 
 const CATEGORIES = ['Fuel', 'Repair', 'Toll', 'Lodging', 'Food', 'Parking', 'Scale', 'Insurance', 'Other'];
 
@@ -137,14 +139,23 @@ function expenseForm(existing = null) {
 // ── Main render ───────────────────────────────────────────────────────────────
 
 export function renderExpenses() {
-  const expenses = getExpenses();
+  const allExpenses = getExpenses();
 
-  const thisMonth  = new Date().toISOString().slice(0, 7);
-  const monthExp   = expenses.filter(e => e.date?.startsWith(thisMonth));
+  const now            = new Date();
+  const thisMonth      = now.toISOString().slice(0, 7);
+  const thisMonthStart = thisMonth + '-01';
+  const lastMonthDate  = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthStart = lastMonthDate.toISOString().slice(0, 7) + '-01';
+  const lastMonthEnd   = thisMonthStart;
+
+  const monthExp   = allExpenses.filter(e => e.date?.startsWith(thisMonth));
   const monthTotal = monthExp.reduce((s, e) => s + Number(e.amount || 0), 0);
 
-  const weekAgo    = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
-  const weekTotal  = expenses.filter(e => e.date >= weekAgo).reduce((s, e) => s + Number(e.amount || 0), 0);
+  const expenses = _filter === 'month' ? monthExp
+    : _filter === 'last'  ? allExpenses.filter(e => e.date >= lastMonthStart && e.date < lastMonthEnd)
+    : allExpenses;
+
+  const displayTotal = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
 
   const html = `
     <div class="flex flex-col h-full bg-black text-white">
@@ -158,18 +169,20 @@ export function renderExpenses() {
         </button>
       </div>
 
-      ${weekTotal > 0 ? `
-      <div class="mx-4 mt-4 bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex justify-between items-center">
-        <span class="text-sm text-gray-400">This Week</span>
-        <span class="font-black text-orange-600">${fmtMoney(weekTotal, 2)}</span>
-      </div>` : ''}
+      <!-- Filter pills -->
+      <div class="flex gap-2 px-4 pt-3 pb-2 shrink-0">
+        <button class="filter-pill ${_filter === 'month' ? 'active' : ''}" data-filter="month">This Month</button>
+        <button class="filter-pill ${_filter === 'last'  ? 'active' : ''}" data-filter="last">Last Month</button>
+        <button class="filter-pill ${_filter === 'all'   ? 'active' : ''}" data-filter="all">All Time</button>
+        ${_filter !== 'month' && displayTotal > 0 ? `<span class="ml-auto text-xs font-black text-orange-500 self-center">${fmtMoney(displayTotal, 2)}</span>` : ''}
+      </div>
 
-      <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
+      <div class="flex-1 overflow-y-auto px-4 pb-4 space-y-2.5">
         ${expenses.length === 0 ? `
-          <div class="flex flex-col items-center justify-center py-20 text-center">
+          <div class="flex flex-col items-center justify-center py-16 text-center">
             <div class="text-5xl mb-4">💸</div>
-            <p class="text-gray-400">No expenses yet.</p>
-            <p class="text-gray-600 text-sm mt-1">Tap + to log your first one.</p>
+            <p class="text-gray-400">${allExpenses.length === 0 ? 'No expenses yet.' : 'No expenses this period.'}</p>
+            <p class="text-gray-600 text-sm mt-1">${allExpenses.length === 0 ? 'Tap + to log your first one.' : 'Switch to All Time or add a new expense.'}</p>
           </div>
         ` : expenses.map(e => `
           <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex justify-between items-start"
@@ -270,6 +283,13 @@ export function renderExpenses() {
   }
 
   function mount(container) {
+    container.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _filter = btn.dataset.filter;
+        window.refresh();
+      });
+    });
+
     // View full receipt
     window._viewReceipt = (id) => {
       const exp = getExpenses().find(e => e.id === id);
@@ -299,6 +319,7 @@ export function renderExpenses() {
             receiptPhoto: fd.get('receiptPhoto') || null,
           });
           closeModal();
+          toast('Expense added ✓');
           window.refresh();
         });
       });
@@ -306,10 +327,11 @@ export function renderExpenses() {
 
     container.querySelectorAll('.del-expense-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (confirm('Delete this expense?')) {
+        confirmSheet('Delete this expense?', 'This cannot be undone.', 'Delete', () => {
           deleteExpense(btn.dataset.id);
+          toast('Expense deleted', 'info');
           window.refresh();
-        }
+        });
       });
     });
 
@@ -330,6 +352,7 @@ export function renderExpenses() {
               receiptPhoto: fd.get('receiptPhoto') || null,
             });
             closeModal();
+            toast('Expense updated ✓');
             window.refresh();
           });
         });

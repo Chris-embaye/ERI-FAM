@@ -1,4 +1,5 @@
 import { getDVIRs, addDVIR, deleteDVIR, fmtDate } from '../store.js';
+import { confirmSheet, toast } from '../modal.js';
 
 const DVIR_SECTIONS = [
   {
@@ -223,10 +224,11 @@ export function renderDVIR() {
 
     container.querySelectorAll('.del-dvir-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (confirm('Delete this inspection record?')) {
+        confirmSheet('Delete this inspection?', 'This cannot be undone.', 'Delete', () => {
           deleteDVIR(btn.dataset.id);
+          toast('Inspection deleted', 'info');
           window.refresh();
-        }
+        });
       });
     });
 
@@ -250,7 +252,7 @@ export function renderDVIR() {
         odometer: odoRaw ? Number(odoRaw) : null,
         unit: unit || null,
       });
-      alert('DVIR submitted ✓');
+      toast('Inspection submitted ✓');
       window.refresh();
     });
   }
