@@ -1,17 +1,38 @@
-// TEST ENVIRONMENT store — isolated localStorage keys, NO cloud sync
-// Data here never reaches Firestore. Safe to test anything.
+// TEST ENVIRONMENT store — isolated localStorage keys + Firestore under rl_test_users/
+// Uses separate Firestore collection so test data never touches production.
 
 let _uid = null;
 
 export function setCurrentUID(uid) { _uid = uid; }
 
-// Cloud sync disabled in test environment
-function getDB() { return null; }
-async function pushKey() { /* no-op in test env */ }
+function getDB() {
+  try { return window.firebase?.firestore?.() ?? null; } catch { return null; }
+}
+
+const ALL_SYNC_KEYS = [
+  'expenses', 'trips', 'dvirs', 'detention', 'fuel', 'maintenance', 'settings',
+  'pTrips', 'pFuel', 'pExpenses', 'pMaint', 'pSettings',
+];
+
+async function pushKey(key, val) {
+  if (!_uid) return;
+  const db = getDB();
+  if (!db) return;
+  try {
+    const doc = { updatedAt: new Date().toISOString() };
+    if (key === 'settings' || key === 'pSettings') {
+      doc[key] = val;
+    } else {
+      doc.items = Array.isArray(val) ? val : [];
+    }
+    await db.collection('rl_test_users').doc(_uid).collection('data').doc(key).set(doc);
+  } catch (e) {
+    console.warn('[rl-test] pushKey failed', key, e.message);
+  }
+}
 
 export async function syncUp() {
-  const SYNC_KEYS = ['expenses', 'trips', 'dvirs', 'detention', 'fuel', 'settings'];
-  await Promise.all(SYNC_KEYS.map(k => pushKey(k, load(k))));
+  await Promise.all(ALL_SYNC_KEYS.map(k => pushKey(k, load(k))));
 }
 
 export async function clearCloudData() {
@@ -19,8 +40,9 @@ export async function clearCloudData() {
   const db = getDB();
   if (!db) return;
   try {
-    const snap = await db.collection('rl_users').doc(_uid).collection('data').get();
+    const snap = await db.collection('rl_test_users').doc(_uid).collection('data').get();
     await Promise.all(snap.docs.map(d => d.ref.delete()));
+    await db.collection('rl_test_users').doc(_uid).delete().catch(() => {});
   } catch (e) {
     console.warn('[rl] clearCloudData failed', e.message);
   }
@@ -30,37 +52,82 @@ export async function syncDown(uid) {
   const db = getDB();
   if (!uid || !db) return;
 
-  const SYNC_KEYS = ['expenses', 'trips', 'dvirs', 'detention', 'fuel', 'settings'];
-  const hasLocal = SYNC_KEYS.some(k => localStorage.getItem(KEYS[k]) !== null);
+  const hasLocal = ALL_SYNC_KEYS.some(k => localStorage.getItem(KEYS[k]) !== null);
 
   if (hasLocal) {
-    // Already have data — push up to Firestore in background so cloud stays current
-    SYNC_KEYS.forEach(k => pushKey(k, load(k)));
+    // Already have local data — push to cloud in background so it stays current
+    ALL_SYNC_KEYS.forEach(k => pushKey(k, load(k)));
+    // Also sync app mode
+    const mode = localStorage.getItem('rl_test_mode');
+    if (mode) db.collection('rl_test_users').doc(uid).set({ mode }, { merge: true }).catch(() => {});
     return;
   }
 
   // New / wiped device — pull from Firestore before first render
   try {
-    const snap = await db.collection('rl_users').doc(uid).collection('data').get();
+    const snap = await db.collection('rl_test_users').doc(uid).collection('data').get();
     snap.forEach(doc => {
       const key  = doc.id;
       const data = doc.data();
       if (!(key in KEYS)) return;
-      if (key === 'settings' && data.settings) {
-        localStorage.setItem(KEYS.settings, JSON.stringify(data.settings));
-      } else if (key !== 'settings' && Array.isArray(data.items) && data.items.length > 0) {
+      if (key === 'settings' || key === 'pSettings') {
+        if (data[key]) localStorage.setItem(KEYS[key], JSON.stringify(data[key]));
+      } else if (Array.isArray(data.items) && data.items.length > 0) {
         localStorage.setItem(KEYS[key], JSON.stringify(data.items));
       }
     });
+    // Restore app mode
+    const userDoc = await db.collection('rl_test_users').doc(uid).get();
+    if (userDoc.exists && userDoc.data()?.mode) {
+      localStorage.setItem('rl_test_mode', userDoc.data().mode);
+    }
   } catch (e) {
     console.warn('[rl] sync down failed', e.message);
   }
 }
 
+export function invalidateCache() {
+  Object.keys(_cache).forEach(k => delete _cache[k]);
+}
+
+export async function restoreFromCloud(uid) {
+  const db = getDB();
+  if (!uid || !db) return false;
+  try {
+    const snap = await db.collection('rl_test_users').doc(uid).collection('data').get();
+    if (snap.empty) return false;
+    snap.forEach(doc => {
+      const key  = doc.id;
+      const data = doc.data();
+      if (!(key in KEYS)) return;
+      if (key === 'settings' || key === 'pSettings') {
+        if (data[key]) localStorage.setItem(KEYS[key], JSON.stringify(data[key]));
+      } else if (Array.isArray(data.items) && data.items.length > 0) {
+        localStorage.setItem(KEYS[key], JSON.stringify(data.items));
+      }
+    });
+    const userDoc = await db.collection('rl_test_users').doc(uid).get();
+    if (userDoc.exists && userDoc.data()?.mode) {
+      localStorage.setItem('rl_test_mode', userDoc.data().mode);
+    }
+    invalidateCache();
+    return true;
+  } catch (e) {
+    console.warn('[rl-test] restoreFromCloud failed', e.message);
+    return false;
+  }
+}
+
 // App mode — 'trucking' | 'personal'
-export function getAppMode()    { return localStorage.getItem('rl_test_mode') || null; }
-export function setAppMode(m)   { localStorage.setItem('rl_test_mode', m); }
-export function clearAppMode()  { localStorage.removeItem('rl_test_mode'); }
+export function getAppMode()  { return localStorage.getItem('rl_test_mode') || null; }
+export function clearAppMode() { localStorage.removeItem('rl_test_mode'); }
+export function setAppMode(m) {
+  localStorage.setItem('rl_test_mode', m);
+  if (_uid) {
+    const db = getDB();
+    if (db) db.collection('rl_test_users').doc(_uid).set({ mode: m }, { merge: true }).catch(() => {});
+  }
+}
 
 // TEST ENVIRONMENT — uses separate storage keys so test data never touches production
 const KEYS = {

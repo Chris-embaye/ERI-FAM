@@ -1,5 +1,4 @@
 import { getDVIRs, getDetentionSessions, getActiveDetention, getSettings, getMaintenanceLogs } from '../store.js';
-import { toast } from '../modal.js';
 
 const chevron = `<svg width="16" height="16" fill="none" stroke="rgba(100,116,139,0.7)" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
 
@@ -104,128 +103,14 @@ export function renderMore() {
           "navigate('settings')"
         )}
 
-        <!-- Load Acceptance Calculator -->
-        <div class="glass-card" id="load-calc" style="padding:16px;margin-bottom:10px">
-          <p style="font-size:0.58rem;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;color:rgba(8,145,178,0.85);margin-bottom:14px">Load Acceptance Calculator</p>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-            <div class="settings-field" style="margin:0">
-              <label class="settings-label">Offered Rate ($)</label>
-              <input id="lc-rate" type="number" inputmode="decimal" step="0.01" class="form-input" placeholder="1 800" style="text-align:center;font-size:1rem;font-weight:700">
-            </div>
-            <div class="settings-field" style="margin:0">
-              <label class="settings-label">Loaded Miles</label>
-              <input id="lc-miles" type="number" inputmode="decimal" class="form-input" placeholder="450" style="text-align:center;font-size:1rem;font-weight:700">
-            </div>
-            <div class="settings-field" style="margin:0">
-              <label class="settings-label">Empty Miles (DH)</label>
-              <input id="lc-empty" type="number" inputmode="decimal" class="form-input" placeholder="0" style="text-align:center">
-            </div>
-            <div class="settings-field" style="margin:0">
-              <label class="settings-label">Fuel $/gal</label>
-              <input id="lc-ppg" type="number" inputmode="decimal" step="0.01" class="form-input" placeholder="3.99" style="text-align:center">
-            </div>
-          </div>
-
-          <div id="lc-result" style="display:none;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid transparent">
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;margin-bottom:12px">
-              <div>
-                <p style="font-size:0.6rem;color:rgba(100,116,139,0.8);font-weight:700">RPM</p>
-                <p id="lc-rpm-out" style="font-size:1.05rem;font-weight:900">—</p>
-              </div>
-              <div>
-                <p style="font-size:0.6rem;color:rgba(100,116,139,0.8);font-weight:700">Fuel Cost</p>
-                <p id="lc-fuel-out" style="font-size:1.05rem;font-weight:900;color:#fca5a5">—</p>
-              </div>
-              <div>
-                <p style="font-size:0.6rem;color:rgba(100,116,139,0.8);font-weight:700">Net</p>
-                <p id="lc-net-out" style="font-size:1.05rem;font-weight:900">—</p>
-              </div>
-            </div>
-            <div id="lc-verdict" style="text-align:center;padding:10px;border-radius:10px;font-weight:800;font-size:0.9rem"></div>
-          </div>
-
-          <button id="lc-btn" class="save-btn-full" style="margin-top:0;padding:11px">Evaluate Load</button>
-        </div>
-
         <!-- Version -->
         <div class="glass-card" style="padding:14px 16px;text-align:center">
           <p style="font-weight:800;font-size:0.85rem;color:rgba(8,145,178,0.9)">Rig Log · TEST BUILD</p>
-          <p style="font-size:0.7rem;color:rgba(100,116,139,0.7);margin-top:3px">v3.1 · owner-operator toolkit · isolated data</p>
+          <p style="font-size:0.7rem;color:rgba(100,116,139,0.7);margin-top:3px">v3.2 · owner-operator toolkit · isolated data</p>
         </div>
 
       </div>
     </div>`;
 
-  function mount(container) {
-    const btn = container.querySelector('#lc-btn');
-    if (!btn) return;
-
-    btn.addEventListener('click', () => {
-      try {
-        const rateEl  = container.querySelector('#lc-rate');
-        const milesEl = container.querySelector('#lc-miles');
-        const emptyEl = container.querySelector('#lc-empty');
-        const ppgEl   = container.querySelector('#lc-ppg');
-        const result  = container.querySelector('#lc-result');
-        const rpmOut  = container.querySelector('#lc-rpm-out');
-        const fuelOut = container.querySelector('#lc-fuel-out');
-        const netOut  = container.querySelector('#lc-net-out');
-        const verdict = container.querySelector('#lc-verdict');
-
-        const rate   = parseFloat(rateEl?.value)  || 0;
-        const loaded = parseFloat(milesEl?.value) || 0;
-        const empty  = parseFloat(emptyEl?.value) || 0;
-        const ppg    = parseFloat(ppgEl?.value)   || 3.99;
-
-        if (!rate && !loaded) { toast('Enter Offered Rate and Loaded Miles', 'error'); return; }
-        if (!rate)            { toast('Enter the Offered Rate ($)', 'error'); return; }
-        if (!loaded)          { toast('Enter the Loaded Miles', 'error'); return; }
-
-        const cfg = getSettings();
-        const mpg       = Number(cfg?.targetMPG)   || 6.5;
-        const targetRPM = Number(cfg?.targetRPM)   || 2.00;
-        const dispPct   = Number(cfg?.dispatchPct) || 0;
-
-        const totalMiles = loaded + empty;
-        const fuelCost   = (totalMiles / mpg) * ppg;
-        const netRevenue = rate * (1 - dispPct / 100);
-        const rpm        = rate / loaded;
-        const net        = netRevenue - fuelCost;
-
-        if (rpmOut)  rpmOut.textContent  = `$${rpm.toFixed(2)}/mi`;
-        if (fuelOut) fuelOut.textContent = `-$${Math.round(fuelCost).toLocaleString()}`;
-        if (netOut) {
-          netOut.textContent = (net < 0 ? '-$' : '$') + Math.abs(Math.round(net)).toLocaleString();
-          netOut.style.color = net >= 0 ? '#4ade80' : '#f87171';
-        }
-
-        const pctOfTarget = rpm / targetRPM;
-        let bg, border, text, msg;
-        if (pctOfTarget >= 1) {
-          bg = 'rgba(21,128,61,0.15)'; border = 'rgba(21,128,61,0.4)'; text = '#4ade80';
-          msg = `✓ TAKE IT — $${rpm.toFixed(2)}/mi beats your $${targetRPM.toFixed(2)} target`;
-        } else if (pctOfTarget >= 0.85) {
-          bg = 'rgba(251,191,36,0.1)'; border = 'rgba(251,191,36,0.3)'; text = '#fbbf24';
-          msg = `~ BORDERLINE — ${Math.round(pctOfTarget * 100)}% of your $${targetRPM.toFixed(2)} target`;
-        } else {
-          bg = 'rgba(220,38,38,0.12)'; border = 'rgba(220,38,38,0.35)'; text = '#f87171';
-          msg = `✕ PASS — only $${rpm.toFixed(2)}/mi, need $${targetRPM.toFixed(2)}`;
-        }
-
-        if (result) {
-          result.style.background  = bg;
-          result.style.borderColor = border;
-          result.style.display     = 'block';
-        }
-        if (verdict) { verdict.textContent = msg; verdict.style.color = text; }
-        if (rpmOut)  rpmOut.style.color = text;
-      } catch (err) {
-        console.error('[lc-btn]', err);
-        toast('Calculator error — check your inputs', 'error');
-      }
-    });
-  }
-
-  return { html, mount };
+  return { html };
 }

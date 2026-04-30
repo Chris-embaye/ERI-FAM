@@ -1,14 +1,22 @@
-import { getSettings, saveSettings, clearCloudData, clearAppMode } from '../store.js';
-import { getCurrentUser, signOut, saveProfile } from '../auth.js';
+import { getSettings, saveSettings, clearCloudData, clearAppMode, syncUp, restoreFromCloud } from '../store.js';
+import { getCurrentUser, signOut, saveProfile, deleteAccount } from '../auth.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 import { ACCENT_PRESETS, BG_PRESETS, applyTheme, loadTheme, saveTheme } from '../theme.js';
 
+const ALL_LOCAL_KEYS = [
+  'rl_test_expenses','rl_test_trips','rl_test_dvirs','rl_test_detention',
+  'rl_test_fuel','rl_test_maintenance','rl_test_settings','rl_test_active_detention',
+  'rl_test_p_trips','rl_test_p_fuel','rl_test_p_expenses','rl_test_p_maintenance','rl_test_p_settings',
+  'rl_test_mode',
+];
+
 function collectExportData(user) {
   const data = {};
-  ['rl_test_expenses','rl_test_trips','rl_test_dvirs','rl_test_detention','rl_test_fuel','rl_test_settings'].forEach(k => {
+  ALL_LOCAL_KEYS.forEach(k => {
     try { data[k] = JSON.parse(localStorage.getItem(k) || 'null'); } catch {}
   });
   if (user) data._account = { uid: user.uid, email: user.email, name: user.displayName };
+  data._exportedAt = new Date().toISOString();
   return data;
 }
 
@@ -264,9 +272,17 @@ export function renderSettings() {
         <!-- ── Data ── -->
         <div class="glass-card space-y-2">
           <p class="settings-section-label" style="color:#64748b">Data &amp; Backup</p>
+          ${user ? `
+          <button id="cloud-backup-btn" class="settings-action-btn w-full">☁ Backup to Cloud</button>
+          <button id="cloud-restore-btn" class="settings-ghost-btn w-full">↓ Restore from Cloud</button>
+          <div style="border-top:1px solid rgba(255,255,255,0.06);margin:4px 0"></div>
+          ` : ''}
           <button id="export-btn" class="settings-action-btn w-full">↓ Download Backup (JSON)</button>
-          <button id="share-btn" class="settings-action-btn w-full">↗ Send to Email / Share</button>
+          <button id="share-btn" class="settings-action-btn w-full">↗ Send to Phone / Share</button>
           <button id="force-update-btn" class="settings-ghost-btn w-full">↺ Force Update App</button>
+          <p style="font-size:0.65rem;color:rgba(100,116,139,0.55);text-align:center;padding-top:2px">
+            Cloud backup stores all your data in your account. Restore pulls it back on any device.
+          </p>
         </div>
 
         <!-- ── TEST ENV ── -->
@@ -289,9 +305,13 @@ export function renderSettings() {
           </button>
         </div>
 
-        <!-- Sign out -->
+        <!-- Sign out + Delete account -->
         ${user ? `
         <button id="signout-btn" class="settings-signout-btn w-full">Sign Out</button>
+        <button id="delete-account-btn" class="w-full font-bold py-2.5 rounded-xl text-sm mt-1"
+                style="background:rgba(220,38,38,0.08);color:rgba(248,113,113,0.7);border:1px solid rgba(220,38,38,0.15)">
+          Delete Account
+        </button>
         ` : ''}
 
         <div style="height:24px"></div>
@@ -377,6 +397,53 @@ export function renderSettings() {
     container.querySelector('#export-btn').addEventListener('click', () => { downloadBackup(user); toast('Backup downloaded ✓'); });
     container.querySelector('#share-btn').addEventListener('click', () => shareBackup(user));
 
+    // Cloud backup
+    container.querySelector('#cloud-backup-btn')?.addEventListener('click', async () => {
+      if (!user) return;
+      const btn = container.querySelector('#cloud-backup-btn');
+      btn.textContent = 'Backing up…'; btn.disabled = true;
+      try {
+        await syncUp();
+        toast('Data backed up to cloud ✓');
+      } catch { toast('Backup failed — check your connection', 'error'); }
+      btn.textContent = '☁ Backup to Cloud'; btn.disabled = false;
+    });
+
+    // Cloud restore
+    container.querySelector('#cloud-restore-btn')?.addEventListener('click', () => {
+      if (!user) return;
+      openModal(`
+        <div class="p-5">
+          <div class="text-center mb-4">
+            <div style="font-size:2.5rem;margin-bottom:8px">☁</div>
+            <p class="font-black text-lg">Restore from Cloud?</p>
+            <p class="text-sm mt-2 px-2" style="color:rgba(148,163,184,0.8)">
+              This will overwrite all data on this device with your latest cloud backup.
+              Any changes made on this device since your last backup will be lost.
+            </p>
+          </div>
+          <div class="space-y-2.5">
+            <button id="confirm-restore-btn" class="settings-action-btn w-full">Restore from Cloud</button>
+            <button onclick="closeModal()" class="btn-ghost w-full">Cancel</button>
+          </div>
+        </div>
+      `, el => {
+        el.querySelector('#confirm-restore-btn').addEventListener('click', async () => {
+          const btn = el.querySelector('#confirm-restore-btn');
+          btn.textContent = 'Restoring…'; btn.disabled = true;
+          const ok = await restoreFromCloud(user.uid);
+          if (ok) {
+            closeModal();
+            toast('Data restored ✓ — reloading…');
+            setTimeout(() => window.location.reload(), 1200);
+          } else {
+            toast('No cloud backup found', 'error');
+            btn.textContent = 'Restore from Cloud'; btn.disabled = false;
+          }
+        });
+      });
+    });
+
     container.querySelector('#force-update-btn').addEventListener('click', async () => {
       try {
         if ('serviceWorker' in navigator) {
@@ -421,6 +488,59 @@ export function renderSettings() {
       confirmSheet('Switch to Personal Mode?', 'Your trucking data stays saved.', 'Switch', () => {
         clearAppMode();
         window.navigate('role-select');
+      });
+    });
+
+    container.querySelector('#delete-account-btn')?.addEventListener('click', () => {
+      openModal(`
+        <div class="p-5">
+          <div class="text-center mb-4">
+            <div style="font-size:2.8rem;margin-bottom:8px">⚠️</div>
+            <p class="font-black text-xl" style="color:#f87171">Delete Account</p>
+            <p class="text-sm mt-2 px-2" style="color:rgba(148,163,184,0.8)">
+              Permanently deletes your account and <strong style="color:#fff">all your data</strong> —
+              trips, expenses, fuel logs, DVIRs, settings, everything.
+              <br><br>
+              <strong style="color:#f87171">This cannot be undone.</strong>
+            </p>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <p style="font-size:0.72rem;text-align:center;color:rgba(100,116,139,0.8);margin-bottom:6px">Type <strong style="color:#f87171">DELETE</strong> to confirm</p>
+              <input id="delete-confirm-input" class="form-input" placeholder="Type DELETE here" style="text-align:center;font-size:1rem;letter-spacing:2px">
+            </div>
+            <button id="confirm-delete-btn" class="w-full font-bold py-3 rounded-xl text-sm"
+                    style="background:rgba(220,38,38,0.15);color:#f87171;border:1px solid rgba(220,38,38,0.4)">
+              Permanently Delete My Account
+            </button>
+            <button onclick="closeModal()" class="btn-ghost w-full">Cancel — Keep My Account</button>
+          </div>
+        </div>
+      `, el => {
+        el.querySelector('#confirm-delete-btn').addEventListener('click', async () => {
+          const typed = el.querySelector('#delete-confirm-input').value.trim();
+          if (typed !== 'DELETE') { toast('Type DELETE (all caps) to confirm', 'error'); return; }
+          const btn = el.querySelector('#confirm-delete-btn');
+          btn.textContent = 'Deleting…'; btn.disabled = true;
+          try {
+            // Wipe local data first
+            ALL_LOCAL_KEYS.forEach(k => localStorage.removeItem(k));
+            // Delete cloud data
+            await clearCloudData();
+            // Delete Firebase auth account
+            await deleteAccount();
+            closeModal();
+            window.location.reload();
+          } catch (e) {
+            if (e.code === 'auth/requires-recent-login') {
+              closeModal();
+              toast('Sign out, sign back in, then try again', 'error');
+            } else {
+              toast('Delete failed — sign out and sign back in first', 'error');
+              btn.textContent = 'Permanently Delete My Account'; btn.disabled = false;
+            }
+          }
+        });
       });
     });
 

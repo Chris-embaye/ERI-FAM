@@ -10,6 +10,7 @@ import { renderExpenses }    from './screens/expenses.js';
 import { renderTrips }       from './screens/trips.js';
 import { renderFuel }        from './screens/fuel.js';
 import { renderMore }        from './screens/more.js';
+import { renderCalculator }  from './screens/calculator.js';
 import { renderDVIR }        from './screens/dvir.js';
 import { renderDetention }   from './screens/detention.js';
 import { renderSettings }    from './screens/settings.js';
@@ -26,6 +27,7 @@ import { renderPersonalMore }      from './screens/personal-more.js';
 
 const TRUCKING_SCREENS = {
   dashboard:   renderDashboard,
+  calculator:  renderCalculator,
   expenses:    renderExpenses,
   trips:       renderTrips,
   fuel:        renderFuel,
@@ -113,6 +115,10 @@ function render() {
   // Colour the bottom nav to match mode
   const navColor = mode === 'personal' ? '#7c3aed' : '#0891b2';
   document.documentElement.style.setProperty('--mode-color', navColor);
+
+  // Calculator tab is trucking-only
+  const calcTab = bottomNav.querySelector('[data-screen="calculator"]');
+  if (calcTab) calcTab.style.display = mode === 'personal' ? 'none' : '';
 
   const SCREENS  = mode === 'personal' ? PERSONAL_SCREENS : TRUCKING_SCREENS;
   const renderFn = SCREENS[screen] || (mode === 'personal' ? renderPersonalDashboard : renderDashboard);

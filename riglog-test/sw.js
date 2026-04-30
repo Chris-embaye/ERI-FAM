@@ -1,4 +1,4 @@
-const CACHE = 'truck-log-test-v15';
+const CACHE = 'truck-log-test-v16';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.json',
   './js/app.js', './js/store.js', './js/modal.js', './js/auth.js', './js/theme.js',
@@ -6,7 +6,7 @@ const ASSETS = [
   './js/screens/role-select.js',
   './js/screens/dashboard.js', './js/screens/expenses.js',
   './js/screens/trips.js', './js/screens/fuel.js',
-  './js/screens/more.js', './js/screens/dvir.js',
+  './js/screens/more.js', './js/screens/calculator.js', './js/screens/dvir.js',
   './js/screens/detention.js', './js/screens/settings.js',
   './js/screens/signin.js', './js/screens/tax.js',
   './js/screens/maintenance.js', './js/screens/ifta.js',

@@ -103,3 +103,9 @@ export async function loadProfile(uid) {
 export async function sendPasswordReset(email) {
   return firebase.auth().sendPasswordResetEmail(email);
 }
+
+export async function deleteAccount() {
+  const user = firebase.auth().currentUser;
+  if (!user) throw new Error('No authenticated user');
+  await user.delete();
+}
