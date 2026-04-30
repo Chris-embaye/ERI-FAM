@@ -291,6 +291,8 @@ function showPage(name) {
   if (name === 'posts')       loadPosts();
   if (name === 'about')       loadAbout();
   if (name === 'analytics')   loadAnalytics();
+  if (name === 'employees')   loadEmployees();
+  if (name === 'riglog')      initRiglogPage();
 }
 
 // Sidebar toggle
@@ -518,13 +520,26 @@ function openEditor(appId) {
   currentEditApp = { ...app };
   document.getElementById('editorTitle').textContent    = app.name;
   document.getElementById('editorSubtitle').textContent = app.url || '';
-  document.getElementById('epName').value    = app.name || '';
-  document.getElementById('epDesc').value    = app.description || '';
-  document.getElementById('epUrl').value     = app.url || '';
-  document.getElementById('epIcon').value    = app.icon || '';
-  document.getElementById('epIconUrl').value = app.iconUrl || '';
-  document.getElementById('epColor').value   = app.color || '#6366f1';
-  document.getElementById('epStatus').value  = app.status || 'active';
+  document.getElementById('epName').value        = app.name || '';
+  document.getElementById('epDesc').value        = app.description || '';
+  document.getElementById('epUrl').value         = app.url || '';
+  document.getElementById('epIcon').value        = app.icon || '';
+  document.getElementById('epIconUrl').value     = app.iconUrl || '';
+  document.getElementById('epColor').value       = app.color || '#6366f1';
+  document.getElementById('epStatus').value      = app.status || 'active';
+  document.getElementById('epCategory').value    = app.category || '';
+  document.getElementById('epVersion').value     = app.version || '';
+  document.getElementById('epPlatform').value    = app.platform || 'web';
+  document.getElementById('epGithub').value      = app.github || '';
+  document.getElementById('epStack').value       = (app.stack || []).join(', ');
+  document.getElementById('epTags').value        = (app.tags || []).join(', ');
+  document.getElementById('epScreenshots').value = (app.screenshots || []).join('\n');
+  document.getElementById('epChangelog').value   = app.changelog || '';
+  // Reset to Info tab
+  document.querySelectorAll('.ep-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ep-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector('.ep-tab[data-tab="info"]')?.classList.add('active');
+  document.getElementById('epPane-info')?.classList.add('active');
   const frame = document.getElementById('editorFrame');
   document.getElementById('chromeUrl').textContent = app.url || 'about:blank';
   frame.src = app.url || 'about:blank';
@@ -534,15 +549,27 @@ function openEditor(appId) {
 
 function renderSections(sections) {
   const list = document.getElementById('sectionsEditor');
-  if (!sections.length) { list.innerHTML = '<p style="font-size:.78rem;color:var(--text-mute);text-align:center;padding:12px 0">No sections yet.</p>'; return; }
+  if (!sections.length) { list.innerHTML = '<p style="font-size:.78rem;color:var(--text-mute);text-align:center;padding:14px 0">No sections yet — add one below.</p>'; return; }
   list.innerHTML = sections.map((s,i) => `
-    <div class="section-item" draggable="true" data-idx="${i}">
-      <span class="section-drag">⠿</span>
-      <span class="section-name">${esc(s.name)}</span>
-      <span class="section-vis ${s.visible!==false?'on':''}" onclick="toggleSection(${i})">${s.visible!==false?'👁':'🚫'}</span>
-      <span class="section-del" onclick="deleteSection(${i})">✕</span>
+    <div class="section-item ${s.visible===false?'sect-hidden':''}" draggable="true" data-idx="${i}">
+      <button class="sect-drag" title="Drag to reorder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+      </button>
+      <div class="sect-info">
+        <span class="section-name">${esc(s.name)}</span>
+        <span class="sect-id-badge">#${esc(s.id||'')}</span>
+      </div>
+      <div class="sect-actions">
+        <button class="sect-btn sect-vis-btn ${s.visible!==false?'active':''}" onclick="toggleSection(${i})" title="${s.visible!==false?'Visible — click to hide':'Hidden — click to show'}">
+          ${s.visible!==false
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'}
+        </button>
+        <button class="sect-btn sect-del-btn" onclick="deleteSection(${i})" title="Delete section">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
     </div>`).join('');
-  // Drag to reorder
   setupSectionDrag(sections);
 }
 
@@ -608,6 +635,14 @@ async function saveEditorChanges() {
     iconUrl:     document.getElementById('epIconUrl').value.trim() || '',
     color:       document.getElementById('epColor').value,
     status:      document.getElementById('epStatus').value,
+    category:    document.getElementById('epCategory').value,
+    version:     document.getElementById('epVersion').value.trim(),
+    platform:    document.getElementById('epPlatform').value,
+    github:      document.getElementById('epGithub').value.trim(),
+    stack:       document.getElementById('epStack').value.split(',').map(s=>s.trim()).filter(Boolean),
+    tags:        document.getElementById('epTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    screenshots: document.getElementById('epScreenshots').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    changelog:   document.getElementById('epChangelog').value.trim(),
     sections:    currentEditApp.sections || [],
     updatedAt:   fb.serverTimestamp(),
   };
@@ -5008,3 +5043,334 @@ function renderTruckLogTable(users) {
   }).join('');
 }
 window.loadTruckLog = loadTruckLog;
+
+/* ════════════════════════════════════════════════════════════════
+   EDITOR PANEL TABS
+   ════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.ep-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.ep-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.ep-pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const pane = document.getElementById('epPane-' + tab.dataset.tab);
+    if (pane) pane.classList.add('active');
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════
+   RIGLOG ADMIN PAGE
+   ════════════════════════════════════════════════════════════════ */
+function initRiglogPage() {
+  const btn = document.getElementById('rlRefreshBtn');
+  if (btn && !btn.dataset.wired) {
+    btn.dataset.wired = '1';
+    btn.addEventListener('click', () => {
+      const f = document.getElementById('riglogFrame');
+      if (f) f.src = f.src;
+    });
+  }
+  loadRiglogStats();
+}
+
+async function loadRiglogStats() {
+  try {
+    const snap = await fb.getDocs(fb.collection(_db, 'riglog_users'));
+    document.getElementById('rlAdmUsers').textContent = snap.size;
+    let trips = 0, expenses = 0, revenue = 0;
+    snap.forEach(d => {
+      const data = d.data();
+      trips    += (data.tripCount    || 0);
+      expenses += (data.expenseCount || 0);
+      revenue  += (data.totalRevenue || 0);
+    });
+    document.getElementById('rlAdmTrips').textContent    = trips    || '—';
+    document.getElementById('rlAdmExpenses').textContent = expenses || '—';
+    document.getElementById('rlAdmRevenue').textContent  = revenue  ? '$' + revenue.toFixed(0) : '—';
+  } catch(e) {
+    if (typeof _trucklogUsers !== 'undefined' && _trucklogUsers.length) {
+      document.getElementById('rlAdmUsers').textContent = _trucklogUsers.length;
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   EMPLOYEES PAGE
+   ════════════════════════════════════════════════════════════════ */
+let _allEmployees = [], _currentEmpId = null;
+
+async function loadEmployees() {
+  const grid = document.getElementById('empGrid');
+  if (!grid) return;
+  grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Loading employees…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_employees'), fb.orderBy('name')));
+    _allEmployees = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderEmployeeGrid(_allEmployees);
+  } catch(e) {
+    grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error loading: ${e.message}</p>`;
+  }
+  wireEmployeePage();
+}
+
+function renderEmployeeGrid(emps) {
+  const grid  = document.getElementById('empGrid');
+  const dept  = document.getElementById('empDeptFilter')?.value   || '';
+  const stat  = document.getElementById('empStatusFilter')?.value || '';
+  const query = (document.getElementById('empSearch')?.value || '').toLowerCase();
+  const list  = emps.filter(e => {
+    if (dept  && e.department !== dept)  return false;
+    if (stat  && e.status     !== stat)  return false;
+    if (query && !`${e.name} ${e.title} ${e.email}`.toLowerCase().includes(query)) return false;
+    return true;
+  });
+  if (!list.length) {
+    grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">No employees match your filters.</p>';
+    return;
+  }
+  const dotColor = { active: '#10b981', 'on-leave': '#f59e0b', inactive: '#6b7280' };
+  grid.innerHTML = list.map(e => {
+    const initials = (e.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    const color    = e.photoUrl ? 'transparent' : '#6366f1';
+    const dc       = dotColor[e.status] || '#6b7280';
+    return `
+    <div class="emp-card" data-empid="${e.id}">
+      <div class="emp-card-photo-wrap">
+        <div class="emp-card-photo">
+          ${e.photoUrl
+            ? `<img src="${esc(e.photoUrl)}" alt="${esc(e.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`
+            : `<span class="emp-card-initials">${initials}</span>`}
+        </div>
+        <span class="emp-card-dot" style="background:${dc}"></span>
+      </div>
+      <div class="emp-card-name">${esc(e.name || '—')}</div>
+      <div class="emp-card-title">${esc(e.title || '—')}</div>
+      <div class="emp-card-dept">${esc(e.department || '')}</div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.emp-card').forEach(card => {
+    card.addEventListener('click', () => openEmployeeDrawer(card.dataset.empid));
+  });
+}
+
+function wireEmployeePage() {
+  const addBtn = document.getElementById('addEmployeeBtn');
+  if (addBtn && !addBtn.dataset.wired) {
+    addBtn.dataset.wired = '1';
+    addBtn.addEventListener('click', () => openEmpModal(null));
+  }
+  ['empSearch', 'empDeptFilter', 'empStatusFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.wired) {
+      el.dataset.wired = '1';
+      el.addEventListener('input', () => renderEmployeeGrid(_allEmployees));
+    }
+  });
+  ['empDhClose', 'empDrawerOverlay'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.wired) { el.dataset.wired = '1'; el.addEventListener('click', closeEmpDrawer); }
+  });
+  const dEdit = document.getElementById('empDhEdit');
+  if (dEdit && !dEdit.dataset.wired) {
+    dEdit.dataset.wired = '1';
+    dEdit.addEventListener('click', () => openEmpModal(_currentEmpId));
+  }
+  const dDel = document.getElementById('empDhDelete');
+  if (dDel && !dDel.dataset.wired) {
+    dDel.dataset.wired = '1';
+    dDel.addEventListener('click', () => deleteEmployee(_currentEmpId));
+  }
+  const noteSend = document.getElementById('empNoteSend');
+  if (noteSend && !noteSend.dataset.wired) {
+    noteSend.dataset.wired = '1';
+    noteSend.addEventListener('click', () => addEmployeeNote(_currentEmpId));
+  }
+  ['empModalClose', 'empModalCancel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.wired) { el.dataset.wired = '1'; el.addEventListener('click', closeEmpModal); }
+  });
+  const mSave = document.getElementById('empModalSave');
+  if (mSave && !mSave.dataset.wired) {
+    mSave.dataset.wired = '1';
+    mSave.addEventListener('click', saveEmployee);
+  }
+  const photoInput = document.getElementById('empModalPhotoInput');
+  if (photoInput && !photoInput.dataset.wired) {
+    photoInput.dataset.wired = '1';
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img  = document.getElementById('empModalPhotoPreview');
+        const icon = document.getElementById('empModalPhotoIcon');
+        img.src = ev.target.result; img.style.display = 'block';
+        if (icon) icon.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+}
+
+function openEmployeeDrawer(id) {
+  const emp = _allEmployees.find(e => e.id === id);
+  if (!emp) return;
+  _currentEmpId = id;
+  const initials = (emp.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  const img = document.getElementById('empDhImg');
+  const ini = document.getElementById('empDhInitials');
+  if (emp.photoUrl) {
+    img.src = emp.photoUrl; img.style.display = 'block';
+    if (ini) ini.style.display = 'none';
+  } else {
+    if (img) img.style.display = 'none';
+    if (ini) { ini.style.display = 'block'; ini.textContent = initials; }
+  }
+  document.getElementById('empDhName').textContent  = emp.name  || '—';
+  document.getElementById('empDhTitle').textContent = emp.title || '—';
+  document.getElementById('empDhDept').textContent  = emp.department || '—';
+  const emailEl = document.getElementById('empDhEmail');
+  emailEl.textContent = emp.email || '—';
+  emailEl.href = emp.email ? `mailto:${emp.email}` : '#';
+  document.getElementById('empDhPhone').textContent = emp.phone || '—';
+  document.getElementById('empDhHired').textContent = emp.hireDate
+    ? new Date(emp.hireDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '—';
+  const statMap = { active: '🟢 Active', 'on-leave': '🟡 On Leave', inactive: '⚫ Inactive' };
+  document.getElementById('empDhStatus').textContent = statMap[emp.status] || emp.status || '—';
+  document.getElementById('empDhBio').textContent    = emp.bio || '—';
+  const dot = document.getElementById('empDhDot');
+  const dc  = { active: '#10b981', 'on-leave': '#f59e0b', inactive: '#6b7280' };
+  if (dot) { dot.style.background = dc[emp.status] || '#6b7280'; dot.title = statMap[emp.status] || ''; }
+  renderEmpNotes(emp.notes || []);
+  document.getElementById('empDrawer').hidden        = false;
+  document.getElementById('empDrawerOverlay').hidden = false;
+}
+
+function closeEmpDrawer() {
+  document.getElementById('empDrawer').hidden        = true;
+  document.getElementById('empDrawerOverlay').hidden = true;
+  _currentEmpId = null;
+}
+
+function renderEmpNotes(notes) {
+  const list = document.getElementById('empNotesList');
+  if (!list) return;
+  if (!notes.length) {
+    list.innerHTML = '<p class="empty-msg" style="padding:12px 0;font-size:.78rem">No notes yet.</p>';
+    return;
+  }
+  list.innerHTML = [...notes].reverse().map(n => `
+    <div class="emp-note">
+      <div class="emp-note-meta">
+        <span class="emp-note-author">${esc(n.by || 'Admin')}</span>
+        <span class="emp-note-time">${n.at ? new Date(n.at).toLocaleString() : ''}</span>
+      </div>
+      <div class="emp-note-text">${esc(n.text || '')}</div>
+    </div>`).join('');
+}
+
+async function addEmployeeNote(id) {
+  if (!id) return;
+  const input = document.getElementById('empNoteInput');
+  const text  = input?.value.trim();
+  if (!text) return;
+  const note = { text, by: currentUserData?.name || currentUserData?.email || 'Admin', at: Date.now() };
+  const emp  = _allEmployees.find(e => e.id === id);
+  if (!emp) return;
+  const notes = [...(emp.notes || []), note];
+  try {
+    await fb.updateDoc(fb.doc(_db, 'hub_employees', id), { notes });
+    emp.notes = notes;
+    renderEmpNotes(notes);
+    input.value = '';
+    toast('Note posted.', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+function openEmpModal(id) {
+  const emp = id ? _allEmployees.find(e => e.id === id) : null;
+  document.getElementById('empModalTitle').textContent = emp ? 'Edit Employee' : 'Add Employee';
+  document.getElementById('empMName').value     = emp?.name       || '';
+  document.getElementById('empMTitle').value    = emp?.title      || '';
+  document.getElementById('empMDept').value     = emp?.department || 'Engineering';
+  document.getElementById('empMStatus').value   = emp?.status     || 'active';
+  document.getElementById('empMEmail').value    = emp?.email      || '';
+  document.getElementById('empMPhone').value    = emp?.phone      || '';
+  document.getElementById('empMHireDate').value = emp?.hireDate   || '';
+  document.getElementById('empMBio').value      = emp?.bio        || '';
+  const preview = document.getElementById('empModalPhotoPreview');
+  const icon    = document.getElementById('empModalPhotoIcon');
+  if (emp?.photoUrl) {
+    preview.src = emp.photoUrl; preview.style.display = 'block';
+    if (icon) icon.style.display = 'none';
+  } else {
+    preview.style.display = 'none';
+    if (icon) icon.style.display = 'block';
+  }
+  document.getElementById('empModalSave').dataset.editId = id || '';
+  document.getElementById('empModal').hidden = false;
+  closeEmpDrawer();
+}
+
+function closeEmpModal() {
+  document.getElementById('empModal').hidden = true;
+  document.getElementById('empModalPhotoInput').value = '';
+}
+
+async function saveEmployee() {
+  const btn    = document.getElementById('empModalSave');
+  const editId = btn.dataset.editId;
+  const name   = document.getElementById('empMName').value.trim();
+  const title  = document.getElementById('empMTitle').value.trim();
+  if (!name || !title) { toast('Name and title are required.', 'error'); return; }
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  let photoUrl = editId ? (_allEmployees.find(e => e.id === editId)?.photoUrl || '') : '';
+  const fileInput = document.getElementById('empModalPhotoInput');
+  if (fileInput.files[0]) {
+    try { photoUrl = await uploadToCloudinary(fileInput.files[0]); }
+    catch(e) { toast('Photo upload failed: ' + e.message, 'warn'); }
+  }
+  const data = {
+    name, title,
+    department: document.getElementById('empMDept').value,
+    status:     document.getElementById('empMStatus').value,
+    email:      document.getElementById('empMEmail').value.trim(),
+    phone:      document.getElementById('empMPhone').value.trim(),
+    hireDate:   document.getElementById('empMHireDate').value,
+    bio:        document.getElementById('empMBio').value.trim(),
+    photoUrl,
+    updatedAt:  fb.serverTimestamp(),
+  };
+  try {
+    if (editId) {
+      await fb.updateDoc(fb.doc(_db, 'hub_employees', editId), data);
+      const idx = _allEmployees.findIndex(e => e.id === editId);
+      if (idx >= 0) _allEmployees[idx] = { id: editId, ..._allEmployees[idx], ...data };
+      toast('Employee updated.', 'success');
+      logActivity(`Updated employee "${name}"`);
+    } else {
+      data.createdAt = fb.serverTimestamp();
+      data.notes     = [];
+      const ref = await fb.addDoc(fb.collection(_db, 'hub_employees'), data);
+      _allEmployees.push({ id: ref.id, ...data });
+      toast('Employee added!', 'success');
+      logActivity(`Added employee "${name}"`);
+    }
+    renderEmployeeGrid(_allEmployees);
+    closeEmpModal();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  finally    { btn.textContent = 'Save Employee'; btn.disabled = false; }
+}
+
+async function deleteEmployee(id) {
+  if (!id || !confirm('Delete this employee profile? This cannot be undone.')) return;
+  const name = _allEmployees.find(e => e.id === id)?.name || id;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'hub_employees', id));
+    _allEmployees = _allEmployees.filter(e => e.id !== id);
+    renderEmployeeGrid(_allEmployees);
+    closeEmpDrawer();
+    toast('Employee deleted.', 'warn');
+    logActivity(`Deleted employee "${name}"`);
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}

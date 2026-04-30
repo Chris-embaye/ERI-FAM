@@ -143,12 +143,25 @@
         </button>
       </div>
 
-      <!-- People -->
+      <!-- Apps -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">People</div>
+        <div class="sb-cat-label">Apps</div>
         <button class="sb-item" data-page="apps">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
           <span>My Apps</span>
+        </button>
+        <button class="sb-item" data-page="riglog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <span>Riglog</span>
+        </button>
+      </div>
+
+      <!-- People -->
+      <div class="sb-cat-group">
+        <div class="sb-cat-label">People</div>
+        <button class="sb-item" data-page="employees">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Employees</span>
         </button>
         <button class="sb-item" data-page="users">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -360,39 +373,123 @@
           </div>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn-sm" id="editorRefresh">⟳ Refresh</button>
-          <button class="btn-danger" id="editorDelete">🗑 Delete App</button>
-          <button class="btn-primary" id="editorSave">Save Changes</button>
+          <button class="btn-sm" id="editorRefresh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+          <button class="btn-primary" id="editorSave">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Changes
+          </button>
         </div>
       </div>
 
       <div class="editor-wrap">
         <!-- Settings panel -->
         <div class="editor-panel" id="editorPanel">
-          <div class="ep-sect">
-            <div class="ep-sect-hd">App Info</div>
-            <div class="form-group"><label>Name</label><input type="text" id="epName" class="form-input"/></div>
-            <div class="form-group"><label>Description</label><input type="text" id="epDesc" class="form-input"/></div>
-            <div class="form-group"><label>URL</label><input type="url" id="epUrl" class="form-input"/></div>
-            <div class="form-row2">
-              <div class="form-group"><label>Icon (emoji)</label><input type="text" id="epIcon" class="form-input" maxlength="4" style="font-size:1.5rem;text-align:center"/></div>
-              <div class="form-group"><label>Color</label><input type="color" id="epColor" class="form-input color-input"/></div>
+
+          <!-- Tab headers -->
+          <div class="ep-tabs">
+            <button class="ep-tab active" data-tab="info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Info
+            </button>
+            <button class="ep-tab" data-tab="sections">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Sections
+            </button>
+            <button class="ep-tab" data-tab="advanced">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Advanced
+            </button>
+          </div>
+
+          <!-- ── INFO TAB ── -->
+          <div class="ep-pane active" id="epPane-info">
+            <div class="ep-sect">
+              <div class="ep-sect-hd">Identity</div>
+              <div class="form-group"><label>App Name</label><input type="text" id="epName" class="form-input" placeholder="My App"/></div>
+              <div class="form-group"><label>Description</label><textarea id="epDesc" class="form-textarea" rows="2" placeholder="What does this app do?"></textarea></div>
+              <div class="form-group"><label>URL</label><input type="url" id="epUrl" class="form-input" placeholder="https://…"/></div>
+              <div class="form-row2">
+                <div class="form-group"><label>Icon emoji</label><input type="text" id="epIcon" class="form-input" maxlength="4" style="font-size:1.5rem;text-align:center"/></div>
+                <div class="form-group"><label>Brand color</label><input type="color" id="epColor" class="form-input color-input"/></div>
+              </div>
+              <div class="form-group"><label>Icon Image URL <span class="form-hint">overrides emoji</span></label><input type="url" id="epIconUrl" class="form-input" placeholder="https://… PNG or SVG"/></div>
             </div>
-            <div class="form-group"><label>Icon Image URL <span style="color:var(--text-dim);font-weight:400">(overrides emoji)</span></label><input type="url" id="epIconUrl" class="form-input" placeholder="https://… PNG or SVG logo"/></div>
+            <div class="ep-sect">
+              <div class="ep-sect-hd">Visibility</div>
+              <div class="form-group"><label>Status</label>
+                <select id="epStatus" class="form-input">
+                  <option value="active">🟢 Active — live & accessible</option>
+                  <option value="maintenance">🟡 Maintenance — temporarily down</option>
+                  <option value="draft">⚫ Draft — hidden from users</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Category</label>
+                <select id="epCategory" class="form-input">
+                  <option value="">— Select category —</option>
+                  <option value="Audio">🎵 Audio</option>
+                  <option value="Video">🎬 Video</option>
+                  <option value="Info">🌐 Info & News</option>
+                  <option value="Tools">🛠 Tools</option>
+                  <option value="Social">💬 Social</option>
+                  <option value="Lifestyle">✨ Lifestyle</option>
+                  <option value="Productivity">⚡ Productivity</option>
+                  <option value="Other">📦 Other</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div class="ep-sect">
-            <div class="ep-sect-hd">Status</div>
-            <select id="epStatus" class="form-input">
-              <option value="active">🟢 Active</option>
-              <option value="maintenance">🟡 Maintenance</option>
-              <option value="draft">⚫ Draft</option>
-            </select>
+
+          <!-- ── SECTIONS TAB ── -->
+          <div class="ep-pane" id="epPane-sections">
+            <div class="ep-sect">
+              <div class="ep-sect-hd">Content Sections <span class="form-hint">drag to reorder</span></div>
+              <div id="sectionsEditor" class="sections-list"></div>
+              <button class="ep-add-section-btn" id="addSectionBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Section
+              </button>
+            </div>
           </div>
-          <div class="ep-sect">
-            <div class="ep-sect-hd">Content Sections <span style="font-size:.7rem;color:var(--text-dim);font-weight:400">(drag to reorder)</span></div>
-            <div id="sectionsEditor" class="sections-list"></div>
-            <button class="btn-sm" id="addSectionBtn" style="width:100%;margin-top:8px">+ Add Section</button>
+
+          <!-- ── ADVANCED TAB ── -->
+          <div class="ep-pane" id="epPane-advanced">
+            <div class="ep-sect">
+              <div class="ep-sect-hd">Technical Details</div>
+              <div class="form-row2">
+                <div class="form-group"><label>Version</label><input type="text" id="epVersion" class="form-input" placeholder="1.0.0"/></div>
+                <div class="form-group"><label>Platform</label>
+                  <select id="epPlatform" class="form-input">
+                    <option value="web">🌐 Web</option>
+                    <option value="pwa">📱 PWA</option>
+                    <option value="mobile">📲 Mobile</option>
+                    <option value="desktop">🖥 Desktop</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group"><label>GitHub URL</label><input type="url" id="epGithub" class="form-input" placeholder="https://github.com/…"/></div>
+              <div class="form-group"><label>Tech Stack <span class="form-hint">comma-separated</span></label><input type="text" id="epStack" class="form-input" placeholder="React, Firebase, Tailwind…"/></div>
+              <div class="form-group"><label>Tags <span class="form-hint">comma-separated</span></label><input type="text" id="epTags" class="form-input" placeholder="music, eritrean, streaming…"/></div>
+            </div>
+            <div class="ep-sect">
+              <div class="ep-sect-hd">Media</div>
+              <div class="form-group"><label>Screenshot URLs <span class="form-hint">one per line</span></label><textarea id="epScreenshots" class="form-textarea" rows="4" placeholder="https://…&#10;https://…"></textarea></div>
+            </div>
+            <div class="ep-sect">
+              <div class="ep-sect-hd">Changelog</div>
+              <div class="form-group"><label>Release Notes <span class="form-hint">markdown supported</span></label><textarea id="epChangelog" class="form-textarea" rows="6" placeholder="## v1.1.0&#10;- Added dark mode&#10;- Fixed login bug"></textarea></div>
+            </div>
+            <div class="ep-sect">
+              <div class="ep-sect-hd">Danger Zone</div>
+              <button class="btn-danger" id="editorDelete" style="width:100%">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                Delete This App
+              </button>
+            </div>
           </div>
+
         </div>
 
         <!-- Preview iframe -->
@@ -447,6 +544,79 @@
             <tr><td colspan="5" class="empty-msg">Loading…</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ══ RIGLOG ══ -->
+    <div class="page" id="page-riglog">
+      <div class="page-hd">
+        <div>
+          <h1>🚛 Riglog</h1>
+          <p class="page-sub">Owner-operator trip, expense & fuel tracking</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <a href="../riglog/" target="_blank" class="btn-sm" style="text-decoration:none">Open App ↗</a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-row" style="margin-bottom:24px">
+        <div class="stat-card" style="--accent:#10b981"><div class="stat-ico">👥</div><div class="stat-body"><div class="stat-num" id="rlAdmUsers">—</div><div class="stat-lbl">Users</div></div></div>
+        <div class="stat-card" style="--accent:#6366f1"><div class="stat-ico">🚚</div><div class="stat-body"><div class="stat-num" id="rlAdmTrips">—</div><div class="stat-lbl">Trips Logged</div></div></div>
+        <div class="stat-card" style="--accent:#f59e0b"><div class="stat-ico">⛽</div><div class="stat-body"><div class="stat-num" id="rlAdmExpenses">—</div><div class="stat-lbl">Expenses</div></div></div>
+        <div class="stat-card" style="--accent:#ef4444"><div class="stat-ico">💰</div><div class="stat-body"><div class="stat-num" id="rlAdmRevenue">—</div><div class="stat-lbl">Revenue</div></div></div>
+      </div>
+
+      <!-- Embedded iframe -->
+      <div class="rl-embed-wrap">
+        <div class="rl-embed-chrome">
+          <div class="chrome-dots"><span></span><span></span><span></span></div>
+          <span class="rl-embed-label">riglog.app — owner operator dashboard</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn-sm" id="rlRefreshBtn" title="Refresh">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </button>
+          </div>
+        </div>
+        <iframe id="riglogFrame" src="../riglog/" class="rl-embed-frame"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+      </div>
+    </div>
+
+    <!-- ══ EMPLOYEES ══ -->
+    <div class="page" id="page-employees">
+      <div class="page-hd">
+        <div>
+          <h1>👥 Employees</h1>
+          <p class="page-sub">Team profiles, contact info &amp; internal notes</p>
+        </div>
+        <button class="btn-primary" id="addEmployeeBtn">+ Add Employee</button>
+      </div>
+
+      <!-- Filters -->
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+        <input type="search" id="empSearch" class="form-input" placeholder="Search name, title, email…" style="flex:1;min-width:160px"/>
+        <select id="empDeptFilter" class="form-input" style="width:160px">
+          <option value="">All Departments</option>
+          <option value="Engineering">Engineering</option>
+          <option value="Design">Design</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Operations">Operations</option>
+          <option value="Finance">Finance</option>
+          <option value="HR">HR</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="empStatusFilter" class="form-input" style="width:140px">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="on-leave">On Leave</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+
+      <!-- Employee grid -->
+      <div id="empGrid" class="emp-grid">
+        <p class="empty-msg" style="grid-column:1/-1">No employees yet. Click + Add Employee to get started.</p>
       </div>
     </div>
 
@@ -1668,6 +1838,108 @@ match /community_posts/{d} {
     <button class="btn-primary" id="pdApproveBtn">✓ Approve</button>
     <button class="btn-danger" id="pdRejectBtn">✕ Reject</button>
     <button class="btn-sm" id="pdViewPostsBtn">📄 View Posts</button>
+  </div>
+</div>
+
+<!-- EMPLOYEE PROFILE DRAWER -->
+<div class="profile-drawer-overlay" id="empDrawerOverlay" hidden></div>
+<div class="profile-drawer emp-drawer" id="empDrawer" hidden>
+  <div class="pd-header emp-dh">
+    <div class="emp-ph-wrap">
+      <div class="emp-ph" id="empDhPhoto">
+        <img id="empDhImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%"/>
+        <span id="empDhInitials">?</span>
+      </div>
+      <span class="emp-status-dot" id="empDhDot" title="Active"></span>
+    </div>
+    <div class="pd-info" style="flex:1;min-width:0">
+      <div class="pd-name" id="empDhName">—</div>
+      <div style="font-size:.78rem;color:var(--text-dim);margin-bottom:4px" id="empDhTitle">—</div>
+      <span class="pd-role-badge" id="empDhDept">—</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+      <button class="modal-x" id="empDhClose">✕</button>
+      <button class="btn-sm" id="empDhEdit">✏ Edit</button>
+      <button class="btn-danger btn-sm" id="empDhDelete">Delete</button>
+    </div>
+  </div>
+
+  <div class="pd-body" style="flex:0 0 auto">
+    <div class="pd-row"><span class="pd-lbl">📧 Email</span><a class="pd-val" id="empDhEmail" href="#" style="color:var(--accent)">—</a></div>
+    <div class="pd-row"><span class="pd-lbl">📞 Phone</span><span class="pd-val" id="empDhPhone">—</span></div>
+    <div class="pd-row"><span class="pd-lbl">📅 Hired</span><span class="pd-val" id="empDhHired">—</span></div>
+    <div class="pd-row"><span class="pd-lbl">📊 Status</span><span class="pd-val" id="empDhStatus">—</span></div>
+    <div class="pd-row" id="empDhBioRow"><span class="pd-lbl">📝 Bio</span><span class="pd-val" id="empDhBio" style="white-space:pre-wrap;line-height:1.5;font-size:.8rem">—</span></div>
+  </div>
+
+  <!-- Internal Notes -->
+  <div class="emp-notes">
+    <div class="emp-notes-hd">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Internal Notes
+    </div>
+    <div class="emp-notes-list" id="empNotesList">
+      <p class="empty-msg" style="padding:12px 0;font-size:.78rem">No notes yet.</p>
+    </div>
+    <div class="emp-note-compose">
+      <textarea id="empNoteInput" class="form-textarea" rows="2" placeholder="Add an internal note…" style="font-size:.82rem"></textarea>
+      <button class="btn-primary" id="empNoteSend" style="flex-shrink:0">Post Note</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMPLOYEE ADD/EDIT MODAL -->
+<div class="modal-overlay" id="empModal" hidden>
+  <div class="modal" style="max-width:540px">
+    <div class="modal-hd">
+      <h3 id="empModalTitle">Add Employee</h3>
+      <button class="modal-x" id="empModalClose">✕</button>
+    </div>
+    <div class="emp-modal-body">
+      <!-- Photo upload -->
+      <div style="display:flex;justify-content:center;margin-bottom:16px">
+        <div class="emp-modal-photo" id="empModalPhotoWrap">
+          <img id="empModalPhotoPreview" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%"/>
+          <span id="empModalPhotoIcon">📷</span>
+          <label for="empModalPhotoInput" class="emp-photo-label">Change</label>
+          <input type="file" id="empModalPhotoInput" accept="image/*" hidden/>
+        </div>
+      </div>
+      <div class="form-row2">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="empMName" class="form-input" placeholder="Jane Doe"/></div>
+        <div class="form-group"><label>Job Title *</label><input type="text" id="empMTitle" class="form-input" placeholder="Software Engineer"/></div>
+      </div>
+      <div class="form-row2">
+        <div class="form-group"><label>Department</label>
+          <select id="empMDept" class="form-input">
+            <option value="Engineering">Engineering</option>
+            <option value="Design">Design</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Operations">Operations</option>
+            <option value="Finance">Finance</option>
+            <option value="HR">HR</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select id="empMStatus" class="form-input">
+            <option value="active">🟢 Active</option>
+            <option value="on-leave">🟡 On Leave</option>
+            <option value="inactive">⚫ Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row2">
+        <div class="form-group"><label>Email</label><input type="email" id="empMEmail" class="form-input" placeholder="jane@company.com"/></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="empMPhone" class="form-input" placeholder="+1 555-0000"/></div>
+      </div>
+      <div class="form-group"><label>Hire Date</label><input type="date" id="empMHireDate" class="form-input"/></div>
+      <div class="form-group"><label>Bio / Notes</label><textarea id="empMBio" class="form-textarea" rows="3" placeholder="Short bio or role description…"></textarea></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-sm" id="empModalCancel">Cancel</button>
+      <button class="btn-primary" id="empModalSave">Save Employee</button>
+    </div>
   </div>
 </div>
 
