@@ -36,17 +36,19 @@ export function initAuth() {
   }
 
   firebase.auth().onAuthStateChanged(async user => {
+    const prevUID = _user?.uid ?? null;
     _user = user;
     if (user) {
       setCurrentUID(user.uid);
-      await syncDown(user.uid);   // pulls cloud data on new device, pushes local on same device
+      await syncDown(user.uid);
     } else {
       setCurrentUID(null);
     }
     if (!_ready) {
       _ready = true;
       _listeners.forEach(fn => fn(user));
-    } else {
+    } else if ((user?.uid ?? null) !== prevUID) {
+      // Only re-render if the user actually changed (sign in / sign out)
       window.refresh?.();
     }
   });

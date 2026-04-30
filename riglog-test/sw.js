@@ -1,4 +1,4 @@
-const CACHE = 'truck-log-test-v3';
+const CACHE = 'truck-log-test-v4';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.json',
   './js/app.js', './js/store.js', './js/modal.js', './js/auth.js',

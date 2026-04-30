@@ -88,29 +88,5 @@
 
   <script type="module" src="js/app.js"></script>
 
-  <script>
-    // 3D card tilt on touch — subtle perspective tilt follows finger
-    (function() {
-      let active = null;
-      document.addEventListener('touchstart', e => {
-        active = e.target.closest('.glass-card, .dash-hero-card');
-        if (active) active.style.transition = 'none';
-      }, { passive: true });
-      document.addEventListener('touchmove', e => {
-        if (!active) return;
-        const r = active.getBoundingClientRect();
-        const x = (e.touches[0].clientX - r.left) / r.width  - 0.5;
-        const y = (e.touches[0].clientY - r.top)  / r.height - 0.5;
-        active.style.transform =
-          `perspective(600px) rotateY(${x * 7}deg) rotateX(${-y * 7}deg) translateZ(6px)`;
-      }, { passive: true });
-      document.addEventListener('touchend', () => {
-        if (!active) return;
-        active.style.transition = 'transform 0.5s cubic-bezier(0.22,1,0.36,1)';
-        active.style.transform  = '';
-        active = null;
-      }, { passive: true });
-    })();
-  </script>
 </body>
 </html>

@@ -106,16 +106,22 @@ const DEFAULTS = {
   },
 };
 
+// In-memory cache — avoids repeated JSON.parse on every screen render
+const _cache = {};
+
 function load(key) {
+  if (_cache[key] !== undefined) return _cache[key];
   try {
     const raw = localStorage.getItem(KEYS[key]);
-    return raw ? JSON.parse(raw) : (DEFAULTS[key] ?? []);
+    _cache[key] = raw ? JSON.parse(raw) : (DEFAULTS[key] ?? []);
   } catch {
-    return DEFAULTS[key] ?? [];
+    _cache[key] = DEFAULTS[key] ?? [];
   }
+  return _cache[key];
 }
 
 function save(key, val) {
+  _cache[key] = val;
   localStorage.setItem(KEYS[key], JSON.stringify(val));
   if (key !== 'activeDetention') pushKey(key, val);
 }
