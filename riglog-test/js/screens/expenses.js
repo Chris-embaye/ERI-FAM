@@ -32,46 +32,6 @@ function resizeImage(file) {
   });
 }
 
-async function runOCR(dataUrl) {
-  if (!window.Tesseract) return null;
-  try {
-    const { data: { text } } = await Tesseract.recognize(dataUrl, 'eng');
-    return text;
-  } catch {
-    return null;
-  }
-}
-
-function parseAmountFromText(text) {
-  if (!text) return null;
-  const lines = text.split('\n');
-  // Try to find a "total" line first
-  const totalLine = lines.find(l => /total|amount\s*due|balance\s*due|grand\s*total/i.test(l));
-  const searchIn = totalLine ? [totalLine, ...lines] : lines;
-  for (const line of searchIn) {
-    const m = line.match(/\$\s*(\d{1,4}[.,]\d{2})\b/);
-    if (m) return parseFloat(m[1].replace(',', '.'));
-  }
-  // Fallback: largest dollar amount found
-  const all = text.match(/\$\s*(\d{1,4}[.,]\d{2})/g);
-  if (all?.length) {
-    return Math.max(...all.map(a => parseFloat(a.replace(/[$\s,]/g, '').replace(',', '.'))));
-  }
-  return null;
-}
-
-function parseDateFromText(text) {
-  if (!text) return null;
-  const m = text.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
-  if (!m) return null;
-  const [, p1, p2, p3] = m;
-  const year = p3.length === 2 ? '20' + p3 : p3;
-  // MM/DD/YYYY assumed
-  const date = new Date(Number(year), Number(p1) - 1, Number(p2));
-  if (isNaN(date)) return null;
-  return date.toISOString().slice(0, 10);
-}
-
 // ── Form builder ──────────────────────────────────────────────────────────────
 
 function expenseForm(existing = null) {
@@ -107,7 +67,6 @@ function expenseForm(existing = null) {
           </label>
           <input type="file" id="receipt-file-input" accept="image/*" capture="environment" class="hidden">
           <input type="hidden" id="receipt-photo-data" name="receiptPhoto" value="${existing?.receiptPhoto || ''}">
-          <p id="scan-status" class="scan-state hidden"></p>
         </div>
 
         <div>
@@ -218,16 +177,11 @@ export function renderExpenses() {
     const previewWrap  = el.querySelector('#receipt-preview-wrap');
     const previewImg   = el.querySelector('#receipt-preview');
     const photoData    = el.querySelector('#receipt-photo-data');
-    const scanStatus   = el.querySelector('#scan-status');
-    const amountInput  = el.querySelector('#expense-amount');
-    const dateInput    = el.querySelector('#expense-date');
     const captureLabel = el.querySelector('#receipt-capture-label');
 
     fileInput.addEventListener('change', async () => {
       const file = fileInput.files[0];
       if (!file) return;
-
-      // Show preview immediately
       const base64 = await resizeImage(file);
       photoData.value = base64;
       previewImg.src  = base64;
@@ -238,33 +192,6 @@ export function renderExpenses() {
           <circle cx="12" cy="13" r="4"/>
         </svg>
         Retake Photo`;
-
-      // Attempt OCR if Tesseract is available
-      if (window.Tesseract) {
-        scanStatus.textContent = 'Scanning receipt…';
-        scanStatus.classList.remove('hidden');
-
-        const text = await runOCR(base64);
-        if (text) {
-          const amt  = parseAmountFromText(text);
-          const date = parseDateFromText(text);
-
-          if (amt && !amountInput.value) {
-            amountInput.value = amt.toFixed(2);
-            scanStatus.textContent = `✓ Found amount: $${amt.toFixed(2)}${date ? ' and date' : ''}`;
-          } else if (amt) {
-            scanStatus.textContent = `✓ Receipt scanned`;
-          } else {
-            scanStatus.textContent = 'Scanned — enter amount manually';
-          }
-          if (date && dateInput) dateInput.value = date;
-        } else {
-          scanStatus.textContent = 'Photo saved — enter amount manually';
-        }
-      } else {
-        scanStatus.textContent = 'Photo saved for your records';
-        scanStatus.classList.remove('hidden');
-      }
     });
 
     el.querySelector('#receipt-clear').addEventListener('click', () => {
@@ -272,7 +199,6 @@ export function renderExpenses() {
       previewImg.src  = '';
       previewWrap.classList.add('hidden');
       fileInput.value = '';
-      scanStatus.classList.add('hidden');
       captureLabel.innerHTML = `
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>

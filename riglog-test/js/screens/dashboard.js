@@ -52,7 +52,6 @@ export function renderDashboard() {
   const weekGross    = weekTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
   const weekRevenue  = weekGross * (1 - dispatchPct / 100);
   const weekMiles    = weekTrips.reduce((s, t) => s + Number(t.miles || 0), 0);
-  const weekHours    = weekTrips.reduce((s, t) => s + Number(t.durationHours || 0), 0);
   const weekExpTotal = weekExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
   const prevRevenue  = prevTrips.reduce((s, t) => s + Number(t.revenue || 0), 0) * (1 - dispatchPct / 100);
 
@@ -63,7 +62,6 @@ export function renderDashboard() {
   const ytdTaxEst    = estTax(ytdNet);
 
   const costPerMile  = weekMiles > 0 ? weekExpTotal / weekMiles : null;
-  const revPerHour   = weekHours > 0 ? weekRevenue / weekHours : null;
   const netProfit    = weekRevenue - weekExpTotal;
   const weekPct      = targetWeekly > 0 ? pct(weekRevenue, targetWeekly) : null;
 
@@ -72,10 +70,6 @@ export function renderDashboard() {
   const changeStr = weekChange !== null
     ? `${Number(weekChange) >= 0 ? '↑' : '↓'} ${Math.abs(Number(weekChange))}% vs last week`
     : '';
-
-  const bestLane = monthTrips
-    .filter(t => Number(t.miles) > 0 && Number(t.revenue) > 0)
-    .sort((a, b) => (Number(b.revenue)/Number(b.miles)) - (Number(a.revenue)/Number(a.miles)))[0];
 
   const isEmpty = allTrips.length === 0 && allExpenses.length === 0;
   const user    = getCurrentUser();
@@ -160,26 +154,21 @@ export function renderDashboard() {
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-2 gap-2 mb-3">
-          <div class="glass-card" style="padding:14px">
+        <div class="grid grid-cols-3 gap-2 mb-3">
+          <div class="glass-card" style="padding:12px">
             <p class="text-xs mb-1" style="color:rgba(148,163,184,0.7)">Net Profit</p>
-            <p class="text-2xl font-black" style="color:${netProfit >= 0 ? '#34d399' : '#f87171'}">${fmtMoney(netProfit)}</p>
-            <p class="text-xs mt-1" style="color:rgba(100,116,139,0.8)">Revenue − expenses</p>
+            <p class="text-xl font-black" style="color:${netProfit >= 0 ? '#34d399' : '#f87171'}">${fmtMoney(netProfit)}</p>
+            <p class="text-xs mt-1" style="color:rgba(100,116,139,0.8)">This week</p>
           </div>
-          <div class="glass-card" style="padding:14px">
+          <div class="glass-card" style="padding:12px">
             <p class="text-xs mb-1" style="color:rgba(148,163,184,0.7)">Cost / Mile</p>
-            <p class="text-2xl font-black">${costPerMile !== null ? fmtMoney(costPerMile, 2) : '—'}</p>
+            <p class="text-xl font-black">${costPerMile !== null ? fmtMoney(costPerMile, 2) : '—'}</p>
             <p class="text-xs mt-1" style="color:rgba(100,116,139,0.8)">${weekMiles > 0 ? weekMiles.toLocaleString()+' mi' : 'No trips'}</p>
           </div>
-          <div class="glass-card" style="padding:14px">
-            <p class="text-xs mb-1" style="color:rgba(148,163,184,0.7)">Rev / Hour</p>
-            <p class="text-2xl font-black">${revPerHour !== null ? fmtMoney(revPerHour) : '—'}</p>
-            <p class="text-xs mt-1" style="color:rgba(100,116,139,0.8)">${weekHours > 0 ? weekHours.toFixed(1)+'h driven' : 'No hours'}</p>
-          </div>
-          <div class="glass-card" style="padding:14px">
+          <div class="glass-card" style="padding:12px">
             <p class="text-xs mb-1" style="color:rgba(148,163,184,0.7)">Trips</p>
-            <p class="text-2xl font-black">${weekTrips.length}</p>
-            <p class="text-xs mt-1" style="color:rgba(100,116,139,0.8)">${weekMiles > 0 ? weekMiles.toLocaleString()+' miles' : 'This week'}</p>
+            <p class="text-xl font-black">${weekTrips.length}</p>
+            <p class="text-xs mt-1" style="color:rgba(100,116,139,0.8)">${weekMiles > 0 ? weekMiles.toLocaleString()+' mi' : 'This week'}</p>
           </div>
         </div>
 
@@ -205,18 +194,6 @@ export function renderDashboard() {
             </div>
           </div>
         </button>
-        ` : ''}
-
-        <!-- Best Lane -->
-        ${bestLane ? `
-        <div class="glass-card mb-3" style="padding:14px">
-          <p class="text-xs mb-2 font-bold uppercase tracking-wider" style="color:rgba(148,163,184,0.7)">Best Lane This Month</p>
-          <p class="font-black text-base">${bestLane.origin} → ${bestLane.destination}</p>
-          <div class="flex gap-3 mt-1">
-            <span class="text-sm font-bold" style="color:#0891b2">${fmtMoney(Number(bestLane.revenue)/Number(bestLane.miles),2)}/mi</span>
-            <span class="text-xs" style="color:rgba(100,116,139,0.8)">${Number(bestLane.miles).toLocaleString()} mi · ${fmtMoney(bestLane.revenue)}</span>
-          </div>
-        </div>
         ` : ''}
 
         <!-- Recent Trips -->

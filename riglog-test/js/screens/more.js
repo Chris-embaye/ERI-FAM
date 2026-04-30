@@ -1,4 +1,4 @@
-import { getDVIRs, getDetentionSessions, getActiveDetention, getSettings, getTrips, getExpenses, getFuelLogs, getMaintenanceLogs } from '../store.js';
+import { getDVIRs, getDetentionSessions, getActiveDetention, getSettings, getMaintenanceLogs } from '../store.js';
 
 const chevron = `<svg width="16" height="16" fill="none" stroke="rgba(100,116,139,0.7)" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
 
@@ -22,9 +22,6 @@ export function renderMore() {
   const sessions = getDetentionSessions();
   const active   = getActiveDetention();
   const settings = getSettings();
-  const trips    = getTrips();
-  const expenses = getExpenses();
-  const fuel     = getFuelLogs();
   const maint    = getMaintenanceLogs();
 
   const lastDVIRDate = dvirs[0]
@@ -33,17 +30,7 @@ export function renderMore() {
 
   const totalDetention = sessions.reduce((s, d) => s + Number(d.value || 0), 0);
 
-  const year      = new Date().getFullYear();
-  const yearStart = `${year}-01-01`;
-  const ytdTrips  = trips.filter(t => t.date >= yearStart);
-  const ytdExp    = expenses.filter(e => e.date >= yearStart);
-  const ytdFuel   = fuel.filter(f => f.date >= yearStart);
-
-  const ytdRev     = ytdTrips.reduce((s, t) => s + Number(t.revenue || 0), 0);
-  const ytdMiles   = ytdTrips.reduce((s, t) => s + Number(t.miles || 0), 0);
-  const ytdExpAmt  = ytdExp.reduce((s, e) => s + Number(e.amount || 0), 0);
-  const ytdFuelAmt = ytdFuel.reduce((s, f) => s + Number(f.totalCost || 0), 0);
-  const ytdNet     = ytdRev - ytdExpAmt - ytdFuelAmt;
+  const year = new Date().getFullYear();
 
   // Maintenance alert count
   const odo = Number(settings.currentOdometer) || 0;
@@ -65,29 +52,6 @@ export function renderMore() {
       </div>
 
       <div class="flex-1 overflow-y-auto" style="padding:14px 14px 80px">
-
-        <!-- YTD Snapshot -->
-        <div class="glass-card" style="padding:16px;margin-bottom:10px">
-          <p style="font-size:0.58rem;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;color:rgba(8,145,178,0.85);margin-bottom:12px">${year} Year-to-Date</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div style="background:rgba(8,145,178,0.08);border:1px solid rgba(8,145,178,0.18);border-radius:14px;padding:12px">
-              <p style="font-size:0.62rem;color:rgba(100,116,139,0.8);font-weight:700">Revenue</p>
-              <p style="font-size:1.15rem;font-weight:900;color:#67e8f9;margin-top:2px">$${Math.round(ytdRev).toLocaleString()}</p>
-            </div>
-            <div style="background:${ytdNet >= 0 ? 'rgba(21,128,61,0.1)' : 'rgba(185,28,28,0.1)'};border:1px solid ${ytdNet >= 0 ? 'rgba(21,128,61,0.25)' : 'rgba(185,28,28,0.25)'};border-radius:14px;padding:12px">
-              <p style="font-size:0.62rem;color:rgba(100,116,139,0.8);font-weight:700">Net Profit</p>
-              <p style="font-size:1.15rem;font-weight:900;color:${ytdNet >= 0 ? '#4ade80' : '#f87171'};margin-top:2px">${ytdNet < 0 ? '-' : ''}$${Math.abs(Math.round(ytdNet)).toLocaleString()}</p>
-            </div>
-            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:12px">
-              <p style="font-size:0.62rem;color:rgba(100,116,139,0.8);font-weight:700">Miles</p>
-              <p style="font-size:1.15rem;font-weight:900;color:#e0f2fe;margin-top:2px">${Math.round(ytdMiles).toLocaleString()}</p>
-            </div>
-            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:12px">
-              <p style="font-size:0.62rem;color:rgba(100,116,139,0.8);font-weight:700">Expenses</p>
-              <p style="font-size:1.15rem;font-weight:900;color:#fca5a5;margin-top:2px">$${Math.round(ytdExpAmt + ytdFuelAmt).toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
 
         <!-- Tool cards -->
         ${moreCard(

@@ -239,40 +239,6 @@ export function renderTax() {
           </div>
         </div>
 
-        <!-- Deduction strategy tips -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Deduction Strategy</p>
-          <div class="space-y-3 text-sm">
-            <div class="flex items-start gap-2">
-              <span class="mt-0.5 text-green-400">✓</span>
-              <p class="text-gray-300">${useStdMileage
-                ? `Using mileage method (${fmtMoney(mileagePlusOther)}) — beats actual expenses (${fmtMoney(totalActualExpenses)}). Saves you ${fmtMoney(mileagePlusOther - totalActualExpenses)} more.`
-                : `Using actual expenses (${fmtMoney(totalActualExpenses)}) — beats mileage deduction (${fmtMoney(mileagePlusOther)}). Saves you ${fmtMoney(totalActualExpenses - mileagePlusOther)} more.`
-              }</p>
-            </div>
-            ${dispatchPct > 0 ? `
-            <div class="flex items-start gap-2">
-              <span class="text-blue-400 mt-0.5">💡</span>
-              <p class="text-gray-300"><span class="font-bold text-white">Dispatch fees</span> reduce your gross income but are NOT themselves a separate deduction — they reduce how much you received, so taxes are calculated on what you actually kept.</p>
-            </div>
-            ` : ''}
-            ${truckPaymentMonthly > 0 ? `
-            <div class="flex items-start gap-2">
-              <span class="text-yellow-400 mt-0.5">⚠</span>
-              <p class="text-gray-300"><span class="font-bold text-white">Truck payment:</span> Only the interest portion is deductible (not principal). Ask your lender for an amortization schedule to find the interest amount.</p>
-            </div>
-            ` : ''}
-            <div class="flex items-start gap-2">
-              <span class="text-blue-400 mt-0.5">💡</span>
-              <p class="text-gray-300"><span class="font-bold text-white">Per Diem:</span> $${Number(s.perDiemRate) || 80}/day for overnight trips away from ${s.homeBase || 'home'}. Keep a travel log — this can add thousands more in deductions.</p>
-            </div>
-            <div class="flex items-start gap-2">
-              <span class="text-yellow-400 mt-0.5">⚠</span>
-              <p class="text-gray-300">Pay <span class="font-bold text-white">~${fmtMoney(quarterlyOwed)}</span> quarterly to avoid IRS underpayment penalties. Next due: <span class="font-bold text-orange-500">${QUARTERS[currentQ - 1].due}</span>.</p>
-            </div>
-          </div>
-        </div>
-
         <!-- Monthly cost overview -->
         ${(eldMonthly + truckPaymentMonthly + insuranceMonthly + otherFixedMonthly) > 0 ? `
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
