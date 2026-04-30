@@ -1,8 +1,7 @@
 import { initAuth, onAuthReady, getCurrentUser } from './auth.js';
-import { getAppMode }               from './store.js';
-import { applyTheme, loadTheme }    from './theme.js';
-import { renderSignIn }             from './screens/signin.js';
-import { renderRoleSelect }         from './screens/role-select.js';
+import { getAppMode, setAppMode }               from './store.js';
+import { applyTheme, loadTheme }                from './theme.js';
+import { renderSignIn }                          from './screens/signin.js';
 
 // Trucking screens
 import { renderDashboard }   from './screens/dashboard.js';
@@ -18,14 +17,7 @@ import { renderTax }         from './screens/tax.js';
 import { renderMaintenance } from './screens/maintenance.js';
 import { renderIFTA }        from './screens/ifta.js';
 
-// Personal screens
-import { renderPersonalDashboard } from './screens/personal-dashboard.js';
-import { renderPersonalTrips }     from './screens/personal-trips.js';
-import { renderPersonalFuel }      from './screens/personal-fuel.js';
-import { renderPersonalExpenses }  from './screens/personal-expenses.js';
-import { renderPersonalMore }      from './screens/personal-more.js';
-
-const TRUCKING_SCREENS = {
+const SCREENS = {
   dashboard:   renderDashboard,
   calculator:  renderCalculator,
   expenses:    renderExpenses,
@@ -40,18 +32,8 @@ const TRUCKING_SCREENS = {
   ifta:        renderIFTA,
 };
 
-const PERSONAL_SCREENS = {
-  dashboard: renderPersonalDashboard,
-  trips:     renderPersonalTrips,
-  fuel:      renderPersonalFuel,
-  expenses:  renderPersonalExpenses,
-  'p-more':  renderPersonalMore,
-  // alias 'more' → personal more so nav still works
-  more:      renderPersonalMore,
-};
-
-const TRUCKING_MORE = new Set(['dvir','detention','settings','tax','maintenance','ifta']);
-const PERSONAL_MORE = new Set(['p-more']);
+// Screens that live under the "More" tab for nav-highlight purposes
+const MORE_SCREENS = new Set(['dvir','detention','settings','tax','maintenance','ifta']);
 
 const bottomNav = document.getElementById('bottom-nav');
 let screenCleanup = null;
@@ -64,9 +46,8 @@ export function navigate(screen) {
   }
 }
 
-function updateNav(screen, mode) {
-  const moreScreens = mode === 'personal' ? PERSONAL_MORE : TRUCKING_MORE;
-  const navScreen   = moreScreens.has(screen) ? 'more' : screen;
+function updateNav(screen) {
+  const navScreen = MORE_SCREENS.has(screen) ? 'more' : screen;
   document.querySelectorAll('.nav-btn').forEach(btn => {
     const active = btn.dataset.screen === navScreen;
     btn.classList.toggle('text-orange-600', active);
@@ -80,7 +61,6 @@ function render() {
   const user      = getCurrentUser();
   const container = document.getElementById('screen');
 
-  // Not signed in
   if (!user) {
     bottomNav.classList.add('hidden');
     const { html, mount } = renderSignIn();
@@ -89,45 +69,20 @@ function render() {
     return;
   }
 
-  const screen = window.location.hash.slice(1) || 'dashboard';
-
-  // Role select screen (no nav)
-  if (screen === 'role-select') {
-    bottomNav.classList.add('hidden');
-    const { html, mount } = renderRoleSelect();
-    container.innerHTML = html;
-    if (mount) screenCleanup = mount(container, navigate) || null;
-    return;
-  }
-
-  // No mode chosen yet → show role selector
-  const mode = getAppMode();
-  if (!mode) {
-    bottomNav.classList.add('hidden');
-    const { html, mount } = renderRoleSelect();
-    container.innerHTML = html;
-    if (mount) screenCleanup = mount(container, navigate) || null;
-    return;
-  }
+  // Always trucking mode — auto-set if somehow unset
+  if (!getAppMode()) setAppMode('trucking');
 
   bottomNav.classList.remove('hidden');
+  document.documentElement.style.setProperty('--mode-color', '#0891b2');
 
-  // Colour the bottom nav to match mode
-  const navColor = mode === 'personal' ? '#7c3aed' : '#0891b2';
-  document.documentElement.style.setProperty('--mode-color', navColor);
-
-  // Calculator tab is trucking-only
-  const calcTab = bottomNav.querySelector('[data-screen="calculator"]');
-  if (calcTab) calcTab.style.display = mode === 'personal' ? 'none' : '';
-
-  const SCREENS  = mode === 'personal' ? PERSONAL_SCREENS : TRUCKING_SCREENS;
-  const renderFn = SCREENS[screen] || (mode === 'personal' ? renderPersonalDashboard : renderDashboard);
+  const screen   = window.location.hash.slice(1) || 'dashboard';
+  const renderFn = SCREENS[screen] || renderDashboard;
 
   const { html, mount } = renderFn();
   container.innerHTML = html;
   if (mount) screenCleanup = mount(container, navigate) || null;
 
-  updateNav(screen, mode);
+  updateNav(screen);
 }
 
 // ── Nav ───────────────────────────────────────────────────────────────────────
@@ -170,7 +125,7 @@ const _t = loadTheme(); applyTheme(_t.accentColor, _t.bgTheme);
 document.getElementById('screen').innerHTML = `
   <div class="flex items-center justify-center h-full">
     <div class="text-center space-y-4">
-      <div class="text-4xl animate-pulse">🚗</div>
+      <div class="text-4xl animate-pulse">🚛</div>
       <p class="text-gray-500 text-sm">Loading…</p>
     </div>
   </div>`;

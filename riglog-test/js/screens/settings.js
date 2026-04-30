@@ -1,4 +1,4 @@
-import { getSettings, saveSettings, clearCloudData, clearAppMode, syncUp, restoreFromCloud } from '../store.js';
+import { getSettings, saveSettings, clearCloudData, syncUp, restoreFromCloud } from '../store.js';
 import { getCurrentUser, signOut, saveProfile, deleteAccount } from '../auth.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 import { ACCENT_PRESETS, BG_PRESETS, applyTheme, loadTheme, saveTheme } from '../theme.js';
@@ -297,14 +297,6 @@ export function renderSettings() {
           </button>
         </div>
 
-        <!-- Switch mode -->
-        <div class="glass-card" style="padding:14px;text-align:center">
-          <p style="font-size:0.7rem;color:rgba(100,116,139,0.7);margin-bottom:10px">Not a trucker? Switch to personal vehicle mode.</p>
-          <button id="switch-mode-btn" style="background:rgba(124,58,237,0.12);color:#c4b5fd;border:1px solid rgba(124,58,237,0.25);font-weight:700;font-size:0.85rem;padding:10px 20px;border-radius:12px;width:100%">
-            🚗 Switch to Personal Mode
-          </button>
-        </div>
-
         <!-- Sign out + Delete account -->
         ${user ? `
         <button id="signout-btn" class="settings-signout-btn w-full">Sign Out</button>
@@ -484,12 +476,6 @@ export function renderSettings() {
       );
     });
 
-    container.querySelector('#switch-mode-btn')?.addEventListener('click', () => {
-      confirmSheet('Switch to Personal Mode?', 'Your trucking data stays saved.', 'Switch', () => {
-        clearAppMode();
-        window.navigate('role-select');
-      });
-    });
 
     container.querySelector('#delete-account-btn')?.addEventListener('click', () => {
       openModal(`
