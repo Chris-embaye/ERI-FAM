@@ -1,6 +1,39 @@
-import { getSettings, saveSettings, clearCloudData } from '../store.js';
+import { getSettings, saveSettings, clearCloudData, syncUp } from '../store.js';
 import { getCurrentUser, signOut, saveProfile } from '../auth.js';
-import { confirmSheet, toast } from '../modal.js';
+import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+
+function collectExportData(user) {
+  const data = {};
+  ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_settings'].forEach(k => {
+    try { data[k] = JSON.parse(localStorage.getItem(k) || 'null'); } catch {}
+  });
+  if (user) data._account = { uid: user.uid, email: user.email, name: user.displayName };
+  return data;
+}
+
+function downloadBackup(user) {
+  const blob = new Blob([JSON.stringify(collectExportData(user), null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href: url, download: `rig-log-backup-${new Date().toISOString().slice(0,10)}.json`,
+  });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function shareBackup(user) {
+  const file = new File(
+    [JSON.stringify(collectExportData(user), null, 2)],
+    `rig-log-backup-${new Date().toISOString().slice(0,10)}.json`,
+    { type: 'application/json' }
+  );
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'Rig Log Backup' }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  downloadBackup(user);
+  toast('Backup downloaded ✓');
+}
 
 export function renderSettings() {
   const s    = getSettings();
@@ -10,7 +43,6 @@ export function renderSettings() {
     ? user.displayName.trim()[0].toUpperCase()
     : user?.email?.[0].toUpperCase() ?? '?';
 
-  // Monthly fixed cost total for display
   const monthlyFixed = (Number(s.eldMonthly) || 0)
     + (Number(s.truckPaymentMonthly) || 0)
     + (Number(s.insuranceMonthly) || 0)
@@ -30,7 +62,7 @@ export function renderSettings() {
 
       <div class="flex-1 overflow-y-auto p-4 space-y-4">
 
-        <!-- Account card -->
+        <!-- Account -->
         ${user ? `
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
           <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Account</p>
@@ -50,12 +82,8 @@ export function renderSettings() {
               <label class="text-xs text-gray-400 block mb-1">Display Name</label>
               <input type="text" id="profile-name" class="form-input" value="${user.displayName || ''}" placeholder="Your name">
             </div>
-            <button id="save-profile-btn" class="w-full bg-gray-800 text-white font-bold py-2.5 rounded-lg text-sm">
-              Update Name
-            </button>
-            <button id="reset-pw-btn" class="w-full bg-gray-800/50 border border-gray-700 text-gray-400 font-bold py-2.5 rounded-lg text-sm">
-              Send Password Reset Email
-            </button>
+            <button id="save-profile-btn" class="w-full bg-gray-800 text-white font-bold py-2.5 rounded-lg text-sm">Update Name</button>
+            <button id="reset-pw-btn" class="w-full bg-gray-800/50 border border-gray-700 text-gray-400 font-bold py-2.5 rounded-lg text-sm">Send Password Reset Email</button>
           </div>
         </div>
         ` : ''}
@@ -69,9 +97,14 @@ export function renderSettings() {
               <label class="text-xs text-gray-400 block mb-1">Truck Name / Unit ID</label>
               <input type="text" name="truckId" class="form-input" value="${s.truckId || ''}" placeholder="My Truck">
             </div>
+            <div>
+              <label class="text-xs text-gray-400 block mb-1">Home Base (City, State)</label>
+              <input type="text" name="homeBase" class="form-input" value="${s.homeBase || ''}" placeholder="e.g. Atlanta, GA">
+              <p class="text-xs text-gray-600 mt-1">Days away from home qualify for per diem deductions.</p>
+            </div>
           </div>
 
-          <!-- Dispatch & Carrier -->
+          <!-- Dispatch -->
           <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
             <div class="flex justify-between items-center">
               <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Dispatch / Carrier</p>
@@ -84,7 +117,6 @@ export function renderSettings() {
               <input type="number" name="dispatchPct" step="0.5" min="0" max="50" class="form-input"
                 value="${s.dispatchPct || 0}" placeholder="0">
               <p class="text-xs text-gray-600 mt-1">
-                Percentage taken off your gross load revenue before it reaches you.
                 ${Number(s.dispatchPct) > 0
                   ? `On a $1,000 load you keep <span class="text-white font-bold">$${(1000 * (1 - Number(s.dispatchPct)/100)).toFixed(0)}</span>.`
                   : 'Enter 0 if you book all loads yourself.'}
@@ -96,47 +128,43 @@ export function renderSettings() {
           <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
             <div class="flex justify-between items-center">
               <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Monthly Fixed Costs</p>
-              ${monthlyFixed > 0
-                ? `<span class="text-xs text-red-400 font-bold">$${monthlyFixed.toLocaleString()}/mo</span>`
-                : ''}
+              ${monthlyFixed > 0 ? `<span class="text-xs text-red-400 font-bold">$${monthlyFixed.toLocaleString()}/mo</span>` : ''}
             </div>
-
             <div>
               <label class="text-xs text-gray-400 block mb-1">ELD Subscription ($/month)</label>
-              <input type="number" name="eldMonthly" step="1" min="0" class="form-input"
-                value="${s.eldMonthly || ''}" placeholder="e.g. 45">
-              <p class="text-xs text-gray-600 mt-1">Samsara, KeepTruckin, Motive, etc. — fully tax-deductible.</p>
+              <input type="number" name="eldMonthly" step="1" min="0" class="form-input" value="${s.eldMonthly || ''}" placeholder="e.g. 45">
+              <p class="text-xs text-gray-600 mt-1">Samsara, Motive, KeepTruckin, etc. — fully deductible.</p>
             </div>
-
             <div>
               <label class="text-xs text-gray-400 block mb-1">Truck Payment / Lease ($/month)</label>
-              <input type="number" name="truckPaymentMonthly" step="1" min="0" class="form-input"
-                value="${s.truckPaymentMonthly || ''}" placeholder="e.g. 2800">
+              <input type="number" name="truckPaymentMonthly" step="1" min="0" class="form-input" value="${s.truckPaymentMonthly || ''}" placeholder="e.g. 2800">
               <p class="text-xs text-gray-600 mt-1">Interest portion is deductible; principal is not.</p>
             </div>
-
             <div>
               <label class="text-xs text-gray-400 block mb-1">Insurance ($/month)</label>
-              <input type="number" name="insuranceMonthly" step="1" min="0" class="form-input"
-                value="${s.insuranceMonthly || ''}" placeholder="e.g. 800">
+              <input type="number" name="insuranceMonthly" step="1" min="0" class="form-input" value="${s.insuranceMonthly || ''}" placeholder="e.g. 800">
               <p class="text-xs text-gray-600 mt-1">Cargo, liability, physical damage — all deductible.</p>
             </div>
-
             <div>
               <label class="text-xs text-gray-400 block mb-1">Other Fixed Monthly ($/month)</label>
-              <input type="number" name="otherFixedMonthly" step="1" min="0" class="form-input"
-                value="${s.otherFixedMonthly || ''}" placeholder="e.g. 200">
+              <input type="number" name="otherFixedMonthly" step="1" min="0" class="form-input" value="${s.otherFixedMonthly || ''}" placeholder="e.g. 200">
               <p class="text-xs text-gray-600 mt-1">Permits, memberships, phone, etc.</p>
             </div>
-
             ${monthlyFixed > 0 ? `
             <div class="bg-gray-800 rounded-xl p-3 space-y-1.5 text-xs">
-              <p class="text-gray-400 font-bold">Annual fixed cost estimate</p>
               <div class="flex justify-between"><span class="text-gray-500">Per month</span><span class="font-bold">$${monthlyFixed.toLocaleString()}</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Per year (12 mo)</span><span class="font-bold text-red-400">$${(monthlyFixed * 12).toLocaleString()}</span></div>
-              <div class="flex justify-between border-t border-gray-700 pt-1.5 mt-1.5"><span class="text-gray-500">Break-even revenue needed</span><span class="font-bold text-orange-500">$${(monthlyFixed * 12).toLocaleString()}/yr</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Per year</span><span class="font-bold text-red-400">$${(monthlyFixed * 12).toLocaleString()}</span></div>
+            </div>` : ''}
+          </div>
+
+          <!-- Tax Preferences -->
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Tax Preferences</p>
+            <div>
+              <label class="text-xs text-gray-400 block mb-1">Per Diem Rate ($/day)</label>
+              <input type="number" name="perDiemRate" step="1" min="0" class="form-input" value="${s.perDiemRate || 80}" placeholder="80">
+              <p class="text-xs text-gray-600 mt-1">IRS 2025: $80/day for overnight trips away from your home base. Deducted from taxable income.</p>
             </div>
-            ` : ''}
           </div>
 
           <!-- Detention -->
@@ -144,25 +172,27 @@ export function renderSettings() {
             <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Detention</p>
             <div>
               <label class="text-xs text-gray-400 block mb-1">Detention Rate ($/hour)</label>
-              <input type="number" name="detentionRate" step="1" min="0" class="form-input"
-                value="${s.detentionRate || 60}" placeholder="60">
-              <p class="text-xs text-gray-600 mt-1">Hourly rate charged after grace period expires.</p>
+              <input type="number" name="detentionRate" step="1" min="0" class="form-input" value="${s.detentionRate || 60}" placeholder="60">
+              <p class="text-xs text-gray-600 mt-1">Hourly rate charged after the grace period expires.</p>
             </div>
             <div>
               <label class="text-xs text-gray-400 block mb-1">Grace Period (hours)</label>
-              <input type="number" name="detentionGrace" step="0.5" min="0" class="form-input"
-                value="${s.detentionGrace || 2}" placeholder="2">
+              <input type="number" name="detentionGrace" step="0.5" min="0" class="form-input" value="${s.detentionGrace || 2}" placeholder="2">
               <p class="text-xs text-gray-600 mt-1">Free wait time before detention charges begin (typically 2h).</p>
             </div>
           </div>
 
-          <!-- Cost targets -->
+          <!-- Profitability Targets -->
           <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
             <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Profitability Targets</p>
             <div>
+              <label class="text-xs text-gray-400 block mb-1">Target Revenue / Mile ($)</label>
+              <input type="number" name="targetRPM" step="0.01" min="0" class="form-input" value="${s.targetRPM || 2.00}" placeholder="2.00">
+              <p class="text-xs text-gray-600 mt-1">Goal rate per mile — trips below this show as red on your list.</p>
+            </div>
+            <div>
               <label class="text-xs text-gray-400 block mb-1">Target Cost / Mile ($)</label>
-              <input type="number" name="targetCPM" step="0.01" min="0" class="form-input"
-                value="${s.targetCPM || 0.50}" placeholder="0.50">
+              <input type="number" name="targetCPM" step="0.01" min="0" class="form-input" value="${s.targetCPM || 0.50}" placeholder="0.50">
               <p class="text-xs text-gray-600 mt-1">Operational cost per mile for profitability analysis.</p>
             </div>
           </div>
@@ -170,24 +200,29 @@ export function renderSettings() {
           <button type="submit" class="btn-primary">Save Settings</button>
         </form>
 
-        <!-- Data & export -->
+        <!-- Data & Sync -->
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-          <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Data</p>
-          <button id="force-update-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
-            Force Update App
+          <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Data &amp; Sync</p>
+          <button id="sync-now-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
+            ☁ Sync Now to Cloud
           </button>
           <button id="export-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
-            Export All Data (JSON)
+            ↓ Download Backup (JSON)
+          </button>
+          <button id="share-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
+            ↗ Send to Email / Share
+          </button>
+          <button id="force-update-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
+            ↺ Force Update App
           </button>
           <button id="clear-btn" class="w-full bg-red-900/20 text-red-400 font-bold py-2.5 rounded-lg text-sm border border-red-900/30">
-            Clear All Local Data
+            Clear All Data (Local + Cloud)
           </button>
         </div>
 
         <!-- Sign out -->
         ${user ? `
-        <button id="signout-btn"
-          class="w-full bg-gray-900 border border-gray-800 text-gray-400 font-bold py-3 rounded-xl text-sm">
+        <button id="signout-btn" class="w-full bg-gray-900 border border-gray-800 text-gray-400 font-bold py-3 rounded-xl text-sm">
           Sign Out
         </button>` : ''}
 
@@ -196,38 +231,43 @@ export function renderSettings() {
     </div>`;
 
   function mount(container) {
+
+    // ── Settings form ──────────────────────────────────────────────────────────
     container.querySelector('#settings-form').addEventListener('submit', e => {
       e.preventDefault();
       const fd = new FormData(e.target);
       saveSettings({
-        truckId:              fd.get('truckId').trim() || 'My Truck',
-        detentionRate:        parseFloat(fd.get('detentionRate'))        || 60,
-        detentionGrace:       parseFloat(fd.get('detentionGrace'))       || 2,
-        targetCPM:            parseFloat(fd.get('targetCPM'))            || 0.50,
-        dispatchPct:          parseFloat(fd.get('dispatchPct'))          || 0,
-        eldMonthly:           parseFloat(fd.get('eldMonthly'))           || 0,
-        truckPaymentMonthly:  parseFloat(fd.get('truckPaymentMonthly'))  || 0,
-        insuranceMonthly:     parseFloat(fd.get('insuranceMonthly'))     || 0,
-        otherFixedMonthly:    parseFloat(fd.get('otherFixedMonthly'))    || 0,
+        truckId:             fd.get('truckId').trim() || 'My Truck',
+        homeBase:            fd.get('homeBase').trim(),
+        detentionRate:       parseFloat(fd.get('detentionRate'))       || 60,
+        detentionGrace:      parseFloat(fd.get('detentionGrace'))      || 2,
+        targetCPM:           parseFloat(fd.get('targetCPM'))           || 0.50,
+        targetRPM:           parseFloat(fd.get('targetRPM'))           || 2.00,
+        dispatchPct:         parseFloat(fd.get('dispatchPct'))         || 0,
+        eldMonthly:          parseFloat(fd.get('eldMonthly'))          || 0,
+        truckPaymentMonthly: parseFloat(fd.get('truckPaymentMonthly')) || 0,
+        insuranceMonthly:    parseFloat(fd.get('insuranceMonthly'))    || 0,
+        otherFixedMonthly:   parseFloat(fd.get('otherFixedMonthly'))   || 0,
+        perDiemRate:         parseFloat(fd.get('perDiemRate'))         || 80,
       });
       toast('Settings saved ✓');
       window.refresh();
     });
 
+    // ── Profile ────────────────────────────────────────────────────────────────
     container.querySelector('#save-profile-btn')?.addEventListener('click', async () => {
-      const nameInput = container.querySelector('#profile-name');
-      const name = nameInput.value.trim();
+      const name = container.querySelector('#profile-name').value.trim();
       if (!name) return;
       const btn = container.querySelector('#save-profile-btn');
       btn.textContent = 'Saving…'; btn.disabled = true;
       try {
         await user.updateProfile({ displayName: name });
         if (user.uid) await saveProfile(user.uid, { name, email: user.email });
-        btn.textContent = 'Updated ✓';
-        setTimeout(() => { btn.textContent = 'Update Name'; btn.disabled = false; }, 1500);
+        toast('Name updated ✓');
       } catch {
-        btn.textContent = 'Error — try again'; btn.disabled = false;
+        toast('Error updating name', 'error');
       }
+      btn.textContent = 'Update Name'; btn.disabled = false;
     });
 
     container.querySelector('#reset-pw-btn')?.addEventListener('click', async () => {
@@ -236,12 +276,32 @@ export function renderSettings() {
       btn.textContent = 'Sending…'; btn.disabled = true;
       try {
         await firebase.auth().sendPasswordResetEmail(user.email);
-        btn.textContent = 'Email sent ✓';
-        setTimeout(() => { btn.textContent = 'Send Password Reset Email'; btn.disabled = false; }, 3000);
+        toast('Reset email sent — check your inbox ✓');
       } catch {
-        btn.textContent = 'Error — try again'; btn.disabled = false;
+        toast('Error sending reset email', 'error');
       }
+      btn.textContent = 'Send Password Reset Email'; btn.disabled = false;
     });
+
+    // ── Data & Sync ────────────────────────────────────────────────────────────
+    container.querySelector('#sync-now-btn')?.addEventListener('click', async () => {
+      const btn = container.querySelector('#sync-now-btn');
+      btn.textContent = 'Syncing…'; btn.disabled = true;
+      try {
+        await syncUp();
+        toast('Synced to cloud ✓');
+      } catch {
+        toast('Sync failed — check your connection', 'error');
+      }
+      btn.textContent = '☁ Sync Now to Cloud'; btn.disabled = false;
+    });
+
+    container.querySelector('#export-btn').addEventListener('click', () => {
+      downloadBackup(user);
+      toast('Backup downloaded ✓');
+    });
+
+    container.querySelector('#share-btn').addEventListener('click', () => shareBackup(user));
 
     container.querySelector('#force-update-btn').addEventListener('click', async () => {
       const btn = container.querySelector('#force-update-btn');
@@ -257,31 +317,58 @@ export function renderSettings() {
       window.location.reload();
     });
 
-    container.querySelector('#export-btn').addEventListener('click', () => {
-      const data = {};
-      ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_settings'].forEach(k => {
-        try { data[k] = JSON.parse(localStorage.getItem(k) || 'null'); } catch {}
-      });
-      if (user) data._account = { uid: user.uid, email: user.email, name: user.displayName };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url  = URL.createObjectURL(blob);
-      const a    = Object.assign(document.createElement('a'), { href: url, download: `rig-log-export-${new Date().toISOString().slice(0,10)}.json` });
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
     container.querySelector('#clear-btn').addEventListener('click', () => {
-      confirmSheet('Clear all data?', 'Deletes everything — trips, expenses, fuel, DVIRs — from this device and the cloud. Cannot be undone.', 'Clear Everything', async () => {
-        ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_active_detention'].forEach(k => {
-          localStorage.removeItem(k);
-        });
-        await clearCloudData();
-        window.navigate('dashboard');
-      });
+      confirmSheet(
+        'Clear all data?',
+        'Deletes all trips, expenses, fuel, and DVIRs from this device and the cloud. Cannot be undone.',
+        'Clear Everything',
+        async () => {
+          ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_active_detention'].forEach(k =>
+            localStorage.removeItem(k)
+          );
+          await clearCloudData();
+          window.navigate('dashboard');
+        }
+      );
     });
 
-    container.querySelector('#signout-btn')?.addEventListener('click', async () => {
-      if (confirm('Sign out?')) await signOut();
+    // ── Sign out — backup reminder sheet ──────────────────────────────────────
+    container.querySelector('#signout-btn')?.addEventListener('click', () => {
+      openModal(`
+        <div class="p-5">
+          <div class="text-center mb-5">
+            <div class="text-4xl mb-2">💾</div>
+            <p class="font-black text-lg">Back up before signing out?</p>
+            <p class="text-gray-400 text-sm mt-1.5 px-2">Your data syncs to the cloud automatically, but a local backup gives you an extra copy.</p>
+          </div>
+          <div class="space-y-2.5">
+            <button id="so-download" class="w-full bg-gray-800 border border-gray-700 text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2.5">
+              <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Backup File
+            </button>
+            <button id="so-share" class="w-full bg-gray-800 border border-gray-700 text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2.5">
+              <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              Send to Email / Share
+            </button>
+            <div class="border-t border-gray-800 pt-2.5">
+              <button id="so-signout" class="w-full bg-orange-600/20 border border-orange-600/40 text-orange-400 font-bold py-3 rounded-xl text-sm">
+                Sign Out Without Backup
+              </button>
+              <button onclick="closeModal()" class="btn-ghost mt-1">Cancel — Stay Signed In</button>
+            </div>
+          </div>
+        </div>
+      `, el => {
+        el.querySelector('#so-download').addEventListener('click', () => {
+          downloadBackup(user);
+          toast('Backup downloaded ✓');
+        });
+        el.querySelector('#so-share').addEventListener('click', () => shareBackup(user));
+        el.querySelector('#so-signout').addEventListener('click', async () => {
+          closeModal();
+          await signOut();
+        });
+      });
     });
   }
 

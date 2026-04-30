@@ -31,6 +31,11 @@ async function pushKey(key, val) {
   }
 }
 
+export async function syncUp() {
+  const SYNC_KEYS = ['expenses', 'trips', 'dvirs', 'detention', 'fuel', 'settings'];
+  await Promise.all(SYNC_KEYS.map(k => pushKey(k, load(k))));
+}
+
 export async function clearCloudData() {
   if (!_uid) return;
   const db = getDB();
@@ -87,14 +92,17 @@ const KEYS = {
 const DEFAULTS = {
   settings: {
     truckId: 'My Truck',
+    homeBase: '',
     detentionRate: 60,
     detentionGrace: 2,
     targetCPM: 0.50,
-    dispatchPct: 0,          // % dispatcher/carrier takes off gross revenue
-    eldMonthly: 0,           // ELD subscription ($/month)
-    truckPaymentMonthly: 0,  // truck loan/lease ($/month)
-    insuranceMonthly: 0,     // insurance ($/month)
-    otherFixedMonthly: 0,    // other fixed monthly costs
+    targetRPM: 2.00,
+    dispatchPct: 0,
+    eldMonthly: 0,
+    truckPaymentMonthly: 0,
+    insuranceMonthly: 0,
+    otherFixedMonthly: 0,
+    perDiemRate: 80,
   },
 };
 

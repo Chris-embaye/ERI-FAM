@@ -1,4 +1,4 @@
-import { getTrips, addTrip, deleteTrip, updateTrip, fmtMoney, fmtDate, today } from '../store.js';
+import { getTrips, addTrip, deleteTrip, updateTrip, getSettings, fmtMoney, fmtDate, today } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 
 let _filter = 'month';
@@ -104,6 +104,7 @@ function tripForm(existing = null) {
 
 export function renderTrips() {
   const allTrips = getTrips();
+  const { targetRPM = 2.00 } = getSettings();
 
   const now            = new Date();
   const thisMonthStart = now.toISOString().slice(0, 7) + '-01';
@@ -150,8 +151,8 @@ export function renderTrips() {
           const rev     = Number(t.revenue) || 0;
           const rPerM   = miles > 0 ? rev / miles : 0;
 
-          const borderColor  = rPerM >= 1.5 ? 'border-green-600' : rPerM >= 1.0 ? 'border-orange-600' : 'border-red-600';
-          const revenueColor = rPerM >= 1.5 ? 'text-green-400'   : rPerM >= 1.0 ? 'text-orange-500'   : 'text-red-400';
+          const borderColor  = rPerM >= targetRPM ? 'border-green-600' : rPerM >= targetRPM * 0.7 ? 'border-orange-600' : 'border-red-600';
+          const revenueColor = rPerM >= targetRPM ? 'text-green-400'   : rPerM >= targetRPM * 0.7 ? 'text-orange-500'   : 'text-red-400';
 
           return `
           <div class="bg-gray-900 border border-gray-800 border-l-4 ${borderColor} rounded-xl p-4" data-id="${t.id}">

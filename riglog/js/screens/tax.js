@@ -264,7 +264,7 @@ export function renderTax() {
             ` : ''}
             <div class="flex items-start gap-2">
               <span class="text-blue-400 mt-0.5">💡</span>
-              <p class="text-gray-300"><span class="font-bold text-white">Per Diem:</span> $80/day for overnight trips away from home. Keep a travel log — this can add thousands more in deductions.</p>
+              <p class="text-gray-300"><span class="font-bold text-white">Per Diem:</span> $${Number(s.perDiemRate) || 80}/day for overnight trips away from ${s.homeBase || 'home'}. Keep a travel log — this can add thousands more in deductions.</p>
             </div>
             <div class="flex items-start gap-2">
               <span class="text-yellow-400 mt-0.5">⚠</span>
