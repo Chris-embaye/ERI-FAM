@@ -1464,7 +1464,7 @@ body::after {
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border-right: 1px solid rgba(120,120,255,0.12) !important;
   box-shadow: 4px 0 40px rgba(0,0,0,0.5);
-  position: relative; z-index: 101;
+  z-index: 101;
 }
 .sb-top {
   border-bottom: 1px solid rgba(120,120,255,0.10) !important;
