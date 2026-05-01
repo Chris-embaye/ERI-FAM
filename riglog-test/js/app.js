@@ -16,6 +16,7 @@ import { renderSettings }    from './screens/settings.js';
 import { renderTax }         from './screens/tax.js';
 import { renderMaintenance } from './screens/maintenance.js';
 import { renderIFTA }        from './screens/ifta.js';
+import { renderPay }         from './screens/pay.js';
 
 const SCREENS = {
   dashboard:   renderDashboard,
@@ -30,10 +31,11 @@ const SCREENS = {
   tax:         renderTax,
   maintenance: renderMaintenance,
   ifta:        renderIFTA,
+  pay:         renderPay,
 };
 
 // Screens that live under the "More" tab for nav-highlight purposes
-const MORE_SCREENS = new Set(['dvir','detention','settings','tax','maintenance','ifta']);
+const MORE_SCREENS = new Set(['dvir','detention','settings','tax','maintenance','ifta','pay']);
 
 const bottomNav = document.getElementById('bottom-nav');
 let screenCleanup = null;

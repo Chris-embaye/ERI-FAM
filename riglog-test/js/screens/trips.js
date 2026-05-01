@@ -1,4 +1,4 @@
-import { getTrips, addTrip, deleteTrip, updateTrip, getSettings, fmtMoney, fmtDate, today } from '../store.js';
+import { getTrips, addTrip, deleteTrip, updateTrip, getSettings, fmtMoney, fmtDate, today, calcTripPay } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 import { requestLocation, locationDeniedMsg } from '../permissions.js';
 import { resizeImage, scanReceipt } from '../receipt-scanner.js';
@@ -201,7 +201,9 @@ function tripForm(existing = null) {
 
 export function renderTrips() {
   const allTrips = getTrips();
-  const { targetRPM = 2.00 } = getSettings();
+  const s = getSettings();
+  const { targetRPM = 2.00 } = s;
+  const isCompany = s.driverType === 'Company';
 
   const now            = new Date();
   const thisMonthStart = now.toISOString().slice(0, 7) + '-01';
@@ -247,9 +249,10 @@ export function renderTrips() {
           const miles   = Number(t.miles)   || 0;
           const rev     = Number(t.revenue) || 0;
           const rPerM   = miles > 0 ? rev / miles : 0;
+          const tripPay = calcTripPay(t, s);
 
-          const borderColor  = rPerM >= targetRPM ? 'border-green-600' : rPerM >= targetRPM * 0.7 ? 'border-orange-600' : 'border-red-600';
-          const revenueColor = rPerM >= targetRPM ? 'text-green-400'   : rPerM >= targetRPM * 0.7 ? 'text-orange-500'   : 'text-red-400';
+          const borderColor  = isCompany ? 'border-green-600' : (rPerM >= targetRPM ? 'border-green-600' : rPerM >= targetRPM * 0.7 ? 'border-orange-600' : 'border-red-600');
+          const revenueColor = isCompany ? 'text-green-400'   : (rPerM >= targetRPM ? 'text-green-400'   : rPerM >= targetRPM * 0.7 ? 'text-orange-500'   : 'text-red-400');
 
           return `
           <div class="bg-gray-900 border border-gray-800 border-l-4 ${borderColor} rounded-xl p-4" data-id="${t.id}">
@@ -263,7 +266,9 @@ export function renderTrips() {
               </div>
               <div class="text-right shrink-0 ml-3">
                 <p class="font-black text-lg ${revenueColor}">${fmtMoney(rev)}</p>
-                ${rPerM > 0 ? `<p class="text-xs text-gray-500">${fmtMoney(rPerM, 2)}/mi</p>` : ''}
+                ${isCompany && tripPay !== null
+                  ? `<p class="text-xs text-green-500">Your cut: ${fmtMoney(tripPay)}</p>`
+                  : (rPerM > 0 ? `<p class="text-xs text-gray-500">${fmtMoney(rPerM, 2)}/mi</p>` : '')}
               </div>
             </div>
             <div class="flex justify-between items-center mt-2">

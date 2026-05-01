@@ -157,6 +157,14 @@ const DEFAULTS = {
     currentOdometer: 0,
     compactMode: false,
     darkestMode: false,
+    companyPayType:        'cpm',
+    cpmRate:               0.58,
+    payPercent:            50,
+    carrierName:           '',
+    weeklyMilesGuarantee:  0,
+    healthInsDeductWeekly: 0,
+    k401DeductWeekly:      0,
+    otherDeductWeekly:     0,
   },
 };
 
@@ -333,4 +341,15 @@ export const getSettings = () => load('settings');
 
 export function saveSettings(data) {
   save('settings', { ...getSettings(), ...data });
+}
+
+export function calcTripPay(trip, settings) {
+  const s = settings;
+  if (s.driverType !== 'Company') return null;
+  const miles = Number(trip.miles || 0);
+  const revenue = Number(trip.revenue || 0);
+  if (s.companyPayType === 'percent') {
+    return revenue * (Number(s.payPercent || 50) / 100);
+  }
+  return miles * Number(s.cpmRate || 0.58);
 }

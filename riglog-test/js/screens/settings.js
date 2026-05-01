@@ -173,6 +173,34 @@ export function renderSettings() {
               inp('dispatchPct', 'number', s.dispatchPct || 0, 'step="0.5" min="0" max="50" placeholder="0"'))}
           `)}
 
+          <!-- ── Company Pay ── -->
+          ${s.driverType === 'Company' ? section('💼  Company Pay', '#22d3ee', `
+  <div class="grid grid-cols-2 gap-3">
+    ${field('Pay Structure', null, selField('companyPayType', s.companyPayType || 'cpm', [
+      ['cpm',     'CPM — Cents Per Mile'],
+      ['percent', 'Percentage of Load'],
+    ]))}
+    ${s.companyPayType === 'percent'
+      ? field('Your % of Load',
+          Number(s.payPercent) > 0 ? `On a $1,500 load you earn <strong style="color:#fff">$${(1500*Number(s.payPercent)/100).toFixed(0)}</strong>.` : 'Typical: 25–30% regional, up to 50% some carriers.',
+          inp('payPercent', 'number', s.payPercent || 50, 'step="0.5" min="0" max="100" placeholder="50"'))
+      : field('CPM Rate ($/mi)',
+          Number(s.cpmRate) > 0 ? `At ${(Number(s.cpmRate||0)*100).toFixed(1)}¢/mi — 2,500 mi/wk = <strong style="color:#fff">$${(Number(s.cpmRate||0)*2500).toFixed(0)}/wk</strong>.` : 'Industry avg: $0.55–$0.70/mi (2025).',
+          inp('cpmRate', 'number', s.cpmRate || 0.58, 'step="0.01" min="0" placeholder="0.58"'))
+    }
+  </div>
+  ${field('Carrier / Company Name', null, inp('carrierName', 'text', s.carrierName || '', 'placeholder="Werner, Swift, Knight…"'))}
+  ${field('Weekly Miles Guarantee', 'Minimum miles your carrier guarantees per week (0 = none).',
+    inp('weeklyMilesGuarantee', 'number', s.weeklyMilesGuarantee || '', 'step="50" min="0" placeholder="2500"'))}
+  <p class="settings-hint" style="color:rgba(100,200,255,0.5);margin-top:4px">— Deductions (Weekly) —</p>
+  <div class="grid grid-cols-2 gap-3">
+    ${field('Health Insurance ($/wk)', null, inp('healthInsDeductWeekly', 'number', s.healthInsDeductWeekly || '', 'step="1" min="0" placeholder="0"'))}
+    ${field('401(k) / Retirement ($/wk)', null, inp('k401DeductWeekly', 'number', s.k401DeductWeekly || '', 'step="1" min="0" placeholder="0"'))}
+  </div>
+  ${field('Other Deductions ($/wk)', 'Garnishment, ELD, uniform, etc.',
+    inp('otherDeductWeekly', 'number', s.otherDeductWeekly || '', 'step="1" min="0" placeholder="0"'))}
+`) : ''}
+
           <!-- ── Monthly Fixed Costs ── -->
           ${section('💸  Monthly Fixed Costs', '#f59e0b', `
             <div class="grid grid-cols-2 gap-3">
@@ -357,6 +385,14 @@ export function renderSettings() {
         currentOdometer:     parseFloat(fd.get('currentOdometer')) || 0,
         compactMode:         fd.get('compactMode') === 'on',
         darkestMode:         fd.get('darkestMode') === 'on',
+        companyPayType:        fd.get('companyPayType') || 'cpm',
+        cpmRate:               parseFloat(fd.get('cpmRate'))               || 0.58,
+        payPercent:            parseFloat(fd.get('payPercent'))             || 50,
+        carrierName:           fd.get('carrierName')?.trim() || '',
+        weeklyMilesGuarantee:  parseFloat(fd.get('weeklyMilesGuarantee'))   || 0,
+        healthInsDeductWeekly: parseFloat(fd.get('healthInsDeductWeekly'))  || 0,
+        k401DeductWeekly:      parseFloat(fd.get('k401DeductWeekly'))       || 0,
+        otherDeductWeekly:     parseFloat(fd.get('otherDeductWeekly'))      || 0,
       });
       toast('Settings saved ✓');
       window.refresh();

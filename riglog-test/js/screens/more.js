@@ -55,6 +55,18 @@ export function renderMore() {
 
         <!-- Tool cards -->
         ${moreCard(
+          `<svg width="22" height="22" fill="none" stroke="#4ade80" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>`,
+          'rgba(74,222,128,0.12)',
+          'Pay Ledger',
+          settings.driverType === 'Company'
+            ? (settings.companyPayType === 'cpm'
+                ? `${(Number(settings.cpmRate||0)*100).toFixed(1)}¢/mi · weekly pay statement`
+                : `${settings.payPercent}% of load · weekly pay statement`)
+            : 'Company drivers — weekly pay tracker',
+          '',
+          "navigate('pay')"
+        )}
+        ${moreCard(
           `<svg width="22" height="22" fill="none" stroke="#67e8f9" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
           'rgba(8,145,178,0.15)',
           'Detention Timer',
