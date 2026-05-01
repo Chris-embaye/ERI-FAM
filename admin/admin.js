@@ -160,7 +160,7 @@ async function doRegister() {
 }
 
 async function doSignOut() {
-  if (_auth) await fb.signOut(_auth);
+  try { if (_auth) await fb.signOut(_auth); } catch(e) { console.warn('[HUB] signOut error:', e); }
   document.getElementById('hubApp').hidden  = true;
   document.getElementById('authScreen').hidden = false;
   switchAuthView('login');
@@ -169,15 +169,20 @@ async function doSignOut() {
 
 function friendlyAuthError(code) {
   const map = {
-    'auth/user-not-found':       'No account found with this email.',
-    'auth/wrong-password':       'Incorrect password.',
-    'auth/invalid-credential':   'Incorrect email or password.',
-    'auth/email-already-in-use': 'An account already exists with this email.',
-    'auth/weak-password':        'Password must be at least 6 characters.',
-    'auth/invalid-email':        'Please enter a valid email address.',
-    'auth/too-many-requests':    'Too many attempts. Try again later.',
+    'auth/user-not-found':             'No account found with this email.',
+    'auth/wrong-password':             'Incorrect password.',
+    'auth/invalid-credential':         'Incorrect email or password.',
+    'auth/invalid-login-credentials':  'Incorrect email or password.',
+    'auth/email-already-in-use':       'An account already exists with this email.',
+    'auth/weak-password':              'Password must be at least 6 characters.',
+    'auth/invalid-email':              'Please enter a valid email address.',
+    'auth/too-many-requests':          'Too many attempts. Try again later.',
+    'auth/network-request-failed':     'Network error — check your connection.',
+    'auth/user-disabled':              'This account has been disabled.',
+    'auth/unauthorized-domain':        'Sign-in not allowed from this domain.',
+    'auth/operation-not-allowed':      'Email sign-in is not enabled.',
   };
-  return map[code] || 'Authentication error. Please try again.';
+  return map[code] || `Sign-in failed (${code || 'unknown'}). Please try again.`;
 }
 
 // ── Auth state observer ───────────────────────────────────
@@ -430,16 +435,20 @@ const DEFAULT_APPS = [
 ];
 
 async function seedDefaultApps() {
-  for (let i = 0; i < DEFAULT_APPS.length; i++) {
-    await fb.addDoc(fb.collection(_db, 'hub_apps'), {
-      ...DEFAULT_APPS[i],
-      order: i,
-      sections: [],
-      createdAt: fb.serverTimestamp(),
-      updatedAt: fb.serverTimestamp(),
-    });
+  try {
+    for (let i = 0; i < DEFAULT_APPS.length; i++) {
+      await fb.addDoc(fb.collection(_db, 'hub_apps'), {
+        ...DEFAULT_APPS[i],
+        order: i,
+        sections: [],
+        createdAt: fb.serverTimestamp(),
+        updatedAt: fb.serverTimestamp(),
+      });
+    }
+    logActivity('Default apps seeded on first load');
+  } catch(e) {
+    console.warn('[HUB] seedDefaultApps failed:', e.message);
   }
-  logActivity('Default apps seeded on first load');
 }
 
 async function loadApps() {

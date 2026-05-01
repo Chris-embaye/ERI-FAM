@@ -1,5 +1,5 @@
 import { getSettings, saveSettings, clearCloudData, syncUp, restoreFromCloud } from '../store.js';
-import { getCurrentUser, signOut, saveProfile, deleteAccount } from '../auth.js';
+import { getCurrentUser, signOut, saveProfile, deleteAccount, sendPasswordReset } from '../auth.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 import { ACCENT_PRESETS, BG_PRESETS, applyTheme, loadTheme, saveTheme } from '../theme.js';
 
@@ -384,7 +384,6 @@ export function renderSettings() {
         perDiemRate:         parseFloat(fd.get('perDiemRate'))         || 80,
         currentOdometer:     parseFloat(fd.get('currentOdometer')) || 0,
         compactMode:         fd.get('compactMode') === 'on',
-        darkestMode:         fd.get('darkestMode') === 'on',
         companyPayType:        fd.get('companyPayType') || 'cpm',
         cpmRate:               parseFloat(fd.get('cpmRate'))               || 0.58,
         payPercent:            parseFloat(fd.get('payPercent'))             || 50,
@@ -416,7 +415,7 @@ export function renderSettings() {
       const btn = container.querySelector('#reset-pw-btn');
       btn.textContent = 'Sending…'; btn.disabled = true;
       try {
-        await firebase.auth().sendPasswordResetEmail(user.email);
+        await sendPasswordReset(user.email);
         toast('Reset email sent ✓');
       } catch { toast('Error sending reset email', 'error'); }
       btn.textContent = 'Reset Password'; btn.disabled = false;

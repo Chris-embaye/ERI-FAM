@@ -156,7 +156,6 @@ const DEFAULTS = {
     perDiemRate: 80,
     currentOdometer: 0,
     compactMode: false,
-    darkestMode: false,
     companyPayType:        'cpm',
     cpmRate:               0.58,
     payPercent:            50,
