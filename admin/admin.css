@@ -70,7 +70,6 @@
 
 html, body {
   height: 100%;
-  overflow: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -297,7 +296,7 @@ body::after {
 /* ── LAYOUT ──────────────────────────────────────────────────── */
 #authScreen[hidden] { display: none !important; }
 #hubApp[hidden]     { display: none !important; }
-#hubApp { display: flex; height: 100vh; overflow: hidden; position: relative; z-index: 1; }
+#hubApp { display: flex; position: fixed; inset: 0; overflow: hidden; z-index: 1; }
 
 /* ── SIDEBAR ─────────────────────────────────────────────────── */
 .sidebar {
