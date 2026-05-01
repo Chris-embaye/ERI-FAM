@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "eri-fam"
+  },
+  "targets": {
+    "eri-fam": {
+      "hosting": {
+        "eritrean-info": ["eri-fam"],
+        "admin": ["eri-fam-admin"]
+      }
+    },
+    "trucklogapp-1b40e": {
+      "hosting": {
+        "riglog": ["trucklogapp-1b40e"]
+      }
+    }
+  }
+}

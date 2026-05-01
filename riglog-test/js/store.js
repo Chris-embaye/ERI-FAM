@@ -1,6 +1,3 @@
-// TEST ENVIRONMENT store — isolated localStorage keys + Firestore under rl_test_users/
-// Uses separate Firestore collection so test data never touches production.
-
 let _uid = null;
 
 export function setCurrentUID(uid) { _uid = uid; }
@@ -11,7 +8,6 @@ function getDB() {
 
 const ALL_SYNC_KEYS = [
   'expenses', 'trips', 'dvirs', 'detention', 'fuel', 'maintenance', 'settings',
-  'pTrips', 'pFuel', 'pExpenses', 'pMaint', 'pSettings',
 ];
 
 async function pushKey(key, val) {
@@ -20,14 +16,14 @@ async function pushKey(key, val) {
   if (!db) return;
   try {
     const doc = { updatedAt: new Date().toISOString() };
-    if (key === 'settings' || key === 'pSettings') {
+    if (key === 'settings') {
       doc[key] = val;
     } else {
       doc.items = Array.isArray(val) ? val : [];
     }
-    await db.collection('rl_test_users').doc(_uid).collection('data').doc(key).set(doc);
+    await db.collection('rl_users').doc(_uid).collection('data').doc(key).set(doc);
   } catch (e) {
-    console.warn('[rl-test] pushKey failed', key, e.message);
+    console.warn('[rl] pushKey failed', key, e.message);
   }
 }
 
@@ -40,9 +36,9 @@ export async function clearCloudData() {
   const db = getDB();
   if (!db) return;
   try {
-    const snap = await db.collection('rl_test_users').doc(_uid).collection('data').get();
+    const snap = await db.collection('rl_users').doc(_uid).collection('data').get();
     await Promise.all(snap.docs.map(d => d.ref.delete()));
-    await db.collection('rl_test_users').doc(_uid).delete().catch(() => {});
+    await db.collection('rl_users').doc(_uid).delete().catch(() => {});
   } catch (e) {
     console.warn('[rl] clearCloudData failed', e.message);
   }
@@ -55,31 +51,27 @@ export async function syncDown(uid) {
   const hasLocal = ALL_SYNC_KEYS.some(k => localStorage.getItem(KEYS[k]) !== null);
 
   if (hasLocal) {
-    // Already have local data — push to cloud in background so it stays current
     ALL_SYNC_KEYS.forEach(k => pushKey(k, load(k)));
-    // Also sync app mode
-    const mode = localStorage.getItem('rl_test_mode');
-    if (mode) db.collection('rl_test_users').doc(uid).set({ mode }, { merge: true }).catch(() => {});
+    const mode = localStorage.getItem('rl_mode');
+    if (mode) db.collection('rl_users').doc(uid).set({ mode }, { merge: true }).catch(() => {});
     return;
   }
 
-  // New / wiped device — pull from Firestore before first render
   try {
-    const snap = await db.collection('rl_test_users').doc(uid).collection('data').get();
+    const snap = await db.collection('rl_users').doc(uid).collection('data').get();
     snap.forEach(doc => {
       const key  = doc.id;
       const data = doc.data();
       if (!(key in KEYS)) return;
-      if (key === 'settings' || key === 'pSettings') {
+      if (key === 'settings') {
         if (data[key]) localStorage.setItem(KEYS[key], JSON.stringify(data[key]));
       } else if (Array.isArray(data.items) && data.items.length > 0) {
         localStorage.setItem(KEYS[key], JSON.stringify(data.items));
       }
     });
-    // Restore app mode
-    const userDoc = await db.collection('rl_test_users').doc(uid).get();
+    const userDoc = await db.collection('rl_users').doc(uid).get();
     if (userDoc.exists && userDoc.data()?.mode) {
-      localStorage.setItem('rl_test_mode', userDoc.data().mode);
+      localStorage.setItem('rl_mode', userDoc.data().mode);
     }
   } catch (e) {
     console.warn('[rl] sync down failed', e.message);
@@ -94,71 +86,54 @@ export async function restoreFromCloud(uid) {
   const db = getDB();
   if (!uid || !db) return false;
   try {
-    const snap = await db.collection('rl_test_users').doc(uid).collection('data').get();
+    const snap = await db.collection('rl_users').doc(uid).collection('data').get();
     if (snap.empty) return false;
     snap.forEach(doc => {
       const key  = doc.id;
       const data = doc.data();
       if (!(key in KEYS)) return;
-      if (key === 'settings' || key === 'pSettings') {
+      if (key === 'settings') {
         if (data[key]) localStorage.setItem(KEYS[key], JSON.stringify(data[key]));
       } else if (Array.isArray(data.items) && data.items.length > 0) {
         localStorage.setItem(KEYS[key], JSON.stringify(data.items));
       }
     });
-    const userDoc = await db.collection('rl_test_users').doc(uid).get();
+    const userDoc = await db.collection('rl_users').doc(uid).get();
     if (userDoc.exists && userDoc.data()?.mode) {
-      localStorage.setItem('rl_test_mode', userDoc.data().mode);
+      localStorage.setItem('rl_mode', userDoc.data().mode);
     }
     invalidateCache();
     return true;
   } catch (e) {
-    console.warn('[rl-test] restoreFromCloud failed', e.message);
+    console.warn('[rl] restoreFromCloud failed', e.message);
     return false;
   }
 }
 
-// App mode — 'trucking' | 'personal'
-export function getAppMode()  { return localStorage.getItem('rl_test_mode') || null; }
-export function clearAppMode() { localStorage.removeItem('rl_test_mode'); }
+// App mode
+export function getAppMode()   { return localStorage.getItem('rl_mode') || null; }
+export function clearAppMode() { localStorage.removeItem('rl_mode'); }
 export function setAppMode(m) {
-  localStorage.setItem('rl_test_mode', m);
+  localStorage.setItem('rl_mode', m);
   if (_uid) {
     const db = getDB();
-    if (db) db.collection('rl_test_users').doc(_uid).set({ mode: m }, { merge: true }).catch(() => {});
+    if (db) db.collection('rl_users').doc(_uid).set({ mode: m }, { merge: true }).catch(() => {});
   }
 }
 
-// TEST ENVIRONMENT — uses separate storage keys so test data never touches production
 const KEYS = {
-  // Trucking
-  expenses: 'rl_test_expenses',
-  trips: 'rl_test_trips',
-  dvirs: 'rl_test_dvirs',
-  detention: 'rl_test_detention',
-  fuel: 'rl_test_fuel',
-  maintenance: 'rl_test_maintenance',
-  settings: 'rl_test_settings',
-  activeDetention: 'rl_test_active_detention',
-  // Personal vehicle
-  pTrips:    'rl_test_p_trips',
-  pFuel:     'rl_test_p_fuel',
-  pExpenses: 'rl_test_p_expenses',
-  pMaint:    'rl_test_p_maintenance',
-  pSettings: 'rl_test_p_settings',
+  expenses:        'rl_expenses',
+  trips:           'rl_trips',
+  dvirs:           'rl_dvirs',
+  detention:       'rl_detention',
+  fuel:            'rl_fuel',
+  maintenance:     'rl_maintenance',
+  settings:        'rl_settings',
+  activeDetention: 'rl_active_detention',
 };
 
 const DEFAULTS = {
-  pSettings: {
-    vehicleNickname: 'My Car',
-    vehicleMake: '', vehicleModel: '', vehicleYear: '', vehiclePlate: '',
-    fuelType: 'gas',
-    targetMPG: 30,
-    tankSize: 15,
-    currentOdometer: 0,
-  },
   settings: {
-    // Truck identity
     truckId: 'My Truck',
     truckMake: '',
     truckModel: '',
@@ -166,34 +141,25 @@ const DEFAULTS = {
     truckPlate: '',
     driverType: 'OTR',
     homeBase: '',
-    // Revenue targets
     targetWeeklyRevenue: 0,
     targetRPM: 2.00,
     targetCPM: 0.50,
-    // Dispatch
     dispatchPct: 0,
-    // Fixed monthly costs
     eldMonthly: 0,
     truckPaymentMonthly: 0,
     insuranceMonthly: 0,
     otherFixedMonthly: 0,
-    // Detention
     detentionRate: 60,
     detentionGrace: 2,
-    // Fuel
     targetMPG: 6.5,
     fuelType: 'diesel',
-    // Tax
     perDiemRate: 80,
-    // Truck odometer (for maintenance due calculations)
     currentOdometer: 0,
-    // App
     compactMode: false,
     darkestMode: false,
   },
 };
 
-// In-memory cache — avoids repeated JSON.parse on every screen render
 const _cache = {};
 
 function load(key) {
@@ -361,34 +327,6 @@ export function deleteMaintenanceLog(id) {
 export function updateMaintenanceLog(id, data) {
   save('maintenance', getMaintenanceLogs().map(m => m.id === id ? { ...m, ...data } : m));
 }
-
-// ── Personal trips ────────────────────────────────────────────────────────────
-export const getPTrips = () => load('pTrips');
-export function addPTrip(data)        { const list = getPTrips(); const item = { id: genId(), date: today(), ...data }; list.unshift(item); save('pTrips', list); return item; }
-export function deletePTrip(id)       { save('pTrips', getPTrips().filter(t => t.id !== id)); }
-export function updatePTrip(id, data) { save('pTrips', getPTrips().map(t => t.id === id ? { ...t, ...data } : t)); }
-
-// ── Personal fuel ─────────────────────────────────────────────────────────────
-export const getPFuelLogs = () => load('pFuel');
-export function addPFuelLog(data)        { const list = getPFuelLogs(); const item = { id: genId(), date: today(), ...data }; list.unshift(item); save('pFuel', list); return item; }
-export function deletePFuelLog(id)       { save('pFuel', getPFuelLogs().filter(l => l.id !== id)); }
-export function updatePFuelLog(id, data) { save('pFuel', getPFuelLogs().map(l => l.id === id ? { ...l, ...data } : l)); }
-
-// ── Personal expenses ─────────────────────────────────────────────────────────
-export const getPExpenses = () => load('pExpenses');
-export function addPExpense(data)        { const list = getPExpenses(); const item = { id: genId(), date: today(), ...data }; list.unshift(item); save('pExpenses', list); return item; }
-export function deletePExpense(id)       { save('pExpenses', getPExpenses().filter(e => e.id !== id)); }
-export function updatePExpense(id, data) { save('pExpenses', getPExpenses().map(e => e.id === id ? { ...e, ...data } : e)); }
-
-// ── Personal maintenance ──────────────────────────────────────────────────────
-export const getPMaintenanceLogs = () => load('pMaint');
-export function addPMaintenanceLog(data)        { const list = getPMaintenanceLogs(); const item = { id: genId(), date: today(), ...data }; list.unshift(item); save('pMaint', list); return item; }
-export function deletePMaintenanceLog(id)       { save('pMaint', getPMaintenanceLogs().filter(m => m.id !== id)); }
-export function updatePMaintenanceLog(id, data) { save('pMaint', getPMaintenanceLogs().map(m => m.id === id ? { ...m, ...data } : m)); }
-
-// ── Personal settings ─────────────────────────────────────────────────────────
-export const getPSettings = () => load('pSettings');
-export function savePSettings(data) { save('pSettings', { ...getPSettings(), ...data }); }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 export const getSettings = () => load('settings');
