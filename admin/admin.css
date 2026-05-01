@@ -70,6 +70,7 @@
 
 html, body {
   height: 100%;
+  overflow: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -527,7 +528,7 @@ body::after {
 
 /* ── MAIN AREA ───────────────────────────────────────────────── */
 #hubMain {
-  flex: 1; overflow-y: auto;
+  flex: 1; min-height: 0; overflow-y: auto;
   display: flex; flex-direction: column;
   background: transparent;
   position: relative; z-index: 1;

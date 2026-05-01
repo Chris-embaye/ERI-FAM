@@ -307,9 +307,11 @@ function showPage(name) {
   if (page) page.classList.add('active');
   if (btn)  btn.classList.add('active');
 
-  // Scroll to top on every page switch
+  // Scroll to top on every page switch (hubMain + document-level safety)
   const main = document.getElementById('hubMain');
   if (main) main.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
 
   // Page progress bar animation
   const bar = document.getElementById('pageProgress');
@@ -378,18 +380,24 @@ async function loadDashboard() {
   document.getElementById('dashDate').textContent     = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 
   try {
-    const [appsSnap, usersSnap, assetsSnap, notifsSnap, tracksSnap] = await Promise.all([
+    const [appsSnap, usersSnap, assetsSnap, notifsSnap, tracksSnap, nlSnap, fbSnap] = await Promise.all([
       fb.getDocs(fb.collection(_db, 'hub_apps')),
       fb.getDocs(fb.collection(_db, 'hub_users')),
       fb.getDocs(fb.collection(_db, 'hub_assets')),
       fb.getDocs(fb.collection(_db, 'hub_notifications')),
       fb.getDocs(fb.collection(_db, 'tracks')),
+      fb.getDocs(fb.collection(_db, 'eri_newsletter')),
+      fb.getDocs(fb.collection(_db, 'feedback')),
     ]);
     countUp(document.getElementById('statApps'),   appsSnap.size);
     countUp(document.getElementById('statUsers'),  usersSnap.docs.filter(d => d.data().status === 'approved').length);
     countUp(document.getElementById('statAssets'), assetsSnap.size);
     countUp(document.getElementById('statNotifs'), notifsSnap.size);
     countUp(document.getElementById('statTracks'), tracksSnap.size);
+    const nlEl = document.getElementById('dashNlCount');
+    const fbEl = document.getElementById('dashFbCount');
+    if (nlEl) countUp(nlEl, nlSnap.size);
+    if (fbEl) countUp(fbEl, fbSnap.size);
 
     // Mini app list
     const apps = appsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
