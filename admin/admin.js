@@ -1903,23 +1903,93 @@ document.getElementById('bulkApproveBtn').addEventListener('click', async () => 
   } catch(e) { toast('Error: ' + e.message, 'error'); }
 });
 
-// ── DARK MODE (single source of truth — uses hub_theme key + data-theme attr) ──
-(function initDarkMode() {
-  const btn = document.getElementById('darkModeBtn');
-  if (!btn) return;
-  const isDark = (localStorage.getItem('hub_theme') || 'dark') !== 'light';
-  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  btn.textContent = isDark ? '☀️' : '🌙';
-  btn.addEventListener('click', () => {
-    const current = document.body.getAttribute('data-theme') || 'dark';
-    const next    = current === 'dark' ? 'light' : 'dark';
-    document.body.setAttribute('data-theme', next);
-    localStorage.setItem('hub_theme', next);
-    btn.textContent = next === 'dark' ? '☀️' : '🌙';
-    // Keep themeToggleBtn in sync
-    const tb = document.getElementById('themeToggleBtn');
-    if (tb) tb.textContent = next === 'light' ? '🌙' : '☀️';
-  });
+// ── THEME SYSTEM (dark/light mode + accent colors) ───────────────
+(function initThemeSystem() {
+  const mode   = localStorage.getItem('hub_theme')  || 'dark';
+  const accent = localStorage.getItem('hub_accent') || 'nebula';
+
+  document.body.setAttribute('data-theme', mode);
+  if (accent !== 'nebula') document.body.setAttribute('data-accent', accent);
+
+  function applyMode(m) {
+    document.body.setAttribute('data-theme', m);
+    localStorage.setItem('hub_theme', m);
+    syncModeButtons(m);
+  }
+  function applyAccent(a) {
+    if (a === 'nebula') document.body.removeAttribute('data-accent');
+    else document.body.setAttribute('data-accent', a);
+    localStorage.setItem('hub_accent', a);
+    syncSwatches(a);
+  }
+  function syncModeButtons(m) {
+    document.querySelectorAll('#tpDarkBtn,#tpLightBtn').forEach(b => b.classList.remove('active'));
+    const active = m === 'dark' ? document.getElementById('tpDarkBtn') : document.getElementById('tpLightBtn');
+    if (active) active.classList.add('active');
+  }
+  function syncSwatches(a) {
+    document.querySelectorAll('.tp-swatch').forEach(s => s.classList.toggle('active', s.dataset.accent === a));
+  }
+
+  // Dark mode btn (sidebar user area)
+  const darkBtn = document.getElementById('darkModeBtn');
+  if (darkBtn) {
+    darkBtn.addEventListener('click', () => {
+      const next = (document.body.getAttribute('data-theme') || 'dark') === 'dark' ? 'light' : 'dark';
+      applyMode(next);
+    });
+  }
+
+  // Theme picker btn (sidebar top)
+  const pickerBtn = document.getElementById('themePickerBtn');
+  const picker    = document.getElementById('themePicker');
+  if (pickerBtn && picker) {
+    pickerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const hidden = picker.hidden;
+      picker.hidden = !hidden;
+      pickerBtn.classList.toggle('active', !hidden ? false : true);
+      if (!hidden) {
+        pickerBtn.classList.remove('active');
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (!picker.hidden && !picker.contains(e.target) && e.target !== pickerBtn) {
+        picker.hidden = true;
+        pickerBtn.classList.remove('active');
+      }
+    });
+
+    document.querySelectorAll('.tp-swatch').forEach(btn => {
+      btn.addEventListener('click', () => applyAccent(btn.dataset.accent));
+    });
+    document.getElementById('tpDarkBtn')?.addEventListener('click', () => applyMode('dark'));
+    document.getElementById('tpLightBtn')?.addEventListener('click', () => applyMode('light'));
+  }
+
+  syncModeButtons(mode);
+  syncSwatches(accent);
+})();
+
+// ── COLLAPSIBLE CARDS ─────────────────────────────────────────────
+window.toggleCard = function(id) {
+  document.getElementById(id)?.classList.toggle('collapsed');
+};
+
+// ── LIVE SIDEBAR CLOCK ────────────────────────────────────────────
+(function initSidebarClock() {
+  const timeEl = document.getElementById('sbClockTime');
+  const dateEl = document.getElementById('sbClockDate');
+  if (!timeEl) return;
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    timeEl.textContent = `${h}:${m}`;
+    dateEl.textContent = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+  }
+  tick();
+  setInterval(tick, 10000);
 })();
 
 // Expose showPage on window (analytics is already called inside showPage)
@@ -4758,27 +4828,6 @@ loadDashboard = async function() {
 })();
 
 
-// ── SIDEBAR THEME TOGGLE (themeToggleBtn) — shares hub_theme key with darkModeBtn ──
-(function initThemeToggle() {
-  const btn = document.getElementById('themeToggleBtn');
-  if (!btn) return;
-  // Sync initial icon from hub_theme (set by initDarkMode above)
-  const saved = localStorage.getItem('hub_theme') || 'dark';
-  btn.textContent = saved === 'light' ? '🌙' : '☀️';
-  btn.title = saved === 'light' ? 'Switch to Dark mode' : 'Switch to Light mode';
-
-  btn.addEventListener('click', () => {
-    const current = document.body.getAttribute('data-theme') || 'dark';
-    const next    = current === 'dark' ? 'light' : 'dark';
-    document.body.setAttribute('data-theme', next);
-    localStorage.setItem('hub_theme', next);
-    btn.textContent = next === 'light' ? '🌙' : '☀️';
-    btn.title = next === 'light' ? 'Switch to Dark mode' : 'Switch to Light mode';
-    // Keep darkModeBtn in sync
-    const db = document.getElementById('darkModeBtn');
-    if (db) db.textContent = next === 'dark' ? '☀️' : '🌙';
-  });
-})();
 
 
 // ── FEATURE H: DRAFT SCHEDULER ────────────────────────────────────
