@@ -75,7 +75,7 @@ function render() {
   if (!getAppMode()) setAppMode('trucking');
 
   bottomNav.classList.remove('hidden');
-  document.documentElement.style.setProperty('--mode-color', '#0891b2');
+  document.documentElement.style.setProperty('--mode-color', '#ea580c');
 
   const screen   = window.location.hash.slice(1) || 'dashboard';
   const renderFn = SCREENS[screen] || renderDashboard;
