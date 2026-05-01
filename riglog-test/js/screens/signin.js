@@ -253,6 +253,7 @@ function friendlyError(code) {
     'auth/missing-password':           'Please enter your password.',
     'auth/missing-email':              'Please enter your email.',
     'auth/account-exists-with-different-credential': 'An account already exists with that email. Try signing in differently.',
+    'auth/unauthorized-domain': 'This domain is not authorized for sign-in. Contact the app administrator.',
   };
   return map[code] || `Sign-in failed (${code || 'unknown'}). Please try again.`;
 }
