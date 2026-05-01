@@ -169,6 +169,7 @@ export function renderSignIn() {
       try {
         await signInEmail(fd.get('email'), fd.get('password'));
       } catch (err) {
+        console.error('[RigLog] sign-in error:', err.code, err.message);
         setError(container, friendlyError(err.code));
         btn.disabled = false; btn.textContent = btn.dataset.label;
       }
@@ -198,6 +199,7 @@ export function renderSignIn() {
       try {
         await signInGoogle();
       } catch (err) {
+        console.error('[RigLog] google sign-in error:', err.code, err.message);
         if (err.code !== 'auth/popup-closed-by-user') setError(container, friendlyError(err.code));
       }
     });
@@ -235,14 +237,22 @@ function setSuccess(container, msg) {
 
 function friendlyError(code) {
   const map = {
-    'auth/user-not-found':          'No account found with that email.',
-    'auth/wrong-password':          'Incorrect password.',
-    'auth/email-already-in-use':    'An account with that email already exists.',
-    'auth/invalid-email':           'Invalid email address.',
-    'auth/weak-password':           'Password must be at least 6 characters.',
-    'auth/too-many-requests':       'Too many attempts. Try again later.',
-    'auth/network-request-failed':  'Network error. Check your connection.',
-    'auth/invalid-credential':      'Invalid email or password.',
+    'auth/user-not-found':             'No account found with that email.',
+    'auth/wrong-password':             'Incorrect password. Try again.',
+    'auth/invalid-credential':         'Incorrect email or password.',
+    'auth/invalid-login-credentials':  'Incorrect email or password.',
+    'auth/email-already-in-use':       'An account with that email already exists.',
+    'auth/invalid-email':              'Invalid email address.',
+    'auth/weak-password':              'Password must be at least 6 characters.',
+    'auth/too-many-requests':          'Too many failed attempts. Wait a few minutes and try again.',
+    'auth/network-request-failed':     'Network error — check your connection.',
+    'auth/user-disabled':              'This account has been disabled.',
+    'auth/operation-not-allowed':      'Email sign-in is not enabled for this app.',
+    'auth/popup-blocked':              'Pop-up was blocked — allow pop-ups and try again.',
+    'auth/popup-closed-by-user':       'Sign-in cancelled.',
+    'auth/missing-password':           'Please enter your password.',
+    'auth/missing-email':              'Please enter your email.',
+    'auth/account-exists-with-different-credential': 'An account already exists with that email. Try signing in differently.',
   };
-  return map[code] || 'Something went wrong. Please try again.';
+  return map[code] || `Sign-in failed (${code || 'unknown'}). Please try again.`;
 }

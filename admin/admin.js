@@ -422,40 +422,103 @@ async function loadDashboard() {
 // ── APPS ──────────────────────────────────────────────────
 document.getElementById('addAppBtn').addEventListener('click', () => openAppModal());
 
+const DEFAULT_APPS = [
+  { name: 'ERI-FAM Hub',   icon: '⬡',  color: '#6366f1', url: 'https://eritreaninfo.com',        category: 'Portal', status: 'active', description: 'Main app hub & portal' },
+  { name: 'Eritrean Info', icon: '📰', color: '#10b981', url: 'https://eritreaninfo.com',        category: 'Info',   status: 'active', description: 'Eritrean news and information' },
+  { name: 'RigLog',        icon: '🚚', color: '#f59e0b', url: 'https://trucklogapp.com',         category: 'App',    status: 'active', description: 'Truck driver log and pay tracker' },
+  { name: 'HUB Admin',     icon: '🛠', color: '#8b5cf6', url: 'https://admin.eritreaninfo.com',  category: 'System', status: 'active', description: 'This admin control panel' },
+];
+
+async function seedDefaultApps() {
+  for (let i = 0; i < DEFAULT_APPS.length; i++) {
+    await fb.addDoc(fb.collection(_db, 'hub_apps'), {
+      ...DEFAULT_APPS[i],
+      order: i,
+      sections: [],
+      createdAt: fb.serverTimestamp(),
+      updatedAt: fb.serverTimestamp(),
+    });
+  }
+  logActivity('Default apps seeded on first load');
+}
+
 async function loadApps() {
   const grid = document.getElementById('appGrid');
   grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Loading…</p>';
   try {
     const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_apps'), fb.orderBy('createdAt','desc')));
     allApps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!allApps.length) {
+      await seedDefaultApps();
+      const snap2 = await fb.getDocs(fb.query(fb.collection(_db, 'hub_apps'), fb.orderBy('createdAt','desc')));
+      allApps = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
     renderApps(allApps);
-    // Populate notify/asset app filter
     populateAppSelects(allApps);
   } catch(e) {
     grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error loading apps: ${e.message}</p>`;
   }
 }
 
+let _dragSrcIdx = null;
+
+window.appDragStart = function(e) {
+  _dragSrcIdx = +e.currentTarget.dataset.idx;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+};
+window.appDragOver = function(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.app-card').forEach(c => c.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+};
+window.appDrop = function(e) {
+  e.preventDefault();
+  const destIdx = +e.currentTarget.dataset.idx;
+  if (_dragSrcIdx === null || _dragSrcIdx === destIdx) return;
+  const moved = allApps.splice(_dragSrcIdx, 1)[0];
+  allApps.splice(destIdx, 0, moved);
+  renderApps(allApps);
+  saveAppOrder();
+};
+window.appDragEnd = function(e) {
+  document.querySelectorAll('.app-card').forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
+  _dragSrcIdx = null;
+};
+
+async function saveAppOrder() {
+  try {
+    const batch = fb.writeBatch(_db);
+    allApps.forEach((a, i) => batch.update(fb.doc(_db, 'hub_apps', a.id), { order: i }));
+    await batch.commit();
+  } catch(e) { console.warn('[HUB] Order save failed:', e); }
+}
+
 function renderApps(apps) {
   const grid = document.getElementById('appGrid');
   if (!apps.length) { grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">No apps yet. Click + New App to get started.</p>'; return; }
-  grid.innerHTML = apps.map(a => `
-    <div class="app-card">
+  grid.innerHTML = apps.map((a, i) => `
+    <div class="app-card" draggable="true" data-id="${a.id}" data-idx="${i}"
+         ondragstart="appDragStart(event)" ondragover="appDragOver(event)"
+         ondrop="appDrop(event)" ondragend="appDragEnd(event)">
       <div class="app-card-top" style="background:linear-gradient(135deg,${a.color||'#6366f1'}33,${a.color||'#6366f1'}11)">
         <div class="app-card-ico">${a.iconUrl ? `<img src="${esc(a.iconUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" onerror="this.parentElement.textContent='📱'"/>` : (a.icon || '📱')}</div>
         <span class="app-status-pill status-${a.status||'active'}">${a.status||'active'}</span>
+        <div class="app-drag-handle" title="Drag to reorder">⠿</div>
       </div>
-      <div class="app-card-body">
+      <div class="app-card-body app-card-click" onclick="openAppModal('${a.id}')">
         <div class="app-card-name">${esc(a.name)}</div>
         <div class="app-card-desc">${esc(a.description||'')}</div>
         <div class="app-card-url">${esc(a.url||'')}</div>
         <div style="font-size:.72rem;color:var(--text-mute)">${esc(a.category||'')}</div>
+        <div class="app-card-hint">Click to edit</div>
       </div>
       <div class="app-card-actions">
-        <button class="app-act-edit"   onclick="openAppModal('${a.id}')">✏ Edit</button>
-        <button class="app-act-edit"   onclick="openEditor('${a.id}')">🖊 Builder</button>
-        <button class="app-act-open"   onclick="window.open('${esc(a.url||'')}','_blank')">↗ Open</button>
-        <button class="app-act-delete" onclick="deleteApp('${a.id}')">🗑</button>
+        <button class="app-act-edit"   onclick="event.stopPropagation();openAppModal('${a.id}')">✏ Edit</button>
+        <button class="app-act-edit"   onclick="event.stopPropagation();openEditor('${a.id}')">🖊 Builder</button>
+        <button class="app-act-open"   onclick="event.stopPropagation();window.open('${esc(a.url||'')}','_blank')">↗ Open</button>
+        <button class="app-act-delete" onclick="event.stopPropagation();deleteApp('${a.id}')">🗑</button>
       </div>
     </div>`).join('');
 }
@@ -745,9 +808,8 @@ async function loadUsers() {
     const pending = allUsers.filter(u => u.status === 'pending').length;
     const badge  = document.getElementById('pendingBadge');
     const tabCnt = document.getElementById('pendingTabCount');
-    badge.textContent  = pending;
-    badge.hidden       = pending === 0;
-    tabCnt.textContent = pending;
+    if (badge) { badge.textContent = pending; badge.hidden = pending === 0; }
+    if (tabCnt) tabCnt.textContent = pending;
   } catch(e) {
     list.innerHTML = `<p class="empty-msg">Error: ${e.message}</p>`;
   }
@@ -869,8 +931,7 @@ async function loadPendingBadge() {
     const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_users'), fb.where('status','==','pending')));
     const count = snap.size;
     const badge = document.getElementById('pendingBadge');
-    badge.textContent = count;
-    badge.hidden = count === 0;
+    if (badge) { badge.textContent = count; badge.hidden = count === 0; }
   } catch(e) {}
 }
 

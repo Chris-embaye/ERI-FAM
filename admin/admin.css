@@ -1035,6 +1035,21 @@ select.form-input { cursor: pointer; }
 .app-act-delete { background: rgba(239,68,68,0.08); color: var(--danger); border: 1px solid rgba(239,68,68,0.18); }
 .app-act-delete:hover { background: rgba(239,68,68,0.18); }
 
+.app-card-click { cursor: pointer; transition: background var(--transition); }
+.app-card-click:hover { background: rgba(124,114,255,0.06); }
+.app-card-hint { font-size: .68rem; color: var(--accent); opacity: 0; transition: opacity var(--transition); margin-top: 4px; }
+.app-card-click:hover .app-card-hint { opacity: 0.7; }
+
+.app-drag-handle {
+  position: absolute; top: 10px; right: 10px;
+  font-size: 1.1rem; color: rgba(255,255,255,0.25);
+  cursor: grab; line-height: 1; letter-spacing: -1px;
+  transition: color var(--transition);
+}
+.app-card:hover .app-drag-handle { color: rgba(255,255,255,0.55); }
+.app-card.dragging { opacity: 0.45; transform: scale(0.97) rotate(1deg); transition: none; }
+.app-card.drag-over { border-color: var(--accent) !important; box-shadow: 0 0 0 2px var(--accent), 0 16px 44px rgba(0,0,0,0.55) !important; }
+
 /* ── EDITOR ──────────────────────────────────────────────────── */
 .editor-wrap { display: flex; gap: 20px; flex: 1; min-height: 0; height: calc(100vh - 140px); }
 .editor-panel {
