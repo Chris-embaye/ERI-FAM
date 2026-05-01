@@ -173,6 +173,9 @@
   <!-- ── MAIN ─────────────────────────────────────────────── -->
   <main id="hubMain">
 
+    <!-- Page navigation progress bar -->
+    <div id="pageProgress" class="page-progress"></div>
+
     <!-- Mobile top bar -->
     <div class="mob-bar">
       <button class="mob-menu" id="mobMenu">
@@ -1922,6 +1925,11 @@ match /community_posts/{d} {
     </div>
   </div>
 </div>
+
+<!-- Floating scroll-to-top button -->
+<button id="scrollTopBtn" class="scroll-top-btn" hidden title="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
 
 <!-- WAVEFORM CANVAS (shared for all preview tracks) -->
 <canvas id="waveformCanvas" class="waveform-canvas" hidden width="200" height="40"></canvas>

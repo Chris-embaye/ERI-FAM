@@ -301,6 +301,25 @@ function showPage(name) {
   const btn  = document.querySelector(`.sb-item[data-page="${name}"]`);
   if (page) page.classList.add('active');
   if (btn)  btn.classList.add('active');
+
+  // Scroll to top on every page switch
+  const main = document.getElementById('hubMain');
+  if (main) main.scrollTop = 0;
+
+  // Page progress bar animation
+  const bar = document.getElementById('pageProgress');
+  if (bar) {
+    bar.className = 'page-progress running';
+    clearTimeout(bar._t);
+    bar._t = setTimeout(() => {
+      bar.className = 'page-progress done';
+      bar._t = setTimeout(() => { bar.className = 'page-progress hide'; }, 250);
+    }, 300);
+  }
+
+  // Update mobile title
+  const titleEl = document.getElementById('mobTitle');
+  if (titleEl && btn) titleEl.textContent = btn.querySelector('span')?.textContent?.trim() || name;
   // Lazy-load page data
   if (name === 'apps')        loadApps();
   if (name === 'users')       loadUsers();
@@ -361,11 +380,11 @@ async function loadDashboard() {
       fb.getDocs(fb.collection(_db, 'hub_notifications')),
       fb.getDocs(fb.collection(_db, 'tracks')),
     ]);
-    document.getElementById('statApps').textContent   = appsSnap.size;
-    document.getElementById('statUsers').textContent  = usersSnap.docs.filter(d => d.data().status === 'approved').length;
-    document.getElementById('statAssets').textContent = assetsSnap.size;
-    document.getElementById('statNotifs').textContent = notifsSnap.size;
-    document.getElementById('statTracks').textContent = tracksSnap.size;
+    countUp(document.getElementById('statApps'),   appsSnap.size);
+    countUp(document.getElementById('statUsers'),  usersSnap.docs.filter(d => d.data().status === 'approved').length);
+    countUp(document.getElementById('statAssets'), assetsSnap.size);
+    countUp(document.getElementById('statNotifs'), notifsSnap.size);
+    countUp(document.getElementById('statTracks'), tracksSnap.size);
 
     // Mini app list
     const apps = appsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1975,6 +1994,32 @@ document.getElementById('bulkApproveBtn').addEventListener('click', async () => 
 window.toggleCard = function(id) {
   document.getElementById(id)?.classList.toggle('collapsed');
 };
+
+// ── COUNT-UP ANIMATION ────────────────────────────────────────────
+function countUp(el, target, duration = 700) {
+  if (!el || isNaN(target)) { if (el) el.textContent = target; return; }
+  const start = parseInt(el.textContent) || 0;
+  const startT = performance.now();
+  function step(now) {
+    const p = Math.min((now - startT) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(start + (target - start) * eased);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ── FLOATING SCROLL-TO-TOP ────────────────────────────────────────
+(function initScrollTopBtn() {
+  const btn  = document.getElementById('scrollTopBtn');
+  const main = document.getElementById('hubMain');
+  if (!btn || !main) return;
+  btn.hidden = false;
+  main.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', main.scrollTop > 280);
+  }, { passive: true });
+  btn.addEventListener('click', () => main.scrollTo({ top: 0, behavior: 'smooth' }));
+})();
 
 // ── LIVE SIDEBAR CLOCK ────────────────────────────────────────────
 (function initSidebarClock() {
