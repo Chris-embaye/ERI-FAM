@@ -5575,3 +5575,285 @@ async function deleteEmployee(id) {
     logActivity(`Deleted employee "${name}"`);
   } catch(e) { toast('Error: ' + e.message, 'error'); }
 }
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN TWEAKS v1.0 — 10 enhancements
+//  1. Keyboard shortcuts panel (? key)
+//  2. Table density toggle (T key / button)
+//  3. Real-time pending badge + notif count (onSnapshot)
+//  4. logAudit on approve / reject / role changes
+//  5. Search pre-warm (load data in background after sign-in)
+//  6. Select-all checkbox in users table
+//  7. User row click → profile drawer
+//  8. Inline app status toggle (click status pill)
+//  9. Analytics chart re-render fix on page switch
+//  10. Shortcuts hint in sidebar
+// ════════════════════════════════════════════════════════════════
+
+// ── 1. KEYBOARD SHORTCUTS PANEL ──────────────────────────────────
+(function initShortcutsPanel() {
+  const modal = document.createElement('div');
+  modal.id = 'shortcutsModal';
+  modal.className = 'shortcuts-modal';
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="sc-box">
+      <div class="sc-head">
+        <span>⌨️ Keyboard Shortcuts</span>
+        <button id="scClose" class="sc-close">✕</button>
+      </div>
+      <div class="sc-grid">
+        <div class="sc-col">
+          <div class="sc-col-title">Navigate to…</div>
+          <div class="sc-row"><div class="sc-keys"><kbd>G</kbd><kbd>D</kbd></div><span>Dashboard</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>G</kbd><kbd>U</kbd></div><span>Users</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>G</kbd><kbd>A</kbd></div><span>Apps</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>G</kbd><kbd>M</kbd></div><span>Music</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>G</kbd><kbd>N</kbd></div><span>Analytics</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>G</kbd><kbd>P</kbd></div><span>Posts</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>G</kbd><kbd>F</kbd></div><span>Feedback</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>G</kbd><kbd>L</kbd></div><span>Audit Log</span></div>
+        </div>
+        <div class="sc-col">
+          <div class="sc-col-title">Actions</div>
+          <div class="sc-row"><div class="sc-keys"><kbd>Ctrl</kbd><kbd>K</kbd></div><span>Global search</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>?</kbd></div><span>This panel</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>T</kbd></div><span>Toggle density</span></div>
+          <div class="sc-row"><div class="sc-keys"><kbd>Esc</kbd></div><span>Close panels</span></div>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  const close = () => { modal.hidden = true; };
+  document.getElementById('scClose').addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  let _gPressed = false, _gTimer;
+  const G_MAP = { d:'dashboard', u:'users', a:'apps', m:'music', n:'analytics', p:'posts', f:'feedback', l:'auditlog' };
+
+  document.addEventListener('keydown', e => {
+    if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    if (e.key === '?') { modal.hidden = !modal.hidden; return; }
+    if (e.key === 'Escape' && !modal.hidden) { close(); return; }
+    if (e.key === 't' || e.key === 'T') { window._toggleDensity?.(); return; }
+
+    if (e.key === 'g' || e.key === 'G') {
+      _gPressed = true;
+      clearTimeout(_gTimer);
+      _gTimer = setTimeout(() => { _gPressed = false; }, 1500);
+      return;
+    }
+    if (_gPressed) {
+      clearTimeout(_gTimer); _gPressed = false;
+      const page = G_MAP[e.key.toLowerCase()];
+      if (page) showPage(page);
+    }
+  });
+})();
+
+// ── 2. TABLE DENSITY TOGGLE ───────────────────────────────────────
+(function initDensityToggle() {
+  const saved = localStorage.getItem('hub_density') || 'comfortable';
+  document.body.setAttribute('data-density', saved);
+
+  window._toggleDensity = function() {
+    const compact = document.body.getAttribute('data-density') === 'compact';
+    const next = compact ? 'comfortable' : 'compact';
+    document.body.setAttribute('data-density', next);
+    localStorage.setItem('hub_density', next);
+    toast(compact ? 'Comfortable view' : 'Compact view');
+    const btn = document.getElementById('densityToggleBtn');
+    if (btn) btn.classList.toggle('active', !compact);
+  };
+
+  // Inject button into the mobile top bar (visible on all pages)
+  const mobBar = document.querySelector('.mob-bar');
+  if (mobBar) {
+    const btn = document.createElement('button');
+    btn.id = 'densityToggleBtn';
+    btn.className = 'mob-search-btn' + (saved === 'compact' ? ' active' : '');
+    btn.title = 'Toggle density (T)';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><line x1="3" y1="5" x2="21" y2="5"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="13" x2="21" y2="13"/><line x1="3" y1="17" x2="21" y2="17"/></svg>`;
+    btn.addEventListener('click', window._toggleDensity);
+    mobBar.appendChild(btn);
+  }
+})();
+
+// ── 3. REAL-TIME BADGES via onSnapshot ───────────────────────────
+(function initRealtimeBadges() {
+  const waitReady = fn => {
+    const check = () => (typeof fb !== 'undefined' && fb.onSnapshot && _db) ? fn() : setTimeout(check, 300);
+    check();
+  };
+  waitReady(() => {
+    try {
+      // Pending users badge — updates live as users register
+      fb.onSnapshot(
+        fb.query(fb.collection(_db, 'hub_users'), fb.where('status', '==', 'pending')),
+        snap => {
+          const n = snap.size;
+          const badge  = document.getElementById('pendingBadge');
+          const tabCnt = document.getElementById('pendingTabCount');
+          if (badge)  { badge.textContent = n; badge.hidden = n === 0; }
+          if (tabCnt) tabCnt.textContent = n;
+          document.title = n > 0 ? `(${n}) HUB — Control Center` : 'HUB — App Control Center';
+        },
+        () => {} // silently ignore permission errors
+      );
+      // Notification count in dashboard stat card
+      fb.onSnapshot(fb.collection(_db, 'hub_notifications'), snap => {
+        const el = document.getElementById('statNotifs');
+        if (el) el.textContent = snap.size;
+      }, () => {});
+    } catch(e) { console.warn('[RT badges]', e); }
+  });
+})();
+
+// ── 4. AUDIT LOG — patch missing calls ───────────────────────────
+(function patchMissingAuditCalls() {
+  const _origApprove = window.approveUser;
+  if (_origApprove) {
+    window.approveUser = async function(uid) {
+      await _origApprove(uid);
+      const u = allUsers.find(x => x.id === uid);
+      logAudit('Approved user: ' + (u?.email || uid));
+    };
+  }
+  const _origReject = window.rejectUser;
+  if (_origReject) {
+    window.rejectUser = async function(uid) {
+      await _origReject(uid);
+      const u = allUsers.find(x => x.id === uid);
+      logAudit('Rejected user: ' + (u?.email || uid));
+    };
+  }
+  const _origRole = window.updateRole;
+  if (_origRole) {
+    window.updateRole = async function(uid, role) {
+      await _origRole(uid, role);
+      const u = allUsers.find(x => x.id === uid);
+      logAudit('Set role "' + role + '" for ' + (u?.email || uid));
+    };
+  }
+})();
+
+// ── 5. SEARCH PRE-WARM — load data in background after sign-in ───
+(function initSearchPrewarm() {
+  const _orig = setupUserDisplay;
+  setupUserDisplay = function() {
+    _orig();
+    setTimeout(() => {
+      if (!allUsers.length  && typeof loadUsers  === 'function') loadUsers().catch(() => {});
+      if (!allApps.length   && typeof loadApps   === 'function') loadApps().catch(() => {});
+      if (!allTracks.length && typeof loadMusic  === 'function') loadMusic().catch(() => {});
+    }, 1200);
+  };
+})();
+
+// ── 6. SELECT-ALL CHECKBOX IN USERS TABLE ────────────────────────
+(function initSelectAll() {
+  const userTabs = document.querySelector('.user-tabs');
+  if (!userTabs) return;
+
+  const label = document.createElement('label');
+  label.className = 'select-all-label';
+  label.title = 'Select / deselect all visible users';
+  const cb   = document.createElement('input');
+  cb.type    = 'checkbox';
+  cb.id      = 'selectAllUsers';
+  const span = document.createElement('span');
+  span.textContent = 'Select all';
+  label.appendChild(cb);
+  label.appendChild(span);
+  userTabs.after(label);
+
+  cb.addEventListener('change', () => {
+    document.querySelectorAll('.user-bulk-cb').forEach(ucb => {
+      if (ucb.checked !== cb.checked) {
+        ucb.checked = cb.checked;
+        ucb.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+  });
+  // Reset on list re-render
+  new MutationObserver(() => { cb.checked = false; })
+    .observe(document.getElementById('userList') || document.body, { childList: true });
+})();
+
+// ── 7. USER ROW CLICK → PROFILE DRAWER ──────────────────────────
+(function patchUserRowClick() {
+  const _orig = renderUsers;
+  renderUsers = function(users, tab) {
+    _orig(users, tab);
+    document.querySelectorAll('#userList .user-row:not([data-click-wired])').forEach(row => {
+      row.dataset.clickWired = '1';
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', e => {
+        if (e.target.closest('button,select,input,a,label')) return;
+        const uid = row.dataset.uid;
+        if (uid && typeof openUserProfileDrawer === 'function') openUserProfileDrawer(uid);
+      });
+    });
+  };
+})();
+
+// ── 8. INLINE APP STATUS TOGGLE (click pill to cycle) ────────────
+(function patchAppStatusToggle() {
+  const CYCLE = { active:'maintenance', maintenance:'draft', draft:'active' };
+  const _orig = renderApps;
+  renderApps = function(apps) {
+    _orig(apps);
+    document.querySelectorAll('.app-status-pill:not([data-wired])').forEach(pill => {
+      pill.dataset.wired = '1';
+      pill.style.cursor  = 'pointer';
+      pill.title         = 'Click to cycle: active → maintenance → draft';
+      pill.addEventListener('click', async e => {
+        e.stopPropagation();
+        const card = pill.closest('.app-card');
+        const id   = card?.dataset.id;
+        if (!id) return;
+        const app  = allApps.find(a => a.id === id);
+        if (!app) return;
+        const next = CYCLE[app.status || 'active'] || 'active';
+        try {
+          await fb.updateDoc(fb.doc(_db, 'hub_apps', id), { status: next, updatedAt: fb.serverTimestamp() });
+          app.status   = next;
+          pill.textContent = next;
+          pill.className   = 'app-status-pill status-' + next;
+          logAudit('App "' + app.name + '" status → ' + next);
+          toast('Status → ' + next, 'success');
+        } catch(err) { toast('Error: ' + err.message, 'error'); }
+      });
+    });
+  };
+})();
+
+// ── 9. ANALYTICS CHART — re-render when page becomes active ──────
+(function patchAnalyticsVisibility() {
+  const _orig = window.showPage;
+  window.showPage = function(name) {
+    _orig(name);
+    if (name === 'analytics') {
+      setTimeout(() => {
+        if (typeof renderAnLineChart === 'function') renderAnLineChart();
+      }, 200);
+    }
+  };
+})();
+
+// ── 10. SHORTCUTS HINT IN SIDEBAR ────────────────────────────────
+(function injectShortcutsHint() {
+  const clock = document.getElementById('sbClock');
+  if (!clock) return;
+  const hint = document.createElement('button');
+  hint.className = 'sb-shortcuts-hint';
+  hint.textContent = 'Press ? for shortcuts';
+  hint.addEventListener('click', () => {
+    const m = document.getElementById('shortcutsModal');
+    if (m) m.hidden = !m.hidden;
+  });
+  clock.after(hint);
+})();

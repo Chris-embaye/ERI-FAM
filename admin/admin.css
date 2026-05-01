@@ -1890,5 +1890,143 @@ body[data-accent="gold"] {
   .page { padding: 16px 14px; }
 }
 
+/* ── ADMIN TWEAKS v1.0 ──────────────────────────────────────── */
+
+/* 1. Keyboard shortcuts modal */
+.shortcuts-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.shortcuts-modal[hidden] { display: none; }
+.sc-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 18px;
+  width: 560px;
+  max-width: 94vw;
+  box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  overflow: hidden;
+}
+.sc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.sc-close {
+  background: rgba(255,255,255,.07);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: .85rem;
+  cursor: pointer;
+  transition: background .15s;
+}
+.sc-close:hover { background: rgba(255,255,255,.14); color: var(--text); }
+.sc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 8px 0 20px;
+}
+.sc-col { padding: 12px 22px; }
+.sc-col-title {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--text-mute);
+  margin-bottom: 10px;
+}
+.sc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: .83rem;
+  color: var(--text-dim);
+}
+.sc-keys { display: flex; gap: 4px; }
+.sc-row kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  padding: 2px 6px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 5px;
+  font-size: .72rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--accent2);
+  box-shadow: 0 2px 0 rgba(0,0,0,.35);
+}
+
+/* 2. Density toggle */
+#densityToggleBtn.active { color: var(--accent); }
+[data-density="compact"] .user-row { padding: 6px 12px; }
+[data-density="compact"] .user-ava  { width: 28px; height: 28px; font-size: .75rem; }
+[data-density="compact"] .user-name { font-size: .82rem; }
+[data-density="compact"] .user-email { font-size: .72rem; }
+[data-density="compact"] .music-track-row { padding: 6px 10px; }
+[data-density="compact"] .audit-row { padding: 7px 0; }
+[data-density="compact"] .activity-item { padding: 5px 0; }
+[data-density="compact"] .card { padding: 14px 16px; }
+[data-density="compact"] .an-bar-row { padding: 3px 0; }
+
+/* 6. Select-all label */
+.select-all-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .78rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px 0 6px;
+  user-select: none;
+}
+.select-all-label input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+.select-all-label:hover { color: var(--text); }
+
+/* 7. User row hover (clickable) */
+#userList .user-row[data-click-wired]:hover {
+  background: rgba(124,114,255,.06);
+  border-radius: 10px;
+}
+
+/* 10. Shortcuts hint in sidebar */
+.sb-shortcuts-hint {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  font-size: .62rem;
+  color: rgba(255,255,255,.2);
+  text-align: center;
+  padding: 3px 12px 8px;
+  cursor: pointer;
+  transition: color .2s;
+  font-family: inherit;
+}
+.sb-shortcuts-hint:hover { color: rgba(255,255,255,.5); }
+.sidebar.collapsed .sb-shortcuts-hint { display: none; }
+
 /* ── END ─────────────────────────────────────────────────────── */
 
