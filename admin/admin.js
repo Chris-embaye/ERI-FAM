@@ -5857,3 +5857,333 @@ async function deleteEmployee(id) {
   });
   clock.after(hint);
 })();
+
+// ════════════════════════════════════════════════════════════════
+//  MUSIC — WAVEFORM PLAYER + AUDIO FINGERPRINTING
+//  • Content-based duplicate detection (audio fingerprint)
+//  • Waveform stored in Firestore, drawn as canvas bars
+//  • Inline player per row: play/pause, seek, live time
+//  • Full player inside the edit modal
+// ════════════════════════════════════════════════════════════════
+
+// ── Audio fingerprint via Web Audio API ──────────────────────────
+// Samples first 6 seconds of audio, hashes PCM data.
+// Two identical audio files (even renamed) will produce the same hash.
+async function computeAudioFingerprint(file) {
+  try {
+    const actx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 22050 });
+    const buf  = await actx.decodeAudioData(await file.arrayBuffer());
+    actx.close();
+    const ch   = buf.getChannelData(0);
+    const win  = Math.min(ch.length, buf.sampleRate * 6); // first 6 seconds
+    const N    = 100;
+    const step = Math.floor(win / N);
+    const pts  = [];
+    for (let i = 0; i < N; i++) pts.push(Math.round((ch[i * step] || 0) * 1000));
+    // DJB2 hash
+    let h = 5381;
+    for (let i = 0, s = pts.join(','); i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+    return (h >>> 0).toString(36);
+  } catch(e) { console.warn('[Fingerprint]', e.message); return ''; }
+}
+
+// ── Waveform amplitude data (60 peaks, normalized 0-1) ───────────
+async function computeWaveformData(file, bars = 60) {
+  try {
+    const actx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 22050 });
+    const buf  = await actx.decodeAudioData(await file.arrayBuffer());
+    actx.close();
+    const ch   = buf.getChannelData(0);
+    const step = Math.floor(ch.length / bars);
+    const data = [];
+    for (let i = 0; i < bars; i++) {
+      let peak = 0;
+      for (let j = 0; j < step; j++) { const a = Math.abs(ch[i * step + j] || 0); if (a > peak) peak = a; }
+      data.push(peak);
+    }
+    const max = Math.max(...data, 0.001);
+    return data.map(v => Math.round((v / max) * 100) / 100);
+  } catch(e) { console.warn('[WaveformData]', e.message); return []; }
+}
+
+// ── Draw real waveform from stored data ───────────────────────────
+function drawWaveform(canvas, data, progress = 0) {
+  if (!canvas || !data?.length) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const bw = W / data.length, px = progress * W;
+  data.forEach((amp, i) => {
+    const x = i * bw, bh = Math.max(2, amp * H * 0.88), y = (H - bh) / 2;
+    ctx.fillStyle = x < px ? 'rgba(124,114,255,0.95)' : 'rgba(255,255,255,0.2)';
+    ctx.fillRect(Math.round(x), Math.round(y), Math.max(1, bw - 1), Math.round(bh));
+  });
+}
+
+// ── Draw deterministic placeholder when no waveform stored ────────
+function drawPlaceholder(canvas, seed) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  let n = (seed | 0) || 99991;
+  const bars = Math.floor(W / 3);
+  const bw = W / bars;
+  for (let i = 0; i < bars; i++) {
+    n = (Math.imul(n, 1664525) + 1013904223) | 0;
+    const amp = 0.15 + ((n >>> 0) / 0xffffffff) * 0.65;
+    const bh = Math.max(2, amp * H * 0.85);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(Math.round(i * bw), Math.round((H - bh) / 2), Math.max(1, bw - 1), Math.round(bh));
+  }
+}
+
+// ── handleMusicFiles — patch to add fingerprint + waveform ────────
+const _origHandleMusic = handleMusicFiles;
+handleMusicFiles = async function(files) {
+  const AUDIO_EXT = /\.(mp3|m4a|flac|wav|ogg|aac)$/i;
+  const audioFiles = [...files].filter(f => f.type.startsWith('audio/') || AUDIO_EXT.test(f.name));
+  if (!audioFiles.length) { toast('No audio files found.', 'error'); return; }
+
+  const progWrap = document.getElementById('musicUploadProgress');
+  const bar      = document.getElementById('musicUpBar');
+  const status   = document.getElementById('musicUpStatus');
+  progWrap.hidden = false;
+  document.getElementById('musicDropZone').hidden = true;
+
+  // Phase 1: analyze (fingerprint + waveform + duration)
+  const ready = [], dupes = [];
+  for (let i = 0; i < audioFiles.length; i++) {
+    const file = audioFiles[i];
+    status.textContent = `Analyzing ${i + 1}/${audioFiles.length}: ${file.name}…`;
+    bar.style.width = ((i / audioFiles.length) * 28) + '%';
+    const [fingerprint, waveformData, duration] = await Promise.all([
+      computeAudioFingerprint(file),
+      computeWaveformData(file),
+      getAudioDuration(file),
+    ]);
+    const existing = fingerprint && allTracks.find(t => t.audioFingerprint === fingerprint);
+    (existing ? dupes : ready).push({ file, fingerprint, waveformData, duration, existing });
+  }
+
+  // Phase 2: warn about duplicates
+  if (dupes.length) {
+    const lines = dupes.map(d =>
+      `• "${d.file.name}"  →  matches  "${d.existing.title}" by ${d.existing.artist || 'Unknown'}`
+    ).join('\n');
+    if (confirm(`⚠️ ${dupes.length} file(s) already exist in the library (detected by audio content — not filename):\n\n${lines}\n\nClick OK to upload anyway, or Cancel to skip them.`)) {
+      ready.push(...dupes);
+    }
+  }
+  if (!ready.length) {
+    progWrap.hidden = true;
+    document.getElementById('musicDropZone').hidden = false;
+    bar.style.width = '0%';
+    return;
+  }
+
+  // Phase 3: upload
+  let added = 0;
+  for (let i = 0; i < ready.length; i++) {
+    const { file, fingerprint, waveformData, duration } = ready[i];
+    status.textContent = `Uploading ${i + 1}/${ready.length}: ${file.name}`;
+    try {
+      const url = await uploadToCloudinary(file, pct => {
+        bar.style.width = (28 + ((i + pct) / ready.length) * 72) + '%';
+      });
+      const base   = file.name.replace(/\.[^.]+$/, '');
+      const parts  = base.split(' - ');
+      const artist = parts.length > 1 ? parts[0].trim() : 'Unknown Artist';
+      const title  = parts.length > 1 ? parts.slice(1).join(' - ').trim() : base;
+      await fb.addDoc(fb.collection(_db, 'tracks'), {
+        title, artist, album: '', url, cover: '',
+        duration, waveformData, audioFingerprint: fingerprint,
+        addedAt: fb.serverTimestamp(),
+        uploadedBy: currentUser?.uid || '',
+      });
+      toast(`✓ ${title}`, 'success');
+      added++;
+    } catch(e) { toast(`Failed: ${file.name} — ${e.message}`, 'error'); }
+  }
+  bar.style.width = '100%';
+  status.textContent = `Done! ${added} track${added !== 1 ? 's' : ''} added.`;
+  setTimeout(() => { progWrap.hidden = true; document.getElementById('musicDropZone').hidden = false; bar.style.width = '0%'; }, 1400);
+  if (added) { loadMusic(); logActivity(`${added} track(s) uploaded`); }
+};
+
+// ── Waveform player — injected into each track row ────────────────
+(function initMusicWaveformPlayer() {
+  let _aud = null, _actId = null, _animId = null;
+
+  function stopAll() {
+    if (_aud) { _aud.pause(); _aud = null; }
+    if (_animId) { cancelAnimationFrame(_animId); _animId = null; }
+    _actId = null;
+    document.querySelectorAll('.mwp-btn').forEach(b => { b.textContent = '▶'; b.classList.remove('playing'); });
+    document.querySelectorAll('.mwp-canvas').forEach(c => {
+      const tid = c.closest('[data-track-id]')?.dataset.trackId;
+      const t   = allTracks.find(x => x.id === tid);
+      if (t?.waveformData?.length) drawWaveform(c, t.waveformData, 0);
+      else drawPlaceholder(c, parseInt((tid || '').slice(-6), 36));
+    });
+  }
+
+  function animate(canvas, tid) {
+    if (!_aud || _actId !== tid) return;
+    const t = allTracks.find(x => x.id === tid);
+    if (t?.waveformData?.length) drawWaveform(canvas, t.waveformData, _aud.duration ? _aud.currentTime / _aud.duration : 0);
+    const timeEl = canvas.parentElement?.querySelector('.mwp-time');
+    if (timeEl && _aud.duration) timeEl.textContent = fmtDuration(_aud.currentTime) + ' / ' + fmtDuration(_aud.duration);
+    _animId = requestAnimationFrame(() => animate(canvas, tid));
+  }
+
+  function playTrack(tid, url, btn, canvas) {
+    if (_actId === tid) {
+      if (_aud?.paused) { _aud.play(); btn.textContent = '⏸'; btn.classList.add('playing'); animate(canvas, tid); }
+      else { _aud?.pause(); btn.textContent = '▶'; btn.classList.remove('playing'); cancelAnimationFrame(_animId); _animId = null; }
+      return;
+    }
+    stopAll();
+    _actId = tid;
+    _aud   = new Audio(url);
+    _aud.play().catch(() => {});
+    btn.textContent = '⏸'; btn.classList.add('playing');
+    animate(canvas, tid);
+    _aud.addEventListener('ended', stopAll);
+  }
+
+  const _prev = renderMusicTracks;
+  renderMusicTracks = function(tracks) {
+    _prev(tracks);
+    // Remove old basic preview buttons
+    document.querySelectorAll('#musicTrackList .preview-btn').forEach(b => b.remove());
+
+    document.querySelectorAll('#musicTrackList .music-track-row:not([data-wired-player])').forEach(row => {
+      row.dataset.wiredPlayer = '1';
+      const tid = row.dataset.trackId;
+      if (!tid) return;
+      const t = allTracks.find(x => x.id === tid);
+      if (!t?.url) return;
+
+      const player = document.createElement('div');
+      player.className = 'mwp-player';
+
+      const btn = document.createElement('button');
+      btn.className   = 'mwp-btn';
+      btn.textContent = (_actId === tid && !_aud?.paused) ? '⏸' : '▶';
+      if (_actId === tid && !_aud?.paused) btn.classList.add('playing');
+      btn.title = 'Preview track';
+
+      const canvas = document.createElement('canvas');
+      canvas.className = 'mwp-canvas';
+      canvas.width  = 100;
+      canvas.height = 30;
+      canvas.title  = 'Click to seek';
+
+      const timeEl = document.createElement('span');
+      timeEl.className = 'mwp-time';
+      timeEl.textContent = t.duration ? fmtDuration(t.duration) : '—';
+
+      // Fingerprint indicator
+      if (!t.audioFingerprint) {
+        const noFp = document.createElement('span');
+        noFp.className = 'mwp-nofp';
+        noFp.title = 'No fingerprint — upload a new copy to enable duplicate detection';
+        noFp.textContent = '⚠';
+        player.append(noFp);
+      }
+
+      player.append(btn, canvas, timeEl);
+
+      if (t.waveformData?.length) {
+        const prog = (_actId === tid && _aud?.duration) ? _aud.currentTime / _aud.duration : 0;
+        drawWaveform(canvas, t.waveformData, prog);
+      } else {
+        drawPlaceholder(canvas, parseInt((tid || '').slice(-6), 36));
+      }
+
+      btn.addEventListener('click', e => { e.stopPropagation(); playTrack(tid, t.url, btn, canvas); });
+      canvas.addEventListener('click', e => {
+        if (_actId === tid && _aud?.duration) {
+          _aud.currentTime = _aud.duration * ((e.clientX - canvas.getBoundingClientRect().left) / canvas.width);
+        } else playTrack(tid, t.url, btn, canvas);
+      });
+      canvas.style.cursor = 'pointer';
+
+      const actDiv = row.querySelector('.music-track-actions');
+      if (actDiv) row.insertBefore(player, actDiv);
+      else row.appendChild(player);
+    });
+  };
+  window.renderMusicTracks = renderMusicTracks;
+
+  // ── Player inside the edit modal ─────────────────────────────
+  const _origOpen = window.openTrackModal;
+  window.openTrackModal = function(id) {
+    _origOpen(id);
+    const t    = allTracks.find(x => x.id === id);
+    const modal = document.getElementById('trackModal');
+    if (!t?.url || !modal) return;
+
+    // Remove any existing modal player
+    modal.querySelector('#mtp')?.remove();
+
+    const mtp = document.createElement('div');
+    mtp.id        = 'mtp';
+    mtp.className = 'modal-track-player';
+    mtp.innerHTML = `
+      <div class="mtp-row">
+        <button class="mtp-btn" id="mtpBtn">▶</button>
+        <canvas id="mtpCanvas" width="220" height="38" style="cursor:pointer;flex:1"></canvas>
+        <span class="mtp-dur" id="mtpTime">${t.duration ? fmtDuration(t.duration) : '—'}</span>
+      </div>
+      <div class="mtp-meta">
+        ${t.audioFingerprint ? `<span class="mtp-fp">✓ Fingerprinted</span>` : '<span class="mtp-fp mtp-nofp">⚠ No fingerprint</span>'}
+        · <a href="${esc(t.url)}" target="_blank" rel="noopener" class="mtp-link">Open file ↗</a>
+      </div>`;
+
+    // Inject below the modal header
+    const hd = modal.querySelector('.modal-hd');
+    if (hd) hd.after(mtp);
+    else modal.querySelector('.modal')?.prepend(mtp);
+
+    const mtpBtn    = document.getElementById('mtpBtn');
+    const mtpCanvas = document.getElementById('mtpCanvas');
+    const mtpTime   = document.getElementById('mtpTime');
+
+    if (t.waveformData?.length) drawWaveform(mtpCanvas, t.waveformData, 0);
+    else drawPlaceholder(mtpCanvas, parseInt((id || '').slice(-6), 36));
+
+    let _ma = null, _maAnimId = null;
+    const resetMtp = () => {
+      if (_ma) { _ma.pause(); _ma = null; }
+      if (_maAnimId) { cancelAnimationFrame(_maAnimId); _maAnimId = null; }
+      mtpBtn.textContent = '▶'; mtpBtn.classList.remove('playing');
+      if (t.waveformData?.length) drawWaveform(mtpCanvas, t.waveformData, 0);
+      else drawPlaceholder(mtpCanvas, parseInt((id || '').slice(-6), 36));
+    };
+
+    function animateMtp() {
+      if (!_ma || _ma.paused) return;
+      const prog = _ma.duration ? _ma.currentTime / _ma.duration : 0;
+      if (t.waveformData?.length) drawWaveform(mtpCanvas, t.waveformData, prog);
+      if (_ma.duration) mtpTime.textContent = fmtDuration(_ma.currentTime) + ' / ' + fmtDuration(_ma.duration);
+      _maAnimId = requestAnimationFrame(animateMtp);
+    }
+
+    mtpBtn.addEventListener('click', () => {
+      if (_ma && !_ma.paused) { _ma.pause(); mtpBtn.textContent = '▶'; mtpBtn.classList.remove('playing'); cancelAnimationFrame(_maAnimId); }
+      else {
+        if (!_ma) { _ma = new Audio(t.url); _ma.addEventListener('ended', resetMtp); }
+        _ma.play(); mtpBtn.textContent = '⏸'; mtpBtn.classList.add('playing');
+        animateMtp();
+      }
+    });
+    mtpCanvas.addEventListener('click', e => {
+      if (_ma?.duration) { _ma.currentTime = _ma.duration * ((e.clientX - mtpCanvas.getBoundingClientRect().left) / mtpCanvas.width); }
+      else mtpBtn.click();
+    });
+    document.getElementById('trackModalClose')?.addEventListener('click', resetMtp, { once: true });
+    document.getElementById('trackModalCancel')?.addEventListener('click', resetMtp, { once: true });
+  };
+})();

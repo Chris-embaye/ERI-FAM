@@ -2028,5 +2028,176 @@ body[data-accent="gold"] {
 .sb-shortcuts-hint:hover { color: rgba(255,255,255,.5); }
 .sidebar.collapsed .sb-shortcuts-hint { display: none; }
 
+/* ── MUSIC WAVEFORM PLAYER ───────────────────────────────────── */
+
+/* Row-level inline player */
+.mwp-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  min-width: 0;
+}
+
+.mwp-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: .85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, transform .1s;
+}
+.mwp-btn:hover { background: var(--accent2); transform: scale(1.08); }
+.mwp-btn:active { transform: scale(.94); }
+
+.mwp-canvas {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: block;
+  background: transparent;
+}
+
+.mwp-time {
+  flex-shrink: 0;
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  min-width: 38px;
+  text-align: right;
+}
+
+.mwp-nofp {
+  flex-shrink: 0;
+  font-size: .65rem;
+  color: var(--warn);
+  title: "No audio fingerprint — track was uploaded before fingerprinting was enabled";
+  cursor: help;
+}
+
+/* Music track row layout tweak */
+.music-track-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+.music-track-row .track-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Modal track player */
+#mtp {
+  margin: 0 -20px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(124,114,255,.06);
+}
+
+.modal-track-player {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mtp-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mtp-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, transform .1s;
+}
+.mtp-btn:hover { background: var(--accent2); transform: scale(1.08); }
+.mtp-btn:active { transform: scale(.94); }
+
+#mtpCanvas {
+  flex: 1;
+  height: 38px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: block;
+  background: transparent;
+}
+
+.mtp-dur {
+  flex-shrink: 0;
+  font-size: .72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  min-width: 48px;
+  text-align: right;
+}
+
+.mtp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: .68rem;
+}
+
+.mtp-fp {
+  color: var(--text-mute);
+  font-family: monospace;
+  background: rgba(255,255,255,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: .03em;
+}
+
+.mtp-nofp {
+  color: var(--warn);
+  font-size: .67rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mtp-link {
+  margin-left: auto;
+  color: var(--accent2);
+  text-decoration: none;
+  font-size: .68rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color .2s;
+}
+.mtp-link:hover { color: var(--text); }
+.mtp-link svg { width: 11px; height: 11px; }
+
+/* Compact density — hide row waveform to save vertical space */
+[data-density="compact"] .mwp-canvas { display: none; }
+[data-density="compact"] .mwp-player { padding: 4px 8px; margin-top: 4px; gap: 6px; }
+[data-density="compact"] .mwp-btn { width: 24px; height: 24px; font-size: .75rem; }
+
 /* ── END ─────────────────────────────────────────────────────── */
 
