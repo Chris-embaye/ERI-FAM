@@ -3,7 +3,7 @@
    Caches all app assets for offline use
    ============================================ */
 
-const CACHE_NAME    = 'eritrean-info-v8';
+const CACHE_NAME    = 'eritrean-info-v9';
 const OFFLINE_URL   = './index.html';
 
 const PRECACHE_ASSETS = [
@@ -11,6 +11,8 @@ const PRECACHE_ASSETS = [
   './styles.css',
   './script.js',
   './firebase-config.js',
+  './features.js',
+  './features.css',
   './manifest.json',
   './icons/icon.svg',
   // Leaflet for offline map rendering
