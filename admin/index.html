@@ -273,56 +273,83 @@
         <button class="btn-primary" id="dashAddApp">+ New App</button>
       </div>
 
-      <div class="stat-row">
-        <div class="stat-card" style="--accent:#6366f1">
-          <div class="stat-ico">📱</div>
-          <div class="stat-body">
-            <div class="stat-num" id="statApps">—</div>
-            <div class="stat-lbl">Connected Apps</div>
+      <div class="cat-grid">
+
+        <!-- ── Apps ── -->
+        <div class="cat-card-wrap">
+          <div class="cat-card" style="--cat:#6366f1;--cat2:#a78bfa" onclick="showPage('apps')">
+            <div class="cat-top">
+              <div class="cat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              </div>
+              <span class="cat-num" id="statApps">—</span>
+            </div>
+            <div class="cat-name">Apps</div>
+            <div class="cat-meta">Connected applications &amp; tools</div>
+            <div class="cat-chips">
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('apps')">My Apps</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('riglog')">Riglog</button>
+            </div>
           </div>
         </div>
-        <div class="stat-card" style="--accent:#10b981">
-          <div class="stat-ico">👥</div>
-          <div class="stat-body">
-            <div class="stat-num" id="statUsers">—</div>
-            <div class="stat-lbl">Team Members</div>
+
+        <!-- ── People ── -->
+        <div class="cat-card-wrap">
+          <div class="cat-card" style="--cat:#10b981;--cat2:#34d399" onclick="showPage('users')">
+            <div class="cat-top">
+              <div class="cat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <span class="cat-num" id="statUsers">—</span>
+            </div>
+            <div class="cat-name">People</div>
+            <div class="cat-meta"><span id="dashOnlineNow">—</span> online now</div>
+            <div class="cat-chips">
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('employees')">Employees</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('users')">Users</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('truck-log')">Truck-Log</button>
+            </div>
           </div>
         </div>
-        <div class="stat-card" style="--accent:#00c853">
-          <div class="stat-ico">🟢</div>
-          <div class="stat-body">
-            <div class="stat-num" id="dashOnlineNow">—</div>
-            <div class="stat-lbl">Online Now (1h)</div>
+
+        <!-- ── Revenue ── -->
+        <div class="cat-card-wrap">
+          <div class="cat-card" style="--cat:#f59e0b;--cat2:#fbbf24" onclick="showPage('monetize')">
+            <div class="cat-top">
+              <div class="cat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <span class="cat-num" id="statRevenue">$0</span>
+            </div>
+            <div class="cat-name">Revenue</div>
+            <div class="cat-meta">Earnings &amp; monetization</div>
+            <div class="cat-chips">
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('monetize')">Monetize</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('coupons')">Coupons</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('analytics')">Analytics</button>
+            </div>
           </div>
         </div>
-        <div class="stat-card" style="--accent:#f59e0b">
-          <div class="stat-ico">🗂</div>
-          <div class="stat-body">
-            <div class="stat-num" id="statAssets">—</div>
-            <div class="stat-lbl">Assets Uploaded</div>
+
+        <!-- ── Content ── -->
+        <div class="cat-card-wrap">
+          <div class="cat-card" style="--cat:#8b5cf6;--cat2:#c084fc" onclick="showPage('music')">
+            <div class="cat-top">
+              <div class="cat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              </div>
+              <span class="cat-num" id="statTracks">—</span>
+            </div>
+            <div class="cat-name">Content</div>
+            <div class="cat-meta"><span id="statAssets">—</span> assets · <span id="statNotifs">—</span> notifs</div>
+            <div class="cat-chips">
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('music')">Music</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('posts')">Posts</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('ericontent')">Eri Content</button>
+            </div>
           </div>
         </div>
-        <div class="stat-card" style="--accent:#ef4444">
-          <div class="stat-ico">🔔</div>
-          <div class="stat-body">
-            <div class="stat-num" id="statNotifs">—</div>
-            <div class="stat-lbl">Notifications Sent</div>
-          </div>
-        </div>
-        <div class="stat-card" style="--accent:#8b5cf6">
-          <div class="stat-ico">🎵</div>
-          <div class="stat-body">
-            <div class="stat-num" id="statTracks">—</div>
-            <div class="stat-lbl">Music Tracks</div>
-          </div>
-        </div>
-        <div class="stat-card" style="--accent:#10b981">
-          <div class="stat-ico">💰</div>
-          <div class="stat-body">
-            <div class="stat-num" id="statRevenue">$0</div>
-            <div class="stat-lbl">Revenue Logged</div>
-          </div>
-        </div>
+
       </div>
 
       <div class="dash-grid">
