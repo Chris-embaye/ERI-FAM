@@ -8,7 +8,8 @@ let _filter = 'month';
 // ── Geolocation helpers ───────────────────────────────────────────────────────
 
 async function getCityFromCoords(lat, lon) {
-  const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`);
+  const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) return '';
   const data = await res.json();
   const a    = data.address || {};
   const city = a.city || a.town || a.village || a.county || '';

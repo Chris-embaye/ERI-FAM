@@ -392,10 +392,27 @@ async function playTrack(track, queueTracks) {
   localStorage.setItem('erifam_recent', JSON.stringify(filtered.slice(0, 20)));
 }
 
-function togglePlay() {
+async function togglePlay() {
   if (!S.currentTrack) return;
-  if (audio.paused) { audio.play(); S.playing = true; }
-  else { audio.pause(); S.playing = false; }
+  if (audio.paused) {
+    // Fire resume() and play() synchronously in the same tick so iOS Safari
+    // keeps the user-gesture token for both calls (awaiting resume first loses it).
+    const resumeP = (audioCtx && audioCtx.state !== 'running')
+      ? audioCtx.resume().catch(e => console.warn('[AudioCtx resume]', e))
+      : null;
+    const playP = audio.play();
+    if (resumeP) await resumeP;
+    try {
+      await playP;
+    } catch(e) {
+      if (e.name !== 'AbortError') toast('⚠ Could not resume — tap again');
+      return;
+    }
+    S.playing = true;
+  } else {
+    audio.pause();
+    S.playing = false;
+  }
   updatePlayerUI();
   updateHeaderPlayState();
 }
@@ -1010,21 +1027,19 @@ document.getElementById('listViewBtn').addEventListener('click', () => {
 
 // ── Mini Player ────────────────────────────────────────────────
 document.getElementById('miniPlayerExpand').addEventListener('click', e => { if (!e.target.closest('.mini-btn')) openPanel('fullPlayer'); });
-document.getElementById('miniPlay').addEventListener('click', e => {
+document.getElementById('miniPlay').addEventListener('click', async e => {
   e.stopPropagation();
   initAudioCtx();
-  if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
-  togglePlay();
+  await togglePlay();
 });
 document.getElementById('miniPrev').addEventListener('click', e => { e.stopPropagation(); prevTrack(); });
 document.getElementById('miniNext').addEventListener('click', e => { e.stopPropagation(); nextTrack(); });
 
 // ── Full Player ────────────────────────────────────────────────
 document.getElementById('fpClose').addEventListener('click', () => closePanel('fullPlayer'));
-document.getElementById('playBtn').addEventListener('click', () => {
+document.getElementById('playBtn').addEventListener('click', async () => {
   initAudioCtx();
-  if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
-  togglePlay();
+  await togglePlay();
 });
 document.getElementById('prevBtn').addEventListener('click', prevTrack);
 document.getElementById('nextBtn').addEventListener('click', nextTrack);
@@ -1135,7 +1150,7 @@ function buildEqSliders() {
   container.querySelectorAll('input').forEach(inp => {
     // On iOS/Android, touching a slider can suspend the AudioContext — resume it
     const resumeCtx = () => {
-      if (audioCtx && audioCtx.state === 'suspended') {
+      if (audioCtx && audioCtx.state !== 'running') {
         audioCtx.resume().then(() => { if (S.playing && audio.paused) audio.play().catch(() => {}); });
       }
     };
@@ -2118,7 +2133,8 @@ document.getElementById('vizToggleBtn').addEventListener('click', async () => {
   }
 });
 
-audio.addEventListener('play',  () => {
+audio.addEventListener('play', () => {
+  // resume() was already fired synchronously in togglePlay() — just start visualizers
   if (vizActive) startVisualizer();
   if (analyserNode) { startDjBars(); startBeatDetection(); }
 });
@@ -2130,7 +2146,7 @@ audio.addEventListener('pause', () => {
 
 // iOS safety net: resume AudioContext on any touch if the OS suspended it
 document.addEventListener('touchstart', () => {
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  if (audioCtx && audioCtx.state !== 'running') audioCtx.resume().catch(() => {});
 }, { passive: true });
 
 /* ════════════════════════════════════════════════════════════════

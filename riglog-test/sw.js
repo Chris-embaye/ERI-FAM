@@ -1,4 +1,4 @@
-const CACHE = 'truck-log-test-v18';
+const CACHE = 'truck-log-v20';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.json',
   './js/app.js', './js/store.js', './js/modal.js', './js/auth.js', './js/theme.js',
@@ -8,7 +8,7 @@ const ASSETS = [
   './js/screens/more.js', './js/screens/calculator.js', './js/screens/dvir.js',
   './js/screens/detention.js', './js/screens/settings.js',
   './js/screens/signin.js', './js/screens/tax.js',
-  './js/screens/maintenance.js', './js/screens/ifta.js',
+  './js/screens/maintenance.js', './js/screens/ifta.js', './js/screens/pay.js',
 ];
 
 self.addEventListener('install', e => {

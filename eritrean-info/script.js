@@ -1650,6 +1650,30 @@ document.addEventListener('keydown', e => {
 (async function loadNewsSection() {
   const grid = document.getElementById('newsGrid');
   if (!grid) return;
+  // If the tabbed news system is on the page it owns #newsGrid — don't conflict
+  if (document.getElementById('newsTabsRow')) return;
+
+  // Hardcoded fallback so the section is never empty
+  const STATIC_FALLBACK = [
+    { tag:'Eritrea', title:'Eritrea marks 32 years of independence', excerpt:'Eritreans worldwide celebrate May 24th — the day EPLF forces liberated Asmara in 1991 and independence was declared in 1993.', link:'https://en.wikipedia.org/wiki/Eritrean_Independence_Day', date:'', source:'EritreanInfo' },
+    { tag:'Culture', title:'Asmara named UNESCO World Heritage City', excerpt:"Asmara's extraordinary collection of Modernist Italian architecture earned UNESCO recognition in 2017, drawing global tourists.", link:'https://en.wikipedia.org/wiki/Asmara', date:'', source:'Wikipedia' },
+    { tag:'Sports', title:'Biniam Girmay makes cycling history', excerpt:'The Eritrean sprinter became the first Black African to win a Grand Tour stage — a milestone for African cycling.', link:'https://en.wikipedia.org/wiki/Biniam_Girmay', date:'', source:'EritreanInfo' },
+    { tag:'Language', title:'Tigrinya — one of the oldest written languages in Africa', excerpt:"Written in the ancient Ge'ez script, Tigrinya is spoken by over 7 million people across Eritrea and Ethiopia.", link:'https://en.wikipedia.org/wiki/Tigrinya_language', date:'', source:'Wikipedia' },
+    { tag:'Nature', title:'Dahlak Archipelago — Red Sea diving paradise', excerpt:'The 200+ islands of the Dahlak Archipelago offer pristine coral reefs and stunning marine biodiversity.', link:'https://en.wikipedia.org/wiki/Dahlak_Archipelago', date:'', source:'EritreanInfo' },
+    { tag:'History', title:"The Aksumite Empire: Eritrea's ancient legacy", excerpt:'The Aksumite Empire, centered in modern Eritrea and Ethiopia, was one of four great world powers of the ancient era.', link:'https://en.wikipedia.org/wiki/Aksumite_Empire', date:'', source:'Wikipedia' },
+  ];
+
+  function renderStaticFallback() {
+    grid.innerHTML = STATIC_FALLBACK.map(n => `
+      <div class="news-card"><div class="news-body">
+        <span class="news-tag">${escHtml(n.tag)}</span>
+        <h3 class="news-title">${escHtml(n.title)}</h3>
+        <p class="news-excerpt">${escHtml(n.excerpt)}</p>
+        <div class="news-meta"><span class="news-source">📚 ${escHtml(n.source)}</span></div>
+        <a href="${escHtml(n.link)}" target="_blank" rel="noopener" class="news-read-more">Read more →</a>
+      </div></div>`).join('');
+  }
+
   try {
     const [appMod, fsMod] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
@@ -1657,27 +1681,26 @@ document.addEventListener('keydown', e => {
     ]);
     const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
     const db  = fsMod.getFirestore(app);
-    const q   = fsMod.query(
-      fsMod.collection(db, 'eri_news'),
-      fsMod.where('status', '==', 'published'),
-      fsMod.orderBy('publishedAt', 'desc'),
-      fsMod.limit(6)
-    );
-    const snap = await fsMod.getDocs(q);
-    if (snap.empty) {
-      grid.innerHTML = '<p class="news-empty">No news articles yet — check back soon!</p>';
-      return;
-    }
+    // Use a simple collection read first (no compound index needed), then filter client-side
+    const colRef = fsMod.collection(db, 'eri_news');
+    const snap = await Promise.race([
+      fsMod.getDocs(fsMod.query(colRef, fsMod.orderBy('publishedAt', 'desc'), fsMod.limit(12))),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000)),
+    ]);
+    const docs = [];
+    snap.forEach(doc => { const d = doc.data(); if (d.status === 'published' || !d.status) docs.push(d); });
+    docs.sort((a, b) => (b.publishedAt?.seconds || 0) - (a.publishedAt?.seconds || 0));
+    const visible = docs.slice(0, 6);
+    if (!visible.length) { renderStaticFallback(); return; }
     grid.innerHTML = '';
-    snap.forEach(doc => {
-      const d = doc.data();
+    visible.forEach(d => {
       const date = d.publishedAt?.toDate ? d.publishedAt.toDate().toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) : '';
       grid.insertAdjacentHTML('beforeend', `
         <div class="news-card">
-          ${d.imageUrl ? `<div class="news-img-wrap"><img src="${escHtml(d.imageUrl)}" alt="${escHtml(d.title)}" loading="lazy"/></div>` : ''}
+          ${d.imageUrl ? `<div class="news-img-wrap"><img src="${escHtml(d.imageUrl)}" alt="${escHtml(d.title||'')}" loading="lazy" onerror="this.parentElement.remove()"/></div>` : ''}
           <div class="news-body">
             ${d.tag ? `<span class="news-tag">${escHtml(d.tag)}</span>` : ''}
-            <h3 class="news-title">${escHtml(d.title)}</h3>
+            <h3 class="news-title">${escHtml(d.title||'')}</h3>
             <p class="news-excerpt">${escHtml((d.excerpt || d.body || '').slice(0, 160))}…</p>
             <div class="news-meta">
               ${date ? `<span class="news-date">📅 ${date}</span>` : ''}
@@ -1689,8 +1712,8 @@ document.addEventListener('keydown', e => {
       `);
     });
   } catch (err) {
-    grid.innerHTML = '<p class="news-empty">News unavailable right now.</p>';
-    console.warn('[News]', err);
+    console.warn('[News Firestore]', err.message);
+    renderStaticFallback();
   }
 })();
 
@@ -1950,6 +1973,34 @@ if (blogSection) {
 async function loadBlogSection() {
   const grid = document.getElementById('blogGrid');
   if (!grid) return;
+
+  const STATIC_ARTICLES = [
+    { cat:'History',  title:'The 30-Year Liberation Struggle',            excerpt:'From 1961 to 1991, Eritrea fought one of Africa\'s longest independence wars against Ethiopian occupation — a story of extraordinary sacrifice and determination.',                 link:'https://en.wikipedia.org/wiki/Eritrean_War_of_Independence',   author:'EritreanInfo' },
+    { cat:'Culture',  title:'Eritrean Coffee Ceremony: The Art of Bunna', excerpt:'Three rounds of coffee, incense, and deep conversation — the Eritrean coffee ceremony is a centuries-old ritual that brings families and communities together.',                      link:'https://en.wikipedia.org/wiki/Coffee_in_Eritrea',               author:'EritreanInfo' },
+    { cat:'Sports',   title:'Biniam Girmay: Cycling\'s New Legend',       excerpt:'The young Eritrean sprinter made history as the first Black African to win a Grand Tour stage, opening the door for a new generation of African cyclists on the world stage.',        link:'https://en.wikipedia.org/wiki/Biniam_Girmay',                   author:'EritreanInfo' },
+    { cat:'Diaspora', title:'Eritrean Communities Around the World',      excerpt:'From Stockholm to San Diego, the Eritrean diaspora has built vibrant communities preserving language, music, food, and faith far from home.',                                          link:'https://en.wikipedia.org/wiki/Eritrean_diaspora',               author:'EritreanInfo' },
+    { cat:'Heritage', title:'Asmara: City of Art Deco Treasures',         excerpt:'Walk through Asmara\'s streets and you\'ll find a living museum of 1930s Italian Modernist architecture — a UNESCO World Heritage Site unlike any other in Africa.',                 link:'https://en.wikipedia.org/wiki/Asmara',                          author:'EritreanInfo' },
+    { cat:'Nature',   title:'The Dahlak Archipelago: Red Sea Paradise',   excerpt:'Over 200 islands scattered across the Red Sea, home to pristine coral reefs and marine life that rivals any tropical destination — one of Africa\'s best-kept secrets.',               link:'https://en.wikipedia.org/wiki/Dahlak_Archipelago',              author:'EritreanInfo' },
+  ];
+
+  function renderStatic() {
+    grid.innerHTML = STATIC_ARTICLES.map(a => `
+      <a class="blog-card" href="${escHtml(a.link)}" target="_blank" rel="noopener">
+        <div class="blog-body">
+          <span class="blog-cat">${escHtml(a.cat)}</span>
+          <h3 class="blog-title">${escHtml(a.title)}</h3>
+          <p class="blog-excerpt">${escHtml(a.excerpt)}</p>
+          <div class="blog-footer">
+            <span class="blog-author">✍️ ${escHtml(a.author)}</span>
+            <span class="blog-read-more">Read more →</span>
+          </div>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  renderStatic(); // Show immediately — never blank
+
   try {
     const [appMod, fsMod] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
@@ -1964,16 +2015,13 @@ async function loadBlogSection() {
       fsMod.limit(6)
     );
     const snap = await fsMod.getDocs(q);
-    if (snap.empty) {
-      grid.innerHTML = '<p class="blog-empty">No articles yet — the first one is coming soon!</p>';
-      return;
-    }
+    if (snap.empty) return; // Keep static articles displayed
     grid.innerHTML = '';
     snap.forEach(doc => {
       const d = doc.data();
       const date = d.publishedAt?.toDate ? d.publishedAt.toDate().toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) : '';
       grid.insertAdjacentHTML('beforeend', `
-        <div class="blog-card">
+        <a class="blog-card" href="${escHtml(d.link || '#')}" target="_blank" rel="noopener">
           ${d.imageUrl ? `<div class="blog-img"><img src="${escHtml(d.imageUrl)}" alt="${escHtml(d.title)}" loading="lazy"/></div>` : ''}
           <div class="blog-body">
             ${d.category ? `<span class="blog-cat">${escHtml(d.category)}</span>` : ''}
@@ -1984,12 +2032,12 @@ async function loadBlogSection() {
               ${date ? `<span class="blog-date">📅 ${date}</span>` : ''}
             </div>
           </div>
-        </div>
+        </a>
       `);
     });
   } catch (err) {
-    grid.innerHTML = '<p class="blog-empty">Articles unavailable right now.</p>';
     console.warn('[Blog]', err);
+    // Keep static articles — no error message shown to user
   }
 }
 
@@ -2240,8 +2288,9 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
   });
 })();
 
-// ── MUSIC PHONE WIDGET ───────────────────────────────────────────
+// ── MUSIC PHONE WIDGET v2 ────────────────────────────────────────
 (function initMusicPhoneWidget() {
+  // ─ DOM refs
   const tabBtn    = document.getElementById('musicPhoneTab');
   const frame     = document.getElementById('musicPhoneFrame');
   const closeBtn  = document.getElementById('mpfClose');
@@ -2249,194 +2298,417 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
   const playBtn   = document.getElementById('mpfPlay');
   const prevBtn   = document.getElementById('mpfPrev');
   const nextBtn   = document.getElementById('mpfNext');
+  const shuffleBtn= document.getElementById('mpfShuffle');
+  const repeatBtn = document.getElementById('mpfRepeat');
+  const likeBtn   = document.getElementById('mpfLikeBtn');
+  const volSlider = document.getElementById('mpfVolume');
   const playlist  = document.getElementById('mpfPlaylist');
   const progFill  = document.getElementById('mpfProgressFill');
+  const progThumb = document.getElementById('mpfProgressThumb');
   const progBar   = document.getElementById('mpfProgressBar');
   const curEl     = document.getElementById('mpfCurrent');
   const durEl     = document.getElementById('mpfDuration');
   const titleEl   = document.getElementById('mpfTrackTitle');
   const artistEl  = document.getElementById('mpfTrackArtist');
   const disc      = document.getElementById('mpfDisc');
+  const discRing  = document.getElementById('mpfDiscRing');
   const viz       = document.getElementById('mpfViz');
   const countEl   = document.getElementById('mpfTrackCount');
   const timeEl    = document.getElementById('mpfTime');
+  const searchEl  = document.getElementById('mpfSearch');
+  const filterRow = document.getElementById('mpfFilterRow');
+  const miniPill  = document.getElementById('mpfMiniPill');
+  const miniDisc  = document.getElementById('mpfMiniDisc');
+  const miniTitle = document.getElementById('mpfMiniTitle');
+  const miniArtist= document.getElementById('mpfMiniArtist');
+  const miniViz   = document.getElementById('mpfMiniViz');
+  const miniPlay  = document.getElementById('mpfMiniPlay');
+  const miniPrev  = document.getElementById('mpfMiniPrev');
+  const miniNext  = document.getElementById('mpfMiniNext');
+  const miniExpand= document.getElementById('mpfMiniExpand');
 
   if (!tabBtn || !frame) return;
 
-  let tracks = [];
-  let currentIdx = -1;
+  // ─ State
+  let tracks       = [];
+  let playOrder    = [];   // may be shuffled
+  let currentIdx   = -1;  // index into playOrder
   let tracksLoaded = false;
+  let shuffle      = false;
+  let repeat       = 'none';   // 'none' | 'one' | 'all'
+  let activeFilter = 'all';
+  let searchQuery  = '';
+  const LIKED_KEY  = 'mpf_liked_v2';
+  const LAST_KEY   = 'mpf_last_v2';
 
-  // Clock in status bar
+  function getLiked() { try { return new Set(JSON.parse(localStorage.getItem(LIKED_KEY) || '[]')); } catch { return new Set(); } }
+  function saveLiked(s) { localStorage.setItem(LIKED_KEY, JSON.stringify([...s])); }
+  let liked = getLiked();
+
+  // ─ Disc gradient themes (cycles per track)
+  const DISC_THEMES = [
+    { from:'#007A3D', to:'#004d27', glow:'rgba(0,122,61,.5)'   },
+    { from:'#4189DD', to:'#2d6abf', glow:'rgba(65,137,221,.5)' },
+    { from:'#CE1126', to:'#8a0b1a', glow:'rgba(206,17,38,.5)'  },
+    { from:'#D4A017', to:'#a07800', glow:'rgba(212,160,23,.5)' },
+    { from:'#8B5CF6', to:'#5b21b6', glow:'rgba(139,92,246,.5)' },
+    { from:'#EC4899', to:'#9d174d', glow:'rgba(236,72,153,.5)' },
+    { from:'#14B8A6', to:'#0f766e', glow:'rgba(20,184,166,.5)' },
+    { from:'#F97316', to:'#c2410c', glow:'rgba(249,115,22,.5)' },
+  ];
+  const DISC_EMOJIS = ['🎵','🎶','🎤','🎸','🎹','🥁','🎺','🎻','🪗','🎙️'];
+
+  // ─ Helpers
+  function fmtTime(s) {
+    if (!isFinite(s) || s < 0) return '0:00';
+    const m = Math.floor(s / 60);
+    return `${m}:${Math.floor(s % 60).toString().padStart(2,'0')}`;
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  const UNK = ['ዘይፍለጥ','unknown','Unknown Artist','ዘይፍለጥ ስነጦባዊ'];
+  function cleanField(raw, fb) {
+    if (!raw) return fb;
+    let s = String(raw);
+    try { s = decodeURIComponent(s.replace(/\+/g,' ')); } catch {}
+    if (s.includes('==')) s = s.split('==')[0].trim();
+    s = s.replace(/\.(mp3|m4a|wav|flac|ogg|aac|opus)$/i,'').replace(/_+/g,' ').replace(/\s{2,}/g,' ').trim();
+    return s || fb;
+  }
+  function cleanTitle(t) { return cleanField(t.title, 'Unknown Song'); }
+  function cleanArtist(t) {
+    const r = cleanField(t.artist, '');
+    return (!r || UNK.some(p => r.startsWith(p))) ? 'Eritrean Artist' : r;
+  }
+
+  // ─ Clock in status bar
   function updateClock() {
-    const now = new Date();
-    timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    if (timeEl) timeEl.textContent = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', hour12:false });
   }
   updateClock();
   setInterval(updateClock, 30000);
 
-  // Open / close phone
-  tabBtn.addEventListener('click', () => {
-    const isHidden = frame.hidden;
-    frame.hidden = false;
-    if (isHidden) {
-      frame.removeAttribute('hidden');
-      if (!tracksLoaded) loadTracks();
-    } else {
-      frame.setAttribute('hidden', '');
-    }
-  });
-  closeBtn.addEventListener('click', () => frame.setAttribute('hidden', ''));
-  closeBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') frame.setAttribute('hidden', ''); });
+  // ─ Open / close
+  function openFrame() {
+    frame.removeAttribute('hidden');
+    miniPill?.setAttribute('hidden','');
+    if (!tracksLoaded) loadTracks();
+  }
+  function closeFrame() {
+    frame.setAttribute('hidden','');
+    if (!mpfAudio.paused) showMiniPill();
+  }
 
-  // Load tracks from Firebase 'tracks' collection
+  tabBtn.addEventListener('click', () => frame.hidden ? openFrame() : closeFrame());
+  closeBtn.addEventListener('click', closeFrame);
+  closeBtn.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') closeFrame(); });
+  miniExpand?.addEventListener('click', openFrame);
+
+  // ─ Mini pill
+  function showMiniPill() {
+    if (!miniPill) return;
+    miniPill.removeAttribute('hidden');
+  }
+  function hideMiniPill() {
+    miniPill?.setAttribute('hidden','');
+  }
+  function updateMiniPill() {
+    if (!miniPill || miniPill.hidden) return;
+    const t = tracks[playOrder[currentIdx]];
+    if (!t) return;
+    if (miniTitle)  miniTitle.textContent  = cleanTitle(t).slice(0, 30);
+    if (miniArtist) miniArtist.textContent = cleanArtist(t).slice(0, 24);
+    const playing = !mpfAudio.paused;
+    miniPlay?.textContent && (miniPlay.textContent = playing ? '⏸' : '▶');
+    miniDisc?.classList.toggle('spinning', playing);
+    miniViz?.classList.toggle('active', playing);
+  }
+  miniPlay?.addEventListener('click', togglePlayPause);
+  miniPrev?.addEventListener('click', playPrev);
+  miniNext?.addEventListener('click', playNext);
+
+  // ─ Load tracks from Firebase
   async function loadTracks() {
     tracksLoaded = true;
-    playlist.innerHTML = '<div class="mpf-loading">Loading music…</div>';
+    if (playlist) playlist.innerHTML = '<div class="mpf-loading">🎵 Loading music…</div>';
     try {
       const [appMod, fsMod] = await Promise.all([
         import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
         import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
       ]);
-      const app = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
-      const db  = fsMod.getFirestore(app);
+      const app  = appMod.getApps().length ? appMod.getApps()[0] : appMod.initializeApp(FIREBASE_CONFIG);
+      const db   = fsMod.getFirestore(app);
       const snap = await fsMod.getDocs(
-        fsMod.query(
-          fsMod.collection(db, 'eri_tracks'),
-          fsMod.orderBy('addedAt', 'desc'),
-          fsMod.limit(200)
-        )
+        fsMod.query(fsMod.collection(db,'eri_tracks'), fsMod.orderBy('addedAt','desc'), fsMod.limit(300))
       );
       tracks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      buildOrder();
       renderPlaylist();
+      // Restore last played track
+      try {
+        const last = JSON.parse(localStorage.getItem(LAST_KEY));
+        if (last && typeof last.globalIdx === 'number') {
+          highlightRow(last.globalIdx);
+          titleEl.textContent  = cleanTitle(tracks[last.globalIdx] || {});
+          artistEl.textContent = cleanArtist(tracks[last.globalIdx] || {});
+        }
+      } catch {}
     } catch (err) {
-      playlist.innerHTML = '<div class="mpf-loading">Could not load music</div>';
+      if (playlist) playlist.innerHTML = '<div class="mpf-loading">Could not load music — check connection</div>';
       console.warn('[MusicWidget]', err);
     }
   }
 
-  // Clean URL-encoded, duplicated, or placeholder track fields
-  const UNKNOWN_ARTIST_PLACEHOLDERS = ['ዘይፍለጥ', 'unknown', 'Unknown Artist', 'ዘይፍለጥ ስነጦባዊ'];
-  function cleanField(raw, fallback) {
-    if (!raw) return fallback;
-    let s = String(raw);
-    // Decode URL encoding (%20 etc.)
-    try { s = decodeURIComponent(s.replace(/\+/g, ' ')); } catch(e) {}
-    // Strip "Title==Title" or "Title == Duplicate" patterns — keep first part
-    if (s.includes('==')) s = s.split('==')[0].trim();
-    // Remove audio file extensions
-    s = s.replace(/\.(mp3|m4a|wav|flac|ogg|aac|opus)$/i, '');
-    // Underscores to spaces, collapse whitespace
-    s = s.replace(/[_]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
-    return s || fallback;
-  }
-  function cleanTitle(t)  { return cleanField(t.title,  'Unknown Song'); }
-  function cleanArtist(t) {
-    const raw = cleanField(t.artist, '');
-    if (!raw) return 'Eritrean Artist';
-    if (UNKNOWN_ARTIST_PLACEHOLDERS.some(p => raw.startsWith(p))) return 'Eritrean Artist';
-    return raw;
-  }
-  function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // ─ Build playback order (respects shuffle)
+  function buildOrder() {
+    playOrder = tracks.map((_,i) => i);
+    if (shuffle) {
+      for (let i = playOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [playOrder[i], playOrder[j]] = [playOrder[j], playOrder[i]];
+      }
+    }
   }
 
+  // ─ Filter visible tracks (search + liked)
+  function filteredIndices() {
+    const q = searchQuery.toLowerCase();
+    return tracks.reduce((acc, t, i) => {
+      if (activeFilter === 'liked' && !liked.has(t.id)) return acc;
+      if (q && !cleanTitle(t).toLowerCase().includes(q) && !cleanArtist(t).toLowerCase().includes(q)) return acc;
+      acc.push(i);
+      return acc;
+    }, []);
+  }
+
+  // ─ Render playlist
   function renderPlaylist() {
+    if (!playlist) return;
+    const indices = filteredIndices();
     if (!tracks.length) {
-      playlist.innerHTML = '<div class="mpf-loading">No songs added yet — use Admin → Eri Music to upload</div>';
-      countEl.textContent = '0 songs';
+      playlist.innerHTML = '<div class="mpf-loading">No songs yet — Admin → Eri Music to add tracks</div>';
+      if (countEl) countEl.textContent = '0 songs';
       return;
     }
-    countEl.textContent = tracks.length + ' ደርፍታት';
-    playlist.innerHTML = tracks.map((t, i) =>
-      `<div class="mpf-track-row" data-idx="${i}">` +
+    if (!indices.length) {
+      playlist.innerHTML = '<div class="mpf-loading">No results found</div>';
+      return;
+    }
+    if (countEl) countEl.textContent = `${tracks.length} ደርፍታት`;
+
+    playlist.innerHTML = indices.map(i => {
+      const t = tracks[i];
+      const isLiked = liked.has(t.id);
+      const isActive = playOrder[currentIdx] === i;
+      return `<div class="mpf-track-row${isActive?' active':''}" data-global="${i}">` +
+        `<div class="mpf-track-playing-icon"><span></span><span></span><span></span></div>` +
         `<span class="mpf-track-num">${i + 1}</span>` +
         `<div class="mpf-track-row-info">` +
-          `<div class="mpf-track-row-title">${esc(cleanTitle(t))}</div>` +
-          `<div class="mpf-track-row-artist">${esc(cleanArtist(t))}</div>` +
+          `<div class="mpf-track-row-title">${escHtml(cleanTitle(t))}</div>` +
+          `<div class="mpf-track-row-artist">${escHtml(cleanArtist(t))}</div>` +
         `</div>` +
-      `</div>`
-    ).join('');
+        `<button class="mpf-track-row-like${isLiked?' liked':''}" data-id="${t.id}" title="${isLiked?'Unlike':'Like'}">${isLiked?'♥':'♡'}</button>` +
+      `</div>`;
+    }).join('');
+
     playlist.querySelectorAll('.mpf-track-row').forEach(row => {
-      row.addEventListener('click', () => playIdx(+row.dataset.idx));
+      row.addEventListener('click', e => {
+        if (e.target.classList.contains('mpf-track-row-like')) return;
+        const gi = +row.dataset.global;
+        // Find this global index in playOrder (or just play directly)
+        let poi = playOrder.indexOf(gi);
+        if (poi < 0) { playOrder.unshift(gi); poi = 0; }
+        playOrderIdx(poi);
+      });
+      row.querySelector('.mpf-track-row-like')?.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = e.currentTarget.dataset.id;
+        if (liked.has(id)) { liked.delete(id); } else { liked.add(id); }
+        saveLiked(liked);
+        renderPlaylist();
+        updateLikeBtn();
+      });
     });
   }
 
-  function playIdx(idx) {
-    if (idx < 0 || idx >= tracks.length) return;
-    currentIdx = idx;
-    const t = tracks[idx];
+  // ─ Highlight current row in playlist
+  function highlightRow(globalIdx) {
+    playlist?.querySelectorAll('.mpf-track-row').forEach(r =>
+      r.classList.toggle('active', +r.dataset.global === globalIdx)
+    );
+    const active = playlist?.querySelector('.mpf-track-row.active');
+    if (active) active.scrollIntoView({ block:'nearest', behavior:'smooth' });
+  }
+
+  // ─ Play by order index
+  function playOrderIdx(poi) {
+    if (poi < 0 || poi >= playOrder.length) return;
+    currentIdx = poi;
+    const globalIdx = playOrder[poi];
+    const t = tracks[globalIdx];
+    if (!t) return;
 
     titleEl.textContent  = cleanTitle(t);
     artistEl.textContent = cleanArtist(t);
+    highlightRow(globalIdx);
+    updateLikeBtn();
+    applyDiscTheme(globalIdx);
+    localStorage.setItem(LAST_KEY, JSON.stringify({ globalIdx }));
 
-    // highlight row
-    playlist.querySelectorAll('.mpf-track-row').forEach((r, i) =>
-      r.classList.toggle('active', i === idx)
-    );
-    // scroll into view
-    const activeRow = playlist.querySelector('.mpf-track-row.active');
-    if (activeRow) activeRow.scrollIntoView({ block: 'nearest' });
-
-    if (!t.url) {
-      setPlayState(false);
-      return;
-    }
+    if (!t.url) { setPlayState(false); return; }
     mpfAudio.src = t.url;
-    mpfAudio.play().catch(err => console.warn('[MusicWidget] play error', err));
+    mpfAudio.play().catch(e => console.warn('[Music]', e));
   }
 
+  function playNext() {
+    if (!playOrder.length) return;
+    if (repeat === 'one') { mpfAudio.currentTime = 0; mpfAudio.play(); return; }
+    const next = (currentIdx + 1) % playOrder.length;
+    playOrderIdx(next);
+  }
+  function playPrev() {
+    if (!playOrder.length) return;
+    if (mpfAudio.currentTime > 3) { mpfAudio.currentTime = 0; return; }
+    playOrderIdx((currentIdx - 1 + playOrder.length) % playOrder.length);
+  }
+  function togglePlayPause() {
+    if (currentIdx < 0 && tracks.length > 0) { playOrderIdx(0); return; }
+    if (mpfAudio.paused) { mpfAudio.play().catch(() => {}); }
+    else { mpfAudio.pause(); }
+  }
+
+  // ─ Disc theme per track
+  function applyDiscTheme(globalIdx) {
+    const theme = DISC_THEMES[globalIdx % DISC_THEMES.length];
+    const emoji = DISC_EMOJIS[globalIdx % DISC_EMOJIS.length];
+    disc.style.background = `radial-gradient(circle at 38% 38%, ${theme.from}, #0a0b12)`;
+    disc.style.borderColor = theme.from;
+    disc.style.boxShadow   = `0 0 30px ${theme.glow}`;
+    document.getElementById('mpfDiscEmoji').textContent = emoji;
+    if (miniDisc) miniDisc.textContent = emoji;
+  }
+
+  // ─ Like button
+  function updateLikeBtn() {
+    if (!likeBtn) return;
+    const t = tracks[playOrder[currentIdx]];
+    const isLiked = t && liked.has(t.id);
+    likeBtn.textContent = isLiked ? '♥' : '♡';
+    likeBtn.classList.toggle('liked', !!isLiked);
+  }
+  likeBtn?.addEventListener('click', () => {
+    const t = tracks[playOrder[currentIdx]];
+    if (!t) return;
+    if (liked.has(t.id)) { liked.delete(t.id); } else { liked.add(t.id); }
+    saveLiked(liked);
+    updateLikeBtn();
+    renderPlaylist();
+  });
+
+  // ─ Set play state visuals
   function setPlayState(playing) {
     playBtn.textContent = playing ? '⏸' : '▶';
     disc.classList.toggle('spinning', playing);
+    discRing?.classList.toggle('active', playing);
     viz.classList.toggle('active', playing);
+    miniPlay && (miniPlay.textContent = playing ? '⏸' : '▶');
+    miniDisc?.classList.toggle('spinning', playing);
+    miniViz?.classList.toggle('active', playing);
   }
 
-  // Controls
-  playBtn.addEventListener('click', () => {
-    if (currentIdx < 0 && tracks.length > 0) { playIdx(0); return; }
-    if (mpfAudio.paused) {
-      mpfAudio.play().catch(() => {});
-    } else {
-      mpfAudio.pause();
-    }
-  });
-  prevBtn.addEventListener('click', () => {
-    if (!tracks.length) return;
-    playIdx((currentIdx - 1 + tracks.length) % tracks.length);
-  });
-  nextBtn.addEventListener('click', () => {
-    if (!tracks.length) return;
-    playIdx((currentIdx + 1) % tracks.length);
+  // ─ Controls
+  playBtn.addEventListener('click', togglePlayPause);
+  prevBtn.addEventListener('click', playPrev);
+  nextBtn.addEventListener('click', playNext);
+
+  shuffleBtn?.addEventListener('click', () => {
+    shuffle = !shuffle;
+    shuffleBtn.classList.toggle('active', shuffle);
+    const curGlobal = playOrder[currentIdx];
+    buildOrder();
+    currentIdx = playOrder.indexOf(curGlobal);
+    if (currentIdx < 0) currentIdx = 0;
   });
 
-  // Audio events
+  repeatBtn?.addEventListener('click', () => {
+    const modes = ['none','all','one'];
+    repeat = modes[(modes.indexOf(repeat) + 1) % modes.length];
+    const icons = { none:'↺', all:'🔁', one:'🔂' };
+    repeatBtn.textContent = icons[repeat];
+    repeatBtn.classList.toggle('active', repeat !== 'none');
+  });
+
+  // ─ Volume
+  mpfAudio.volume = 0.8;
+  volSlider?.addEventListener('input', () => {
+    mpfAudio.volume = volSlider.value / 100;
+    const volIcon = document.getElementById('mpfVolIcon');
+    if (volIcon) volIcon.textContent = volSlider.value == 0 ? '🔇' : volSlider.value < 40 ? '🔈' : '🔊';
+  });
+
+  // ─ Audio events
   mpfAudio.addEventListener('play',  () => setPlayState(true));
   mpfAudio.addEventListener('pause', () => setPlayState(false));
   mpfAudio.addEventListener('ended', () => {
-    if (tracks.length) playIdx((currentIdx + 1) % tracks.length);
+    if (repeat === 'one') { mpfAudio.currentTime = 0; mpfAudio.play(); return; }
+    if (repeat === 'all' || currentIdx < playOrder.length - 1) { playNext(); return; }
+    setPlayState(false);
   });
   mpfAudio.addEventListener('timeupdate', () => {
     if (!mpfAudio.duration) return;
     const pct = (mpfAudio.currentTime / mpfAudio.duration) * 100;
-    progFill.style.width = pct + '%';
-    curEl.textContent = fmtTime(mpfAudio.currentTime);
-    durEl.textContent = fmtTime(mpfAudio.duration);
+    if (progFill) progFill.style.width = pct + '%';
+    if (progThumb) progThumb.style.left = pct + '%';
+    if (curEl) curEl.textContent = fmtTime(mpfAudio.currentTime);
+    if (durEl) durEl.textContent = fmtTime(mpfAudio.duration);
+    updateMiniPill();
   });
 
-  // Click on progress bar to seek
-  progBar.addEventListener('click', e => {
-    if (!mpfAudio.duration) return;
+  // ─ Seek on progress bar (click + drag)
+  let seeking = false;
+  function seekTo(e) {
+    if (!mpfAudio.duration || !progBar) return;
     const rect = progBar.getBoundingClientRect();
-    mpfAudio.currentTime = ((e.clientX - rect.left) / rect.width) * mpfAudio.duration;
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    mpfAudio.currentTime = Math.max(0, Math.min(1, x / rect.width)) * mpfAudio.duration;
+  }
+  progBar?.addEventListener('mousedown', e => { seeking = true; seekTo(e); });
+  progBar?.addEventListener('touchstart', e => { seeking = true; seekTo(e); }, { passive: true });
+  document.addEventListener('mousemove', e => { if (seeking) seekTo(e); });
+  document.addEventListener('mouseup',  () => { seeking = false; });
+  document.addEventListener('touchend', () => { seeking = false; });
+
+  // ─ Search
+  searchEl?.addEventListener('input', () => {
+    searchQuery = searchEl.value.trim();
+    renderPlaylist();
   });
 
-  function fmtTime(s) {
-    if (!isFinite(s)) return '0:00';
-    const m   = Math.floor(s / 60);
-    const sec = Math.floor(s % 60).toString().padStart(2, '0');
-    return `${m}:${sec}`;
-  }
+  // ─ Filter tabs
+  filterRow?.querySelectorAll('.mpf-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.filter;
+      filterRow.querySelectorAll('.mpf-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderPlaylist();
+    });
+  });
+
+  // ─ Keyboard shortcuts (only when frame is visible)
+  document.addEventListener('keydown', e => {
+    if (frame.hidden || document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+    if (e.key === ' ' && e.target === document.body) { e.preventDefault(); togglePlayPause(); }
+    if (e.key === 'ArrowRight' && e.altKey) { e.preventDefault(); playNext(); }
+    if (e.key === 'ArrowLeft'  && e.altKey) { e.preventDefault(); playPrev(); }
+    if ((e.key === 'l' || e.key === 'L') && e.altKey) { likeBtn?.click(); }
+  });
+
+  // ─ Swipe down mini pill to close it on mobile
+  let touchStartY = 0;
+  miniPill?.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive:true });
+  miniPill?.addEventListener('touchend', e => {
+    if (e.changedTouches[0].clientY - touchStartY > 50) hideMiniPill();
+  });
 })();
 
 // ══════════════════════════════════════════════════════════════

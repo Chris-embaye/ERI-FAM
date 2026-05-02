@@ -887,7 +887,2417 @@ document.addEventListener('DOMContentLoaded', () => {
     injectCommentsSection();
   }, 800);
 
-  loadLiveNewsFeed();
   initEventsBoard();
   updateBookmarkCount();
+
+  // ── Tweaks v2.0 ──
+  initReadingProgressBar();
+  initWordOfDay();
+  initReadingMode();
+  initInPageSearch();
+  initOfflineBadges();
+  initLessonsStreakBanner();
+  initQuizLeaderboard();
+  initRelatedSections();
+  initPrayerLocate();
+  initEventsICS();
+  initVisitorCounter();
+  setTimeout(initShareOnFacts, 1200);
+
+  // ── Power Upgrade ──
+  initNewsTicker();
+  initDiasporaClocks();
+  initCityWeather();
+  initEriTodayCard();
+  initLiveRates();
+  initCountrySpotlight();
+  initAutoRefresh();
+  setTimeout(() => {
+    initEnhancedNewsTabs();
+    initCopyButtons();
+    initExploreScore();
+  }, 900);
 });
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TWEAKS v2.0 — 13 new features
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── T1: READING PROGRESS BAR ─────────────────────────────────────────────────
+function initReadingProgressBar() {
+  const bar = document.getElementById('readingBar');
+  if (!bar) return;
+  window.addEventListener('scroll', () => {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (max > 0 ? (window.scrollY / max) * 100 : 0) + '%';
+  }, { passive: true });
+}
+
+// ── T2: WORD OF THE DAY ──────────────────────────────────────────────────────
+function initWordOfDay() {
+  const WORDS = [
+    { ti: 'ሰላም', en: 'Peace / Hello', ex: '"ሰላም ኣለዉ?" — How are you?' },
+    { ti: 'ፍቕሪ', en: 'Love', ex: '"ፍቕሪ ይወስን" — Love conquers' },
+    { ti: 'ሓርነት', en: 'Freedom', ex: 'ሓርነት ኤርትራ — Freedom of Eritrea' },
+    { ti: 'ትምህርቲ', en: 'Education', ex: '"ትምህርቲ ብርሃን" — Education is light' },
+    { ti: 'ሃገር', en: 'Country/Nation', ex: '"ሃገርና ኤርትራ" — Our nation Eritrea' },
+    { ti: 'ሓቂ', en: 'Truth', ex: '"ሓቂ ትዕወት" — Truth prevails' },
+    { ti: 'ደስታ', en: 'Joy/Happiness', ex: '"ደስታ ኣምጽእ" — Bring joy' },
+    { ti: 'ብርሃን', en: 'Light', ex: '"ብርሃን ናይ ዓለም" — Light of the world' },
+    { ti: 'ሰብ', en: 'Person/Human', ex: '"ሰብ ሓው ሰብ" — People are siblings' },
+    { ti: 'ዕዮ', en: 'Work', ex: '"ዕዮ ክብሪ" — Work is dignity' },
+    { ti: 'ኣደ', en: 'Mother', ex: '"ኣደ ፍቕሪ" — A mother\'s love' },
+    { ti: 'ሃልሃልታ', en: 'Flame/Passion', ex: 'ሃልሃልታ ልቢ — Flame of the heart' },
+    { ti: 'ዓወት', en: 'Victory', ex: '"ዓወት ንሓፋሽ" — Victory to the masses' },
+    { ti: 'ጽቡቕ', en: 'Good/Beautiful', ex: '"ጽቡቕ ዕዮ" — Good work' },
+    { ti: 'ምሕረት', en: 'Mercy/Forgiveness', ex: '"ምሕረት ዓቢ ምትእምማን" — Mercy builds trust' },
+    { ti: 'ተስፋ', en: 'Hope', ex: '"ተስፋ ይቕጽል" — Hope continues' },
+    { ti: 'ክብሪ', en: 'Honor/Dignity', ex: '"ክብሪ ሰብኣይ" — A man\'s honor' },
+    { ti: 'ጽምዋ', en: 'Loneliness/Solitude', ex: '"ጽምዋ ሓጺን" — Solitude is iron' },
+    { ti: 'ሙዚቃ', en: 'Music', ex: '"ሙዚቃ ናይ ዓለም" — Music of the world' },
+    { ti: 'ደልሃመት', en: 'Darkness', ex: '"ድሕሪ ደልሃመት ብርሃን" — After darkness, light' },
+    { ti: 'ጀሚርካ', en: 'Beginning/Started', ex: '"ጀሚርካ ፈሊ" — Start and finish' },
+    { ti: 'ቤት', en: 'Home/House', ex: '"ቤት ቀዳምነት" — Home is priority' },
+    { ti: 'ጸሎት', en: 'Prayer', ex: '"ጸሎት ሓይሊ" — Prayer is strength' },
+    { ti: 'ዕርቂ', en: 'Reconciliation', ex: '"ዕርቂ ቅዱስ" — Reconciliation is sacred' },
+    { ti: 'ምዕባለ', en: 'Development', ex: '"ምዕባለ ህዝቢ" — People\'s development' },
+    { ti: 'ኪዳን', en: 'Covenant/Promise', ex: '"ኪዳን ኤርትራ" — Eritrea\'s covenant' },
+    { ti: 'ሕሉፍ', en: 'Past/Former', ex: '"ሕሉፍ ተምሂርና" — We learn from the past' },
+    { ti: 'ዕድሜ', en: 'Age/Lifespan', ex: '"ዕድሜ ጸጋ" — Age is a blessing' },
+  ];
+  const today = Math.floor(Date.now() / 86400000);
+  const dismissed = localStorage.getItem('wod_dismissed');
+  if (dismissed === String(today)) return;
+  const w = WORDS[today % WORDS.length];
+  const bar = document.getElementById('wodBar');
+  if (!bar) return;
+  document.getElementById('wodTi').textContent = w.ti;
+  document.getElementById('wodEn').textContent = w.en;
+  document.getElementById('wodEx').textContent = w.ex;
+  bar.hidden = false;
+  document.getElementById('wodClose').onclick = () => {
+    bar.hidden = true;
+    localStorage.setItem('wod_dismissed', String(today));
+  };
+}
+
+// ── T3 (reading bar already in T1) / T9: READING MODE ───────────────────────
+function initReadingMode() {
+  const btn = document.getElementById('readingModeBtn');
+  if (!btn) return;
+  const active = localStorage.getItem('eri_reading_mode') === '1';
+  if (active) { document.body.classList.add('reading-mode'); btn.classList.add('active'); }
+  btn.addEventListener('click', () => {
+    const on = document.body.classList.toggle('reading-mode');
+    btn.classList.toggle('active', on);
+    localStorage.setItem('eri_reading_mode', on ? '1' : '0');
+  });
+}
+
+// ── T4: BOOKMARK QUICK-VIEW (panel already exists, wire nav button) ───────────
+// The bmPanel is already wired via injectBookmarkButtons() — exposed via window
+// The auth button area already has a bookmarks trigger in features.js
+
+// ── T5: STREAK & XP BANNER ON LESSONS PAGE ───────────────────────────────────
+function initLessonsStreakBanner() {
+  const section = document.getElementById('lessons');
+  if (!section) return;
+  const s = getStreak();
+  const banner = document.createElement('div');
+  banner.className = 'lessons-streak-banner';
+  banner.innerHTML = `
+    <div class="lsb-flame">🔥</div>
+    <div class="lsb-info">
+      <p class="lsb-streak">${s.days} day streak</p>
+      <p class="lsb-sub">${s.totalWords} words learned · ${s.quizzes} quizzes done</p>
+    </div>
+    <div class="lsb-xp">
+      <div class="lsb-xp-num">${(s.totalWords * 10) + (s.quizzes * 25)}</div>
+      <div class="lsb-xp-lbl">XP</div>
+    </div>`;
+  const progressWrap = section.querySelector('.lessons-progress-bar-wrap');
+  if (progressWrap) progressWrap.before(banner);
+  else section.querySelector('.container').prepend(banner);
+}
+
+// ── T6: SHARE AS IMAGE on Facts ───────────────────────────────────────────────
+function initShareOnFacts() {
+  const shareBtn = document.getElementById('fgShare');
+  const textEl   = document.getElementById('fgText');
+  if (!shareBtn || !textEl) return;
+  shareBtn.addEventListener('click', () => {
+    const text = textEl.textContent.trim();
+    if (!text) return;
+    if (typeof generateShareCard === 'function') generateShareCard('Did You Know?', text);
+    else if (typeof shareProverb === 'function') shareProverb('🇪🇷 Did You Know?', text);
+    else { navigator.clipboard?.writeText(text + '\n\n🇪🇷 eritreaninfo.com'); }
+  });
+}
+
+// ── T7: QUIZ LEADERBOARD ─────────────────────────────────────────────────────
+function initQuizLeaderboard() {
+  const lbEl = document.getElementById('quizLeaderboard');
+  if (!lbEl) return;
+
+  async function saveScore(score, total) {
+    if (!_authUser) return;
+    try {
+      const { db, collection, addDoc, serverTimestamp } = await _getFirestore();
+      await addDoc(collection(db, 'eri_quiz_scores'), {
+        uid: _authUser.uid,
+        name: _authUser.displayName || _authUser.email?.split('@')[0] || 'Anonymous',
+        score, total,
+        pct: Math.round((score / total) * 100),
+        at: serverTimestamp()
+      });
+    } catch(e) { console.warn('[Quiz] score save:', e); }
+  }
+
+  async function loadLeaderboard() {
+    lbEl.style.display = 'block';
+    lbEl.innerHTML = '<div class="quiz-leaderboard"><p class="qlb-title">🏆 Top Scores</p><p style="opacity:.4;font-size:.8rem">Loading…</p></div>';
+    try {
+      const { db, collection, query, orderBy, limit, getDocs } = await _getFirestore();
+      const snap = await getDocs(query(collection(db, 'eri_quiz_scores'), orderBy('pct','desc'), orderBy('at','desc'), limit(10)));
+      const rows = snap.docs.map((d,i) => {
+        const data = d.data();
+        const isMe = _authUser && data.uid === _authUser.uid;
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+        return `<div class="qlb-row${isMe?' me':''}"><span class="qlb-rank">${medal}</span><span class="qlb-name">${esc(data.name)}</span><span class="qlb-score">${data.score}/${data.total} (${data.pct}%)</span></div>`;
+      });
+      lbEl.innerHTML = `<div class="quiz-leaderboard"><p class="qlb-title">🏆 Top Scores</p>${rows.join('') || '<p style="opacity:.4;font-size:.8rem">No scores yet.</p>'}</div>`;
+    } catch(e) { lbEl.innerHTML = ''; }
+  }
+
+  // Patch quiz result to save score + show leaderboard
+  const retryBtn = document.getElementById('quizRetryBtn');
+  const resultEl = document.getElementById('quizResult');
+  if (retryBtn && resultEl) {
+    const obs = new MutationObserver(() => {
+      if (!resultEl.hidden) {
+        const scoreEl = document.getElementById('quizFinalScore');
+        if (scoreEl) {
+          const match = scoreEl.textContent.match(/(\d+)\s*\/\s*(\d+)/);
+          if (match) { saveScore(parseInt(match[1]), parseInt(match[2])); loadLeaderboard(); }
+        }
+      }
+    });
+    obs.observe(resultEl, { attributes: true, attributeFilter: ['hidden'] });
+  }
+}
+
+// Helper: lazy-load Firestore modules
+async function _getFirestore() {
+  const VER = '10.12.2';
+  const base = `https://www.gstatic.com/firebasejs/${VER}/firebase-firestore.js`;
+  const m = await import(base);
+  const app = (await import(`https://www.gstatic.com/firebasejs/${VER}/firebase-app.js`)).getApps()[0];
+  const db = m.getFirestore(app);
+  return { db, ...m };
+}
+
+// ── T8: RELATED SECTIONS ─────────────────────────────────────────────────────
+function initRelatedSections() {
+  const MAP = {
+    'recipes':    [{ href:'#cooking-videos', label:'🎬 Cooking Videos' }, { href:'#culture', label:'🎭 Culture' }, { href:'#artists', label:'🎵 Artists' }],
+    'history':    [{ href:'#overview', label:'🏛️ Overview' }, { href:'#geography', label:'🗺️ Geography' }, { href:'#government', label:'⚖️ Government' }],
+    'culture':    [{ href:'#recipes', label:'🍽️ Recipes' }, { href:'#music', label:'🎵 Music' }, { href:'#proverbs', label:'💬 Proverbs' }, { href:'#holidays', label:'🗓️ Holidays' }],
+    'proverbs':   [{ href:'#poetry', label:'📝 Poetry' }, { href:'#lessons', label:'📖 Lessons' }, { href:'#facts', label:'🌟 Facts' }],
+    'poetry':     [{ href:'#proverbs', label:'💬 Proverbs' }, { href:'#blog', label:'📖 Blog' }, { href:'#artists', label:'🎵 Artists' }],
+    'facts':      [{ href:'#quiz', label:'🏆 Quiz' }, { href:'#history', label:'📜 History' }, { href:'#flag-explorer', label:'🚩 Flag' }],
+    'lessons':    [{ href:'#fidel', label:'🔤 Alphabet' }, { href:'#proverbs', label:'💬 Proverbs' }, { href:'#quiz', label:'🏆 Quiz' }],
+    'tourism':    [{ href:'#asmara-tour', label:'🏛️ Virtual Tour' }, { href:'#gallery', label:'📸 Gallery' }, { href:'#regions', label:'🗾 Regions' }],
+    'quiz':       [{ href:'#facts', label:'🌟 Facts' }, { href:'#history', label:'📜 History' }, { href:'#lessons', label:'📖 Lessons' }],
+    'geography':  [{ href:'#diaspora-map', label:'🌍 Diaspora' }, { href:'#regions', label:'🗾 Regions' }, { href:'#compare', label:'📊 Compare' }],
+    'economy':    [{ href:'#government', label:'⚖️ Government' }, { href:'#compare', label:'📊 Compare' }, { href:'#people', label:'👥 People' }],
+  };
+  Object.entries(MAP).forEach(([id, links]) => {
+    const section = document.getElementById(id);
+    if (!section) return;
+    const container = section.querySelector('.container');
+    if (!container) return;
+    const div = document.createElement('div');
+    div.className = 'related-sections';
+    div.innerHTML = `<div class="related-title">You might also like</div><div class="related-links">${links.map(l=>`<a href="${l.href}" class="related-link">${l.label}</a>`).join('')}</div>`;
+    container.appendChild(div);
+  });
+}
+
+// ── T10: PRAYER TIMES AUTO-DETECT LOCATION ───────────────────────────────────
+function initPrayerLocate() {
+  const btn = document.getElementById('prayerLocateBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    if (!navigator.geolocation) { alert('Geolocation not supported by your browser.'); return; }
+    btn.textContent = '📍 Locating…';
+    btn.classList.add('loading');
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      const date  = new Date();
+      const url   = `https://api.aladhan.com/v1/timings/${Math.floor(date/1000)}?latitude=${lat}&longitude=${lng}&method=2`;
+      try {
+        const res  = await fetch(url);
+        const data = await res.json();
+        const t    = data.data.timings;
+        const grid = document.getElementById('prayerGrid');
+        if (!grid) return;
+        const prayers = [
+          { name:'Fajr', icon:'🌙', time: t.Fajr },
+          { name:'Dhuhr', icon:'☀️', time: t.Dhuhr },
+          { name:'Asr', icon:'🌤️', time: t.Asr },
+          { name:'Maghrib', icon:'🌅', time: t.Maghrib },
+          { name:'Isha', icon:'🌙', time: t.Isha }
+        ];
+        grid.innerHTML = prayers.map(p => `
+          <div class="prayer-card">
+            <div class="prayer-icon">${p.icon}</div>
+            <div class="prayer-name">${p.name}</div>
+            <div class="prayer-time">${p.time}</div>
+          </div>`).join('');
+        const hijriEl = document.getElementById('prayerHijri');
+        if (hijriEl) hijriEl.textContent = `${data.data.date.hijri.date} — ${data.data.date.hijri.month.en} ${data.data.date.hijri.year} AH`;
+        document.querySelectorAll('.pct').forEach(b => b.classList.remove('active'));
+        btn.textContent = '📍 My Location ✓';
+        btn.classList.add('active');
+      } catch { btn.textContent = '📍 My Location'; }
+      btn.classList.remove('loading');
+    }, () => { btn.textContent = '📍 My Location'; btn.classList.remove('loading'); alert('Could not get location. Please allow location access.'); });
+  });
+}
+
+// ── T11: IN-PAGE SEARCH ───────────────────────────────────────────────────────
+function initInPageSearch() {
+  const overlay = document.getElementById('inPageSearchOverlay');
+  const input   = document.getElementById('ipsInput');
+  const countEl = document.getElementById('ipsCount');
+  const prevBtn = document.getElementById('ipsPrev');
+  const nextBtn = document.getElementById('ipsNext');
+  const closeBtn = document.getElementById('ipsClose');
+  const openBtn  = document.getElementById('inPageSearchBtn');
+  if (!overlay || !input) return;
+
+  let highlights = [], current = 0;
+
+  function clearHighlights() {
+    document.querySelectorAll('.ips-highlight').forEach(el => {
+      el.replaceWith(document.createTextNode(el.textContent));
+    });
+    highlights = []; current = 0;
+  }
+
+  function doSearch(q) {
+    clearHighlights();
+    if (!q.trim()) { countEl.textContent = ''; return; }
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: n => {
+        const p = n.parentElement;
+        if (!p || ['SCRIPT','STYLE','INPUT','TEXTAREA'].includes(p.tagName)) return NodeFilter.FILTER_REJECT;
+        if (p.closest('.ips-overlay, #navbar, .learn-widget, .bm-panel, .auth-panel')) return NodeFilter.FILTER_REJECT;
+        return n.textContent.toLowerCase().includes(q.toLowerCase()) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    nodes.forEach(node => {
+      const parts = node.textContent.split(re);
+      if (parts.length < 2) return;
+      const frag = document.createDocumentFragment();
+      parts.forEach((p, i) => {
+        if (i % 2 === 1) { const span = document.createElement('mark'); span.className = 'ips-highlight'; span.textContent = p; frag.appendChild(span); highlights.push(span); }
+        else frag.appendChild(document.createTextNode(p));
+      });
+      node.parentNode.replaceChild(frag, node);
+    });
+    countEl.textContent = highlights.length ? `${current + 1}/${highlights.length}` : '0';
+    if (highlights.length) { highlights[0].classList.add('current'); highlights[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  }
+
+  function navigate(dir) {
+    if (!highlights.length) return;
+    highlights[current].classList.remove('current');
+    current = (current + dir + highlights.length) % highlights.length;
+    highlights[current].classList.add('current');
+    highlights[current].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    countEl.textContent = `${current + 1}/${highlights.length}`;
+  }
+
+  function open() { overlay.hidden = false; input.focus(); input.select(); }
+  function close() { overlay.hidden = true; clearHighlights(); countEl.textContent = ''; input.value = ''; }
+
+  openBtn?.addEventListener('click', open);
+  closeBtn?.addEventListener('click', close);
+  prevBtn?.addEventListener('click', () => navigate(-1));
+  nextBtn?.addEventListener('click', () => navigate(1));
+  input.addEventListener('input', () => doSearch(input.value));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') navigate(e.shiftKey ? -1 : 1);
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); open(); }
+    if (e.key === 'Escape' && !overlay.hidden) close();
+  });
+}
+
+// ── T12: CULTURAL CALENDAR .ICS DOWNLOAD ─────────────────────────────────────
+function initEventsICS() {
+  const btn = document.getElementById('eventsIcsBtn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    btn.textContent = '⏳ Generating…';
+    let events = [];
+    try {
+      const { db, collection, getDocs, query, orderBy } = await _getFirestore();
+      const snap = await getDocs(query(collection(db, 'eri_events'), orderBy('date','asc')));
+      events = snap.docs.map(d => d.data()).filter(e => e.date && e.name && e.status !== 'rejected');
+    } catch { /* use empty */ }
+
+    if (!events.length) { btn.textContent = '📅 Download Calendar'; alert('No events found to download.'); return; }
+
+    const esc = s => (s || '').replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n');
+    const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//EritreanInfo//Events//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+    events.forEach(ev => {
+      const d = ev.date.replace(/-/g, '');
+      lines.push('BEGIN:VEVENT', `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${d}`, `SUMMARY:${esc(ev.name)}`, `DESCRIPTION:${esc(ev.description || '')}`, `LOCATION:${esc(ev.location || '')}`, `STATUS:CONFIRMED`, 'END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'eritrean-events.ics' });
+    a.click(); URL.revokeObjectURL(a.href);
+    btn.textContent = '📅 Download Calendar';
+  });
+}
+
+// ── T13: VISITOR COUNTER / LIVE PRESENCE ─────────────────────────────────────
+function initVisitorCounter() {
+  const SECTIONS = ['history', 'quiz', 'recipes', 'proverbs', 'lessons', 'culture', 'facts'];
+  const TTL = 5 * 60 * 1000; // 5 min presence window
+  const sessionId = Math.random().toString(36).slice(2);
+
+  async function registerPresence(sectionId) {
+    try {
+      const { db, doc, setDoc, collection, getDocs, query, where, serverTimestamp, Timestamp } = await _getFirestore();
+      const ref = doc(collection(db, 'eri_presence'), `${sectionId}_${sessionId}`);
+      await setDoc(ref, { section: sectionId, at: serverTimestamp(), ttl: Date.now() + TTL });
+      const cutoff = Timestamp.fromMillis(Date.now() - TTL);
+      const snap   = await getDocs(query(collection(db, 'eri_presence'), where('section','==',sectionId)));
+      const live   = snap.docs.filter(d => { const data = d.data(); return data.at?.toMillis ? data.at.toMillis() > Date.now() - TTL : true; }).length;
+      injectVisitorCount(sectionId, live);
+    } catch { /* silent */ }
+  }
+
+  function injectVisitorCount(sectionId, count) {
+    const section = document.getElementById(sectionId);
+    if (!section || count < 2) return;
+    let el = section.querySelector('.visitor-counter');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'visitor-counter';
+      section.querySelector('.section-header p')?.after(el) || section.querySelector('.section-header')?.appendChild(el);
+    }
+    el.innerHTML = `<span class="visitor-dot"></span> ${count} people reading this now`;
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { registerPresence(e.target.id); observer.unobserve(e.target); } });
+  }, { threshold: 0.3 });
+
+  SECTIONS.forEach(id => { const s = document.getElementById(id); if (s) observer.observe(s); });
+}
+
+// ── T1b: OFFLINE SECTION BADGES ──────────────────────────────────────────────
+async function initOfflineBadges() {
+  if (!('caches' in window)) return;
+  try {
+    const cache = await caches.open('eritrean-info-v10');
+    const keys  = await cache.keys();
+    const urls  = new Set(keys.map(r => r.url));
+    // Mark the main sections that are part of the SPA cache (index.html covers all)
+    if (urls.size > 3) {
+      ['overview','history','culture','proverbs','facts','lessons','fidel'].forEach(id => {
+        const hdr = document.getElementById(id)?.querySelector('.section-header h2');
+        if (hdr && !hdr.querySelector('.offline-ready-badge')) {
+          const badge = document.createElement('span');
+          badge.className = 'offline-ready-badge';
+          badge.textContent = '✓ Offline';
+          hdr.appendChild(badge);
+        }
+      });
+    }
+  } catch { /* silent */ }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// POWER UPGRADE — Daily Live Updates, World Info, Enhanced Features
+// ══════════════════════════════════════════════════════════════════════════════
+
+// P1: LIVE SCROLLING NEWS TICKER
+function initNewsTicker() {
+  const ticker = document.getElementById('newsTicker');
+  const track  = document.getElementById('tickerTrack');
+  const pauseBtn = document.getElementById('tickerPause');
+  if (!ticker || !track) return;
+
+  const PROXY = 'https://api.allorigins.win/get?url=';
+  const FEEDS = [
+    { url: 'https://feeds.bbci.co.uk/tigrinya/rss.xml',    label: 'BBC Tigrinya' },
+    { url: 'https://feeds.bbci.co.uk/news/africa/rss.xml', label: 'BBC Africa' },
+  ];
+
+  const FALLBACK = [
+    'Eritrea gained independence on May 24, 1993 after a 30-year liberation struggle',
+    'Asmara is a UNESCO World Heritage city known for its remarkable Art Deco architecture',
+    'Eritrea has 9 ethnic groups speaking 9 different languages',
+    'The Eritrean highlands have a pleasant climate year-round — averaging 16°C in Asmara',
+    "Eritrea's cyclists are among the best in Africa and the world",
+    'The Dahlak Archipelago in the Red Sea is home to stunning marine biodiversity',
+    'Eritrea has one of the longest coastlines on the Red Sea — over 1,200 km',
+    "Tigrinya is written in the ancient Ge'ez script, one of the oldest alphabets still in use",
+    "The Nakfa — Eritrea's currency — is named after the town that held firm during the liberation war",
+    'Eritrea was the first country in Africa to gain independence via a UN-supervised referendum',
+  ];
+
+  async function loadTicker() {
+    const items = [];
+    for (const feed of FEEDS) {
+      try {
+        const r = await fetch(PROXY + encodeURIComponent(feed.url), { signal: AbortSignal.timeout(6000) });
+        if (!r.ok) continue;
+        const { contents } = await r.json();
+        const xml = new DOMParser().parseFromString(contents, 'text/xml');
+        xml.querySelectorAll('item').forEach(item => {
+          const title = item.querySelector('title')?.textContent?.trim();
+          if (title && title.length > 5) items.push(`[${feed.label}] ${title}`);
+        });
+      } catch { /* network unavailable */ }
+    }
+
+    const headlines = items.length ? items : FALLBACK;
+    const content = headlines.slice(0, 16).map(h =>
+      `<span class="ticker-item">${esc(h)}</span><span class="ticker-sep">◆</span>`
+    ).join('');
+    // Duplicate for seamless infinite scroll
+    track.innerHTML = content + content;
+    track.style.animationDuration = `${headlines.length * 5}s`;
+    ticker.hidden = false;
+  }
+
+  loadTicker();
+  setInterval(loadTicker, 30 * 60 * 1000);
+
+  pauseBtn?.addEventListener('click', function() {
+    const paused = track.style.animationPlayState === 'paused';
+    track.style.animationPlayState = paused ? 'running' : 'paused';
+    this.textContent = paused ? '⏸' : '▶';
+  });
+}
+
+// P2: DIASPORA WORLD CLOCKS — live ticking every second
+function initDiasporaClocks() {
+  const grid = document.getElementById('clocksGrid');
+  if (!grid) return;
+
+  const CITIES = [
+    { name: 'Asmara',   tz: 'Africa/Asmara',      flag: '🇪🇷' },
+    { name: 'DC',       tz: 'America/New_York',    flag: '🇺🇸' },
+    { name: 'London',   tz: 'Europe/London',       flag: '🇬🇧' },
+    { name: 'Frankfurt',tz: 'Europe/Berlin',       flag: '🇩🇪' },
+    { name: 'Dubai',    tz: 'Asia/Dubai',          flag: '🇦🇪' },
+    { name: 'Melbourne',tz: 'Australia/Melbourne', flag: '🇦🇺' },
+    { name: 'Toronto',  tz: 'America/Toronto',     flag: '🇨🇦' },
+    { name: 'Stockholm',tz: 'Europe/Stockholm',    flag: '🇸🇪' },
+  ];
+
+  grid.innerHTML = CITIES.map((c, i) => `
+    <div class="clock-city">
+      <span class="clock-flag">${c.flag}</span>
+      <span class="clock-time" id="clk${i}">--:--</span>
+      <span class="clock-name">${c.name}</span>
+    </div>
+  `).join('');
+
+  function tick() {
+    const now = new Date();
+    CITIES.forEach((c, i) => {
+      const el = document.getElementById(`clk${i}`);
+      if (el) el.textContent = now.toLocaleTimeString('en-US', {
+        timeZone: c.tz, hour: '2-digit', minute: '2-digit', hour12: false
+      });
+    });
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// P3: MULTI-CITY ERITREA WEATHER — Open-Meteo (free, no API key)
+async function initCityWeather() {
+  const WMO = {
+    0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+    45:'🌫️', 48:'🌫️', 51:'🌦️', 53:'🌦️', 55:'🌦️',
+    61:'🌧️', 63:'🌧️', 65:'🌧️', 71:'🌨️', 73:'🌨️', 75:'🌨️',
+    80:'🌦️', 81:'🌦️', 82:'🌦️', 95:'⛈️', 96:'⛈️', 99:'⛈️',
+  };
+  const CITIES = [
+    { id: 'asmara',    lat: 15.338, lon: 38.931 },
+    { id: 'massawa',   lat: 15.609, lon: 39.453 },
+    { id: 'keren',     lat: 15.779, lon: 38.460 },
+    { id: 'mendefera', lat: 14.886, lon: 38.822 },
+    { id: 'barentu',   lat: 15.113, lon: 37.588 },
+  ];
+
+  async function loadWeather() {
+    for (const city of CITIES) {
+      try {
+        const r = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current_weather=true`,
+          { signal: AbortSignal.timeout(8000) }
+        );
+        if (!r.ok) continue;
+        const { current_weather: cw } = await r.json();
+        const el = document.getElementById(`cws-${city.id}`);
+        if (el) {
+          el.querySelector('.cws-temp').textContent = `${Math.round(cw.temperature)}°`;
+          el.querySelector('.cws-icon').textContent  = WMO[cw.weathercode] || '🌡️';
+        }
+      } catch {}
+    }
+    const upd = document.getElementById('cwsUpdate');
+    if (upd) upd.textContent = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  loadWeather();
+  setInterval(loadWeather, 60 * 60 * 1000);
+}
+
+// P4: ERI TODAY DAILY CARD
+function initEriTodayCard() {
+  const now = new Date();
+  const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
+
+  const PROVERBS = [
+    { ti: 'ሓደ ዕፅዋ ኣኽሊ ኣይገብርን', en: 'One tree does not make a forest.' },
+    { ti: 'ዝኸዶ ዘይፈልጥ ዝመጾ ኣይፈልጥን', en: 'He who does not know where he\'s going does not know where he came from.' },
+    { ti: 'ሰብ ብሰብ ይነብር', en: 'People live through people.' },
+    { ti: 'ፍቕሪ ኣሕዋት ካብ ወርቂ ይሓይሽ', en: 'The love of siblings is worth more than gold.' },
+    { ti: 'ዝነበረ ናብ ዝነበሮ ይምለስ', en: 'What was returns to where it was.' },
+    { ti: 'ሓቂ ዘዘልለ ሕጂ ምቅላዕ ዘለዎ', en: 'Truth that was suppressed must one day be revealed.' },
+    { ti: 'ጸሎት ዘይብሉ ፍቕሪ የልቦን', en: 'Without patience, there is no love.' },
+    { ti: 'ብዝሓሰብካሉ ምስ ዘምጻእካሉ ይፍለ', en: 'Plan before you act.' },
+    { ti: 'ሓደ ዝቐጸሎ ሰብ ሓደ ዝሓዞ ሰብ ይህሉ', en: 'For every person who chases, there is a person who waits.' },
+    { ti: 'ዋናኡ ዘይፈልጦ ብሃሊ ናብ ዋናኡ ይምለስ', en: 'Lost property always finds its rightful owner.' },
+    { ti: 'ናብ ዝኸደ ዓዲ ቛንቛኡ ተዛረብ', en: 'Speak the language of the land you are in.' },
+    { ti: 'ተዛሪቡ ዘይፈልጥ ሰብ ሓቁ ዘይፈልጥ', en: 'He who cannot speak his mind does not know his own truth.' },
+    { ti: 'ልቢ ዝሃበካ ሰብ ዘድልዮ ሰብ', en: 'He who gives you his heart needs you in return.' },
+    { ti: 'ዘሕዘነካ ዘሐጎሰካ ኢዩ', en: 'What once made you cry may one day make you smile.' },
+  ];
+
+  const OTD = [
+    { m:5,  d:24, e:'Eritrea declared independence — May 24, 1993 🎉' },
+    { m:9,  d:1,  e:'The Eritrean armed struggle for independence began (1961)' },
+    { m:6,  d:20, e:'Martyrs\' Day — honoring heroes who gave their lives for freedom' },
+    { m:1,  d:7,  e:'Eritrean Orthodox Christmas (Lidat) celebrated across the highlands' },
+    { m:5,  d:20, e:'EPLF forces liberated Massawa, securing Eritrea\'s Red Sea port (1990)' },
+    { m:7,  d:1,  e:'The Nakfa currency was introduced as Eritrea\'s national currency (1997)' },
+    { m:11, d:12, e:'UNESCO inscribed Asmara as a World Heritage City (2017)' },
+    { m:4,  d:12, e:'Eritrean women joined liberation forces in large numbers (1973)' },
+  ];
+
+  const HOLIDAYS = [
+    { name: 'Independence Day', m:5, d:24 },
+    { name: 'Martyrs\' Day',    m:6, d:20 },
+    { name: 'Revolution Day',   m:9, d:1  },
+    { name: 'Orthodox Christmas', m:1, d:7 },
+    { name: 'New Year',         m:1, d:1  },
+  ];
+
+  const GEEZ_MONTHS = ['Meskerem','Tikimt','Hidar','Tahsas','Tir','Yekatit','Megabit','Miazia','Ginbot','Senie','Hamle','Nehase','Pagume'];
+  const MOON_PHASES = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+
+  function moonPhase(d) {
+    const newMoon = new Date(1970, 0, 7, 20, 35, 0);
+    const phase = ((d - newMoon) % 2551443000) / 2551443000;
+    return MOON_PHASES[Math.round(Math.abs(phase) * 8) % 8];
+  }
+
+  function daysUntil(m, d) {
+    const t = new Date(now.getFullYear(), m - 1, d);
+    if (t <= now) t.setFullYear(now.getFullYear() + 1);
+    return Math.ceil((t - now) / 864e5);
+  }
+
+  const today = { m: now.getMonth() + 1, d: now.getDate() };
+  const prov  = PROVERBS[dayOfYear % PROVERBS.length];
+  const otd   = OTD.find(e => e.m === today.m && e.d === today.d);
+  const next  = HOLIDAYS.map(h => ({ ...h, days: daysUntil(h.m, h.d) })).sort((a,b) => a.days - b.days)[0];
+  const geezMonth = GEEZ_MONTHS[(now.getMonth() + 4) % 13];
+  const etYear    = now.getFullYear() - (now.getMonth() < 8 ? 8 : 7);
+  const moon = moonPhase(now);
+
+  const ldDateTag = document.getElementById('ldDateTag');
+  if (ldDateTag) ldDateTag.textContent = now.toLocaleDateString('en-US', { month:'long', day:'numeric' });
+
+  const etcMoon = document.getElementById('etcMoon');
+  if (etcMoon) etcMoon.textContent = moon;
+
+  const etcDateBox = document.getElementById('etcDateBox');
+  if (etcDateBox) etcDateBox.innerHTML = `<span class="etc-geez-month">${geezMonth}</span><span class="etc-geez-year">ዓ.ም ${etYear}</span>`;
+
+  const etcProverb = document.getElementById('etcProverb');
+  if (etcProverb) etcProverb.innerHTML = `<div class="etc-prov-ti">${esc(prov.ti)}</div><div class="etc-prov-en">"${esc(prov.en)}"</div>`;
+
+  const etcOtd = document.getElementById('etcOtd');
+  if (etcOtd && otd) etcOtd.innerHTML = `📅 <strong>On This Day:</strong> ${esc(otd.e)}`;
+  else if (etcOtd) etcOtd.innerHTML = `📖 <strong>Did you know?</strong> Eritrea has 9 ethnic groups across its territory`;
+
+  const etcCountdown = document.getElementById('etcCountdown');
+  if (etcCountdown && next) etcCountdown.innerHTML = `
+    <div class="etc-hol-days">${next.days}</div>
+    <div class="etc-hol-info">
+      <div class="etc-hol-label">days until</div>
+      <div class="etc-hol-name">${esc(next.name)}</div>
+    </div>
+  `;
+}
+
+// P5: ENHANCED NEWS TABS — tabbed news from multiple RSS feeds
+function initEnhancedNewsTabs() {
+  const tabsRow = document.getElementById('newsTabsRow');
+  if (!tabsRow) return;
+
+  // Multiple CORS proxies — allorigins.win first (no rate limits), rss2json second, corsproxy fallback
+  const PROXIES = [
+    url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    url => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`,
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  ];
+  const FEEDS = {
+    eritrea: 'https://news.google.com/rss/search?q=eritrea&hl=en-US&gl=US&ceid=US:en',
+    africa:  'https://feeds.bbci.co.uk/news/africa/rss.xml',
+    world:   'https://feeds.bbci.co.uk/news/world/rss.xml',
+    sports:  'https://feeds.bbci.co.uk/sport/rss.xml',
+    tech:    'https://feeds.bbci.co.uk/news/technology/rss.xml',
+  };
+  const TAGS = { eritrea:'🇪🇷 Eritrea News', africa:'🌍 BBC Africa', world:'🌐 BBC World', sports:'⚽ BBC Sport', tech:'💻 BBC Tech' };
+
+  const FALLBACK_NEWS = {
+    eritrea: [
+      { title:'Eritrea marks 32nd Independence Day — May 24th', link:'https://en.wikipedia.org/wiki/Eritrean_Independence_Day', desc:'Eritreans worldwide celebrate the anniversary of independence from Ethiopia in 1993, marked by events across the diaspora.', pub:'', img:'' },
+      { title:'Asmara: UNESCO World Heritage City', link:'https://en.wikipedia.org/wiki/Asmara', desc:'Asmara\'s Italian Modernist architecture continues to attract global attention since its 2017 UNESCO listing.', pub:'', img:'' },
+      { title:'Eritrean cyclists dominate African racing circuit', link:'https://en.wikipedia.org/wiki/Cycling_in_Eritrea', desc:'Eritrea produces world-class cyclists including Biniam Girmay, the first Black African to win a Grand Tour stage.', pub:'', img:'' },
+      { title:'Tigrinya language: one of the oldest written African languages', link:'https://en.wikipedia.org/wiki/Tigrinya_language', desc:'Written in the ancient Ge\'ez script, Tigrinya is spoken by over 7 million people across Eritrea and Ethiopia.', pub:'', img:'' },
+      { title:'Dahlak Archipelago — Red Sea diving destination', link:'https://en.wikipedia.org/wiki/Dahlak_Archipelago', desc:'The 200+ islands of the Dahlak Archipelago offer pristine coral reefs and rich marine biodiversity.', pub:'', img:'' },
+      { title:'Eritrea\'s coffee ceremony: a cultural tradition', link:'https://en.wikipedia.org/wiki/Coffee_in_Eritrea', desc:'The Eritrean coffee ceremony, known as \'bunna\', is a central social ritual symbolizing friendship and community.', pub:'', img:'' },
+    ],
+    africa: [
+      { title:'African Union summit focuses on regional peace', link:'https://au.int', desc:'African leaders gather to discuss ongoing conflicts and economic development across the continent.', pub:'', img:'' },
+      { title:'East Africa economic integration accelerates', link:'https://en.wikipedia.org/wiki/East_African_Community', desc:'The East African Community continues to expand trade agreements and infrastructure development.', pub:'', img:'' },
+      { title:'Horn of Africa development update', link:'https://en.wikipedia.org/wiki/Horn_of_Africa', desc:'Infrastructure and economic projects advance across Djibouti, Eritrea, Ethiopia, and Somalia.', pub:'', img:'' },
+    ],
+    world: [
+      { title:'Global diaspora communities thriving in 2025', link:'https://en.wikipedia.org/wiki/African_diaspora', desc:'African diaspora communities worldwide continue to grow, contributing billions in remittances to home countries.', pub:'', img:'' },
+      { title:'Red Sea trade routes remain strategically vital', link:'https://en.wikipedia.org/wiki/Red_Sea', desc:'The Red Sea corridor handles 12% of global trade, making Eritrea\'s coastline strategically significant.', pub:'', img:'' },
+    ],
+    sports: [
+      { title:'Biniam Girmay continues to make cycling history', link:'https://en.wikipedia.org/wiki/Biniam_Girmay', desc:'The Eritrean sprinter became the first Black African to win a Grand Tour stage, inspiring a generation of cyclists.', pub:'', img:'' },
+      { title:'Ghirmay Ghebreslassie: marathon world champion', link:'https://en.wikipedia.org/wiki/Ghirmay_Ghebreslassie', desc:'The Rio 2016 Olympic marathon gold medalist remains one of East Africa\'s greatest long-distance runners.', pub:'', img:'' },
+      { title:'Eritrean football federation growing the sport nationally', link:'https://en.wikipedia.org/wiki/Eritrea_national_football_team', desc:'Football continues to grow in popularity across Eritrea with youth development programs expanding.', pub:'', img:'' },
+    ],
+    tech: [
+      { title:'African tech innovation hubs expanding in East Africa', link:'https://en.wikipedia.org/wiki/Silicon_Savannah', desc:'East African tech hubs continue to grow with mobile payment solutions and agricultural technology leading growth.', pub:'', img:'' },
+      { title:'Mobile connectivity reaches remote communities', link:'https://en.wikipedia.org/wiki/Internet_in_Africa', desc:'Expanded mobile infrastructure is connecting previously isolated communities across the Horn of Africa.', pub:'', img:'' },
+    ],
+  };
+
+  const cache = {};
+
+  function parseRss2Json(data) {
+    if (!data.items?.length) return [];
+    return data.items.slice(0, 9).map(item => ({
+      title: item.title || '',
+      link:  item.link || '#',
+      desc:  (item.description || item.content || '').replace(/<[^>]*>/g,'').trim().slice(0, 110),
+      pub:   item.pubDate || '',
+      img:   item.thumbnail || item.enclosure?.link || '',
+    }));
+  }
+
+  function parseAllOrigins(data) {
+    const xml = new DOMParser().parseFromString(data.contents || '', 'text/xml');
+    return [...xml.querySelectorAll('item')].slice(0, 9).map(item => ({
+      title: item.querySelector('title')?.textContent?.trim() || '',
+      link:  item.querySelector('link')?.textContent?.trim() || '#',
+      desc:  (item.querySelector('description')?.textContent || '').replace(/<[^>]*>/g,'').trim().slice(0, 110),
+      pub:   item.querySelector('pubDate')?.textContent || '',
+      img:   item.querySelector('enclosure')?.getAttribute('url') || '',
+    }));
+  }
+
+  function parseDirect(text) {
+    const xml = new DOMParser().parseFromString(text, 'text/xml');
+    return [...xml.querySelectorAll('item')].slice(0, 9).map(item => ({
+      title: item.querySelector('title')?.textContent?.trim() || '',
+      link:  item.querySelector('link')?.textContent?.trim() || '#',
+      desc:  (item.querySelector('description')?.textContent || '').replace(/<[^>]*>/g,'').trim().slice(0, 110),
+      pub:   item.querySelector('pubDate')?.textContent || '',
+      img:   item.querySelector('enclosure')?.getAttribute('url') || '',
+    }));
+  }
+
+  async function loadFeed(key) {
+    if (cache[key] && Date.now() - cache[key].ts < 18e5) return cache[key].items;
+    const feedUrl = FEEDS[key];
+    for (let i = 0; i < PROXIES.length; i++) {
+      try {
+        const proxyUrl = PROXIES[i](feedUrl);
+        const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(7000) });
+        if (!r.ok) continue;
+        let items = [];
+        if (i === 2) {
+          // corsproxy.io returns raw XML text
+          const text = await r.text();
+          items = parseDirect(text);
+        } else {
+          const data = await r.json().catch(() => null);
+          if (!data) continue;
+          if (i === 0 && data.contents) items = parseAllOrigins(data);
+          else if (i === 1 && data.items) items = parseRss2Json(data);
+        }
+        if (items.length) { cache[key] = { items, ts: Date.now() }; return items; }
+      } catch { /* try next proxy */ }
+    }
+    return FALLBACK_NEWS[key] || [];
+  }
+
+  function renderNews(items, key) {
+    const grid = document.getElementById('newsGrid');
+    if (!grid) return;
+    if (!items.length) {
+      grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted)">Checking news sources…</p>`;
+      return;
+    }
+    grid.innerHTML = items.map(it => `
+      <a class="news-card" href="${esc(it.link || '#')}" target="_blank" rel="noopener noreferrer">
+        ${it.img ? `<div class="news-img-wrap"><img src="${esc(it.img)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"/></div>` : ''}
+        <div class="news-body">
+          <span class="news-tag">${TAGS[key] || key}</span>
+          <h3 class="news-title">${esc(it.title)}</h3>
+          ${it.desc ? `<p class="news-excerpt">${esc(it.desc)}…</p>` : ''}
+          ${it.pub ? `<div class="news-meta"><span class="news-date">🕐 ${new Date(it.pub).toLocaleDateString()}</span></div>` : ''}
+          <span class="news-read-more">Read full article →</span>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  async function switchTab(key) {
+    tabsRow.querySelectorAll('.news-tab').forEach(t => t.classList.toggle('active', t.dataset.feed === key));
+    // Show fallback/cached content immediately so the section is never blank
+    renderNews(cache[key] ? cache[key].items : (FALLBACK_NEWS[key] || []), key);
+    // Fetch live RSS in background; update only if still on same tab and we got results
+    loadFeed(key).then(items => {
+      const still = tabsRow.querySelector('.news-tab.active')?.dataset.feed === key;
+      if (still && items.length) renderNews(items, key);
+    });
+  }
+
+  tabsRow.querySelectorAll('.news-tab').forEach(btn =>
+    btn.addEventListener('click', () => switchTab(btn.dataset.feed))
+  );
+  switchTab('eritrea');
+}
+
+// P6: COPY BUTTONS on proverbs, facts, fact generator
+function initCopyButtons() {
+  function addCopy(card, getText) {
+    if (card.querySelector('.copy-btn')) return;
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.title = 'Copy to clipboard';
+    btn.innerHTML = '📋';
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      try {
+        await navigator.clipboard.writeText(getText());
+        btn.innerHTML = '✅';
+        setTimeout(() => { btn.innerHTML = '📋'; }, 2000);
+      } catch { btn.innerHTML = '❌'; setTimeout(() => { btn.innerHTML = '📋'; }, 2000); }
+    });
+    card.style.position = 'relative';
+    card.appendChild(btn);
+  }
+
+  document.querySelectorAll('.proverb-card, .proverb-item').forEach(c =>
+    addCopy(c, () => c.textContent.trim().replace(/\s+/g,' '))
+  );
+  document.querySelectorAll('.fact-card').forEach(c =>
+    addCopy(c, () => c.textContent.trim().replace(/\s+/g,' '))
+  );
+
+  // Also wire copy to the fact generator
+  const fgText = document.getElementById('fgText');
+  if (fgText) {
+    const copyFact = document.createElement('button');
+    copyFact.className = 'copy-btn';
+    copyFact.style.cssText = 'position:static;opacity:1;margin-top:8px;';
+    copyFact.innerHTML = '📋 Copy fact';
+    copyFact.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(fgText.textContent);
+        copyFact.innerHTML = '✅ Copied!';
+        setTimeout(() => { copyFact.innerHTML = '📋 Copy fact'; }, 2000);
+      } catch {}
+    });
+    document.querySelector('.fg-actions')?.appendChild(copyFact);
+  }
+}
+
+// P7: EXPLORE SCORE — track visited sections with SVG ring
+function initExploreScore() {
+  const widget = document.getElementById('exploreScore');
+  const fill   = document.getElementById('esFill');
+  const pctEl  = document.getElementById('esPct');
+  if (!widget || !fill || !pctEl) return;
+
+  const SECTION_IDS = ['overview','history','geography','people','culture','economy','government',
+    'languages','gallery','tourism','blog','quiz','fidel','lessons','proverbs','poetry','facts',
+    'recipes','artists','regions','news','sports-tracker','flag-explorer','diaspora-map','compare'];
+  const KEY = 'eri_visited_v2';
+  let visited = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
+
+  const CIRCUMFERENCE = 2 * Math.PI * 15.9; // r=15.9
+
+  function updateScore() {
+    const pct = Math.round((visited.size / SECTION_IDS.length) * 100);
+    const dash = (pct / 100) * CIRCUMFERENCE;
+    fill.setAttribute('stroke-dasharray', `${dash} ${CIRCUMFERENCE}`);
+    pctEl.textContent = `${pct}%`;
+    widget.title = `${pct}% explored — ${visited.size}/${SECTION_IDS.length} sections visited!`;
+  }
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        visited.add(e.target.id);
+        localStorage.setItem(KEY, JSON.stringify([...visited]));
+        updateScore();
+      }
+    });
+  }, { threshold: 0.25 });
+
+  SECTION_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) obs.observe(el);
+  });
+
+  widget.addEventListener('click', () => {
+    const remaining = SECTION_IDS.filter(id => !visited.has(id));
+    if (remaining.length) {
+      document.getElementById(remaining[0])?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
+  updateScore();
+}
+
+// P8: LIVE ERN EXCHANGE RATES
+async function initLiveRates() {
+  const el = document.getElementById('liveRatesWidget');
+  if (!el) return;
+
+  // Official ERN peg: 1 USD ≈ 15.075 ERN
+  const USD_TO_ERN = 15.075;
+  const CURRENCIES = [
+    { code:'USD', flag:'🇺🇸', name:'US Dollar',     usdRate:1      },
+    { code:'EUR', flag:'🇪🇺', name:'Euro',          usdRate:0.93   },
+    { code:'GBP', flag:'🇬🇧', name:'British Pound', usdRate:0.79   },
+    { code:'SAR', flag:'🇸🇦', name:'Saudi Riyal',   usdRate:3.75   },
+    { code:'ETB', flag:'🇪🇹', name:'Ethiopian Birr',usdRate:125.0  },
+    { code:'AED', flag:'🇦🇪', name:'UAE Dirham',    usdRate:3.67   },
+    { code:'SEK', flag:'🇸🇪', name:'Swedish Krona', usdRate:10.6   },
+    { code:'CAD', flag:'🇨🇦', name:'Canadian $',    usdRate:1.36   },
+  ];
+
+  function render(rates) {
+    el.innerHTML = rates.map(c => {
+      const ernPer1 = (c.usdRate * USD_TO_ERN).toFixed(2);
+      return `<div class="lr-row">
+        <span class="lr-flag">${c.flag}</span>
+        <span class="lr-cur">${c.code}</span>
+        <span class="lr-eq">1 ${c.code} = ${ernPer1} ERN</span>
+      </div>`;
+    }).join('');
+  }
+
+  render(CURRENCIES);
+
+  // Try to get live rates
+  try {
+    const r = await fetch('https://api.frankfurter.app/latest?from=USD', { signal: AbortSignal.timeout(6000) });
+    if (r.ok) {
+      const { rates } = await r.json();
+      const updated = CURRENCIES.map(c => ({
+        ...c, usdRate: c.code === 'USD' ? 1 : (rates[c.code] || c.usdRate)
+      }));
+      render(updated);
+    }
+  } catch {}
+}
+
+// P9: COUNTRY SPOTLIGHT — daily rotating world country
+function initCountrySpotlight() {
+  const el = document.getElementById('countrySpotlight');
+  if (!el) return;
+
+  const COUNTRIES = [
+    { name:'Ethiopia',     flag:'🇪🇹', pop:'126M', capital:'Addis Ababa', area:'1,104,300 km²', lang:'Amharic', note:'Eritrea\'s southern neighbor — shares deep cultural and historical roots.' },
+    { name:'Sudan',        flag:'🇸🇩', pop:'45M',  capital:'Khartoum',   area:'1,886,068 km²', lang:'Arabic',  note:'Northern neighbor with ancient Nubian civilizations along the Nile.' },
+    { name:'Djibouti',     flag:'🇩🇯', pop:'1.1M', capital:'Djibouti City',area:'23,200 km²',  lang:'French/Arabic', note:'Shares the strategic Red Sea corridor with Eritrea.' },
+    { name:'Yemen',        flag:'🇾🇪', pop:'34M',  capital:'Sanaa',      area:'527,968 km²',   lang:'Arabic',  note:'Across the Red Sea — centuries of trade ties with Eritrea.' },
+    { name:'Saudi Arabia', flag:'🇸🇦', pop:'35M',  capital:'Riyadh',     area:'2,149,690 km²', lang:'Arabic',  note:'Home to a large Eritrean diaspora community.' },
+    { name:'Germany',      flag:'🇩🇪', pop:'84M',  capital:'Berlin',     area:'357,114 km²',   lang:'German',  note:'One of Europe\'s largest Eritrean diaspora populations.' },
+    { name:'Sweden',       flag:'🇸🇪', pop:'10M',  capital:'Stockholm',  area:'450,295 km²',   lang:'Swedish', note:'Has welcomed tens of thousands of Eritrean refugees and immigrants.' },
+    { name:'USA',          flag:'🇺🇸', pop:'331M', capital:'Washington', area:'9,833,517 km²', lang:'English', note:'Home to the largest Eritrean diaspora outside Africa.' },
+    { name:'Italy',        flag:'🇮🇹', pop:'60M',  capital:'Rome',       area:'301,340 km²',   lang:'Italian', note:'Former colonial power — Italian Art Deco still graces Asmara today.' },
+    { name:'Egypt',        flag:'🇪🇬', pop:'104M', capital:'Cairo',      area:'1,001,450 km²', lang:'Arabic',  note:'Ancient civilization connected to the Red Sea and Horn of Africa.' },
+    { name:'Kenya',        flag:'🇰🇪', pop:'55M',  capital:'Nairobi',    area:'580,367 km²',   lang:'Swahili/English', note:'East Africa\'s economic hub and Eritrea\'s regional neighbor.' },
+    { name:'Nigeria',      flag:'🇳🇬', pop:'220M', capital:'Abuja',      area:'923,768 km²',   lang:'English', note:'Africa\'s most populous nation and largest economy.' },
+    { name:'South Africa', flag:'🇿🇦', pop:'60M',  capital:'Pretoria',   area:'1,219,090 km²', lang:'11 official', note:'Africa\'s most industrialized economy and global icon of liberation.' },
+    { name:'Morocco',      flag:'🇲🇦', pop:'37M',  capital:'Rabat',      area:'446,550 km²',   lang:'Arabic/Berber', note:'Gateway between Africa and Europe on the Atlantic coast.' },
+    { name:'Ghana',        flag:'🇬🇭', pop:'33M',  capital:'Accra',      area:'238,533 km²',   lang:'English', note:'Pan-African symbol — first sub-Saharan nation to gain independence.' },
+    { name:'Japan',        flag:'🇯🇵', pop:'125M', capital:'Tokyo',      area:'377,975 km²',   lang:'Japanese', note:'Technological powerhouse and one of the world\'s great cultures.' },
+    { name:'Canada',       flag:'🇨🇦', pop:'38M',  capital:'Ottawa',     area:'9,984,670 km²', lang:'English/French', note:'Home to a growing Eritrean diaspora community.' },
+    { name:'Australia',    flag:'🇦🇺', pop:'26M',  capital:'Canberra',   area:'7,692,024 km²', lang:'English', note:'Continent-nation with a vibrant Eritrean community in Melbourne.' },
+    { name:'India',        flag:'🇮🇳', pop:'1.4B', capital:'New Delhi',  area:'3,287,263 km²', lang:'Hindi+21', note:'World\'s most populous democracy and fastest-growing major economy.' },
+    { name:'Brazil',       flag:'🇧🇷', pop:'215M', capital:'Brasília',   area:'8,515,767 km²', lang:'Portuguese', note:'South America\'s giant — world\'s largest tropical rainforest.' },
+    { name:'China',        flag:'🇨🇳', pop:'1.4B', capital:'Beijing',    area:'9,596,960 km²', lang:'Mandarin', note:'World\'s second-largest economy with 5,000 years of civilization.' },
+    { name:'France',       flag:'🇫🇷', pop:'68M',  capital:'Paris',      area:'551,695 km²',   lang:'French', note:'Cultural capital of Europe — home to the Louvre and Eiffel Tower.' },
+    { name:'Netherlands',  flag:'🇳🇱', pop:'17M',  capital:'Amsterdam',  area:'41,543 km²',    lang:'Dutch', note:'Eritrea has a significant diaspora community in the Netherlands.' },
+    { name:'Norway',       flag:'🇳🇴', pop:'5M',   capital:'Oslo',       area:'385,207 km²',   lang:'Norwegian', note:'One of the world\'s highest quality-of-life nations.' },
+    { name:'Israel',       flag:'🇮🇱', pop:'9M',   capital:'Jerusalem',  area:'22,072 km²',    lang:'Hebrew/Arabic', note:'Middle Eastern nation with historical ties to the Horn of Africa.' },
+    { name:'Tanzania',     flag:'🇹🇿', pop:'63M',  capital:'Dodoma',     area:'945,087 km²',   lang:'Swahili/English', note:'Home of Mount Kilimanjaro and the Serengeti.' },
+    { name:'Uganda',       flag:'🇺🇬', pop:'48M',  capital:'Kampala',    area:'241,550 km²',   lang:'English/Swahili', note:'The Pearl of Africa — source of the White Nile.' },
+    { name:'Libya',        flag:'🇱🇾', pop:'7M',   capital:'Tripoli',    area:'1,759,541 km²', lang:'Arabic', note:'Northern African nation on the Mediterranean coast.' },
+    { name:'Qatar',        flag:'🇶🇦', pop:'3M',   capital:'Doha',       area:'11,586 km²',    lang:'Arabic', note:'Wealthy Gulf state — hosted 2022 FIFA World Cup.' },
+    { name:'Turkey',       flag:'🇹🇷', pop:'85M',  capital:'Ankara',     area:'783,356 km²',   lang:'Turkish', note:'Bridge between Europe and Asia with a rich Ottoman heritage.' },
+  ];
+
+  const now = new Date();
+  const dayIdx = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
+  const c = COUNTRIES[dayIdx % COUNTRIES.length];
+
+  el.innerHTML = `
+    <div class="cs-flag-big">${c.flag}</div>
+    <div class="cs-name">${c.name}</div>
+    <div class="cs-facts-row">
+      <span class="cs-fact">🏛️ ${c.capital}</span>
+      <span class="cs-fact">👥 ${c.pop}</span>
+      <span class="cs-fact">📐 ${c.area}</span>
+      <span class="cs-fact">🗣️ ${c.lang}</span>
+    </div>
+    <div class="cs-note">${esc(c.note)}</div>
+    <div class="cs-vs-row">
+      <div class="cs-vs-item"><span class="cs-vs-val">🇪🇷 3.5M</span><span class="cs-vs-lbl">Eritrea pop.</span></div>
+      <span class="cs-vs-sep">vs</span>
+      <div class="cs-vs-item"><span class="cs-vs-val">${c.flag} ${c.pop}</span><span class="cs-vs-lbl">${c.name} pop.</span></div>
+    </div>
+  `;
+}
+
+// P10: AUTO-REFRESH — hourly refresh when tab becomes visible again
+function initAutoRefresh() {
+  let lastRefresh = Date.now();
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Date.now() - lastRefresh > 60 * 60 * 1000) {
+      lastRefresh = Date.now();
+      showToast('🔄 Refreshing live data…', 'info');
+      Promise.all([
+        initCityWeather(),
+        initLiveRates(),
+      ]);
+      initEriTodayCard();
+      document.querySelector('.news-tab.active')?.click();
+    }
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   TWEAKS v3.0 — 30 Power Features (T14–T43)
+   Each is an IIFE. All run on DOMContentLoaded via the loader at bottom.
+════════════════════════════════════════════════════════════════════════ */
+
+// ── T14: FLOATING TABLE OF CONTENTS ──────────────────────────────────────
+(function T14_TOC() {
+  const SECTIONS = [
+    {id:'hero',emoji:'🏠',label:'Home'},{id:'live-dashboard',emoji:'📡',label:'Live Dashboard'},
+    {id:'overview',emoji:'🏛️',label:'Overview'},{id:'history',emoji:'📜',label:'History'},
+    {id:'geography',emoji:'🗺️',label:'Geography'},{id:'people',emoji:'👥',label:'People'},
+    {id:'culture',emoji:'🎭',label:'Culture'},{id:'economy',emoji:'💰',label:'Economy'},
+    {id:'government',emoji:'⚖️',label:'Government'},{id:'famous',emoji:'⭐',label:'Famous People'},
+    {id:'gallery',emoji:'📸',label:'Gallery'},{id:'translator',emoji:'🌐',label:'Translator'},
+    {id:'tourism',emoji:'✈️',label:'Tourism'},{id:'regions',emoji:'🗾',label:'Regions'},
+    {id:'recipes',emoji:'🍽️',label:'Recipes'},{id:'artists',emoji:'🎵',label:'Artists'},
+    {id:'quiz',emoji:'🏆',label:'Quiz'},{id:'fidel',emoji:'🔤',label:'Alphabet (Fidel)'},
+    {id:'lessons',emoji:'📖',label:'Lessons'},{id:'proverbs',emoji:'💬',label:'Proverbs'},
+    {id:'poetry',emoji:'📝',label:'Poetry'},{id:'facts',emoji:'🌟',label:'Facts'},
+    {id:'community',emoji:'🤝',label:'Community'},{id:'news',emoji:'📰',label:'News'},
+    {id:'prayer-times',emoji:'🕌',label:'Prayer Times'},{id:'holidays',emoji:'🗓️',label:'Holidays'},
+    {id:'sports-tracker',emoji:'🚴',label:'Sports'},{id:'flag-explorer',emoji:'🚩',label:'Flag Explorer'},
+    {id:'compare',emoji:'📊',label:'Compare Countries'},{id:'events',emoji:'📅',label:'Events'},
+    {id:'diaspora-map',emoji:'🌍',label:'Diaspora Map'},{id:'asmara-tour',emoji:'🏛️',label:'Asmara Tour'},
+    {id:'about',emoji:'ℹ️',label:'About Us'},
+  ];
+
+  function init() {
+    const fab = document.getElementById('tocFab');
+    const panel = document.getElementById('tocPanel');
+    if (!fab || !panel) return;
+
+    panel.innerHTML = `<div class="toc-header"><span>📋 Jump to Section</span><button class="toc-close" id="tocClose">✕</button></div>
+      <ul class="toc-list">${SECTIONS.map(s => `<li><a href="#${s.id}" class="toc-link" data-target="${s.id}">${s.emoji} ${s.label}</a></li>`).join('')}</ul>`;
+
+    document.getElementById('tocClose').onclick = () => { panel.classList.remove('open'); panel.hidden = true; };
+
+    panel.querySelectorAll('.toc-link').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const el = document.getElementById(a.dataset.target);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (window.innerWidth < 768) { panel.classList.remove('open'); setTimeout(() => panel.hidden = true, 280); }
+      });
+    });
+
+    fab.hidden = false;
+    fab.onclick = () => {
+      const open = panel.classList.contains('open');
+      if (open) { panel.classList.remove('open'); setTimeout(() => panel.hidden = true, 280); }
+      else { panel.hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add('open'))); }
+    };
+
+    window.addEventListener('scroll', () => {
+      let cur = '';
+      SECTIONS.forEach(s => { const el = document.getElementById(s.id); if (el && el.getBoundingClientRect().top < 200) cur = s.id; });
+      panel.querySelectorAll('.toc-link').forEach(a => a.classList.toggle('active', a.dataset.target === cur));
+    }, { passive: true });
+
+    document.addEventListener('keydown', e => { if (e.altKey && e.key === 't') { e.preventDefault(); fab.click(); } });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T15: TEXT-TO-SPEECH READER ───────────────────────────────────────────
+(function T15_TTS() {
+  if (!('speechSynthesis' in window)) return;
+  let currentBtn = null, utterance = null;
+
+  function injectButtons() {
+    document.querySelectorAll('section[id]').forEach(sec => {
+      if (sec.querySelector('.tts-btn')) return;
+      const h = sec.querySelector('h1,h2,h3');
+      if (!h) return;
+      const btn = document.createElement('button');
+      btn.className = 'tts-btn';
+      btn.innerHTML = '🔊 Listen';
+      btn.title = 'Read this section aloud';
+      btn.addEventListener('click', () => {
+        if (currentBtn === btn && speechSynthesis.speaking) {
+          speechSynthesis.cancel(); btn.innerHTML = '🔊 Listen'; btn.classList.remove('speaking'); currentBtn = null; return;
+        }
+        if (speechSynthesis.speaking) speechSynthesis.cancel();
+        const text = Array.from(sec.querySelectorAll('p,li,blockquote')).map(el => el.textContent.trim()).filter(Boolean).slice(0, 20).join('. ');
+        if (!text) return;
+        utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.92; utterance.pitch = 1;
+        utterance.onend = () => { btn.innerHTML = '🔊 Listen'; btn.classList.remove('speaking'); currentBtn = null; };
+        utterance.onerror = () => { btn.innerHTML = '🔊 Listen'; btn.classList.remove('speaking'); currentBtn = null; };
+        speechSynthesis.speak(utterance);
+        btn.innerHTML = '⏹ Stop'; btn.classList.add('speaking'); currentBtn = btn;
+      });
+      h.insertAdjacentElement('afterend', btn);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(injectButtons, 1200));
+  new MutationObserver(injectButtons).observe(document.body, { childList: true, subtree: true });
+})();
+
+// ── T16: READING TIME ESTIMATOR ──────────────────────────────────────────
+(function T16_ReadingTime() {
+  function inject() {
+    document.querySelectorAll('section[id]').forEach(sec => {
+      if (sec.querySelector('.read-time-badge')) return;
+      const h = sec.querySelector('h1,h2,h3');
+      if (!h) return;
+      const words = sec.textContent.trim().split(/\s+/).length;
+      const mins = Math.max(1, Math.round(words / 200));
+      const badge = document.createElement('span');
+      badge.className = 'read-time-badge';
+      badge.textContent = `📖 ${mins} min read`;
+      h.insertAdjacentElement('afterend', badge);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', () => setTimeout(inject, 800));
+})();
+
+// ── T17: CUSTOM THEME PALETTES ───────────────────────────────────────────
+(function T17_Themes() {
+  const THEMES = {
+    forest:'#007A3D', ocean:'#0284c7', sunset:'#ea580c',
+    royal:'#7c3aed', earth:'#92400e', fire:'#dc2626',
+  };
+  const DARK_BG = { forest:'#0a1f14', ocean:'#0c1a2e', sunset:'#1c0d00',
+    royal:'#130924', earth:'#1a0e06', fire:'#1c0505' };
+  const LS_KEY = 'eri_theme';
+
+  function applyTheme(name) {
+    const color = THEMES[name] || THEMES.forest;
+    document.documentElement.style.setProperty('--green', color);
+    const isDark = document.documentElement.classList.contains('dark');
+    if (isDark) document.documentElement.style.setProperty('--bg', DARK_BG[name] || '#0f172a');
+    document.querySelectorAll('.tp-swatch').forEach(b => b.classList.toggle('active', b.dataset.theme === name));
+    localStorage.setItem(LS_KEY, name);
+  }
+
+  function init() {
+    const picker = document.getElementById('themePicker');
+    const closeBtn = document.getElementById('themePickerClose');
+    if (!picker) return;
+
+    const saved = localStorage.getItem(LS_KEY) || 'forest';
+    applyTheme(saved);
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.id = 'themeToggle'; toggleBtn.title = 'Change theme'; toggleBtn.textContent = '🎨';
+    toggleBtn.style.cssText = 'position:fixed;bottom:264px;right:18px;z-index:201;width:36px;height:36px;background:var(--bg,#fff);border:1px solid var(--border,#e0e0e0);border-radius:50%;cursor:pointer;font-size:.95rem;box-shadow:0 2px 8px rgba(0,0,0,.1);';
+    document.body.appendChild(toggleBtn);
+    toggleBtn.addEventListener('click', () => { picker.hidden = !picker.hidden; });
+    if (closeBtn) closeBtn.addEventListener('click', () => { picker.hidden = true; });
+
+    picker.querySelectorAll('.tp-swatch').forEach(btn => {
+      btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T18: ANIMATED STAT COUNTERS ──────────────────────────────────────────
+(function T18_Counters() {
+  const TARGETS = [
+    { sel: '#hero .hero-badges', add: false },
+  ];
+
+  function countUp(el, target, duration) {
+    const start = performance.now();
+    const isFloat = String(target).includes('.');
+    function step(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      const val = isFloat ? (target * ease).toFixed(1) : Math.round(target * ease);
+      el.textContent = Number(val).toLocaleString();
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function initCounters() {
+    const stats = [
+      { id: 'statPop',   val: 3500000, label: 'Population' },
+      { id: 'statArea',  val: 117600,  label: 'Area (km²)' },
+      { id: 'statIslands',val: 209,    label: 'Islands' },
+      { id: 'statCoast', val: 2234,    label: 'Coastline (km)' },
+    ];
+    stats.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (!el) return;
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { countUp(el, s.val, 1600); io.disconnect(); } });
+      }, { threshold: 0.5 });
+      io.observe(el);
+    });
+
+    // Also scan for elements with data-count attribute
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const val = parseFloat(el.dataset.count);
+      if (isNaN(val)) return;
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { countUp(el, val, 1400); io.disconnect(); } });
+      }, { threshold: 0.5 });
+      io.observe(el);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(initCounters, 1000));
+})();
+
+// ── T19: PRINT MODE ──────────────────────────────────────────────────────
+(function T19_Print() {
+  function init() {
+    const navRight = document.querySelector('.nav-right');
+    if (!navRight) return;
+    const btn = document.createElement('button');
+    btn.className = 'nav-print-btn'; btn.title = 'Print page (Alt+P)'; btn.textContent = '🖨';
+    btn.addEventListener('click', () => window.print());
+    navRight.prepend(btn);
+    document.addEventListener('keydown', e => { if (e.altKey && e.key === 'p') { e.preventDefault(); window.print(); } });
+  }
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T20: FONT SIZE ACCESSIBILITY ─────────────────────────────────────────
+(function T20_FontSize() {
+  const SIZES = ['14px','16px','19px'];
+  const LABELS = ['A−','A','A+'];
+  const LS_KEY = 'eri_fontsize';
+
+  function apply(idx) {
+    document.documentElement.style.fontSize = SIZES[idx];
+    document.querySelectorAll('.nav-font-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+    localStorage.setItem(LS_KEY, idx);
+  }
+
+  function init() {
+    const navRight = document.querySelector('.nav-right');
+    if (!navRight) return;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:3px;align-items:center;';
+    LABELS.forEach((lbl, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'nav-font-btn'; btn.textContent = lbl;
+      btn.addEventListener('click', () => apply(i));
+      wrap.appendChild(btn);
+    });
+    navRight.prepend(wrap);
+    apply(parseInt(localStorage.getItem(LS_KEY) || '1'));
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T21: SECTION STAR RATINGS ────────────────────────────────────────────
+(function T21_StarRatings() {
+  const LS_KEY = 'eri_ratings';
+  function getRatings() { try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; } }
+  function saveRatings(r) { localStorage.setItem(LS_KEY, JSON.stringify(r)); }
+
+  function injectRating(sec) {
+    if (sec.querySelector('.section-rating')) return;
+    const id = sec.id;
+    const ratings = getRatings();
+    const myRating = ratings[id] || 0;
+    const wrap = document.createElement('div');
+    wrap.className = 'section-rating';
+    wrap.innerHTML = `<span style="font-size:.78rem;color:var(--text-muted,#888)">Rate this section:</span>
+      <div class="star-rating">${[1,2,3,4,5].map(n => `<button class="star-btn${n<=myRating?' lit':''}" data-v="${n}" aria-label="${n} star">★</button>`).join('')}</div>
+      <span class="star-avg" id="sa-${id}"></span>`;
+    sec.appendChild(wrap);
+
+    const btns = wrap.querySelectorAll('.star-btn');
+    btns.forEach(btn => {
+      btn.addEventListener('mouseenter', () => btns.forEach(b => b.classList.toggle('lit', +b.dataset.v <= +btn.dataset.v)));
+      btn.addEventListener('mouseleave', () => { const r = getRatings()[id]||0; btns.forEach(b => b.classList.toggle('lit', +b.dataset.v <= r)); });
+      btn.addEventListener('click', () => {
+        const v = +btn.dataset.v;
+        const r = getRatings(); r[id] = v; saveRatings(r);
+        btns.forEach(b => b.classList.toggle('lit', +b.dataset.v <= v));
+        showToast(`⭐ Rated ${v}/5 for ${id.replace(/-/g,' ')}`, 'info');
+        checkAchievement('rater');
+      });
+    });
+  }
+
+  function inject() {
+    document.querySelectorAll('section[id]').forEach(sec => { if (sec.id !== 'hero') injectRating(sec); });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(inject, 1400));
+})();
+
+// ── T22: KEYBOARD SHORTCUTS MODAL ────────────────────────────────────────
+(function T22_Shortcuts() {
+  function init() {
+    const modal = document.getElementById('shortcutsModal');
+    const closeBtn = document.getElementById('shortcutsClose');
+    if (!modal) return;
+    closeBtn.onclick = () => modal.hidden = true;
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+    document.addEventListener('keydown', e => {
+      if (e.key === '?' && !e.ctrlKey && !e.altKey && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+        modal.hidden = !modal.hidden;
+      }
+      if (e.key === 'Escape') modal.hidden = true;
+    });
+  }
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T23: SPOTLIGHT SEARCH ────────────────────────────────────────────────
+(function T23_Spotlight() {
+  const SECTIONS = [
+    {id:'overview',emoji:'🏛️',label:'Overview',hint:'History, geography, capital'},{id:'history',emoji:'📜',label:'History',hint:'1890–present timeline'},
+    {id:'geography',emoji:'🗺️',label:'Geography',hint:'Mountains, coast, climate'},{id:'people',emoji:'👥',label:'People',hint:'9 ethnic groups, languages'},
+    {id:'culture',emoji:'🎭',label:'Culture',hint:'Music, food, traditions'},{id:'economy',emoji:'💰',label:'Economy',hint:'GDP, trade, Nakfa currency'},
+    {id:'government',emoji:'⚖️',label:'Government',hint:'Political system, PFDJ'},{id:'famous',emoji:'⭐',label:'Famous People',hint:'Athletes, artists, leaders'},
+    {id:'gallery',emoji:'📸',label:'Gallery',hint:'Photos of Eritrea'},{id:'translator',emoji:'🌐',label:'Translator',hint:'Tigrinya ↔ English AI'},
+    {id:'tourism',emoji:'✈️',label:'Tourism',hint:'Places to visit'},{id:'regions',emoji:'🗾',label:'Regions',hint:'6 administrative zones'},
+    {id:'recipes',emoji:'🍽️',label:'Recipes',hint:'Injera, Zigni, Ful'},{id:'artists',emoji:'🎵',label:'Artists',hint:'Tigrinya & Eritrean music'},
+    {id:'quiz',emoji:'🏆',label:'Quiz',hint:'Test your Eritrea knowledge'},{id:'fidel',emoji:'🔤',label:'Alphabet',hint:'Ge\'ez Fidel script'},
+    {id:'lessons',emoji:'📖',label:'Lessons',hint:'Learn Tigrinya phrases'},{id:'proverbs',emoji:'💬',label:'Proverbs',hint:'Eritrean wisdom & sayings'},
+    {id:'poetry',emoji:'📝',label:'Poetry',hint:'Eritrean literary tradition'},{id:'facts',emoji:'🌟',label:'Facts',hint:'Amazing Eritrean facts'},
+    {id:'community',emoji:'🤝',label:'Community',hint:'Posts & discussions'},{id:'news',emoji:'📰',label:'News',hint:'Latest from Eritrea'},
+    {id:'prayer-times',emoji:'🕌',label:'Prayer Times',hint:'Geolocation-based'},{id:'holidays',emoji:'🗓️',label:'Holidays',hint:'National & cultural days'},
+    {id:'sports-tracker',emoji:'🚴',label:'Sports',hint:'Cyclists, runners, champions'},{id:'flag-explorer',emoji:'🚩',label:'Flag Explorer',hint:'Colors & symbols explained'},
+    {id:'compare',emoji:'📊',label:'Compare',hint:'Eritrea vs world countries'},{id:'events',emoji:'📅',label:'Events',hint:'Community events calendar'},
+    {id:'live-dashboard',emoji:'📡',label:'Live Dashboard',hint:'Clocks, weather, exchange rates'},{id:'asmara-tour',emoji:'🏛️',label:'Asmara Tour',hint:'Virtual city tour'},
+    {id:'diaspora-map',emoji:'🌍',label:'Diaspora Map',hint:'Eritreans around the world'},{id:'about',emoji:'ℹ️',label:'About Us',hint:'About this platform'},
+  ];
+
+  let activeIdx = 0;
+
+  function open() {
+    const overlay = document.getElementById('spotlightOverlay');
+    const input = document.getElementById('spotlightInput');
+    if (!overlay) return;
+    overlay.hidden = false;
+    input.value = '';
+    render('');
+    setTimeout(() => input.focus(), 50);
+    checkAchievement('searcher');
+  }
+  function close() { const o = document.getElementById('spotlightOverlay'); if (o) o.hidden = true; }
+
+  function render(q) {
+    const list = document.getElementById('spotlightResults');
+    if (!list) return;
+    const matches = q ? SECTIONS.filter(s => s.label.toLowerCase().includes(q.toLowerCase()) || s.hint.toLowerCase().includes(q.toLowerCase())) : SECTIONS;
+    activeIdx = 0;
+    list.innerHTML = matches.map((s, i) => `<li data-id="${s.id}" class="${i===0?'sp-active':''}"><span class="sp-emoji">${s.emoji}</span><div><div class="sp-title">${s.label}</div><div class="sp-hint">${s.hint}</div></div></li>`).join('');
+    list.querySelectorAll('li').forEach((li, i) => {
+      li.addEventListener('mouseenter', () => { activeIdx = i; updateActive(); });
+      li.addEventListener('click', () => jumpTo(li.dataset.id));
+    });
+  }
+
+  function updateActive() {
+    document.querySelectorAll('#spotlightResults li').forEach((li, i) => li.classList.toggle('sp-active', i === activeIdx));
+    const active = document.querySelector('#spotlightResults li.sp-active');
+    if (active) active.scrollIntoView({ block: 'nearest' });
+  }
+
+  function jumpTo(id) {
+    const el = document.getElementById(id);
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); close(); }
+  }
+
+  function init() {
+    const overlay = document.getElementById('spotlightOverlay');
+    const input = document.getElementById('spotlightInput');
+    if (!overlay || !input) return;
+
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    input.addEventListener('input', () => render(input.value.trim()));
+    input.addEventListener('keydown', e => {
+      const items = document.querySelectorAll('#spotlightResults li');
+      if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx+1, items.length-1); updateActive(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx-1, 0); updateActive(); }
+      else if (e.key === 'Enter') { if (items[activeIdx]) jumpTo(items[activeIdx].dataset.id); }
+      else if (e.key === 'Escape') close();
+    });
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); open(); }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T24: TIGRINYA FLASHCARDS ─────────────────────────────────────────────
+(function T24_Flashcards() {
+  const CARDS = [
+    {ti:'ሰላም',en:'Peace / Hello',ex:'ሰላም ኣለኩም — Hello (to group)'},{ti:'ፍቕሪ',en:'Love',ex:'ፍቕሪ ዓቢ ሓይሊ — Love is a great power'},
+    {ti:'ሃገር',en:'Country / Nation',ex:'ሃገርና ኤርትራ — Our country Eritrea'},{ti:'ሓርነት',en:'Freedom',ex:'ሓርነት ዓወት — Freedom is victory'},
+    {ti:'ትምህርቲ',en:'Education',ex:'ትምህርቲ ብርሃን — Education is light'},{ti:'ቤት',en:'Home / House',ex:'ቤትካ ጽቡቕ — Your home is nice'},
+    {ti:'ኣደ',en:'Mother',ex:'ኣደ ፍቕሪ — A mother\'s love'},{ti:'ዓወት',en:'Victory',ex:'ዓወት ንሓፋሽ — Victory to the masses'},
+    {ti:'ብርሃን',en:'Light',ex:'ብርሃን ናብ ዓለም — Light unto the world'},{ti:'ደስታ',en:'Joy / Happiness',ex:'ደስታ ኣምጽእ — Bring joy'},
+    {ti:'ጸሎት',en:'Prayer',ex:'ጸሎት ሓይሊ — Prayer is strength'},{ti:'ምሕረት',en:'Mercy / Forgiveness',ex:'ምሕረት ዓቢ — Mercy is great'},
+    {ti:'ተስፋ',en:'Hope',ex:'ተስፋ ይቕጽል — Hope continues'},{ti:'ክብሪ',en:'Honor / Dignity',ex:'ክብሪ ሰብ — Human dignity'},
+    {ti:'ሓቂ',en:'Truth',ex:'ሓቂ ትዕወት — Truth prevails'},{ti:'ምዕባለ',en:'Development / Progress',ex:'ምዕባለ ህዝቢ — People\'s development'},
+    {ti:'ሙዚቃ',en:'Music',ex:'ሙዚቃ ሕይወት — Music is life'},{ti:'ዕርቂ',en:'Reconciliation / Peace',ex:'ዕርቂ ቅዱስ — Reconciliation is sacred'},
+    {ti:'ኪዳን',en:'Covenant / Promise',ex:'ኪዳን ኤርትራ — Eritrea\'s covenant'},{ti:'ጽቡቕ',en:'Good / Beautiful',ex:'ጽቡቕ ዕዮ — Good work'},
+  ];
+
+  let deck = [], flipped = false, mastered = 0;
+
+  function openModal() {
+    const modal = document.getElementById('flashcardModal');
+    if (!modal) return;
+    deck = [...CARDS].sort(() => Math.random() - .5);
+    mastered = 0; flipped = false;
+    modal.hidden = false;
+    render();
+    checkAchievement('linguist');
+  }
+
+  function render() {
+    if (!deck.length) {
+      document.getElementById('fcFront').textContent = '🎉 All done!';
+      document.getElementById('fcBack').textContent = `${mastered}/${CARDS.length} mastered`;
+      document.getElementById('fcInner').classList.remove('flipped');
+      return;
+    }
+    const card = deck[0]; flipped = false;
+    document.getElementById('fcFront').textContent = card.ti;
+    document.getElementById('fcBack').textContent = `${card.en} — ${card.ex}`;
+    document.getElementById('fcInner').classList.remove('flipped');
+    document.getElementById('fcProgress').style.width = `${(mastered/CARDS.length)*100}%`;
+    document.getElementById('fcDone').textContent = CARDS.length - deck.length;
+    document.getElementById('fcLeft').textContent = deck.length;
+    document.getElementById('fcPct').textContent = Math.round((mastered/CARDS.length)*100);
+  }
+
+  function flip() { flipped = !flipped; document.getElementById('fcInner').classList.toggle('flipped', flipped); }
+
+  function init() {
+    const modal = document.getElementById('flashcardModal');
+    const closeBtn = document.getElementById('flashcardClose');
+    if (!modal) return;
+    closeBtn.onclick = () => modal.hidden = true;
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+    document.getElementById('fcCard').addEventListener('click', flip);
+    document.getElementById('fcFlip').addEventListener('click', flip);
+    document.getElementById('fcRight').addEventListener('click', () => { mastered++; deck.shift(); render(); });
+    document.getElementById('fcWrong').addEventListener('click', () => { const c = deck.shift(); deck.push(c); render(); });
+
+    // Add flashcard button to lessons section
+    const lessons = document.getElementById('lessons');
+    if (lessons) {
+      const btn = document.createElement('button');
+      btn.className = 'btn-secondary'; btn.textContent = '🃏 Flashcard Mode';
+      btn.style.margin = '12px 0';
+      btn.addEventListener('click', openModal);
+      const h = lessons.querySelector('h1,h2,h3');
+      if (h) h.insertAdjacentElement('afterend', btn);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 800));
+})();
+
+// ── T25: ACHIEVEMENT BADGES ───────────────────────────────────────────────
+const BADGES_DEF = [
+  {id:'explorer', icon:'🌍', name:'Explorer',     desc:'Visited 5+ sections'},
+  {id:'scholar',  icon:'🎓', name:'Scholar',      desc:'Completed the quiz'},
+  {id:'linguist', icon:'🗣️', name:'Linguist',     desc:'Used flashcards or translator'},
+  {id:'foodie',   icon:'🍽️', name:'Foodie',       desc:'Visited the recipes section'},
+  {id:'searcher', icon:'🔍', name:'Searcher',     desc:'Used Spotlight search'},
+  {id:'rater',    icon:'⭐', name:'Critic',       desc:'Rated a section'},
+  {id:'sharer',   icon:'📤', name:'Ambassador',   desc:'Shared an Eritrea card'},
+  {id:'reader',   icon:'📚', name:'Deep Reader',  desc:'Spent 5+ min reading'},
+  {id:'quizmaster',icon:'🏆',name:'Quiz Master',  desc:'Scored 8+ on the quiz'},
+  {id:'nightowl', icon:'🌙', name:'Night Owl',    desc:'Used the site after midnight'},
+];
+
+const LS_BADGES = 'eri_badges_v1';
+function getEarnedBadges() { try { return JSON.parse(localStorage.getItem(LS_BADGES) || '[]'); } catch { return []; } }
+function checkAchievement(id) {
+  const earned = getEarnedBadges();
+  if (earned.includes(id)) return;
+  earned.push(id);
+  localStorage.setItem(LS_BADGES, JSON.stringify(earned));
+  const def = BADGES_DEF.find(b => b.id === id);
+  if (def) showToast(`🏅 Badge unlocked: ${def.icon} ${def.name} — ${def.desc}`, 'info');
+  refreshBadgeDrawer();
+}
+
+(function T25_Badges() {
+  function refreshBadgeDrawer() {
+    const list = document.getElementById('badgeList');
+    if (!list) return;
+    const earned = getEarnedBadges();
+    list.innerHTML = BADGES_DEF.map(b => `<div class="badge-item${earned.includes(b.id)?' earned':''}" title="${b.desc}">
+      <span class="badge-icon">${b.icon}</span><span class="badge-name">${b.name}</span></div>`).join('');
+  }
+  window.refreshBadgeDrawer = refreshBadgeDrawer;
+
+  function init() {
+    const btn = document.getElementById('badgeDrawerBtn');
+    const drawer = document.getElementById('badgeDrawer');
+    const closeBtn = document.getElementById('badgeDrawerClose');
+    if (!btn) return;
+    btn.hidden = false;
+    refreshBadgeDrawer();
+    btn.addEventListener('click', () => { refreshBadgeDrawer(); drawer.hidden = !drawer.hidden; });
+    if (closeBtn) closeBtn.addEventListener('click', () => drawer.hidden = true);
+
+    // Track reading time
+    setTimeout(() => checkAchievement('reader'), 5 * 60 * 1000);
+    if (new Date().getHours() >= 0 && new Date().getHours() < 5) checkAchievement('nightowl');
+
+    // Track section visits
+    const visitedSections = new Set();
+    document.addEventListener('scroll', () => {
+      document.querySelectorAll('section[id]').forEach(sec => {
+        if (sec.getBoundingClientRect().top < window.innerHeight * .6) visitedSections.add(sec.id);
+      });
+      if (visitedSections.size >= 5) checkAchievement('explorer');
+      if (visitedSections.has('recipes')) checkAchievement('foodie');
+    }, { passive: true });
+
+    // Quiz score check
+    const quizResult = document.getElementById('quizResult');
+    if (quizResult) {
+      new MutationObserver(() => {
+        if (!quizResult.hidden) {
+          checkAchievement('scholar');
+          const score = document.getElementById('quizFinalScore');
+          if (score && parseInt(score.textContent) >= 8) checkAchievement('quizmaster');
+        }
+      }).observe(quizResult, { attributes: true });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 900));
+})();
+
+// ── T26: CANVAS SHARE CARDS ──────────────────────────────────────────────
+(function T26_ShareCards() {
+  function drawCard(title, emoji, facts) {
+    const canvas = document.getElementById('shareCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = 800, H = 420;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#004d27'); grad.addColorStop(1, '#003d7a');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+    // Stripe accent
+    ctx.fillStyle = '#4BD08B'; ctx.fillRect(0, 0, 8, H);
+    ctx.fillStyle = '#0076CE'; ctx.fillRect(8, 0, 8, H);
+    ctx.fillStyle = '#CE1126'; ctx.fillRect(16, 0, 8, H);
+
+    // Title
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 36px Montserrat,sans-serif';
+    ctx.fillText(emoji + ' ' + title, 40, 70);
+
+    // Underline
+    ctx.strokeStyle = '#4BD08B'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(40, 82); ctx.lineTo(Math.min(40 + title.length * 22, 760), 82); ctx.stroke();
+
+    // Facts
+    ctx.font = '18px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)';
+    facts.slice(0, 6).forEach((f, i) => ctx.fillText('• ' + f, 40, 128 + i * 38));
+
+    // Branding
+    ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.font = '15px sans-serif';
+    ctx.fillText('eritreaninfo.com  🇪🇷', W - 240, H - 18);
+  }
+
+  function openFor(sectionId) {
+    const sec = document.getElementById(sectionId);
+    const modal = document.getElementById('shareCardModal');
+    if (!sec || !modal) return;
+    const h = sec.querySelector('h1,h2,h3');
+    const title = h ? h.textContent.trim() : sectionId;
+    const emoji = sec.querySelector('.section-badge')?.textContent?.slice(0, 2) || '🇪🇷';
+    const facts = Array.from(sec.querySelectorAll('p,li')).map(el => el.textContent.trim()).filter(t => t.length > 20 && t.length < 80).slice(0, 6);
+    drawCard(title, emoji, facts);
+    modal.hidden = false;
+    checkAchievement('sharer');
+  }
+  window._openShareCard = openFor;
+
+  function injectShareBtns() {
+    document.querySelectorAll('section[id]').forEach(sec => {
+      if (sec.id === 'hero' || sec.querySelector('.section-share-btn')) return;
+      const btn = document.createElement('button');
+      btn.className = 'tts-btn section-share-btn'; btn.innerHTML = '📤 Share Card';
+      btn.addEventListener('click', () => openFor(sec.id));
+      const h = sec.querySelector('h1,h2,h3');
+      if (h) h.insertAdjacentElement('afterend', btn);
+    });
+  }
+
+  function init() {
+    const modal = document.getElementById('shareCardModal');
+    const closeBtn = document.getElementById('shareCardClose');
+    const dlBtn = document.getElementById('shareCardDownload');
+    const nativeBtn = document.getElementById('shareCardNative');
+    if (!modal) return;
+
+    closeBtn.onclick = () => modal.hidden = true;
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+
+    dlBtn.addEventListener('click', () => {
+      const canvas = document.getElementById('shareCanvas');
+      const a = document.createElement('a');
+      a.download = 'eritrean-info-card.png'; a.href = canvas.toDataURL('image/png'); a.click();
+    });
+    nativeBtn.addEventListener('click', async () => {
+      const canvas = document.getElementById('shareCanvas');
+      if (navigator.share && navigator.canShare) {
+        try {
+          canvas.toBlob(async blob => {
+            const file = new File([blob], 'eritrea.png', { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({ files: [file], title: 'Eritrean Info', text: 'Learn about Eritrea!' });
+            } else { await navigator.share({ title: 'Eritrean Info', url: location.href }); }
+          });
+        } catch {}
+      } else { showToast('Sharing not supported on this browser', 'info'); }
+    });
+
+    setTimeout(injectShareBtns, 1600);
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T27: RECIPE SERVING ADJUSTER ─────────────────────────────────────────
+(function T27_RecipeAdjuster() {
+  const INGREDIENT_RE = /(\d+(?:\.\d+)?)\s*(cup|tbsp|tsp|g|kg|ml|l|oz|lb|piece|clove|bunch|slice|handful)s?/gi;
+
+  function inject(recipeEl) {
+    if (recipeEl.querySelector('.recipe-adjuster')) return;
+    let servings = 4;
+    const adjuster = document.createElement('div');
+    adjuster.className = 'recipe-adjuster';
+    adjuster.innerHTML = `<span>Servings:</span><button class="ra-minus">−</button><span class="ra-count">${servings}</span><button class="ra-plus">+</button>`;
+    recipeEl.insertAdjacentElement('afterbegin', adjuster);
+
+    const texts = [];
+    recipeEl.querySelectorAll('li, .ingredient').forEach(el => {
+      const orig = el.textContent;
+      texts.push({ el, orig });
+    });
+
+    function update() {
+      adjuster.querySelector('.ra-count').textContent = servings;
+      texts.forEach(({ el, orig }) => {
+        el.textContent = orig.replace(INGREDIENT_RE, (_, num, unit) => {
+          const scaled = (parseFloat(num) * servings / 4).toFixed(num.includes('.') ? 1 : 0);
+          return `${scaled} ${unit}`;
+        });
+      });
+    }
+
+    adjuster.querySelector('.ra-minus').addEventListener('click', () => { if (servings > 1) { servings--; update(); } });
+    adjuster.querySelector('.ra-plus').addEventListener('click', () => { if (servings < 20) { servings++; update(); } });
+  }
+
+  function init() {
+    const recipeSec = document.getElementById('recipes');
+    if (!recipeSec) return;
+    recipeSec.querySelectorAll('.recipe-card, .recipe, [class*="recipe"]').forEach(inject);
+    if (recipeSec.querySelectorAll('.recipe-card, .recipe, [class*="recipe"]').length === 0) inject(recipeSec);
+    checkAchievement('foodie');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 1200));
+})();
+
+// ── T28: SPEED QUIZ CHALLENGE ────────────────────────────────────────────
+(function T28_SpeedQuiz() {
+  const QS = typeof QUIZ_QS !== 'undefined' ? QUIZ_QS : [
+    {q:'Capital of Eritrea?',opts:['Massawa','Keren','Asmara','Assab'],ans:2,fact:'Asmara'},
+    {q:'Independence year?',opts:['1991','1993','1995','1998'],ans:1,fact:'1993'},
+    {q:'Main language?',opts:['Arabic','Amharic','Tigrinya','Afar'],ans:2,fact:'Tigrinya'},
+    {q:'Eritrean currency?',opts:['Birr','Nakfa','Dollar','Pound'],ans:1,fact:'Nakfa'},
+  ];
+
+  let timerInterval, timeLeft, score, combo, shuffledQ, qi, answered;
+
+  function start() {
+    shuffledQ = [...QS].sort(() => Math.random() - .5);
+    qi = 0; score = 0; combo = 0; timeLeft = 60; answered = false;
+    document.getElementById('sqStartBtn').hidden = true;
+    document.getElementById('sqResult').hidden = true;
+    document.getElementById('sqHeader').style.display = 'flex';
+    tick();
+    timerInterval = setInterval(tick, 1000);
+    showQ();
+  }
+
+  function tick() {
+    const timerEl = document.getElementById('sqTimer');
+    timerEl.textContent = timeLeft;
+    timerEl.className = 'sq-timer' + (timeLeft <= 10 ? ' danger' : timeLeft <= 20 ? ' warning' : '');
+    if (timeLeft <= 0) { clearInterval(timerInterval); showFinalResult(); return; }
+    timeLeft--;
+  }
+
+  function showQ() {
+    if (qi >= shuffledQ.length) { clearInterval(timerInterval); showFinalResult(); return; }
+    const q = shuffledQ[qi]; answered = false;
+    document.getElementById('sqQuestion').textContent = q.q;
+    document.getElementById('sqOptions').innerHTML = q.opts.map((o, i) => `<button class="sq-opt" data-i="${i}">${o}</button>`).join('');
+    document.querySelectorAll('.sq-opt').forEach(btn => btn.addEventListener('click', function() {
+      if (answered) return; answered = true;
+      const correct = +this.dataset.i === q.ans;
+      this.classList.add(correct ? 'correct' : 'wrong');
+      if (!correct) { document.querySelectorAll('.sq-opt')[q.ans].classList.add('correct'); combo = 0; }
+      else { combo++; score += 10 + (combo > 1 ? (combo - 1) * 5 : 0); }
+      document.getElementById('sqScore').textContent = score;
+      document.getElementById('sqCombo').textContent = combo > 1 ? `×${combo} combo!` : '';
+      setTimeout(() => { qi++; showQ(); }, 700);
+    }));
+  }
+
+  function showFinalResult() {
+    document.getElementById('sqQuestion').textContent = '';
+    document.getElementById('sqOptions').innerHTML = '';
+    const res = document.getElementById('sqResult');
+    res.hidden = false;
+    res.innerHTML = `<div style="font-size:2rem">🏆</div><div style="font-weight:800;font-size:1.2rem">${score} points</div>
+      <div style="color:var(--text-muted,#888);margin:6px 0">${qi} questions answered in 60 seconds</div>
+      <button class="btn-primary" onclick="document.querySelector('#sqStartBtn').hidden=false;document.getElementById('sqResult').hidden=true;" style="margin-top:12px">Play Again</button>`;
+    if (score >= 100) checkAchievement('quizmaster');
+  }
+
+  function init() {
+    const modal = document.getElementById('speedQuizModal');
+    const closeBtn = document.getElementById('speedQuizClose');
+    const startBtn = document.getElementById('sqStartBtn');
+    if (!modal) return;
+    document.getElementById('sqHeader').style.display = 'none';
+    closeBtn.onclick = () => { clearInterval(timerInterval); modal.hidden = true; };
+    modal.addEventListener('click', e => { if (e.target === modal) { clearInterval(timerInterval); modal.hidden = true; } });
+    startBtn.addEventListener('click', start);
+
+    // Add button in quiz section
+    const quizSec = document.getElementById('quiz');
+    if (quizSec) {
+      const btn = document.createElement('button');
+      btn.className = 'btn-secondary'; btn.textContent = '⚡ Speed Challenge (60s)';
+      btn.style.marginTop = '12px';
+      btn.addEventListener('click', () => modal.hidden = false);
+      const h = quizSec.querySelector('h1,h2,h3');
+      if (h) h.insertAdjacentElement('afterend', btn);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 800));
+})();
+
+// ── T29: TRANSLATOR HISTORY ──────────────────────────────────────────────
+(function T29_TransHistory() {
+  const LS_KEY = 'eri_trans_hist';
+  const MAX = 10;
+  function getHist() { try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; } }
+  function saveHist(h) { localStorage.setItem(LS_KEY, JSON.stringify(h.slice(0, MAX))); }
+
+  function addEntry(src, tgt) {
+    if (!src || !tgt || src === tgt) return;
+    const h = getHist().filter(e => e.src !== src);
+    h.unshift({ src, tgt, time: Date.now() });
+    saveHist(h);
+    renderHistory();
+    checkAchievement('linguist');
+  }
+  window._addTransHistory = addEntry;
+
+  function renderHistory() {
+    const container = document.getElementById('transHistoryList');
+    if (!container) return;
+    const h = getHist();
+    if (!h.length) { container.innerHTML = '<div style="color:var(--text-muted,#888);font-size:.78rem;padding:6px 0">No translations yet</div>'; return; }
+    container.innerHTML = h.map(e => `<div class="trans-hist-item" data-src="${encodeURIComponent(e.src)}" data-tgt="${encodeURIComponent(e.tgt)}">
+      <span class="thi-src">${esc(e.src.slice(0,30))}</span><span class="thi-arrow">→</span><span class="thi-tgt">${esc(e.tgt.slice(0,30))}</span></div>`).join('');
+    container.querySelectorAll('.trans-hist-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const srcIn = document.querySelector('#translator textarea, #translatorInput');
+        if (srcIn) { srcIn.value = decodeURIComponent(el.dataset.src); srcIn.dispatchEvent(new Event('input')); }
+      });
+    });
+  }
+
+  function init() {
+    const transSection = document.getElementById('translator');
+    if (!transSection) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'trans-history';
+    wrap.innerHTML = '<div class="trans-history-title">🕐 Recent Translations</div><div id="transHistoryList"></div>';
+    transSection.appendChild(wrap);
+    renderHistory();
+    const translateBtn = transSection.querySelector('button');
+    if (translateBtn) {
+      translateBtn.addEventListener('click', () => {
+        setTimeout(() => {
+          const srcIn = transSection.querySelector('textarea');
+          const out = transSection.querySelector('[id*=output],[id*=Output],[id*=result],[id*=Result]');
+          if (srcIn && out && out.textContent.trim()) addEntry(srcIn.value.trim(), out.textContent.trim().slice(0, 80));
+        }, 1500);
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 1000));
+})();
+
+// ── T30: AUTO DARK MODE SCHEDULER ────────────────────────────────────────
+(function T30_AutoDark() {
+  function shouldBeDark() { const h = new Date().getHours(); return h >= 21 || h < 6; }
+
+  function applyAuto() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const want = shouldBeDark() || window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (want && !isDark) { document.documentElement.classList.add('dark'); localStorage.setItem('eri_dark', '1'); }
+  }
+
+  function init() {
+    if (!sessionStorage.getItem('eri_dark_override')) {
+      applyAuto();
+      const toggle = document.getElementById('darkToggle');
+      if (toggle && shouldBeDark() && !toggle.querySelector('.dark-auto-badge')) {
+        const badge = document.createElement('span');
+        badge.className = 'dark-auto-badge'; badge.textContent = 'AUTO';
+        toggle.appendChild(badge);
+      }
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (!sessionStorage.getItem('eri_dark_override')) applyAuto();
+    });
+    const toggle = document.getElementById('darkToggle');
+    if (toggle) toggle.addEventListener('click', () => sessionStorage.setItem('eri_dark_override', '1'), { once: true });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T31: AMBIENT SOUNDS (WEB AUDIO API) ──────────────────────────────────
+(function T31_Ambient() {
+  let ctx = null, sources = [], gainNode = null, playing = null;
+
+  const PRESETS = {
+    rain: (ac, gn) => {
+      const buf = ac.createBuffer(1, ac.sampleRate * 3, ac.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+      const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+      const filter = ac.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 600;
+      src.connect(filter); filter.connect(gn); src.start(); return [src];
+    },
+    drone: (ac, gn) => {
+      return [55, 110, 165, 220].map(f => {
+        const osc = ac.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+        const g2 = ac.createGain(); g2.gain.value = 0.06;
+        osc.connect(g2); g2.connect(gn); osc.start(); return osc;
+      });
+    },
+    nature: (ac, gn) => {
+      const buf = ac.createBuffer(1, ac.sampleRate * 4, ac.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.15;
+      const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+      const filter = ac.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 1200;
+      src.connect(filter); filter.connect(gn); src.start(); return [src];
+    },
+  };
+
+  function stop() { sources.forEach(s => { try { s.stop ? s.stop() : s.disconnect(); } catch {} }); sources = []; playing = null; }
+
+  function play(preset) {
+    if (!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); gainNode = ctx.createGain(); gainNode.gain.value = 0.4; gainNode.connect(ctx.destination); }
+    if (ctx.state === 'suspended') ctx.resume();
+    stop();
+    if (!PRESETS[preset]) { updateBtn(null); return; }
+    sources = PRESETS[preset](ctx, gainNode) || [];
+    playing = preset; updateBtn(preset);
+  }
+
+  function updateBtn(preset) {
+    const btn = document.getElementById('ambientToggleBtn');
+    if (!btn) return;
+    const labels = { rain:'🌧 Rain', drone:'🎶 Drone', nature:'🌿 Nature' };
+    btn.classList.toggle('playing', !!preset);
+    btn.querySelector('.ambient-label').textContent = (preset && labels[preset]) || '🎵 Ambient';
+  }
+
+  function init() {
+    const navRight = document.querySelector('.nav-right');
+    if (!navRight) return;
+    const btn = document.createElement('button');
+    btn.id = 'ambientToggleBtn'; btn.className = 'ambient-btn'; btn.title = 'Ambient sounds (Alt+S)';
+    btn.innerHTML = '<span class="ambient-label">🎵 Ambient</span>';
+    const menu = document.createElement('div');
+    menu.className = 'ambient-menu';
+    menu.innerHTML = `<button class="ambient-opt active" data-p="">🔇 Off</button>
+      <button class="ambient-opt" data-p="rain">🌧 Rain</button>
+      <button class="ambient-opt" data-p="drone">🎶 Meditation Drone</button>
+      <button class="ambient-opt" data-p="nature">🌿 Nature</button>`;
+    btn.appendChild(menu);
+    btn.addEventListener('click', e => {
+      if (e.target.classList.contains('ambient-opt')) {
+        play(e.target.dataset.p);
+        menu.querySelectorAll('.ambient-opt').forEach(o => o.classList.toggle('active', o.dataset.p === e.target.dataset.p));
+        btn.classList.remove('open');
+      } else { btn.classList.toggle('open'); }
+    });
+    document.addEventListener('click', e => { if (!btn.contains(e.target)) btn.classList.remove('open'); });
+    document.addEventListener('keydown', e => { if (e.altKey && e.key === 's') { e.preventDefault(); btn.classList.toggle('open'); } });
+    navRight.prepend(btn);
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T32: TEXT ANNOTATIONS ────────────────────────────────────────────────
+(function T32_Annotations() {
+  const LS_KEY = 'eri_annotations';
+  let pendingRange = null, pendingText = '';
+
+  function getAnnotations() { try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; } }
+  function saveAnnotations(a) { localStorage.setItem(LS_KEY, JSON.stringify(a)); }
+
+  function showPopup(x, y) {
+    const popup = document.getElementById('annotPopup');
+    if (!popup) return;
+    popup.style.left = Math.min(x, window.innerWidth - 280) + 'px';
+    popup.style.top = (y + window.scrollY - 10) + 'px';
+    popup.hidden = false;
+    document.getElementById('annotInput').value = '';
+    setTimeout(() => document.getElementById('annotInput').focus(), 50);
+  }
+
+  function renderPanel() {
+    const list = document.getElementById('annotPanelList');
+    if (!list) return;
+    const annotations = getAnnotations();
+    if (!annotations.length) { list.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:.8rem">Select text on any section and add a note!</div>'; return; }
+    list.innerHTML = annotations.map((a, i) => `<div class="annot-entry">
+      <button class="annot-entry-del" data-i="${i}">✕</button>
+      <div class="annot-entry-quote">"${esc(a.text)}"</div>
+      <div class="annot-entry-text">${esc(a.note)}</div>
+    </div>`).join('');
+    list.querySelectorAll('.annot-entry-del').forEach(btn => {
+      btn.addEventListener('click', () => { const a = getAnnotations(); a.splice(+btn.dataset.i, 1); saveAnnotations(a); renderPanel(); });
+    });
+  }
+
+  function init() {
+    const popup = document.getElementById('annotPopup');
+    const panelBtn = document.getElementById('annotPanelBtn');
+    const panel = document.getElementById('annotPanel');
+    if (!popup) return;
+    panelBtn.hidden = false;
+    panelBtn.addEventListener('click', () => { renderPanel(); panel.hidden = !panel.hidden; });
+    document.getElementById('annotPanelClose').addEventListener('click', () => panel.hidden = true);
+
+    document.addEventListener('mouseup', e => {
+      if (popup.contains(e.target) || panel.contains(e.target)) return;
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || sel.toString().trim().length < 5) { popup.hidden = true; return; }
+      pendingText = sel.toString().trim().slice(0, 100);
+      pendingRange = sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+      showPopup(e.clientX, e.clientY);
+    });
+
+    document.getElementById('annotSave').addEventListener('click', () => {
+      const note = document.getElementById('annotInput').value.trim();
+      if (!note) return;
+      const annotations = getAnnotations();
+      annotations.unshift({ text: pendingText, note, time: Date.now() });
+      saveAnnotations(annotations);
+      if (pendingRange) {
+        try { const mark = document.createElement('mark'); mark.className = 'annot-mark'; mark.title = note; pendingRange.surroundContents(mark); } catch {}
+      }
+      popup.hidden = true;
+      showToast('📝 Annotation saved', 'info');
+    });
+    document.getElementById('annotCancel').addEventListener('click', () => { popup.hidden = true; window.getSelection()?.removeAllRanges(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { popup.hidden = true; panel.hidden = true; } });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 800));
+})();
+
+// ── T33: PER-SECTION OFFLINE SAVE ────────────────────────────────────────
+(function T33_OfflineSave() {
+  const CACHE_NAME = 'eritrean-offline-sections-v1';
+
+  async function isSaved(id) {
+    if (!('caches' in window)) return false;
+    try { const cache = await caches.open(CACHE_NAME); const keys = await cache.keys(); return keys.some(k => k.url.includes('?section=' + id)); } catch { return false; }
+  }
+
+  async function saveSec(id, html) {
+    if (!('caches' in window)) return;
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(new Request(location.origin + location.pathname + '?section=' + id), new Response(html, { headers: { 'Content-Type': 'text/html' } }));
+    } catch {}
+  }
+
+  function injectBtn(sec) {
+    if (sec.querySelector('.offline-save-btn')) return;
+    const id = sec.id;
+    const btn = document.createElement('button');
+    btn.className = 'offline-save-btn'; btn.innerHTML = '💾 Save Offline';
+    btn.addEventListener('click', async () => {
+      btn.textContent = '⏳ Saving…'; btn.disabled = true;
+      await saveSec(id, `<h2>${id}</h2>${sec.innerHTML}`);
+      btn.innerHTML = '✓ Saved'; btn.classList.add('saved');
+      showToast(`✓ "${id}" saved for offline`, 'info');
+    });
+    isSaved(id).then(s => { if (s) { btn.innerHTML = '✓ Saved'; btn.classList.add('saved'); btn.disabled = true; } });
+    const h = sec.querySelector('h1,h2,h3');
+    if (h) h.insertAdjacentElement('afterend', btn);
+  }
+
+  function init() {
+    if (!('caches' in window)) return;
+    document.querySelectorAll('section[id]').forEach(sec => { if (sec.id !== 'hero') injectBtn(sec); });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 1800));
+})();
+
+// ── T34: DICTIONARY POPUP ON SELECTION ───────────────────────────────────
+(function T34_Dictionary() {
+  let lookupTimeout = null;
+
+  async function lookupWord(word, x, y) {
+    const popup = document.getElementById('dictPopup');
+    const bodyEl = document.getElementById('dictBody');
+    if (!popup || !bodyEl) return;
+    document.getElementById('dictWord').textContent = word;
+    bodyEl.innerHTML = 'Looking up…';
+    popup.style.left = Math.min(x, window.innerWidth - 300) + 'px';
+    popup.style.top = (y + window.scrollY + 12) + 'px';
+    popup.hidden = false;
+
+    try {
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) throw new Error('not found');
+      const data = await res.json();
+      const entry = data[0];
+      const phonetic = entry.phonetic || '';
+      const meanings = (entry.meanings || []).slice(0, 2).map(m => `<div class="dict-def-item"><span class="dict-def-part">${m.partOfSpeech}</span>: ${(m.definitions[0]||{}).definition||''}</div>`).join('');
+      bodyEl.innerHTML = `${phonetic ? `<div class="dict-phonetic">${phonetic}</div>` : ''}${meanings || 'No definition available.'}`;
+    } catch { bodyEl.innerHTML = 'No definition found.'; }
+  }
+
+  function init() {
+    const popup = document.getElementById('dictPopup');
+    const closeBtn = document.getElementById('dictClose');
+    if (!popup) return;
+    closeBtn.addEventListener('click', () => popup.hidden = true);
+
+    document.addEventListener('mouseup', e => {
+      if (popup.contains(e.target)) return;
+      clearTimeout(lookupTimeout);
+      const sel = window.getSelection();
+      const word = sel ? sel.toString().trim() : '';
+      if (word.length < 3 || word.length > 25 || word.includes(' ') || word.includes('\n')) { popup.hidden = true; return; }
+      lookupTimeout = setTimeout(() => lookupWord(word, e.clientX, e.clientY), 800);
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { popup.hidden = true; clearTimeout(lookupTimeout); } });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T35: JOURNEY MAP ─────────────────────────────────────────────────────
+(function T35_JourneyMap() {
+  const SECTIONS = [
+    {id:'overview',emoji:'🏛️',label:'Overview'},{id:'history',emoji:'📜',label:'History'},
+    {id:'geography',emoji:'🗺️',label:'Geography'},{id:'people',emoji:'👥',label:'People'},
+    {id:'culture',emoji:'🎭',label:'Culture'},{id:'economy',emoji:'💰',label:'Economy'},
+    {id:'government',emoji:'⚖️',label:'Government'},{id:'famous',emoji:'⭐',label:'Famous'},
+    {id:'gallery',emoji:'📸',label:'Gallery'},{id:'translator',emoji:'🌐',label:'Translator'},
+    {id:'tourism',emoji:'✈️',label:'Tourism'},{id:'regions',emoji:'🗾',label:'Regions'},
+    {id:'recipes',emoji:'🍽️',label:'Recipes'},{id:'artists',emoji:'🎵',label:'Artists'},
+    {id:'quiz',emoji:'🏆',label:'Quiz'},{id:'fidel',emoji:'🔤',label:'Fidel'},
+    {id:'lessons',emoji:'📖',label:'Lessons'},{id:'proverbs',emoji:'💬',label:'Proverbs'},
+    {id:'poetry',emoji:'📝',label:'Poetry'},{id:'facts',emoji:'🌟',label:'Facts'},
+    {id:'community',emoji:'🤝',label:'Community'},{id:'news',emoji:'📰',label:'News'},
+    {id:'prayer-times',emoji:'🕌',label:'Prayer'},{id:'holidays',emoji:'🗓️',label:'Holidays'},
+    {id:'sports-tracker',emoji:'🚴',label:'Sports'},{id:'flag-explorer',emoji:'🚩',label:'Flag'},
+    {id:'compare',emoji:'📊',label:'Compare'},{id:'events',emoji:'📅',label:'Events'},
+    {id:'diaspora-map',emoji:'🌍',label:'Diaspora'},{id:'asmara-tour',emoji:'🏛️',label:'Asmara Tour'},
+  ];
+  const LS_KEY = 'eri_visited_v1';
+  function getVisited() { try { return new Set(JSON.parse(localStorage.getItem(LS_KEY) || '[]')); } catch { return new Set(); } }
+  function saveVisited(v) { localStorage.setItem(LS_KEY, JSON.stringify([...v])); }
+
+  function renderJourney() {
+    const grid = document.getElementById('journeyGrid');
+    if (!grid) return;
+    const visited = getVisited();
+    const pct = Math.round((visited.size / SECTIONS.length) * 100);
+    grid.innerHTML = `<div style="grid-column:1/-1;margin-bottom:12px;font-weight:700;color:var(--green,#007A3D)">${pct}% explored — ${visited.size}/${SECTIONS.length} sections</div>` +
+      SECTIONS.map(s => `<div class="journey-item${visited.has(s.id)?' visited':''}">
+        <span class="ji-check">${visited.has(s.id)?'✓':'○'}</span>
+        <span>${s.emoji} ${s.label}</span></div>`).join('');
+  }
+
+  function init() {
+    const modal = document.getElementById('journeyModal');
+    const closeBtn = document.getElementById('journeyClose');
+    const exportBtn = document.getElementById('journeyExport');
+    if (!modal) return;
+
+    closeBtn.onclick = () => modal.hidden = true;
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+    exportBtn.addEventListener('click', () => {
+      const data = JSON.stringify({ visited: [...getVisited()], total: SECTIONS.length, date: new Date().toISOString() }, null, 2);
+      const a = document.createElement('a');
+      a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(data);
+      a.download = 'my-eritrea-journey.json'; a.click();
+    });
+
+    const exploreWidget = document.getElementById('exploreScore');
+    if (exploreWidget) exploreWidget.addEventListener('click', () => { renderJourney(); modal.hidden = false; });
+
+    const visited = getVisited();
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { visited.add(e.target.id); saveVisited(visited); } });
+    }, { threshold: 0.3 });
+    SECTIONS.forEach(s => { const el = document.getElementById(s.id); if (el) io.observe(el); });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 700));
+})();
+
+// ── T36: ERITREAN HISTORY INTERACTIVE TIMELINE ───────────────────────────
+(function T36_Timeline() {
+  const EVENTS = [
+    {year:'~800 BC',title:'Adulis Trade Port',desc:'Eritrea\'s coast becomes integral to Adulis — one of the busiest ancient ports connecting Rome, India, and sub-Saharan Africa.'},
+    {year:'100–940 AD',title:'Aksumite Empire',desc:'Eritrea forms the heartland of the powerful Aksumite Empire, one of the four great powers of the ancient world alongside Persia, Rome, and China.'},
+    {year:'1557',title:'Ottoman Occupation',desc:'The Ottomans seize Massawa and coastal areas, beginning centuries of outside control over Eritrea\'s strategic Red Sea coast.'},
+    {year:'1890',title:'Italian Colony',desc:'Italy formally establishes the Colony of Eritrea on January 1, 1890, naming it after the Roman name for the Red Sea: Mare Erythraeum.'},
+    {year:'1941',title:'British Administration',desc:'British forces defeat Italy in East Africa. Britain administers Eritrea for a decade while the UN deliberates its political future.'},
+    {year:'1952',title:'Federation with Ethiopia',desc:'The UN federates Eritrea with Ethiopia. Eritrea retains parliament, but Ethiopia gradually erodes its autonomy, annexing it in 1962.'},
+    {year:'1961',title:'Armed Struggle Begins',desc:'Hamid Idris Awate fires the first shots of the liberation struggle on September 1, 1961. The ELF begins guerrilla warfare.'},
+    {year:'1970',title:'EPLF Founded',desc:'The Eritrean People\'s Liberation Front is founded, later becoming the dominant liberation movement with its discipline and social programs.'},
+    {year:'1978',title:'Strategic Withdrawal',desc:'Facing a Soviet-backed offensive, the EPLF retreats to the Nakfa Mountains — the stronghold that was never taken in 13 years of siege.'},
+    {year:'1991',title:'Liberation of Asmara',desc:'On May 24, 1991, EPLF forces liberate Asmara. After 30 years of struggle, Eritrea is finally free.'},
+    {year:'1993',title:'Independence Referendum',desc:'99.83% of Eritreans vote for independence. Eritrea officially becomes a nation on May 24, 1993 — Africa\'s newest country.'},
+    {year:'1997',title:'Nakfa Currency',desc:'Eritrea introduces the Nakfa, named after the mountain town that symbolized resistance during the liberation war.'},
+    {year:'1998–2000',title:'Border War with Ethiopia',desc:'A border dispute erupts into full-scale war. The Algiers Agreement ends the conflict in December 2000.'},
+    {year:'2017',title:'UNESCO World Heritage',desc:'Asmara\'s extraordinary Italian Modernist architecture earns UNESCO World Heritage status.'},
+    {year:'2018',title:'Peace with Ethiopia',desc:'In a historic breakthrough, Eritrea and Ethiopia sign a peace declaration, ending 20 years of no-peace-no-war.'},
+  ];
+
+  function init() {
+    const historySec = document.getElementById('history');
+    if (!historySec || historySec.querySelector('.eri-timeline')) return;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<h3 style="margin-top:32px;margin-bottom:4px;color:var(--green,#007A3D)">📜 Timeline of Eritrean History</h3>
+      <p style="font-size:.8rem;color:var(--text-muted,#888);margin-bottom:16px">Click any event to expand</p>
+      <div class="eri-timeline">${EVENTS.map(e => `<div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-content"><div class="tl-year">${e.year}</div><div class="tl-title">${e.title}</div><div class="tl-desc">${e.desc}</div></div>
+      </div>`).join('')}</div>`;
+    historySec.appendChild(wrap);
+    historySec.querySelectorAll('.tl-content').forEach(el => el.addEventListener('click', () => el.classList.toggle('open')));
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 1000));
+})();
+
+// ── T37: QUICK LANGUAGE CYCLE ────────────────────────────────────────────
+(function T37_LangCycle() {
+  const LANGS = [{lang:'en',label:'EN'},{lang:'ti',label:'TI'},{lang:'ar',label:'AR'},{lang:'it',label:'IT'},{lang:'fr',label:'FR'},{lang:'de',label:'DE'}];
+  let idx = 0;
+  document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('keydown', e => {
+      if (e.altKey && e.key === 'l') {
+        e.preventDefault();
+        idx = (idx + 1) % LANGS.length;
+        const { lang, label } = LANGS[idx];
+        const btn = document.querySelector(`.lang-opt[data-lang="${lang}"]`);
+        if (btn) { btn.click(); showToast(`🌐 Language: ${label}`, 'info'); }
+      }
+      if (e.altKey && e.key === 'd') { e.preventDefault(); document.getElementById('darkToggle')?.click(); }
+      if (e.altKey && e.key === 'r') { e.preventDefault(); document.getElementById('readingModeBtn')?.click(); }
+    });
+  });
+})();
+
+// ── T38: GALLERY LIGHTBOX UPGRADE ────────────────────────────────────────
+(function T38_GalleryLightbox() {
+  let images = [], curIdx = 0, startX = 0;
+  function open(idx) { const lb = document.getElementById('galleryLb'); if (!lb) return; curIdx = idx; lb.hidden = false; render(); }
+  function closeLb() { const lb = document.getElementById('galleryLb'); if (lb) lb.hidden = true; }
+  function render() {
+    const img = images[curIdx]; if (!img) return;
+    document.getElementById('glbImg').src = img.src;
+    document.getElementById('glbImg').alt = img.alt || '';
+    document.getElementById('glbCaption').textContent = img.alt || img.title || '';
+    document.getElementById('glbCounter').textContent = `${curIdx + 1} / ${images.length}`;
+    document.getElementById('glbPrev').style.display = images.length > 1 ? 'flex' : 'none';
+    document.getElementById('glbNext').style.display = images.length > 1 ? 'flex' : 'none';
+  }
+  function prev() { curIdx = (curIdx - 1 + images.length) % images.length; render(); }
+  function next() { curIdx = (curIdx + 1) % images.length; render(); }
+
+  function init() {
+    const lb = document.getElementById('galleryLb');
+    if (!lb) return;
+    document.getElementById('glbClose').addEventListener('click', closeLb);
+    document.getElementById('glbPrev').addEventListener('click', prev);
+    document.getElementById('glbNext').addEventListener('click', next);
+    lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
+    document.addEventListener('keydown', e => {
+      if (lb.hidden) return;
+      if (e.key === 'ArrowLeft') prev(); else if (e.key === 'ArrowRight') next(); else if (e.key === 'Escape') closeLb();
+    });
+    lb.addEventListener('touchstart', e => { startX = e.changedTouches[0].clientX; }, { passive: true });
+    lb.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - startX; if (Math.abs(dx) > 50) { dx > 0 ? prev() : next(); } });
+
+    function wireImages() {
+      const imgs = Array.from(document.querySelectorAll('#gallery img, .gallery-item img'));
+      if (!imgs.length) return;
+      images = imgs;
+      imgs.forEach((img, i) => {
+        if (!img.dataset.lbWired) { img.style.cursor = 'zoom-in'; img.addEventListener('click', () => open(i)); img.dataset.lbWired = '1'; }
+      });
+    }
+    setTimeout(wireImages, 1400);
+    new MutationObserver(wireImages).observe(document.body, { childList: true, subtree: true });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T39: QUICK CURRENCY CONVERTER ────────────────────────────────────────
+(function T39_QuickConverter() {
+  const RATES = { USD:15, EUR:16.2, GBP:18.9, SAR:4, AED:4.08, SEK:1.38, CAD:11.1 };
+
+  function calc() {
+    const amt = parseFloat(document.getElementById('qcAmt')?.value || 0);
+    const cur = document.getElementById('qcCur')?.value || 'USD';
+    const ern = (amt * (RATES[cur] || 15)).toFixed(2);
+    const el = document.getElementById('qcResult');
+    if (el) el.textContent = `= ${Number(ern).toLocaleString()} ERN`;
+  }
+
+  function init() {
+    const widget = document.getElementById('quickConverter');
+    if (!widget) return;
+    fetch('https://api.frankfurter.app/latest?from=USD&to=ERN')
+      .then(r => r.json()).then(d => { if (d.rates && d.rates.ERN) RATES.USD = d.rates.ERN; calc(); }).catch(() => {});
+    document.getElementById('qcAmt').addEventListener('input', calc);
+    document.getElementById('qcCur').addEventListener('change', calc);
+    calc();
+    const economySec = document.getElementById('economy');
+    if (economySec) {
+      const io = new IntersectionObserver(entries => entries.forEach(e => { widget.hidden = !e.isIntersecting; }), { threshold: 0.05 });
+      io.observe(economySec);
+    } else { widget.hidden = false; }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 800));
+})();
+
+// ── T40: EXPORT LEARNING KIT ─────────────────────────────────────────────
+(function T40_ExportKit() {
+  function collectData() {
+    const get = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; } };
+    return {
+      exportDate: new Date().toISOString(),
+      sectionsVisited: get('eri_visited_v1', []),
+      badges: get('eri_badges_v1', []),
+      sectionRatings: get('eri_ratings', {}),
+      annotations: get('eri_annotations', []).map(a => ({ text: a.text, note: a.note })),
+      recentTranslations: get('eri_trans_hist', []).map(t => ({ from: t.src, to: t.tgt })),
+      learningStreak: get('eri_streak', {}),
+    };
+  }
+
+  function init() {
+    const navRight = document.querySelector('.nav-right');
+    if (!navRight) return;
+    const btn = document.createElement('button');
+    btn.className = 'nav-print-btn'; btn.title = 'Download my learning kit'; btn.textContent = '📥 Kit';
+    btn.addEventListener('click', () => {
+      const data = JSON.stringify(collectData(), null, 2);
+      const a = document.createElement('a');
+      a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(data);
+      a.download = `eritrean-info-kit-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      showToast('📥 Learning kit downloaded!', 'info');
+    });
+    navRight.prepend(btn);
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+// ── T41: SECTION COLOR BADGES ────────────────────────────────────────────
+(function T41_SectionBadges() {
+  const MAP = {
+    history:'history', government:'history', famous:'history', overview:'history',
+    culture:'culture', people:'culture', languages:'culture', proverbs:'culture', poetry:'culture', holidays:'culture', 'cultural-calendar':'culture',
+    geography:'nature', 'eritrea-map':'nature',
+    community:'community', events:'community', blog:'community', 'diaspora-map':'community', about:'community',
+    quiz:'learning', fidel:'learning', lessons:'learning', facts:'learning', 'flag-explorer':'learning', translator:'learning',
+    economy:'economy', compare:'economy',
+    tourism:'travel', regions:'travel', 'asmara-tour':'travel', 'sports-tracker':'travel',
+    recipes:'food', 'cooking-videos':'food',
+    gallery:'media', artists:'media',
+    'live-dashboard':'live', news:'live', 'world-search':'live', 'prayer-times':'live',
+  };
+  const LABELS = {
+    history:'🏛 History', culture:'🎭 Culture', nature:'🌿 Nature',
+    community:'🤝 Community', learning:'📚 Learning', economy:'💰 Economy',
+    travel:'✈️ Travel', food:'🍽️ Food', media:'📸 Media', live:'📡 Live',
+  };
+
+  function inject() {
+    document.querySelectorAll('section[id]').forEach(sec => {
+      if (sec.id === 'hero' || sec.querySelector('.section-badge')) return;
+      const cat = MAP[sec.id]; if (!cat) return;
+      const badge = document.createElement('span');
+      badge.className = `section-badge sb-${cat}`; badge.textContent = LABELS[cat];
+      const h = sec.querySelector('h1,h2,h3');
+      if (h) h.insertAdjacentElement('beforebegin', badge);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', () => setTimeout(inject, 600));
+})();
+
+// ── T42: PARALLAX HERO EFFECT ────────────────────────────────────────────
+(function T42_Parallax() {
+  document.addEventListener('DOMContentLoaded', () => {
+    const heroBg = document.querySelector('#hero .hero-bg');
+    const heroContent = document.querySelector('#hero .hero-content');
+    if (!heroBg) return;
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY;
+      if (y > window.innerHeight * 1.2) return;
+      heroBg.style.transform = `translateY(${y * 0.4}px)`;
+      if (heroContent) heroContent.style.transform = `translateY(${y * 0.12}px)`;
+    }, { passive: true });
+  });
+})();
+
+// ── T43: READING POSITION SAVER ──────────────────────────────────────────
+(function T43_ReadingSaver() {
+  const LS_KEY = 'eri_scroll_pos';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const saved = parseInt(localStorage.getItem(LS_KEY) || '0');
+    if (saved > 600) {
+      const toast = document.createElement('div');
+      toast.className = 'reading-saver-toast';
+      toast.innerHTML = `<span>📖 Continue from where you left?</span>
+        <button class="rs-btn" id="rsContinue">Resume</button>
+        <button style="background:none;border:none;cursor:pointer;color:var(--text-muted,#888);padding:0 6px;font-size:1rem" id="rsDismiss">✕</button>`;
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+      document.getElementById('rsContinue').addEventListener('click', () => {
+        window.scrollTo({ top: saved, behavior: 'smooth' });
+        toast.classList.remove('show'); setTimeout(() => toast.remove(), 400);
+      });
+      document.getElementById('rsDismiss').addEventListener('click', () => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); });
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 9000);
+    }
+    window.addEventListener('scroll', () => localStorage.setItem(LS_KEY, String(window.scrollY)), { passive: true });
+  });
+})();
