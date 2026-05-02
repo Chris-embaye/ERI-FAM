@@ -4,6 +4,9 @@
    ================================================================ */
 'use strict';
 
+// Prevent document-level scroll — all scrolling should happen inside #hubMain
+window.addEventListener('scroll', () => window.scrollTo(0, 0), { passive: true });
+
 // ── Firebase state ────────────────────────────────────────
 let _db, _auth, fb = {};
 let _fbPromise      = null; // singleton — prevents double-init
