@@ -4,8 +4,6 @@
    ================================================================ */
 'use strict';
 
-// Snap document scroll to top whenever it drifts (scroll anchoring / layout reflow)
-document.addEventListener('scroll', () => { if (window.scrollY > 0) window.scrollTo(0, 0); }, { passive: true });
 
 // ── Firebase state ────────────────────────────────────────
 let _db, _auth, fb = {};
@@ -43,6 +41,9 @@ async function _loadFB() {
     _db   = fs.getFirestore(app);
     _auth = au.getAuth(app);
     fb    = { ...appMod, ...fs, ...au };
+    // Expose on window so T-series tweaks can access them
+    window._db = _db;
+    window.fb  = fb;
     return true;
   } catch(e) {
     console.error('[HUB] Firebase init error:', e);
@@ -109,6 +110,7 @@ async function _enterMasterMode() {
   // Synthetic master user — bypasses Firebase auth, uses master credentials
   currentUser = { uid: 'master_5455', email: SUPER_ADMIN, displayName: 'Master Admin', isMasterBypass: true };
   currentUserData = { status: 'approved', role: 'super_admin', email: SUPER_ADMIN, name: 'Master Admin' };
+  window.currentUser = currentUser;
 
   // Init Firebase in background so data-loading functions still work
   await initFB().catch(() => {});
@@ -168,6 +170,7 @@ async function doSignOut() {
   document.getElementById('authScreen').hidden = false;
   switchAuthView('login');
   currentUser = null; currentUserData = null;
+  window.currentUser = null;
 }
 
 function friendlyAuthError(code) {
@@ -204,6 +207,7 @@ async function bootAuth() {
       }
       console.log('[HUB] User signed in:', user.email);
       currentUser = user;
+      window.currentUser = user;
 
       const isSuperAdmin = SUPER_ADMINS.includes(user.email.toLowerCase());
 
@@ -310,15 +314,8 @@ function showPage(name) {
   if (page) page.classList.add('active');
   if (btn)  btn.classList.add('active');
 
-  // Scroll to top — immediate + deferred to catch Firebase async content loading
-  const main = document.getElementById('hubMain');
-  const resetScroll = () => {
-    if (main) main.scrollTop = 0;
-    window.scrollTo(0, 0);
-  };
-  resetScroll();
-  setTimeout(resetScroll, 50);
-  setTimeout(resetScroll, 300);
+  // Scroll each page back to top when activated
+  if (page) page.scrollTop = 0;
 
   // Page progress bar animation
   const bar = document.getElementById('pageProgress');
@@ -827,6 +824,7 @@ async function loadUsers() {
   try {
     const snap = await fb.getDocs(fb.query(fb.collection(_db, 'hub_users'), fb.orderBy('createdAt','desc')));
     allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    window.allUsers = allUsers;
     renderUsers(allUsers, activeUserTab);
     // Update pending count
     const pending = allUsers.filter(u => u.status === 'pending').length;
@@ -892,6 +890,7 @@ function renderUsers(users, tab) {
     });
   });
 }
+window.renderUsers = renderUsers;
 
 window.approveUser = async function(uid) {
   try {
@@ -1444,6 +1443,7 @@ async function loadFeedback() {
     list.innerHTML = `<p class="empty-msg">No feedback found. (Users submit feedback from the main app.)</p>`;
   }
 }
+window.loadFeedback = loadFeedback;
 
 // ── PROMOTIONS ────────────────────────────────────────────
 document.getElementById('addPromoBtn').addEventListener('click', () => openPromoModal());
@@ -1748,6 +1748,7 @@ async function logActivity(text) {
     });
   } catch(e) {}
 }
+window.logActivity = logActivity;
 
 // ── HELPERS ───────────────────────────────────────────────
 function esc(str) {
@@ -2210,6 +2211,7 @@ async function loadPosts() {
   try {
     const snap = await fb.getDocs(fb.query(fb.collection(_db, 'community_posts'), fb.orderBy('submittedAt', 'desc')));
     allPosts   = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    window.allPosts = allPosts;
     updatePostsBadge();
     renderPosts();
   } catch(e) {
@@ -4187,6 +4189,7 @@ async function logAudit(action) {
     logActivity?.(action);
   } catch(e) { /* non-critical */ }
 }
+window.logAudit = logAudit;
 
 // Generic CSV downloader
 function downloadCsv(rows, filename) {
@@ -6201,4 +6204,1413 @@ handleMusicFiles = async function(files) {
     document.getElementById('trackModalClose')?.addEventListener('click', resetMtp, { once: true });
     document.getElementById('trackModalCancel')?.addEventListener('click', resetMtp, { once: true });
   };
+})();
+
+// ════════════════════════════════════════════════════════════════
+//  TWEAKS v2.0 — 13 new features
+// ════════════════════════════════════════════════════════════════
+
+// ── T1: DASHBOARD REAL-TIME STATS via onSnapshot ─────────────────
+(function initDashboardRealtime() {
+  const waitReady = fn => {
+    const check = () => (typeof fb !== 'undefined' && fb.onSnapshot && _db) ? fn() : setTimeout(check, 400);
+    check();
+  };
+  waitReady(() => {
+    const snap = (col, elId) => fb.onSnapshot(fb.collection(_db, col), s => {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.classList.add('stat-live-pulse');
+      setTimeout(() => el.classList.remove('stat-live-pulse'), 650);
+      countUp(el, s.size);
+    });
+    snap('hub_apps',  'statApps');
+    snap('hub_users', 'statUsers');
+    snap('tracks',    'statTracks');
+    snap('hub_assets','statAssets');
+    snap('eri_newsletter', 'dashNlCount');
+    snap('feedback',       'dashFbCount');
+  });
+})();
+
+// ── T2: NOTIFICATION LIVE PREVIEW ───────────────────────────────
+(function initNotifyPreview() {
+  const titleEl  = document.getElementById('notifyTitle');
+  const bodyEl   = document.getElementById('notifyBody');
+  const preTitle = document.getElementById('previewTitle');
+  const preBody  = document.getElementById('previewBody');
+  if (!titleEl || !preTitle) return;
+  function update() {
+    preTitle.textContent = titleEl.value.trim() || 'Notification Title';
+    preBody.textContent  = bodyEl?.value.trim() || 'Your message will appear here…';
+  }
+  titleEl.addEventListener('input', update);
+  bodyEl?.addEventListener('input', update);
+})();
+
+// ── T3: INLINE QUICK-EDIT on app card name (double-click) ────────
+(function initInlineAppEdit() {
+  document.getElementById('appGrid')?.addEventListener('dblclick', async e => {
+    const nameEl = e.target.closest('.app-card-name');
+    if (!nameEl) return;
+    const card = nameEl.closest('.app-card');
+    const appId = card?.dataset.id;
+    if (!appId) return;
+    nameEl.contentEditable = 'true';
+    nameEl.focus();
+    const range = document.createRange();
+    range.selectNodeContents(nameEl);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    const save = async () => {
+      nameEl.contentEditable = 'false';
+      const newName = nameEl.textContent.trim();
+      if (!newName) return;
+      const app = allApps.find(a => a.id === appId);
+      if (!app || newName === app.name) return;
+      try {
+        await fb.updateDoc(fb.doc(_db, 'hub_apps', appId), { name: newName });
+        app.name = newName;
+        logAudit(`App renamed to "${newName}"`);
+        toast('App renamed!', 'success');
+      } catch(err) { toast('Error: ' + err.message, 'error'); }
+    };
+    nameEl.addEventListener('blur', save, { once: true });
+    nameEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); nameEl.blur(); } if (e.key === 'Escape') { nameEl.contentEditable = 'false'; } }, { once: true });
+  });
+})();
+
+// ── T4: FEEDBACK REPLY BUTTON ────────────────────────────────────
+(function patchFeedbackReply() {
+  const _origRender = loadFeedback;
+  loadFeedback = async function(...args) {
+    await _origRender.apply(this, args);
+    document.querySelectorAll('.feedback-item').forEach(item => {
+      if (item.querySelector('.fb-reply-btn')) return;
+      const meta = item.querySelector('.feedback-meta');
+      const emailSpan = meta?.querySelector('span');
+      const email = emailSpan?.textContent?.trim();
+      if (!email || !email.includes('@')) return;
+      const btn = document.createElement('button');
+      btn.className = 'fb-reply-btn';
+      btn.textContent = '✉ Reply';
+      btn.title = `Send email to ${email}`;
+      btn.onclick = () => {
+        const body = item.querySelector('.feedback-body')?.textContent?.trim() || '';
+        window.open(`mailto:${email}?subject=Re: Your Feedback&body=\n\n---\nYour original message: "${body}"`, '_blank');
+      };
+      item.appendChild(btn);
+    });
+  };
+})();
+
+// ── T5: POSTS CSV EXPORT ─────────────────────────────────────────
+(function initPostsExport() {
+  document.getElementById('exportPostsBtn')?.addEventListener('click', () => {
+    if (!window.allPosts?.length) { toast('No posts loaded yet. Open the Posts page first.', 'warn'); return; }
+    const rows = [['Title','Author','Status','Created']];
+    window.allPosts.forEach(p => {
+      const d = p.createdAt?.toDate ? p.createdAt.toDate() : (p.createdAt ? new Date(p.createdAt) : new Date());
+      rows.push([p.title||'', p.authorName||p.authorEmail||'', p.status||'', d.toLocaleDateString()]);
+    });
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a = Object.assign(document.createElement('a'), { href: 'data:text/csv,' + encodeURIComponent(csv), download: 'posts.csv' });
+    a.click();
+    toast('Posts exported!', 'success');
+  });
+})();
+
+// ── T6: USER TEXT SEARCH ─────────────────────────────────────────
+(function initUserSearch() {
+  const input = document.getElementById('userSearch');
+  if (!input) return;
+  input.addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    if (!q) { renderUsers(allUsers, activeUserTab); return; }
+    const filtered = allUsers.filter(u =>
+      (u.name||'').toLowerCase().includes(q) ||
+      (u.email||'').toLowerCase().includes(q) ||
+      (u.role||'').toLowerCase().includes(q)
+    );
+    renderUsers(filtered, 'all');
+  });
+})();
+
+// ── T7: RECENTLY VISITED PAGES ───────────────────────────────────
+(function initRecentPages() {
+  const MAX = 5;
+  const PAGE_ICONS = { dashboard:'🏠', apps:'📱', users:'👥', music:'🎵', posts:'📄', notify:'🔔', newsletter:'📧', feedback:'💬', analytics:'📊', promotions:'🎯', feedback:'⭐', monetize:'💰', settings:'⚙', auditlog:'📋', storage:'💾', seo:'🔍', versions:'🏷', employees:'👔', assets:'🖼', playlists:'🎧', ericontent:'🇪🇷' };
+  let recents = JSON.parse(localStorage.getItem('hub_recents') || '[]');
+
+  function renderRecents() {
+    const list = document.getElementById('sbRecentsList');
+    const wrap = document.getElementById('sbRecents');
+    if (!list || !wrap) return;
+    if (!recents.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    list.innerHTML = recents.map(p => `
+      <div class="sb-recent-item" onclick="showPage('${p}')">
+        <span class="sb-recent-icon">${PAGE_ICONS[p] || '📄'}</span>
+        <span>${p.charAt(0).toUpperCase() + p.slice(1)}</span>
+      </div>`).join('');
+  }
+
+  const _orig = window.showPage;
+  window.showPage = function(name) {
+    _orig(name);
+    recents = [name, ...recents.filter(r => r !== name)].slice(0, MAX);
+    localStorage.setItem('hub_recents', JSON.stringify(recents));
+    renderRecents();
+  };
+  renderRecents();
+})();
+
+// ── T8: APP HEALTH MONITOR ───────────────────────────────────────
+(function initAppHealthCheck() {
+  const checked = new Map();
+
+  async function checkUrl(url) {
+    if (!url) return 'offline';
+    if (checked.has(url)) return checked.get(url);
+    try {
+      const res = await fetch(url, { method: 'HEAD', mode: 'no-cors', signal: AbortSignal.timeout(4000) });
+      const status = 'online';
+      checked.set(url, status);
+      return status;
+    } catch { checked.set(url, 'offline'); return 'offline'; }
+  }
+
+  const _origRenderApps = renderApps;
+  window.renderApps = renderApps = function(apps) {
+    _origRenderApps(apps);
+    document.querySelectorAll('.app-card[data-id]').forEach(card => {
+      const appId = card.dataset.id;
+      const app   = apps.find(a => a.id === appId);
+      if (!app?.url) return;
+      const urlRow = card.querySelector('.app-card-url-row') || card.querySelector('.app-card-url');
+      if (!urlRow) return;
+      let dot = card.querySelector('.app-health-dot');
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'app-health-dot checking';
+        dot.title = 'Checking…';
+        if (urlRow.classList.contains('app-card-url-row')) urlRow.prepend(dot);
+        else { urlRow.style.display = 'flex'; urlRow.style.alignItems = 'center'; urlRow.style.gap = '5px'; urlRow.prepend(dot); }
+      }
+      checkUrl(app.url).then(status => {
+        dot.className = 'app-health-dot ' + status;
+        dot.title = status === 'online' ? '✓ Online' : '✗ Offline or unreachable';
+      });
+    });
+  };
+})();
+
+// ── T9: PINNED STICKY NOTES ──────────────────────────────────────
+(function initStickyNotes() {
+  const ta     = document.getElementById('dashNotes');
+  const status = document.getElementById('notesStatus');
+  if (!ta) return;
+  let saveTimer;
+
+  function loadNote() {
+    const waitDb = () => {
+      if (!_db || !currentUser) { setTimeout(waitDb, 500); return; }
+      fb.getDoc(fb.doc(_db, 'hub_admin_notes', currentUser.uid)).then(d => {
+        if (d.exists()) ta.value = d.data().text || '';
+      }).catch(() => { ta.value = localStorage.getItem('hub_notes') || ''; });
+    };
+    waitDb();
+  }
+
+  async function saveNote() {
+    const text = ta.value;
+    if (status) status.textContent = 'Saving…';
+    try {
+      if (_db && currentUser) await fb.setDoc(fb.doc(_db, 'hub_admin_notes', currentUser.uid), { text, updatedAt: Date.now() });
+      else localStorage.setItem('hub_notes', text);
+      if (status) status.textContent = 'Saved ✓';
+      setTimeout(() => { if (status) status.textContent = ''; }, 2000);
+    } catch { localStorage.setItem('hub_notes', text); if (status) status.textContent = 'Saved locally'; }
+  }
+
+  ta.addEventListener('input', () => { clearTimeout(saveTimer); if (status) status.textContent = '…'; saveTimer = setTimeout(saveNote, 1200); });
+  loadNote();
+})();
+
+// ── T10: DASHBOARD REAL-TIME ACTIVITY FEED (already had onSnapshot, ensure wired) ──
+// Already handled by initRealtimeBadges and dashboard activity onSnapshot in feature B2.
+
+// ── T11: ENHANCED KEYBOARD SHORTCUT MODAL ────────────────────────
+(function enhanceShortcutModal() {
+  const modal = document.getElementById('kbdShortcutModal');
+  if (!modal) return;
+  const list = modal.querySelector('.kbd-shortcut-list');
+  if (list) {
+    list.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+        <div>
+          <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text-mute);margin-bottom:8px;margin-top:4px">Navigation</div>
+          <div class="kbd-row"><kbd>Ctrl</kbd>+<kbd>K</kbd><span>Global search</span></div>
+          <div class="kbd-row"><kbd>D</kbd><span>Dashboard</span></div>
+          <div class="kbd-row"><kbd>U</kbd><span>Users</span></div>
+          <div class="kbd-row"><kbd>M</kbd><span>Music</span></div>
+          <div class="kbd-row"><kbd>A</kbd><span>Analytics</span></div>
+          <div class="kbd-row"><kbd>1</kbd>–<kbd>9</kbd><span>Jump to page</span></div>
+          <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text-mute);margin-bottom:8px;margin-top:14px">G + key combos</div>
+          <div class="kbd-row"><kbd>G</kbd><kbd>D</kbd><span>Dashboard</span></div>
+          <div class="kbd-row"><kbd>G</kbd><kbd>U</kbd><span>Users</span></div>
+          <div class="kbd-row"><kbd>G</kbd><kbd>N</kbd><span>Notifications</span></div>
+          <div class="kbd-row"><kbd>G</kbd><kbd>M</kbd><span>Music</span></div>
+          <div class="kbd-row"><kbd>G</kbd><kbd>A</kbd><span>Analytics</span></div>
+        </div>
+        <div>
+          <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text-mute);margin-bottom:8px;margin-top:4px">Actions</div>
+          <div class="kbd-row"><kbd>N</kbd><span>New item on page</span></div>
+          <div class="kbd-row"><kbd>R</kbd><span>Refresh page data</span></div>
+          <div class="kbd-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Save form</span></div>
+          <div class="kbd-row"><kbd>?</kbd><span>This shortcuts panel</span></div>
+          <div class="kbd-row"><kbd>Esc</kbd><span>Close modal / cancel</span></div>
+          <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text-mute);margin-bottom:8px;margin-top:14px">New in v2.0</div>
+          <div class="kbd-row"><span>Double-click app name</span><span style="color:var(--accent2)">Inline rename</span></div>
+          <div class="kbd-row"><span>Ctrl+K → type</span><span style="color:var(--accent2)">Search everything</span></div>
+          <div class="kbd-row"><span>Pinned Notes</span><span style="color:var(--accent2)">Auto-saves to cloud</span></div>
+          <div class="kbd-row"><span>Health dots</span><span style="color:var(--accent2)">App online/offline</span></div>
+        </div>
+      </div>`;
+  }
+  modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+  document.getElementById('kbdShortcutClose')?.addEventListener('click', () => { modal.hidden = true; });
+})();
+
+// ── T12: CSV EXPORT FOR POSTS (ensure allPosts is global) ────────
+// allPosts is already global in admin.js — no extra action needed.
+// exportPostsBtn wired in T5 above.
+
+// ── T13: APP HEALTH — wrap app url in health row for dot inject ──
+(function patchAppCardUrl() {
+  const _origRender = typeof renderApps === 'function' ? renderApps : null;
+  if (!_origRender) return;
+  const origFn = renderApps;
+  window.renderApps = renderApps = function(apps) {
+    origFn(apps);
+    document.querySelectorAll('.app-card-url').forEach(el => {
+      if (!el.classList.contains('app-card-url-row')) el.classList.add('app-card-url-row');
+    });
+  };
+})();
+
+// ════════════════════════════════════════════════════════════════
+//  TWEAKS v3.0 — 20 powerful enhancements
+//  T14. Command Palette v2 (action mode via > prefix)
+//  T15. Session Timer + auto-logout warning
+//  T16. Live Activity Feed Panel + FAB
+//  T17. Broadcast Banner Tool
+//  T18. Data Export Hub
+//  T19. Dashboard Sparklines
+//  T20. Bulk User Actions
+//  T21. Quick Reply Templates
+//  T22. Sidebar Favorites (pin pages with ★)
+//  T23. Smart Alerts Detector
+//  T24. Quick User Card on hover
+//  T25. Character Counter on textareas
+//  T26. Session History Timeline in sidebar
+//  T27. Copy-on-Click IDs and emails
+//  T28. Milestone Confetti
+//  T29. Floating Speed Dial FAB
+//  T30. System Health Bar
+//  T31. Sortable Table Columns
+//  T32. Markdown Preview for Posts
+//  T33. Customizable Dashboard (drag-to-reorder)
+// ════════════════════════════════════════════════════════════════
+
+// ── T14: COMMAND PALETTE v2 (action mode) ────────────────────────
+(function initCommandPalette() {
+  const overlay  = document.getElementById('gsearchOverlay');
+  const input    = document.getElementById('gsearchInput');
+  const results  = document.getElementById('gsearchResults');
+  if (!overlay || !input || !results) return;
+
+  const ACTIONS = [
+    { label:'📡 Broadcast Banner',   hint:'Push site-wide alert to all users', key:'broadcast banner alert',   fn:() => { document.getElementById('broadcastModal').hidden = false; } },
+    { label:'📦 Export Hub',         hint:'Download any collection as CSV',    key:'export csv download data', fn:() => { document.getElementById('exportHubModal').hidden = false; } },
+    { label:'📊 Live Activity',      hint:'Open real-time activity feed',       key:'activity live feed',       fn:() => { const f = document.getElementById('activityFab'); if (f) f.click(); } },
+    { label:'➕ New App',            hint:'Add a new application',             key:'new app add create',       fn:() => { showPage('apps'); setTimeout(() => document.getElementById('addAppBtn')?.click(), 350); } },
+    { label:'🔔 New Notification',   hint:'Send a push notification',          key:'notify notification push', fn:() => showPage('notify') },
+    { label:'👥 View Users',         hint:'Open the users page',               key:'users people',             fn:() => showPage('users') },
+    { label:'📊 Analytics',          hint:'View analytics dashboard',          key:'analytics stats charts',   fn:() => showPage('analytics') },
+    { label:'🎵 Music Library',      hint:'Manage Eri Music tracks',           key:'music tracks library',     fn:() => showPage('erimusic') },
+    { label:'🌙 Toggle Theme',       hint:'Switch between dark and light mode', key:'theme dark light mode',  fn:() => document.getElementById('darkModeBtn')?.click() },
+    { label:'⌨️ Keyboard Shortcuts', hint:'View all keyboard shortcuts',       key:'shortcuts keyboard keys',  fn:() => { document.getElementById('kbdShortcutModal').hidden = false; } },
+    { label:'🏠 Dashboard',          hint:'Go to the main dashboard',          key:'dashboard home',           fn:() => showPage('dashboard') },
+    { label:'📋 Audit Log',          hint:'View the admin audit log',          key:'audit log history',        fn:() => showPage('auditlog') },
+    { label:'📧 Newsletter',         hint:'Manage newsletter subscribers',     key:'newsletter email',         fn:() => showPage('newsletter') },
+    { label:'💰 Monetize',           hint:'Revenue and monetization settings', key:'monetize revenue money',   fn:() => showPage('monetize') },
+  ];
+
+  input.addEventListener('input', function() {
+    const raw = this.value.trim();
+    if (!raw.startsWith('>')) return;
+    const cmd = raw.slice(1).trim().toLowerCase();
+    const matches = ACTIONS.filter(a => !cmd || a.key.includes(cmd) || a.label.toLowerCase().includes(cmd));
+    results.innerHTML = (matches.length
+      ? `<div class="cmd-palette-hint">Actions — press Enter or click</div>` +
+        matches.map((a, i) => `
+          <div class="gsearch-result cmd-action" data-idx="${i}">
+            <div class="gsearch-result-label">${a.label}</div>
+            <div class="gsearch-result-sub">${a.hint}</div>
+          </div>`).join('')
+      : `<div class="gsearch-empty">No action matched "<em>${cmd || '…'}</em>". Try: broadcast, export, users…</div>`
+    );
+    results.querySelectorAll('.cmd-action').forEach((el, i) => {
+      el.addEventListener('click', () => {
+        overlay.hidden = true; input.value = '';
+        matches[i]?.fn();
+      });
+    });
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && input.value.startsWith('>')) {
+      results.querySelector('.cmd-action')?.click();
+    }
+  });
+
+  // Add the ">" hint inside the search overlay
+  const box = overlay.querySelector('.gsearch-box');
+  if (box) {
+    const tip = document.createElement('div');
+    tip.style.cssText = 'font-size:.67rem;color:var(--text-mute);padding:6px 12px;text-align:center;border-top:1px solid var(--border)';
+    tip.textContent = 'Tip: type > to run commands  ·  Ctrl+K to open';
+    box.appendChild(tip);
+  }
+})();
+
+// ── T15: SESSION TIMER + AUTO-LOGOUT WARNING ─────────────────────
+(function initSessionTimer() {
+  let startTime  = null;
+  let warned7h45 = false;
+  let timerEl    = null;
+
+  function inject() {
+    const clock = document.getElementById('sbClock');
+    if (!clock || document.getElementById('sbSessionTimer')) return;
+    timerEl = document.createElement('div');
+    timerEl.id = 'sbSessionTimer';
+    timerEl.className = 'sb-session-timer';
+    clock.after(timerEl);
+  }
+
+  function tick() {
+    if (!startTime || !timerEl) return;
+    const ms = Date.now() - startTime;
+    const h  = Math.floor(ms / 3600000);
+    const m  = Math.floor((ms % 3600000) / 60000);
+    const s  = Math.floor((ms % 60000) / 1000);
+    timerEl.textContent = `Session: ${h ? h + 'h ' : ''}${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+
+    if (ms >= 7 * 3600000 + 45 * 60000 && !warned7h45) {
+      warned7h45 = true;
+      timerEl.classList.add('st-warn');
+      toast('⚠️ Session is 7 h 45 min old — auto-logout in 15 min.', 'warn');
+    }
+    if (ms >= 8 * 3600000) {
+      timerEl.classList.add('st-danger');
+      toast('🔒 8-hour session limit reached. Signing out…', 'error');
+      setTimeout(() => document.getElementById('signOutBtn')?.click(), 2500);
+    }
+  }
+
+  function waitLogin() {
+    if (!window.currentUser) { setTimeout(waitLogin, 500); return; }
+    inject();
+    startTime = Date.now();
+    setInterval(tick, 1000);
+  }
+  waitLogin();
+})();
+
+// ── T16: LIVE ACTIVITY FEED PANEL ────────────────────────────────
+(function initActivityFeed() {
+  const fab      = document.getElementById('activityFab');
+  const panel    = document.getElementById('activityPanel');
+  const overlay  = document.getElementById('activityPanelOverlay');
+  const list     = document.getElementById('activityPanelList');
+  const badge    = document.getElementById('activityFabBadge');
+  const closeBtn = document.getElementById('activityPanelClose');
+  if (!fab || !panel) return;
+
+  let isOpen = false, unread = 0;
+
+  function openPanel() {
+    isOpen = true;
+    panel.hidden = false; overlay.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add('open')));
+    unread = 0; badge.hidden = true; badge.textContent = '0';
+  }
+  function closePanel() {
+    isOpen = false;
+    panel.classList.remove('open');
+    setTimeout(() => { panel.hidden = true; overlay.hidden = true; }, 260);
+  }
+
+  fab.addEventListener('click', () => isOpen ? closePanel() : openPanel());
+  overlay.addEventListener('click', closePanel);
+  closeBtn?.addEventListener('click', closePanel);
+
+  const ICONS = { login:'🔑', logout:'🚪', approve:'✅', reject:'❌', ban:'🚫', update:'✏️', delete:'🗑️', create:'➕', export:'📦', notify:'🔔', error:'⚠️', broadcast:'📡' };
+
+  function timeAgo(date) {
+    const s = Math.floor((Date.now() - date) / 1000);
+    if (s < 60)    return 'just now';
+    if (s < 3600)  return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    return Math.floor(s / 86400) + 'd ago';
+  }
+
+  function renderActivity(items) {
+    if (!list) return;
+    if (!items.length) {
+      list.innerHTML = '<div class="activity-empty">No activity recorded yet</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const icon = ICONS[item.type] || '📋';
+      const msg  = item.message || item.action || 'Activity event';
+      const ts   = item.timestamp?.toDate ? item.timestamp.toDate() : new Date(item.timestamp || 0);
+      return `<div class="activity-item">
+        <div class="activity-item-icon">${icon}</div>
+        <div class="activity-item-body">
+          <div class="activity-item-text">${msg}</div>
+          <div class="activity-item-time">${timeAgo(ts)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function waitDb() {
+    if (!window._db || !window.fb) { setTimeout(waitDb, 500); return; }
+    try {
+      fb.onSnapshot(fb.collection(_db, 'hub_activity'), snap => {
+        const items = [];
+        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+        items.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        renderActivity(items.slice(0, 50));
+        if (!isOpen) {
+          unread = Math.min(unread + 1, 99);
+          badge.textContent = unread > 9 ? '9+' : String(unread);
+          badge.hidden = false;
+        }
+      });
+    } catch (e) {
+      list.innerHTML = '<div class="activity-empty">Activity feed unavailable</div>';
+    }
+  }
+
+  // Show fab once admin shell is visible
+  function waitHub() {
+    const hub = document.getElementById('hubMain');
+    if (!hub) { setTimeout(waitHub, 500); return; }
+    const obs = new MutationObserver(() => {
+      if (getComputedStyle(hub).display !== 'none') { fab.hidden = false; obs.disconnect(); }
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+    if (getComputedStyle(hub).display !== 'none') { fab.hidden = false; obs.disconnect(); }
+  }
+  waitHub();
+  waitDb();
+})();
+
+// ── T17: BROADCAST BANNER TOOL ───────────────────────────────────
+(function initBroadcastTool() {
+  const modal    = document.getElementById('broadcastModal');
+  const closeBtn = document.getElementById('broadcastClose');
+  const cancel   = document.getElementById('broadcastCancel');
+  const sendBtn  = document.getElementById('broadcastSend');
+  const clearBtn = document.getElementById('broadcastClear');
+  const msgEl    = document.getElementById('broadcastMsg');
+  const titleEl  = document.getElementById('broadcastTitle');
+  const durEl    = document.getElementById('broadcastDur');
+  const countEl  = document.getElementById('broadcastCharCount');
+  const bpTitle  = document.getElementById('bpTitle');
+  const bpMsg    = document.getElementById('bpMsg');
+  if (!modal) return;
+
+  const open  = () => { modal.hidden = false; };
+  const close = () => { modal.hidden = true; };
+  window._openBroadcastModal = open;
+
+  closeBtn?.addEventListener('click', close);
+  cancel?.addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  function updatePreview() {
+    if (bpTitle) bpTitle.textContent = titleEl?.value.trim() || 'Banner Title';
+    if (bpMsg)   bpMsg.textContent   = msgEl?.value.trim()   || 'Your message here';
+    const len = msgEl?.value.length || 0;
+    if (countEl) {
+      countEl.textContent = `${len} / 200`;
+      countEl.className = 'char-count' + (len >= 200 ? ' ch-limit' : len >= 160 ? ' ch-warn' : '');
+    }
+  }
+  msgEl?.addEventListener('input', updatePreview);
+  titleEl?.addEventListener('input', updatePreview);
+
+  sendBtn?.addEventListener('click', async () => {
+    const title   = titleEl?.value.trim();
+    const message = msgEl?.value.trim();
+    if (!title || !message) { toast('Title and message are both required.', 'warn'); return; }
+    const dur      = parseInt(durEl?.value || '86400');
+    const payload  = { title, message, createdAt: Date.now(), expiresAt: dur > 0 ? Date.now() + dur * 1000 : 0, createdBy: window.currentUser?.email || 'admin' };
+    try {
+      if (window._db && window.fb) {
+        await fb.setDoc(fb.doc(_db, 'hub_broadcast', 'active'), payload);
+        window.logAudit?.('Broadcast: "' + title + '"');
+      }
+      toast('📡 Banner broadcast to all users!', 'success');
+      close();
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+  });
+
+  clearBtn?.addEventListener('click', async () => {
+    try {
+      if (window._db && window.fb) {
+        await fb.setDoc(fb.doc(_db, 'hub_broadcast', 'active'), { cleared: true, clearedAt: Date.now() });
+      }
+      toast('Banner cleared.', 'success'); close();
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+  });
+})();
+
+// ── T18: DATA EXPORT HUB ─────────────────────────────────────────
+(function initExportHub() {
+  const modal    = document.getElementById('exportHubModal');
+  const closeBtn = document.getElementById('exportHubClose');
+  if (!modal) return;
+  window._openExportHub = () => { modal.hidden = false; };
+  closeBtn?.addEventListener('click', () => { modal.hidden = true; });
+  modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+
+  function toCSV(rows) {
+    return rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  }
+  function download(csv, name) {
+    const a = Object.assign(document.createElement('a'), {
+      href: 'data:text/csv;charset=utf-8,' + encodeURIComponent('﻿' + csv),
+      download: name
+    });
+    a.click();
+  }
+
+  async function fetchCol(col) {
+    if (!window._db || !window.fb) throw new Error('DB not ready');
+    return new Promise((resolve, reject) => {
+      const unsub = fb.onSnapshot(fb.collection(_db, col), snap => {
+        unsub();
+        const docs = [];
+        snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+        resolve(docs);
+      }, reject);
+    });
+  }
+
+  document.getElementById('ehExportUsers')?.addEventListener('click', async () => {
+    try {
+      const docs = window.allUsers?.length ? window.allUsers : await fetchCol('hub_users');
+      const rows = [['Name','Email','Role','Status','Created']];
+      docs.forEach(u => {
+        const d = u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt || 0);
+        rows.push([u.name||'', u.email||'', u.role||'', u.status||'', d.toLocaleDateString()]);
+      });
+      download(toCSV(rows), 'hub_users.csv');
+      toast(`Exported ${docs.length} users`, 'success');
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+  });
+
+  document.getElementById('ehExportPosts')?.addEventListener('click', () => {
+    if (!window.allPosts?.length) { toast('Open the Posts page first to load data.', 'warn'); return; }
+    const rows = [['Title','Author','Status','Created']];
+    window.allPosts.forEach(p => {
+      const d = p.createdAt?.toDate ? p.createdAt.toDate() : new Date(p.createdAt || 0);
+      rows.push([p.title||'', p.authorName||p.authorEmail||'', p.status||'', d.toLocaleDateString()]);
+    });
+    download(toCSV(rows), 'hub_posts.csv');
+    toast(`Exported ${window.allPosts.length} posts`, 'success');
+  });
+
+  document.getElementById('ehExportTracks')?.addEventListener('click', async () => {
+    try {
+      const docs = await fetchCol('tracks');
+      const rows = [['Title','Artist','Duration','Plays','ID']];
+      docs.forEach(t => rows.push([t.title||'', t.artist||'', t.duration||'', t.plays||0, t.id]));
+      download(toCSV(rows), 'hub_tracks.csv');
+      toast(`Exported ${docs.length} tracks`, 'success');
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+  });
+
+  document.getElementById('ehExportFeedback')?.addEventListener('click', async () => {
+    try {
+      const docs = await fetchCol('feedback');
+      const rows = [['From','Message','Rating','Created']];
+      docs.forEach(f => {
+        const d = f.createdAt?.toDate ? f.createdAt.toDate() : new Date(f.createdAt || 0);
+        rows.push([f.email||'', f.body||f.message||'', f.rating||'', d.toLocaleDateString()]);
+      });
+      download(toCSV(rows), 'hub_feedback.csv');
+      toast(`Exported ${docs.length} feedback entries`, 'success');
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+  });
+
+  document.getElementById('ehExportActivity')?.addEventListener('click', async () => {
+    try {
+      const docs = await fetchCol('hub_activity');
+      const rows = [['Action','User','Type','Timestamp']];
+      docs.forEach(a => {
+        const d = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp || 0);
+        rows.push([a.message||a.action||'', a.user||a.by||'', a.type||'', d.toLocaleString()]);
+      });
+      download(toCSV(rows), 'hub_activity.csv');
+      toast(`Exported ${docs.length} activity entries`, 'success');
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+  });
+
+  document.getElementById('ehExportApps')?.addEventListener('click', async () => {
+    try {
+      const docs = window.allApps?.length ? window.allApps : await fetchCol('hub_apps');
+      const rows = [['Name','URL','Status','Category']];
+      docs.forEach(a => rows.push([a.name||'', a.url||'', a.status||'', a.category||'']));
+      download(toCSV(rows), 'hub_apps.csv');
+      toast(`Exported ${docs.length} apps`, 'success');
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+  });
+})();
+
+// ── T19: DASHBOARD SPARKLINES ─────────────────────────────────────
+(function initSparklines() {
+  const STATS = ['statApps', 'statUsers', 'statTracks', 'statAssets'];
+
+  function drawSpark(container) {
+    if (container.querySelector('.spark-wrap')) return;
+    const n      = parseInt(container.querySelector('[id^=stat]')?.textContent) || 20;
+    const points = Array.from({ length: 7 }, (_, i) => {
+      const base = Math.max(1, n - Math.floor(n * (0.3 * (6 - i) / 6)));
+      return base + Math.floor(Math.random() * Math.max(1, base * 0.1));
+    });
+    const max = Math.max(...points), min = Math.min(...points);
+    const W = 72, H = 22;
+    const pts = points.map((v, i) => {
+      const x = (i / (points.length - 1)) * W;
+      const y = H - ((v - min) / (max - min + .01)) * H;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    const wrap = document.createElement('div');
+    wrap.className = 'spark-wrap';
+    wrap.innerHTML = `<svg class="spark-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <polyline class="spark-line" points="${pts}"/>
+    </svg>`;
+    container.appendChild(wrap);
+  }
+
+  function inject() {
+    document.querySelectorAll('.cat-top').forEach(top => {
+      if (!top.querySelector('.spark-wrap')) drawSpark(top);
+    });
+  }
+
+  setTimeout(inject, 1800);
+  document.addEventListener('pageChanged', e => {
+    if (e?.detail === 'dashboard') setTimeout(inject, 400);
+  });
+})();
+
+// ── T20: BULK USER ACTIONS ────────────────────────────────────────
+(function initBulkUserActions() {
+  const hub = document.getElementById('hubMain');
+  if (!hub) return;
+
+  const bar = document.createElement('div');
+  bar.id = 'bulkActionBar';
+  bar.className = 'bulk-action-bar';
+  bar.innerHTML = `
+    <span class="bulk-action-count" id="bulkCount">0 selected</span>
+    <button class="bulk-btn bulk-btn-approve" id="bulkApprove">✅ Approve</button>
+    <button class="bulk-btn bulk-btn-ban"     id="bulkBan">🚫 Ban</button>
+    <button class="bulk-btn bulk-btn-export"  id="bulkExport">📥 Export</button>
+    <button class="bulk-btn-clear" id="bulkClear" title="Clear selection">✕</button>`;
+  hub.appendChild(bar);
+
+  let selected = new Set();
+
+  function updateBar() {
+    const n = selected.size;
+    document.getElementById('bulkCount').textContent = `${n} selected`;
+    bar.classList.toggle('visible', n > 0);
+  }
+
+  function clearSel() {
+    selected.clear();
+    document.querySelectorAll('.user-row-cb').forEach(cb => { cb.checked = false; });
+    updateBar();
+  }
+
+  document.getElementById('bulkClear')?.addEventListener('click', clearSel);
+
+  document.getElementById('bulkApprove')?.addEventListener('click', async () => {
+    if (!selected.size || !window._db) return;
+    let done = 0;
+    for (const id of selected) {
+      try {
+        const u = (window.allUsers || []).find(x => (x.id || x.uid) === id);
+        await fb.updateDoc(fb.doc(_db, 'hub_users', id), { status: 'approved', role: u?.role || 'viewer' });
+        done++;
+      } catch {}
+    }
+    toast(`✅ Approved ${done} user${done !== 1 ? 's' : ''}`, 'success');
+    window.logAudit?.(`Bulk approved ${done} users`);
+    clearSel(); typeof loadUsers === 'function' && loadUsers();
+  });
+
+  document.getElementById('bulkBan')?.addEventListener('click', async () => {
+    if (!selected.size) return;
+    if (!confirm(`Ban ${selected.size} selected user${selected.size !== 1 ? 's' : ''}?`)) return;
+    let done = 0;
+    for (const id of selected) {
+      try { await fb.updateDoc(fb.doc(_db, 'hub_users', id), { status: 'banned' }); done++; } catch {}
+    }
+    toast(`🚫 Banned ${done} user${done !== 1 ? 's' : ''}`, 'warn');
+    window.logAudit?.(`Bulk banned ${done} users`);
+    clearSel(); typeof loadUsers === 'function' && loadUsers();
+  });
+
+  document.getElementById('bulkExport')?.addEventListener('click', () => {
+    const users = (window.allUsers || []).filter(u => selected.has(u.id || u.uid));
+    if (!users.length) return;
+    const rows = [['Name','Email','Role','Status']];
+    users.forEach(u => rows.push([u.name||'', u.email||'', u.role||'', u.status||'']));
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a = Object.assign(document.createElement('a'), { href: 'data:text/csv;charset=utf-8,' + encodeURIComponent('﻿' + csv), download: 'selected_users.csv' });
+    a.click();
+    toast(`Exported ${users.length} users`, 'success');
+  });
+
+  // Inject checkboxes whenever user table is rendered
+  const _origRender = window.renderUsers;
+  if (typeof _origRender === 'function') {
+    window.renderUsers = function(...args) {
+      _origRender.apply(this, args);
+      setTimeout(() => {
+        document.querySelectorAll('#userTable tbody tr, #userTableBody tr').forEach(row => {
+          if (row.querySelector('.user-cb-cell')) return;
+          const id = row.dataset.id || row.dataset.uid;
+          if (!id) return;
+          const td = document.createElement('td');
+          td.className = 'user-cb-cell';
+          const cb = Object.assign(document.createElement('input'), { type:'checkbox', className:'user-row-cb' });
+          cb.checked = selected.has(id);
+          cb.addEventListener('change', () => {
+            if (cb.checked) selected.add(id); else selected.delete(id);
+            updateBar();
+          });
+          td.appendChild(cb);
+          row.prepend(td);
+        });
+      }, 80);
+    };
+  }
+})();
+
+// ── T21: QUICK REPLY TEMPLATES ────────────────────────────────────
+(function initReplyTemplates() {
+  const TPLS_KEY = 'hub_reply_tpls_v1';
+  const DEFAULTS = [
+    'Thank you for your feedback! We really appreciate you sharing your thoughts with us.',
+    "Hi! We've received your message and our team is looking into it. We'll get back to you soon.",
+    "Thanks for reporting this issue. We've logged it and will address it in our next update.",
+    'We appreciate your kind words! Feedback like yours motivates us to keep improving.',
+    "Sorry to hear about your experience. Please email us directly and we'll resolve this right away.",
+  ];
+  const tpls = JSON.parse(localStorage.getItem(TPLS_KEY) || 'null') || DEFAULTS;
+
+  function inject() {
+    document.querySelectorAll('.fb-reply-btn').forEach(btn => {
+      const parent = btn.parentElement;
+      if (parent?.querySelector('.fb-templates-wrap')) return;
+      const wrap   = document.createElement('span');
+      wrap.className = 'fb-templates-wrap';
+      const tplBtn = document.createElement('button');
+      tplBtn.className = 'fb-templates-btn';
+      tplBtn.textContent = '📝 Templates';
+      wrap.appendChild(tplBtn);
+      btn.after(wrap);
+
+      tplBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        document.querySelectorAll('.fb-templates-dropdown').forEach(d => d.remove());
+        const rect = tplBtn.getBoundingClientRect();
+        const dd   = document.createElement('div');
+        dd.className = 'fb-templates-dropdown';
+        dd.style.cssText = `top:${rect.bottom + 4 + window.scrollY}px;left:${rect.left}px`;
+        tpls.forEach(t => {
+          const item = document.createElement('div');
+          item.className = 'fb-tpl-item';
+          item.title = t;
+          item.textContent = t.length > 65 ? t.slice(0, 65) + '…' : t;
+          item.addEventListener('click', () => {
+            const fbItem = btn.closest('.feedback-item');
+            const email  = fbItem?.querySelector('.feedback-meta span')?.textContent?.trim();
+            if (email) window.open(`mailto:${email}?subject=Re:%20Your%20Feedback&body=${encodeURIComponent('\n\n---\n' + t)}`, '_blank');
+            dd.remove();
+          });
+          dd.appendChild(item);
+        });
+        document.body.appendChild(dd);
+        setTimeout(() => document.addEventListener('click', () => dd.remove(), { once: true }), 0);
+      });
+    });
+  }
+
+  const _orig = window.loadFeedback;
+  if (typeof _orig === 'function') {
+    window.loadFeedback = async function(...args) {
+      await _orig.apply(this, args);
+      setTimeout(inject, 250);
+    };
+  }
+})();
+
+// ── T22: SIDEBAR FAVORITES ────────────────────────────────────────
+(function initSidebarFavorites() {
+  const FAV_KEY = 'hub_sb_favs_v1';
+  let favs = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+
+  const LABEL_MAP = { dashboard:'Dashboard', analytics:'Analytics', apps:'App Manager', ericontent:'Eri Content', assets:'Assets', users:'Users', employees:'Employees', erimusic:'Eri Music', playlists:'Playlists', posts:'Posts', feedback:'Feedback', notify:'Notifications', newsletter:'Newsletter', promotions:'Promotions', monetize:'Monetize', coupons:'Coupons', riglog:'RigLog', 'truck-log':'Truck Log', auditlog:'Audit Log', settings:'Settings' };
+
+  function save() { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); }
+
+  function renderFavGroup() {
+    document.getElementById('sbFavsGroup')?.remove();
+    if (!favs.length) return;
+    const nav = document.querySelector('.sb-nav');
+    if (!nav) return;
+
+    const group = document.createElement('div');
+    group.id = 'sbFavsGroup';
+    group.className = 'sb-cat-group sb-favorites-group';
+    group.innerHTML = '<div class="sb-favorites-label">★ Favorites</div>';
+    favs.forEach(page => {
+      const btn = document.createElement('button');
+      btn.className = 'sb-item';
+      btn.dataset.page = page;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>${LABEL_MAP[page] || page}</span>`;
+      btn.addEventListener('click', () => showPage(page));
+      group.appendChild(btn);
+    });
+    nav.prepend(group);
+  }
+
+  function addStars() {
+    document.querySelectorAll('.sb-nav .sb-item[data-page]').forEach(btn => {
+      if (btn.closest('#sbFavsGroup') || btn.querySelector('.sb-star')) return;
+      const page = btn.dataset.page;
+      const star = document.createElement('button');
+      star.className = 'sb-star' + (favs.includes(page) ? ' starred' : '');
+      star.title = favs.includes(page) ? 'Remove from favorites' : 'Add to favorites';
+      star.textContent = '★';
+      star.addEventListener('click', e => {
+        e.stopPropagation();
+        if (favs.includes(page)) favs = favs.filter(f => f !== page);
+        else if (favs.length < 8) favs = [...favs, page];
+        save();
+        star.className = 'sb-star' + (favs.includes(page) ? ' starred' : '');
+        star.title = favs.includes(page) ? 'Remove from favorites' : 'Add to favorites';
+        renderFavGroup();
+      });
+      btn.appendChild(star);
+    });
+  }
+
+  setTimeout(() => { addStars(); renderFavGroup(); }, 700);
+})();
+
+// ── T23: SMART ALERTS DETECTOR ───────────────────────────────────
+(function initSmartAlerts() {
+  const banner    = document.getElementById('smartAlertBanner');
+  const textEl    = document.getElementById('smartAlertText');
+  const iconEl    = document.getElementById('smartAlertIcon');
+  const actionEl  = document.getElementById('smartAlertAction');
+  const dismissEl = document.getElementById('smartAlertDismiss');
+  if (!banner) return;
+
+  dismissEl?.addEventListener('click', () => { banner.hidden = true; });
+
+  function show(msg, type, icon, actionLabel, actionFn) {
+    if (iconEl)  iconEl.textContent  = icon || '⚠️';
+    if (textEl)  textEl.textContent  = msg;
+    banner.className = 'smart-alert-banner' + (type === 'danger' ? ' danger' : type === 'info' ? ' info' : '');
+    if (actionLabel && actionEl) {
+      actionEl.textContent = actionLabel;
+      actionEl.hidden = false;
+      actionEl.onclick = () => { banner.hidden = true; actionFn?.(); };
+    } else if (actionEl) { actionEl.hidden = true; }
+    banner.hidden = false;
+  }
+
+  const shown = new Set();
+
+  function waitDb() {
+    if (!window._db || !window.fb) { setTimeout(waitDb, 800); return; }
+    try {
+      fb.onSnapshot(fb.collection(_db, 'hub_users'), snap => {
+        let pending = 0;
+        snap.forEach(d => { if (d.data().status === 'pending') pending++; });
+        const key = 'pending_' + Math.floor(pending / 3);
+        if (pending >= 5 && !shown.has(key)) {
+          shown.add(key);
+          show(`🚨 ${pending} users awaiting approval`, 'danger', '🚨', 'View Users', () => showPage('users'));
+        }
+      });
+    } catch {}
+
+    try {
+      fb.onSnapshot(fb.collection(_db, 'feedback'), snap => {
+        let unread = 0;
+        snap.forEach(d => { if (!d.data().read) unread++; });
+        const key = 'fb_' + Math.floor(unread / 5);
+        if (unread >= 10 && !shown.has(key)) {
+          shown.add(key);
+          show(`💬 ${unread} unread feedback messages`, 'warn', '💬', 'View Feedback', () => showPage('feedback'));
+        }
+      });
+    } catch {}
+  }
+
+  setTimeout(waitDb, 3000);
+})();
+
+// ── T24: QUICK USER CARD HOVER ───────────────────────────────────
+(function initQuickUserCard() {
+  let card = null, timer = null;
+
+  function remove() { card?.remove(); card = null; clearTimeout(timer); }
+
+  function show(user, x, y) {
+    remove();
+    const d = user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt || 0);
+    const initials = ((user.name || user.email || '?').trim().split(' ').map(w => w[0]).join('').slice(0, 2)).toUpperCase();
+    card = document.createElement('div');
+    card.className = 'quick-user-card';
+    card.style.left = Math.min(x + 14, window.innerWidth - 240) + 'px';
+    card.style.top  = Math.max(y - 90, 10) + 'px';
+    card.innerHTML = `
+      <div class="quc-avatar">${initials}</div>
+      <div class="quc-name">${user.name || '—'}</div>
+      <div class="quc-email">${user.email || '—'}</div>
+      <div class="quc-role">${user.role || 'viewer'}</div>
+      <div class="quc-joined">Joined: ${user.createdAt ? d.toLocaleDateString() : '—'}</div>`;
+    document.body.appendChild(card);
+  }
+
+  function setup(container) {
+    if (container.dataset.qucWired) return;
+    container.dataset.qucWired = '1';
+    container.addEventListener('mouseover', e => {
+      const row = e.target.closest('tr[data-id],tr[data-uid]');
+      if (!row) return;
+      const id   = row.dataset.id || row.dataset.uid;
+      const user = (window.allUsers || []).find(u => (u.id || u.uid) === id);
+      if (!user) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => show(user, e.clientX, e.clientY), 320);
+    });
+    container.addEventListener('mouseleave', remove);
+  }
+
+  new MutationObserver(() => {
+    document.querySelectorAll('#userTableBody, #userTable tbody').forEach(setup);
+  }).observe(document.getElementById('hubMain') || document.body, { childList: true, subtree: true });
+})();
+
+// ── T25: CHARACTER COUNTER ON TEXTAREAS ──────────────────────────
+(function initCharCounters() {
+  const ID_LIMITS = { notifyTitle:80, notifyBody:300, broadcastMsg:200, broadcastTitle:80, dashNotes:2000 };
+
+  function attach(ta) {
+    if (ta.dataset.ccWired) return;
+    ta.dataset.ccWired = '1';
+    const max = ID_LIMITS[ta.id] || (parseInt(ta.maxLength) > 0 ? parseInt(ta.maxLength) : 0);
+    const counter = document.createElement('div');
+    counter.className = 'textarea-counter';
+    ta.after(counter);
+    function update() {
+      const len = ta.value.length;
+      counter.textContent = max ? `${len} / ${max}` : `${len}`;
+      counter.className = 'textarea-counter' + (!max ? '' : len >= max ? ' over' : len >= max * .8 ? ' warn' : '');
+    }
+    ta.addEventListener('input', update);
+    update();
+  }
+
+  function scan() {
+    document.querySelectorAll('textarea:not([data-cc-wired])').forEach(attach);
+  }
+
+  setTimeout(scan, 900);
+  new MutationObserver(scan).observe(document.getElementById('hubMain') || document.body, { childList: true, subtree: true });
+})();
+
+// ── T26: SESSION HISTORY TIMELINE ────────────────────────────────
+(function initSessionHistory() {
+  const LABELS = { dashboard:'Dashboard', apps:'App Manager', users:'Users', erimusic:'Eri Music', music:'Music', posts:'Posts', notify:'Notifications', analytics:'Analytics', feedback:'Feedback', employees:'Employees', auditlog:'Audit Log', newsletter:'Newsletter', playlists:'Playlists', ericontent:'Eri Content', assets:'Assets', monetize:'Monetize', coupons:'Coupons', riglog:'RigLog' };
+  const hist   = [];
+
+  const _orig = window.showPage;
+  window.showPage = function(name) {
+    _orig.apply(this, arguments);
+    hist.push({ page: name, time: new Date() });
+    render();
+  };
+
+  function render() {
+    const el = document.getElementById('sbHistList');
+    if (!el) return;
+    el.innerHTML = hist.slice(-6).reverse().map(h => {
+      const t = h.time.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+      return `<div class="sb-hist-item" onclick="showPage('${h.page}')">
+        <span>🕐</span><span>${LABELS[h.page] || h.page}</span>
+        <span class="sb-hist-time">${t}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function inject() {
+    if (document.getElementById('sbHistList')) return;
+    const sbUser = document.querySelector('.sb-user');
+    if (!sbUser) { setTimeout(inject, 600); return; }
+    const wrap = document.createElement('div');
+    wrap.className = 'sb-history-wrap';
+    wrap.innerHTML = `<div class="sb-history-label">This Session</div><div id="sbHistList"></div>`;
+    sbUser.before(wrap);
+    render();
+  }
+  setTimeout(inject, 800);
+})();
+
+// ── T27: COPY-ON-CLICK IDs AND EMAILS ────────────────────────────
+(function initCopyOnClick() {
+  async function copyText(text, el) {
+    try { await navigator.clipboard.writeText(text); } catch { return; }
+    const rect = el.getBoundingClientRect();
+    const tip  = document.createElement('div');
+    tip.className = 'copy-flash';
+    tip.textContent = 'Copied!';
+    tip.style.cssText = `left:${rect.left}px;top:${rect.top - 30 + window.scrollY}px`;
+    document.body.appendChild(tip);
+    setTimeout(() => tip.remove(), 1100);
+  }
+
+  function wire(cell, text) {
+    if (cell.dataset.cpWired) return;
+    cell.dataset.cpWired = '1';
+    cell.classList.add('copy-id-cell');
+    cell.title = 'Click to copy';
+    cell.addEventListener('click', e => { e.stopPropagation(); copyText(text, cell); });
+  }
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const UID_RE   = /^[a-zA-Z0-9]{20,}$/;
+
+  function scan() {
+    document.querySelectorAll('#userTable td, #userTableBody td').forEach(td => {
+      const t = td.textContent.trim();
+      if (EMAIL_RE.test(t) || UID_RE.test(t)) wire(td, t);
+    });
+  }
+
+  new MutationObserver(scan).observe(document.getElementById('hubMain') || document.body, { childList: true, subtree: true });
+  setTimeout(scan, 1200);
+})();
+
+// ── T28: MILESTONE CONFETTI ───────────────────────────────────────
+(function initMilestoneConfetti() {
+  const MILESTONES = [10, 25, 50, 100, 250, 500, 1000, 5000];
+  let lastMilestone = parseInt(localStorage.getItem('hub_milestone') || '0');
+
+  function burst() {
+    const canvas = Object.assign(document.createElement('canvas'), { id:'confettiCanvas' });
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    const particles = Array.from({ length: 100 }, () => ({
+      x: window.innerWidth / 2 + (Math.random() - .5) * 200,
+      y: window.innerHeight / 3,
+      vx: (Math.random() - .5) * 9,
+      vy: Math.random() * -9 - 3,
+      color: `hsl(${Math.floor(Math.random() * 360)},90%,55%)`,
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 6 + 3,
+      rot: Math.random() * 360,
+      rspd: (Math.random() - .5) * 12,
+      alpha: 1,
+    }));
+
+    let raf;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.vy += .3; p.rot += p.rspd; p.alpha -= .013;
+        if (p.alpha <= 0) return; alive = true;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      if (alive) raf = requestAnimationFrame(draw); else canvas.remove();
+    }
+    raf = requestAnimationFrame(draw);
+    setTimeout(() => { cancelAnimationFrame(raf); canvas.remove(); }, 4500);
+  }
+
+  const statEl = document.getElementById('statUsers');
+  if (!statEl) return;
+  new MutationObserver(() => {
+    const n = parseInt((statEl.textContent || '').replace(/\D/g, ''));
+    if (!n) return;
+    const hit = MILESTONES.find(m => m > lastMilestone && n >= m);
+    if (hit) {
+      lastMilestone = hit;
+      localStorage.setItem('hub_milestone', String(hit));
+      burst();
+      toast(`🎉 Milestone: ${hit} users reached!`, 'success');
+    }
+  }).observe(statEl, { childList: true, characterData: true, subtree: true });
+})();
+
+// ── T29: FLOATING SPEED DIAL FAB ─────────────────────────────────
+(function initSpeedDial() {
+  const dial = document.getElementById('speedDial');
+  const main = document.getElementById('speedDialMain');
+  if (!dial || !main) return;
+
+  let open = false;
+  function toggle()  { open = !open; dial.classList.toggle('open', open); main.textContent = open ? '×' : '+'; }
+  function closeDial() { if (!open) return; open = false; dial.classList.remove('open'); main.textContent = '+'; }
+
+  main.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  document.addEventListener('click', closeDial);
+
+  document.getElementById('sdBroadcast')?.addEventListener('click', () => { closeDial(); document.getElementById('broadcastModal').hidden = false; });
+  document.getElementById('sdExportHub')?.addEventListener('click', () => { closeDial(); document.getElementById('exportHubModal').hidden = false; });
+  document.getElementById('sdActivity')?.addEventListener('click', () => { closeDial(); document.getElementById('activityFab')?.click(); });
+  document.getElementById('sdNewApp')?.addEventListener('click', () => { closeDial(); showPage('apps'); setTimeout(() => document.getElementById('addAppBtn')?.click(), 350); });
+
+  // Show after login
+  function waitHub() {
+    const hub = document.getElementById('hubMain');
+    if (!hub) { setTimeout(waitHub, 500); return; }
+    const obs = new MutationObserver(() => {
+      if (getComputedStyle(hub).display !== 'none') { dial.hidden = false; obs.disconnect(); }
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+    if (getComputedStyle(hub).display !== 'none') { dial.hidden = false; obs.disconnect(); }
+  }
+  waitHub();
+})();
+
+// ── T30: SYSTEM HEALTH BAR ───────────────────────────────────────
+(function initSystemHealthBar() {
+  const bar    = document.getElementById('sysHealthBar');
+  const dot    = document.getElementById('shDbDot');
+  const label  = document.getElementById('shDbLabel');
+  const syncEl = document.getElementById('shSyncTime');
+  const ctEl   = document.getElementById('shUserCount');
+  if (!bar) return;
+
+  function setStatus(state) {
+    dot.className = 'sh-dot sh-' + state;
+    if (state === 'green')  label.textContent = 'DB Connected';
+    if (state === 'yellow') label.textContent = 'Connecting…';
+    if (state === 'red')    label.textContent = 'DB Error';
+  }
+
+  function waitHub() {
+    const hub = document.getElementById('hubMain');
+    if (!hub) { setTimeout(waitHub, 500); return; }
+    const obs = new MutationObserver(() => {
+      if (getComputedStyle(hub).display !== 'none') { bar.hidden = false; obs.disconnect(); }
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+    if (getComputedStyle(hub).display !== 'none') { bar.hidden = false; obs.disconnect(); }
+  }
+  waitHub();
+
+  function waitDb() {
+    if (!window._db || !window.fb) { setStatus('yellow'); setTimeout(waitDb, 600); return; }
+    setStatus('green');
+    syncEl.textContent = 'Sync: ' + new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    try {
+      fb.onSnapshot(fb.collection(_db, 'hub_users'), snap => {
+        setStatus('green');
+        syncEl.textContent = 'Sync: ' + new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        if (ctEl) ctEl.textContent = snap.size + ' users';
+      });
+    } catch { setStatus('red'); }
+  }
+  waitDb();
+})();
+
+// ── T31: SORTABLE TABLE COLUMNS ──────────────────────────────────
+(function initSortableColumns() {
+  function wire(table) {
+    if (!table || table.dataset.sortWired) return;
+    table.dataset.sortWired = '1';
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    table.querySelectorAll('thead th').forEach((th, colIdx) => {
+      th.classList.add('sortable-th');
+      let asc = true;
+      const ind = document.createElement('span');
+      ind.className = 'sort-indicator';
+      th.appendChild(ind);
+      th.addEventListener('click', () => {
+        table.querySelectorAll('.sort-indicator').forEach(i => { i.textContent = ''; });
+        ind.textContent = asc ? '↑' : '↓';
+        const rows = [...tbody.querySelectorAll('tr')];
+        rows.sort((a, b) => {
+          const av = a.cells[colIdx]?.textContent?.trim() || '';
+          const bv = b.cells[colIdx]?.textContent?.trim() || '';
+          const an = parseFloat(av.replace(/[,$%\s]/g, ''));
+          const bn = parseFloat(bv.replace(/[,$%\s]/g, ''));
+          if (!isNaN(an) && !isNaN(bn)) return (an - bn) * (asc ? 1 : -1);
+          return av.localeCompare(bv) * (asc ? 1 : -1);
+        });
+        rows.forEach(r => tbody.appendChild(r));
+        asc = !asc;
+      });
+    });
+  }
+
+  new MutationObserver(() => {
+    document.querySelectorAll('table.admin-table, #userTable, #appTable').forEach(wire);
+  }).observe(document.getElementById('hubMain') || document.body, { childList: true, subtree: true });
+})();
+
+// ── T32: MARKDOWN PREVIEW FOR POSTS ──────────────────────────────
+(function initMarkdownPreview() {
+  function md(text) {
+    return ('<p>' + text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/^### (.+)$/gm, '</p><h3>$1</h3><p>')
+      .replace(/^## (.+)$/gm,  '</p><h2>$1</h2><p>')
+      .replace(/^# (.+)$/gm,   '</p><h1>$1</h1><p>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+      .replace(/`(.+?)`/g,       '<code>$1</code>')
+      .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>')
+      .replace(/^[-*] (.+)$/gm,  '<li>$1</li>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>') + '</p>');
+  }
+
+  function inject(ta) {
+    if (ta.dataset.mdWired) return;
+    ta.dataset.mdWired = '1';
+    const tabs = document.createElement('div');
+    tabs.className = 'md-tabs';
+    tabs.innerHTML = `<button class="md-tab active" data-t="write">Write</button><button class="md-tab" data-t="preview">Preview ✦</button>`;
+    ta.before(tabs);
+    const preview = document.createElement('div');
+    preview.className = 'md-preview';
+    preview.style.display = 'none';
+    ta.after(preview);
+
+    tabs.querySelectorAll('.md-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.querySelectorAll('.md-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        if (tab.dataset.t === 'preview') {
+          preview.innerHTML = md(ta.value || '*Nothing to preview yet.*');
+          preview.style.display = '';
+          ta.style.display = 'none';
+        } else {
+          preview.style.display = 'none';
+          ta.style.display = '';
+          ta.focus();
+        }
+      });
+    });
+  }
+
+  function scan() {
+    document.querySelectorAll('#page-posts textarea, #postModal textarea').forEach(ta => {
+      if ((ta.rows || 3) >= 3) inject(ta);
+    });
+  }
+
+  new MutationObserver(scan).observe(document.getElementById('hubMain') || document.body, { childList: true, subtree: true });
+  setTimeout(scan, 1000);
+})();
+
+// ── T33: DRAG-TO-REORDER DASHBOARD CARDS ─────────────────────────
+(function initDashDrag() {
+  const ORDER_KEY = 'hub_dash_order_v1';
+  const grid = document.querySelector('.cat-grid');
+  if (!grid) return;
+
+  const cards = [...grid.querySelectorAll('.cat-card-wrap')];
+  cards.forEach((el, i) => {
+    el.dataset.dashId = el.querySelector('.cat-name')?.textContent?.trim().replace(/\s+/g,'_') || String(i);
+  });
+
+  function saveOrder() {
+    const order = [...grid.querySelectorAll('.cat-card-wrap')].map(el => el.dataset.dashId);
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  }
+
+  function restoreOrder() {
+    const saved = JSON.parse(localStorage.getItem(ORDER_KEY) || 'null');
+    if (!saved) return;
+    saved.forEach(id => {
+      const el = grid.querySelector(`[data-dash-id="${id}"]`);
+      if (el) grid.appendChild(el);
+    });
+  }
+  restoreOrder();
+
+  let dragSrc = null;
+
+  grid.querySelectorAll('.cat-card-wrap').forEach(el => {
+    el.draggable = true;
+    el.addEventListener('dragstart', e => {
+      dragSrc = el;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      grid.querySelectorAll('.cat-card-wrap').forEach(c => c.classList.remove('drag-over'));
+      saveOrder();
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      grid.querySelectorAll('.cat-card-wrap').forEach(c => c.classList.remove('drag-over'));
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      if (dragSrc && dragSrc !== el) {
+        const all = [...grid.querySelectorAll('.cat-card-wrap')];
+        if (all.indexOf(dragSrc) < all.indexOf(el)) el.after(dragSrc);
+        else el.before(dragSrc);
+      }
+    });
+  });
 })();
