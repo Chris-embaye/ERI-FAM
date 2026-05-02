@@ -528,10 +528,11 @@ body::after {
 
 /* ── MAIN AREA ───────────────────────────────────────────────── */
 #hubMain {
-  flex: 1; min-height: 0; overflow-y: auto;
+  flex: 1; overflow-y: auto; overflow-anchor: none;
   display: flex; flex-direction: column;
   background: transparent;
   position: relative; z-index: 1;
+  align-self: stretch;
 }
 
 /* Mobile top bar */
@@ -569,6 +570,7 @@ body::after {
 .page {
   display: none; flex-direction: column;
   padding: 36px 40px; flex: 1;
+  overflow-anchor: none;
 }
 .page.active {
   display: flex;

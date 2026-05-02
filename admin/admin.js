@@ -310,11 +310,15 @@ function showPage(name) {
   if (page) page.classList.add('active');
   if (btn)  btn.classList.add('active');
 
-  // Scroll to top on every page switch (hubMain + document-level safety)
+  // Scroll to top — immediate + deferred to catch Firebase async content loading
   const main = document.getElementById('hubMain');
-  if (main) main.scrollTop = 0;
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
+  const resetScroll = () => {
+    if (main) main.scrollTop = 0;
+    window.scrollTo(0, 0);
+  };
+  resetScroll();
+  setTimeout(resetScroll, 50);
+  setTimeout(resetScroll, 300);
 
   // Page progress bar animation
   const bar = document.getElementById('pageProgress');
