@@ -70,6 +70,7 @@
 
 html, body {
   height: 100%;
+  overflow-anchor: none;
   background: var(--bg);
   color: var(--text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;

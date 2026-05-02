@@ -4,8 +4,8 @@
    ================================================================ */
 'use strict';
 
-// Prevent document-level scroll — all scrolling should happen inside #hubMain
-window.addEventListener('scroll', () => window.scrollTo(0, 0), { passive: true });
+// Snap document scroll to top whenever it drifts (scroll anchoring / layout reflow)
+document.addEventListener('scroll', () => { if (window.scrollY > 0) window.scrollTo(0, 0); }, { passive: true });
 
 // ── Firebase state ────────────────────────────────────────
 let _db, _auth, fb = {};
