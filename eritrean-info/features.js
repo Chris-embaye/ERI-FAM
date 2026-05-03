@@ -2084,54 +2084,6 @@ function initAutoRefresh() {
   document.addEventListener('DOMContentLoaded', init);
 })();
 
-// ── T18: ANIMATED STAT COUNTERS ──────────────────────────────────────────
-(function T18_Counters() {
-  const TARGETS = [
-    { sel: '#hero .hero-badges', add: false },
-  ];
-
-  function countUp(el, target, duration) {
-    const start = performance.now();
-    const isFloat = String(target).includes('.');
-    function step(now) {
-      const p = Math.min((now - start) / duration, 1);
-      const ease = 1 - Math.pow(1 - p, 3);
-      const val = isFloat ? (target * ease).toFixed(1) : Math.round(target * ease);
-      el.textContent = Number(val).toLocaleString();
-      if (p < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-
-  function initCounters() {
-    const stats = [
-      { id: 'statPop',   val: 3500000, label: 'Population' },
-      { id: 'statArea',  val: 117600,  label: 'Area (km²)' },
-      { id: 'statIslands',val: 209,    label: 'Islands' },
-      { id: 'statCoast', val: 2234,    label: 'Coastline (km)' },
-    ];
-    stats.forEach(s => {
-      const el = document.getElementById(s.id);
-      if (!el) return;
-      const io = new IntersectionObserver(entries => {
-        entries.forEach(e => { if (e.isIntersecting) { countUp(el, s.val, 1600); io.disconnect(); } });
-      }, { threshold: 0.5 });
-      io.observe(el);
-    });
-
-    // Also scan for elements with data-count attribute
-    document.querySelectorAll('[data-count]').forEach(el => {
-      const val = parseFloat(el.dataset.count);
-      if (isNaN(val)) return;
-      const io = new IntersectionObserver(entries => {
-        entries.forEach(e => { if (e.isIntersecting) { countUp(el, val, 1400); io.disconnect(); } });
-      }, { threshold: 0.5 });
-      io.observe(el);
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', () => setTimeout(initCounters, 1000));
-})();
 
 // ── T19: PRINT MODE ──────────────────────────────────────────────────────
 (function T19_Print() {
@@ -2683,60 +2635,6 @@ function checkAchievement(id) {
   document.addEventListener('DOMContentLoaded', () => setTimeout(init, 800));
 })();
 
-// ── T29: TRANSLATOR HISTORY ──────────────────────────────────────────────
-(function T29_TransHistory() {
-  const LS_KEY = 'eri_trans_hist';
-  const MAX = 10;
-  function getHist() { try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; } }
-  function saveHist(h) { localStorage.setItem(LS_KEY, JSON.stringify(h.slice(0, MAX))); }
-
-  function addEntry(src, tgt) {
-    if (!src || !tgt || src === tgt) return;
-    const h = getHist().filter(e => e.src !== src);
-    h.unshift({ src, tgt, time: Date.now() });
-    saveHist(h);
-    renderHistory();
-    checkAchievement('linguist');
-  }
-  window._addTransHistory = addEntry;
-
-  function renderHistory() {
-    const container = document.getElementById('transHistoryList');
-    if (!container) return;
-    const h = getHist();
-    if (!h.length) { container.innerHTML = '<div style="color:var(--text-muted,#888);font-size:.78rem;padding:6px 0">No translations yet</div>'; return; }
-    container.innerHTML = h.map(e => `<div class="trans-hist-item" data-src="${encodeURIComponent(e.src)}" data-tgt="${encodeURIComponent(e.tgt)}">
-      <span class="thi-src">${esc(e.src.slice(0,30))}</span><span class="thi-arrow">→</span><span class="thi-tgt">${esc(e.tgt.slice(0,30))}</span></div>`).join('');
-    container.querySelectorAll('.trans-hist-item').forEach(el => {
-      el.addEventListener('click', () => {
-        const srcIn = document.querySelector('#translator textarea, #translatorInput');
-        if (srcIn) { srcIn.value = decodeURIComponent(el.dataset.src); srcIn.dispatchEvent(new Event('input')); }
-      });
-    });
-  }
-
-  function init() {
-    const transSection = document.getElementById('translator');
-    if (!transSection) return;
-    const wrap = document.createElement('div');
-    wrap.className = 'trans-history';
-    wrap.innerHTML = '<div class="trans-history-title">🕐 Recent Translations</div><div id="transHistoryList"></div>';
-    transSection.appendChild(wrap);
-    renderHistory();
-    const translateBtn = transSection.querySelector('button');
-    if (translateBtn) {
-      translateBtn.addEventListener('click', () => {
-        setTimeout(() => {
-          const srcIn = transSection.querySelector('textarea');
-          const out = transSection.querySelector('[id*=output],[id*=Output],[id*=result],[id*=Result]');
-          if (srcIn && out && out.textContent.trim()) addEntry(srcIn.value.trim(), out.textContent.trim().slice(0, 80));
-        }, 1500);
-      });
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 1000));
-})();
 
 // ── T30: AUTO DARK MODE SCHEDULER ────────────────────────────────────────
 (function T30_AutoDark() {
