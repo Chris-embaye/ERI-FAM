@@ -277,6 +277,7 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 .tc-info { padding: 9px 10px 11px; }
 .tc-title { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
 .tc-artist { font-size: 0.71rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-date   { font-size: 0.65rem; color: var(--text-mute, #666); margin-top: 3px; opacity: 0.75; }
 .tc-more {
   position: absolute; top: 5px; right: 5px;
   width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.5);
@@ -2359,63 +2360,6 @@ body.theme-galaxy .nav-item.active::before { background: var(--accent); box-shad
   to   { transform: rotate(360deg); }
 }
 
-/* DJ waveform bars — heights driven by JS/AnalyserNode in real-time */
-/* ── DJ Visualizer Scene ──────────────────────────────────── */
-.fp-dj-scene {
-  width: 100%; margin-bottom: 16px; padding: 0 8px;
-  opacity: 0; transition: opacity 0.4s;
-  position: relative;
-  will-change: filter;
-}
-.fp-dj-scene.active { opacity: 1; }
-
-/* Peak-hold dots — sit inside the wave, one per bar slot */
-.fp-dj-peaks {
-  display: flex; align-items: flex-end; gap: 3px;
-  height: 64px; width: 100%;
-  position: absolute; bottom: 0; left: 0; right: 0;
-  pointer-events: none; z-index: 2;
-}
-.fp-dj-peak {
-  flex: 1; height: 2px; border-radius: 2px;
-  will-change: transform, background, box-shadow;
-  transform: translateY(0);
-  transition: transform 0.05s linear;
-}
-
-/* Main bars — align to bottom */
-.fp-dj-wave {
-  display: flex; align-items: flex-end; gap: 3px;
-  height: 64px; width: 100%;
-  position: relative; z-index: 1;
-}
-.fp-dj-bar {
-  flex: 1; border-radius: 3px 3px 1px 1px;
-  height: 3px; min-height: 3px;
-  will-change: height, background, box-shadow;
-}
-
-/* Mirror reflection below — flipped, faded */
-.fp-dj-reflect {
-  display: flex; align-items: flex-start; gap: 3px;
-  height: 24px; width: 100%;
-  transform: scaleY(-1);
-  opacity: 0.22;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6) 100%);
-  mask-image: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6) 100%);
-}
-.fp-dj-reflect .fp-dj-bar {
-  border-radius: 1px 1px 3px 3px;
-  will-change: height, background, box-shadow;
-}
-
-/* Beat pulse on album art ring — JS adds/removes class on each beat */
-@keyframes beat-pulse {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.042); filter: brightness(1.18) drop-shadow(0 0 20px var(--accent-glow)); }
-  100% { transform: scale(1); }
-}
-.fp-ring-container.beat-pulse { animation: beat-pulse 0.32s cubic-bezier(0.22,1,0.36,1); }
 
 /* Kill-code PIN overlay */
 [data-kill-overlay] { position: fixed; inset: 0; z-index: 10000; }

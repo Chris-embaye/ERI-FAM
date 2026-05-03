@@ -167,6 +167,16 @@ function idbDelete(store, key) {
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 function fmtTime(s) { if (!s || isNaN(s)) return '0:00'; return Math.floor(s/60)+':'+Math.floor(s%60).toString().padStart(2,'0'); }
 function fmtSize(b) { if (b < 1e6) return (b/1e3).toFixed(0)+' KB'; return (b/1e6).toFixed(1)+' MB'; }
+function fmtAgo(ts) {
+  if (!ts) return '';
+  const d = Math.floor((Date.now() - ts) / 86400000);
+  if (d === 0) return 'Today';
+  if (d === 1) return 'Yesterday';
+  if (d < 7)  return d + ' days ago';
+  if (d < 30) return Math.floor(d / 7) + ' wk ago';
+  if (d < 365) return Math.floor(d / 30) + ' mo ago';
+  return Math.floor(d / 365) + ' yr ago';
+}
 
 let toastTimer;
 function toast(msg, dur=2400) {
@@ -395,15 +405,11 @@ async function playTrack(track, queueTracks) {
 async function togglePlay() {
   if (!S.currentTrack) return;
   if (audio.paused) {
-    // Fire resume() and play() synchronously in the same tick so iOS Safari
-    // keeps the user-gesture token for both calls (awaiting resume first loses it).
-    const resumeP = (audioCtx && audioCtx.state !== 'running')
-      ? audioCtx.resume().catch(e => console.warn('[AudioCtx resume]', e))
-      : null;
-    const playP = audio.play();
-    if (resumeP) await resumeP;
+    if (audioCtx && audioCtx.state !== 'running') {
+      await audioCtx.resume().catch(e => console.warn('[AudioCtx resume]', e));
+    }
     try {
-      await playP;
+      await audio.play();
     } catch(e) {
       if (e.name !== 'AbortError') toast('⚠ Could not resume — tap again');
       return;
@@ -548,10 +554,8 @@ function updatePlayIcons() {
 
 function updateHeaderPlayState() {
   document.getElementById('appHeader').classList.toggle('music-playing', S.playing);
-  const vinyl  = document.getElementById('fpVinyl');
-  const djScene = document.getElementById('fpDjScene');
-  if (vinyl)   vinyl.classList.toggle('spinning', S.playing);
-  if (djScene) djScene.classList.toggle('active', S.playing);
+  const vinyl = document.getElementById('fpVinyl');
+  if (vinyl) vinyl.classList.toggle('spinning', S.playing);
 }
 
 function updatePlayerUI() {
@@ -669,6 +673,7 @@ function renderGrid(tracks) {
       <div class="tc-info">
         <div class="tc-title">${esc(t.title)}${t.premium ? ' <span class="tc-premium-lock">🔒</span>' : ''}</div>
         <div class="tc-artist">${esc(t.artist)}</div>
+        ${t.type === 'cloud' && t.addedAt ? `<div class="tc-date">${fmtAgo(t.addedAt)}</div>` : ''}
       </div>
       <button class="tc-more" data-id="${t.id}">⋯</button>
     </div>`;
@@ -700,6 +705,7 @@ function renderList(tracks) {
       <div class="tr-info">
         <div class="tr-title">${esc(t.title)}</div>
         <div class="tr-artist">${esc(t.artist)}</div>
+        ${t.type === 'cloud' && t.addedAt ? `<div class="tc-date">${fmtAgo(t.addedAt)}</div>` : ''}
       </div>
       <button class="tr-play-btn${playing?' tr-playing':''}" data-id="${t.id}">${playing && S.playing ? pauseSvg : playSvg}</button>
       <span class="tr-dur">${fmtTime(t.duration)}</span>
@@ -1029,7 +1035,6 @@ document.getElementById('listViewBtn').addEventListener('click', () => {
 document.getElementById('miniPlayerExpand').addEventListener('click', e => { if (!e.target.closest('.mini-btn')) openPanel('fullPlayer'); });
 document.getElementById('miniPlay').addEventListener('click', async e => {
   e.stopPropagation();
-  initAudioCtx();
   await togglePlay();
 });
 document.getElementById('miniPrev').addEventListener('click', e => { e.stopPropagation(); prevTrack(); });
@@ -1038,7 +1043,6 @@ document.getElementById('miniNext').addEventListener('click', e => { e.stopPropa
 // ── Full Player ────────────────────────────────────────────────
 document.getElementById('fpClose').addEventListener('click', () => closePanel('fullPlayer'));
 document.getElementById('playBtn').addEventListener('click', async () => {
-  initAudioCtx();
   await togglePlay();
 });
 document.getElementById('prevBtn').addEventListener('click', prevTrack);
@@ -1719,6 +1723,9 @@ async function syncCloud() {
   } catch(e) {
     console.warn('[Sync]', e);
     banner.style.display = 'none';
+    if (!S.cloudTracks.length) {
+      toast('⚠ Could not load songs — check your connection and refresh', 4000);
+    }
   }
 }
 
@@ -1980,134 +1987,6 @@ function stopVisualizer() {
   }
 }
 
-/* ── Audio-reactive DJ bars ──────────────────────────────────── */
-// Frequency bin indices picked to spread evenly across the spectrum (16 bands)
-const DJ_BINS = [2,3,5,7,9,11,14,18,22,27,33,40,48,56,60,63];
-// Hue per bar: bass=cyan(190) → mid=lime(110) → treble=red(5)
-const DJ_HUES = [192,186,178,168,158,146,132,118,103,86,68,50,34,22,12,5];
-const MAX_H = 62;
-let djBarRaf = null;
-const djSmooth = new Float32Array(16).fill(3);
-const djPeaks  = new Float32Array(16).fill(3);
-const djPeakHold = new Int16Array(16).fill(0);
-
-function startDjBars() {
-  if (!analyserNode) return;
-  const scene   = document.getElementById('fpDjScene');
-  const bars    = document.querySelectorAll('#fpDjWave .fp-dj-bar');
-  const mirrors = document.querySelectorAll('#fpDjReflect .fp-dj-bar');
-  const peaks   = document.querySelectorAll('#fpDjPeaks .fp-dj-peak');
-  if (!bars.length) return;
-  const buf = new Uint8Array(analyserNode.frequencyBinCount);
-
-  function frame() {
-    djBarRaf = requestAnimationFrame(frame);
-    analyserNode.getByteFrequencyData(buf);
-
-    let bassEnergy = 0;
-    bars.forEach((bar, i) => {
-      const bin = Math.min(DJ_BINS[i] || i * 4, buf.length - 1);
-      const raw = (buf[bin] / 255) * MAX_H;
-      djSmooth[i] = raw > djSmooth[i]
-        ? raw * 0.7 + djSmooth[i] * 0.3   // fast attack
-        : raw * 0.07 + djSmooth[i] * 0.93; // slow decay
-      const h = Math.max(3, djSmooth[i]);
-      if (i < 4) bassEnergy += h / MAX_H;
-
-      // Peak tracking
-      if (h >= djPeaks[i]) { djPeaks[i] = h; djPeakHold[i] = 48; }
-      else if (djPeakHold[i] > 0) { djPeakHold[i]--; }
-      else { djPeaks[i] = Math.max(3, djPeaks[i] - 0.6); }
-
-      const hue = DJ_HUES[i];
-      const sat = 95 + (h / MAX_H) * 5;
-      const lit = 48 + (h / MAX_H) * 18;
-      const glow = (h / MAX_H) * 22;
-      const glowA = (h / MAX_H) * 0.75;
-      const css = `hsl(${hue},${sat}%,${lit}%)`;
-      const shadow = `0 0 ${glow}px hsla(${hue},100%,60%,${glowA}), 0 0 ${glow * 2}px hsla(${hue},100%,50%,${glowA * 0.35})`;
-
-      bar.style.height    = h + 'px';
-      bar.style.background = `linear-gradient(to top, hsl(${hue},100%,${lit - 12}%), ${css})`;
-      bar.style.boxShadow = shadow;
-
-      if (mirrors[i]) {
-        mirrors[i].style.height    = h + 'px';
-        mirrors[i].style.background = bar.style.background;
-        mirrors[i].style.boxShadow = `0 0 ${glow * 0.6}px hsla(${hue},100%,60%,${glowA * 0.4})`;
-      }
-      if (peaks[i]) {
-        peaks[i].style.transform  = `translateY(-${djPeaks[i]}px)`;
-        peaks[i].style.background = `hsl(${hue},100%,78%)`;
-        peaks[i].style.boxShadow  = `0 0 6px hsl(${hue},100%,70%)`;
-      }
-    });
-
-    // Outer scene glow driven by bass energy
-    const eg = Math.min(1, bassEnergy / 3);
-    if (scene) scene.style.filter = eg > 0.05
-      ? `drop-shadow(0 0 ${eg * 18}px hsla(190,100%,55%,${eg * 0.7}))`
-      : 'none';
-  }
-  frame();
-}
-
-function stopDjBars() {
-  if (djBarRaf) { cancelAnimationFrame(djBarRaf); djBarRaf = null; }
-  const scene = document.getElementById('fpDjScene');
-  if (scene) scene.style.filter = 'none';
-  document.querySelectorAll('.fp-dj-bar').forEach(bar => {
-    bar.style.height = '3px';
-    bar.style.background = '';
-    bar.style.boxShadow = '';
-  });
-  document.querySelectorAll('.fp-dj-peak').forEach(p => { p.style.bottom = '3px'; });
-  djSmooth.fill(3); djPeaks.fill(3); djPeakHold.fill(0);
-}
-
-/* ── Beat detection for visual pulse ────────────────────────── */
-let beatRaf = null, lastBeatTime = 0;
-const beatBuf = new Float32Array(5); // rolling bass average
-let beatBufIdx = 0, beatBufFull = false;
-
-function startBeatDetection() {
-  if (!analyserNode) return;
-  const buf = new Uint8Array(analyserNode.frequencyBinCount);
-
-  function detect() {
-    beatRaf = requestAnimationFrame(detect);
-    analyserNode.getByteFrequencyData(buf);
-    // Bass energy: bins 1-5 (~40–200 Hz)
-    const bass = (buf[1] + buf[2] + buf[3] + buf[4] + buf[5]) / (5 * 255);
-    beatBuf[beatBufIdx % 5] = bass;
-    beatBufIdx++;
-    if (beatBufIdx >= 5) beatBufFull = true;
-    const avg = beatBufFull
-      ? beatBuf.reduce((s, v) => s + v, 0) / 5
-      : bass;
-
-    const now = performance.now();
-    // Beat = current bass spike significantly above rolling average, min 250ms apart
-    if (bass > avg * 1.35 && bass > 0.4 && now - lastBeatTime > 250) {
-      lastBeatTime = now;
-      const ring = document.getElementById('fpRingContainer');
-      if (ring) {
-        ring.classList.remove('beat-pulse');
-        void ring.offsetWidth; // force reflow to restart animation
-        ring.classList.add('beat-pulse');
-      }
-    }
-    // Update energy CSS var for ambient glow
-    const energy = buf.reduce((s, v) => s + v, 0) / (buf.length * 255);
-    document.documentElement.style.setProperty('--beat-energy', energy.toFixed(3));
-  }
-  detect();
-}
-
-function stopBeatDetection() {
-  if (beatRaf) { cancelAnimationFrame(beatRaf); beatRaf = null; }
-  document.documentElement.style.setProperty('--beat-energy', '0');
-}
 
 document.getElementById('vizToggleBtn').addEventListener('click', async () => {
   const wasPlaying = !audio.paused;
@@ -2134,14 +2013,10 @@ document.getElementById('vizToggleBtn').addEventListener('click', async () => {
 });
 
 audio.addEventListener('play', () => {
-  // resume() was already fired synchronously in togglePlay() — just start visualizers
   if (vizActive) startVisualizer();
-  if (analyserNode) { startDjBars(); startBeatDetection(); }
 });
 audio.addEventListener('pause', () => {
   stopVisualizer();
-  stopDjBars();
-  stopBeatDetection();
 });
 
 // iOS safety net: resume AudioContext on any touch if the OS suspended it
@@ -3900,22 +3775,6 @@ document.addEventListener('keydown', e => {
   }
 })();
 
-/* ════════════════════════════════════════════════════════════════
-   NOW PLAYING — enhanced ambient glow driven by --beat-energy
-   ════════════════════════════════════════════════════════════════ */
-(function initNowPlayingFX() {
-  // When the full player opens, start beat detection if audio is playing
-  const fpPanel = document.getElementById('fullPlayer');
-  if (!fpPanel) return;
-
-  const observer = new MutationObserver(() => {
-    if (fpPanel.classList.contains('open')) {
-      if (S.playing && analyserNode && !beatRaf) startBeatDetection();
-      if (S.playing && analyserNode && !djBarRaf) startDjBars();
-    }
-  });
-  observer.observe(fpPanel, { attributes: true, attributeFilter: ['class'] });
-})();
 
 function _toggleKeyboardModal() {
   const m = document.getElementById('keyboardModal');
