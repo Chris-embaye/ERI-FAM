@@ -115,8 +115,8 @@ export function renderDashboard() {
         ${isEmpty ? `
           <div class="flex flex-col items-center justify-center py-16 space-y-4 text-center px-8">
             <div class="text-6xl mb-2">🚛</div>
-            <h2 class="text-xl font-black">Welcome to RigLog TEST</h2>
-            <p class="text-sm" style="color:rgba(148,163,184,0.8)">This is your isolated test environment. Data here never touches production.</p>
+            <h2 class="text-xl font-black">Welcome to RigLog</h2>
+            <p class="text-sm" style="color:rgba(148,163,184,0.8)">Log your first trip to get started tracking revenue and expenses.</p>
             <div class="flex gap-3 mt-2">
               <button onclick="navigate('trips')" class="font-bold px-5 py-2.5 rounded-xl text-sm" style="background:#0891b2;color:#fff">Log First Trip</button>
               <button onclick="navigate('expenses')" class="font-bold px-5 py-2.5 rounded-xl text-sm" style="background:rgba(255,255,255,0.07);color:#fff">Add Expense</button>

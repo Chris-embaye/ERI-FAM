@@ -58,6 +58,19 @@
   </div>
 
   <!-- NAVIGATION -->
+  <!-- Reading progress bar -->
+  <div id="readingBar" class="reading-bar"></div>
+
+  <!-- Word of the Day strip -->
+  <div id="wodBar" class="wod-bar" hidden>
+    <span class="wod-label">🌟 Word of the Day:</span>
+    <span class="wod-ti" id="wodTi"></span>
+    <span class="wod-sep">—</span>
+    <span class="wod-en" id="wodEn"></span>
+    <span class="wod-ex" id="wodEx"></span>
+    <button class="wod-close" id="wodClose" aria-label="Dismiss">✕</button>
+  </div>
+
   <nav id="navbar">
     <div class="nav-container">
       <a href="#hero" class="nav-logo">
@@ -80,6 +93,8 @@
 
       <div class="nav-right">
         <button class="nav-search-btn" id="globalSearchBtn" title="Search everything" aria-label="Search">🔍</button>
+        <button class="nav-icon-btn" id="inPageSearchBtn" title="Search within page (Ctrl+F)" aria-label="In-page search">🔎</button>
+        <button class="nav-icon-btn" id="readingModeBtn" title="Reading mode" aria-label="Reading mode">Aa</button>
         <button class="dark-toggle" id="darkToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
         <div class="lang-picker-wrap" id="langPickerWrap">
           <button class="lang-picker-btn" id="langPickerBtn" title="Choose language">🌐 <span id="currentLangLabel">EN</span></button>
@@ -112,6 +127,7 @@
     <!-- Slide-down nav panel -->
     <div class="nav-dropdown" id="navDropdown">
       <div class="nav-dropdown-grid">
+        <a href="#live-dashboard" class="nav-dd-item">📡<span>Live</span></a>
         <a href="#world-search" class="nav-dd-item">🌍<span>World Search</span></a>
         <a href="#eritrea-map"  class="nav-dd-item">🗺️<span>Map</span></a>
         <a href="#overview"     class="nav-dd-item">🏛️<span>Overview</span></a>
@@ -156,6 +172,15 @@
       </div>
     </div>
   </nav>
+
+  <!-- LIVE NEWS TICKER -->
+  <div id="newsTicker" class="news-ticker" hidden>
+    <span class="ticker-label">📡 LIVE</span>
+    <div class="ticker-overflow">
+      <div class="ticker-track" id="tickerTrack">Loading latest headlines…</div>
+    </div>
+    <button class="ticker-pause" id="tickerPause" title="Pause">⏸</button>
+  </div>
 
   <!-- SHARE STORY FLOATING BUTTON -->
   <button class="share-story-float" id="shareStoryFloat" title="Share Your Story with the Community">
@@ -235,6 +260,16 @@
     </div>
   </div>
 
+  <!-- CITIES WEATHER STRIP -->
+  <div class="cities-weather-strip" id="citiesWeatherStrip">
+    <div class="cws-city" id="cws-asmara"><span class="cws-place-icon">🏛️</span><span class="cws-name">Asmara</span><span class="cws-icon">🌡️</span><span class="cws-temp">—°</span></div>
+    <div class="cws-city" id="cws-massawa"><span class="cws-place-icon">⛵</span><span class="cws-name">Massawa</span><span class="cws-icon">🌡️</span><span class="cws-temp">—°</span></div>
+    <div class="cws-city" id="cws-keren"><span class="cws-place-icon">🌿</span><span class="cws-name">Keren</span><span class="cws-icon">🌡️</span><span class="cws-temp">—°</span></div>
+    <div class="cws-city" id="cws-mendefera"><span class="cws-place-icon">🏔️</span><span class="cws-name">Mendefera</span><span class="cws-icon">🌡️</span><span class="cws-temp">—°</span></div>
+    <div class="cws-city" id="cws-barentu"><span class="cws-place-icon">🌾</span><span class="cws-name">Barentu</span><span class="cws-icon">🌡️</span><span class="cws-temp">—°</span></div>
+    <div class="cws-update" id="cwsUpdate">Live weather updating…</div>
+  </div>
+
   <!-- QUICK FACTS -->
   <section id="quick-facts">
     <div class="container">
@@ -279,6 +314,48 @@
           <div class="fact-label">Calling Code</div>
           <div class="fact-value">+291</div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE DASHBOARD -->
+  <section id="live-dashboard" class="live-dashboard-section">
+    <div class="container">
+      <div class="ld-header">
+        <span class="ld-live-badge">● LIVE</span>
+        <h2 class="ld-title">Eritrea Live</h2>
+        <span class="ld-sub">Real-time data, daily updates, world connections</span>
+      </div>
+      <div class="ld-grid">
+
+        <!-- Diaspora Clocks -->
+        <div class="ld-card ld-clocks-card">
+          <div class="ld-card-head">🕐 Eritrean Diaspora — Live Times</div>
+          <div class="clocks-grid" id="clocksGrid"></div>
+        </div>
+
+        <!-- Eri Today Daily Card -->
+        <div class="ld-card ld-today-card">
+          <div class="ld-card-head">🇪🇷 Eri Today <span class="ld-date-tag" id="ldDateTag"></span></div>
+          <div class="etc-moon-row"><span id="etcMoon">🌕</span><div id="etcDateBox"></div></div>
+          <div id="etcProverb" class="etc-proverb-block"></div>
+          <div id="etcOtd" class="etc-otd-block"></div>
+          <div id="etcCountdown" class="etc-countdown-block"></div>
+        </div>
+
+        <!-- Live Exchange Rates -->
+        <div class="ld-card ld-rates-card">
+          <div class="ld-card-head">💱 ERN Exchange Rates <span class="ld-live-dot"></span></div>
+          <div id="liveRatesWidget" class="live-rates-list"></div>
+          <div class="ld-rates-note">Based on official ERN peg • Updated daily</div>
+        </div>
+
+        <!-- Country Spotlight -->
+        <div class="ld-card ld-spotlight-card">
+          <div class="ld-card-head">🌍 Today's World Spotlight</div>
+          <div id="countrySpotlight"></div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -333,8 +410,15 @@
     <div class="container">
       <div class="section-header">
         <span class="section-tag">News</span>
-        <h2>Latest from Eritrea</h2>
-        <p>Curated updates, stories, and news from Eritrea and the diaspora</p>
+        <h2>Latest News</h2>
+        <p>Live headlines from Eritrea, Africa, and the world — updated every 30 minutes</p>
+      </div>
+      <div class="news-tabs-row" id="newsTabsRow">
+        <button class="news-tab active" data-feed="eritrea">🇪🇷 Eritrea</button>
+        <button class="news-tab" data-feed="africa">🌍 Africa</button>
+        <button class="news-tab" data-feed="world">🌐 World</button>
+        <button class="news-tab" data-feed="sports">⚽ Sports</button>
+        <button class="news-tab" data-feed="tech">💻 Tech</button>
       </div>
       <div class="news-grid" id="newsGrid">
         <div class="news-skeleton"><div class="news-skel-card"></div><div class="news-skel-card"></div><div class="news-skel-card"></div></div>
@@ -1822,59 +1906,115 @@
 
   <!-- ═══ MUSIC PHONE WIDGET ═══ -->
   <div id="musicPhoneWidget">
+
+    <!-- Mini pill — shows when frame is hidden but music is playing -->
+    <div id="mpfMiniPill" class="mpf-mini-pill" hidden>
+      <div class="mpf-mini-disc" id="mpfMiniDisc">🎵</div>
+      <div class="mpf-mini-info">
+        <span class="mpf-mini-title" id="mpfMiniTitle">—</span>
+        <span class="mpf-mini-artist" id="mpfMiniArtist">—</span>
+      </div>
+      <div class="mpf-mini-viz" id="mpfMiniViz"><span></span><span></span><span></span></div>
+      <button class="mpf-mini-ctrl" id="mpfMiniPrev" title="Previous">⏮</button>
+      <button class="mpf-mini-ctrl mpf-mini-play" id="mpfMiniPlay" title="Play/Pause">▶</button>
+      <button class="mpf-mini-ctrl" id="mpfMiniNext" title="Next">⏭</button>
+      <button class="mpf-mini-expand" id="mpfMiniExpand" title="Open player">↑</button>
+    </div>
+
+    <!-- Tab trigger button -->
     <button id="musicPhoneTab" class="music-phone-tab" title="Open ERI-FAM Music App">
       <span class="mpt-icon">🎵</span>
       <span class="mpt-label">Music</span>
     </button>
+
+    <!-- Full phone frame -->
     <div id="musicPhoneFrame" class="music-phone-frame" hidden>
       <div class="mpf-shell">
         <div class="mpf-notch"></div>
         <div class="mpf-screen">
+
+          <!-- Status bar -->
           <div class="mpf-statusbar">
             <span class="mpf-time" id="mpfTime">9:41</span>
             <span class="mpf-status-icons">📶 🔋</span>
           </div>
+
+          <!-- Header -->
           <div class="mpf-header">
-            <span class="mpf-close-btn" id="mpfClose" role="button" tabindex="0" title="Close">✕</span>
+            <span class="mpf-close-btn" id="mpfClose" role="button" tabindex="0" title="Minimise">−</span>
             <span class="mpf-app-title">ERI-FAM Music</span>
             <span class="mpf-logo">🇪🇷</span>
           </div>
 
           <!-- Now Playing -->
-          <div class="mpf-now-playing">
+          <div class="mpf-now-playing" id="mpfNowPlaying">
+            <!-- Disc with pulsing ring -->
             <div class="mpf-disc-wrap">
-              <div class="mpf-disc" id="mpfDisc">
-                <span id="mpfDiscEmoji">🎵</span>
+              <div class="mpf-disc-ring" id="mpfDiscRing"></div>
+              <div class="mpf-disc" id="mpfDisc"><span id="mpfDiscEmoji">🎵</span></div>
+            </div>
+
+            <!-- Track info + like -->
+            <div class="mpf-track-info-row">
+              <div class="mpf-track-info">
+                <div class="mpf-track-title" id="mpfTrackTitle">Select a song</div>
+                <div class="mpf-track-artist" id="mpfTrackArtist">ERI-FAM Music</div>
               </div>
+              <button class="mpf-like-btn" id="mpfLikeBtn" title="Like this track">♡</button>
             </div>
-            <div class="mpf-track-info">
-              <div class="mpf-track-title" id="mpfTrackTitle">Select a song</div>
-              <div class="mpf-track-artist" id="mpfTrackArtist">ERI-FAM Music</div>
-            </div>
+
+            <!-- Progress bar -->
             <div class="mpf-progress-wrap">
               <div class="mpf-progress-bar" id="mpfProgressBar">
                 <div class="mpf-progress-fill" id="mpfProgressFill"></div>
+                <div class="mpf-progress-thumb" id="mpfProgressThumb"></div>
               </div>
               <div class="mpf-time-row">
                 <span id="mpfCurrent">0:00</span>
                 <span id="mpfDuration">0:00</span>
               </div>
             </div>
-            <div class="mpf-controls">
-              <button class="mpf-ctrl-btn" id="mpfPrev" title="Previous">⏮</button>
-              <button class="mpf-ctrl-btn mpf-play-btn" id="mpfPlay" title="Play/Pause">▶</button>
-              <button class="mpf-ctrl-btn" id="mpfNext" title="Next">⏭</button>
+
+            <!-- Controls: shuffle | prev | play | next | repeat -->
+            <div class="mpf-controls-row">
+              <button class="mpf-mode-btn" id="mpfShuffle" title="Shuffle">⇄</button>
+              <div class="mpf-controls">
+                <button class="mpf-ctrl-btn" id="mpfPrev" title="Previous">⏮</button>
+                <button class="mpf-ctrl-btn mpf-play-btn" id="mpfPlay" title="Play/Pause">▶</button>
+                <button class="mpf-ctrl-btn" id="mpfNext" title="Next">⏭</button>
+              </div>
+              <button class="mpf-mode-btn" id="mpfRepeat" title="Repeat">↺</button>
             </div>
+
+            <!-- Volume -->
+            <div class="mpf-volume-row">
+              <span class="mpf-vol-icon" id="mpfVolIcon">🔈</span>
+              <input type="range" id="mpfVolume" class="mpf-volume-slider" min="0" max="100" value="80"/>
+              <span class="mpf-vol-icon">🔊</span>
+            </div>
+
+            <!-- Visualizer -->
             <div class="mpf-viz" id="mpfViz">
-              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <!-- Playlist header: search + filter -->
+          <div class="mpf-playlist-header">
+            <div class="mpf-plist-top">
+              <span class="mpf-plist-label">🎶 Playlist</span>
+              <span id="mpfTrackCount" class="mpf-track-count">Loading…</span>
+            </div>
+            <div class="mpf-search-wrap">
+              <input type="search" id="mpfSearch" class="mpf-search" placeholder="🔍 Search songs or artists…" autocomplete="off"/>
+            </div>
+            <div class="mpf-filter-row" id="mpfFilterRow">
+              <button class="mpf-filter-btn active" data-filter="all">All</button>
+              <button class="mpf-filter-btn" data-filter="liked">♥ Liked</button>
             </div>
           </div>
 
           <!-- Playlist -->
-          <div class="mpf-playlist-header">
-            <span>🎶 Playlist</span>
-            <span id="mpfTrackCount" class="mpf-track-count">Loading…</span>
-          </div>
           <div class="mpf-playlist" id="mpfPlaylist">
             <div class="mpf-loading">Tap to open &amp; load music…</div>
           </div>
@@ -2194,6 +2334,7 @@
         <button class="pct active" data-pcity="asmara">Asmara</button>
         <button class="pct" data-pcity="massawa">Massawa</button>
         <button class="pct" data-pcity="keren">Keren</button>
+        <button class="pct pct-locate" id="prayerLocateBtn">📍 My Location</button>
       </div>
       <div class="prayer-grid" id="prayerGrid">
         <div class="prayer-loading">Loading prayer times…</div>
@@ -2248,6 +2389,7 @@
           <option value="sa">🇸🇦 Saudi Arabia</option>
         </select>
         <button class="events-add-btn" id="eventsAddBtn">+ Submit Event</button>
+        <button class="events-ics-btn" id="eventsIcsBtn">📅 Download Calendar</button>
       </div>
       <div class="events-grid" id="eventsGrid"></div>
       <div class="event-submit-modal" id="eventSubmitModal" hidden>
@@ -2340,31 +2482,206 @@
     </div>
   </div>
 
-  <!-- ═══ SHARE CARD MODAL ═══ -->
-  <div class="share-card-modal" id="shareCardModal" hidden>
-    <div class="scm-box">
-      <button class="scm-close" id="scmClose">✕</button>
-      <h3>🎨 Create Share Card</h3>
-      <canvas id="shareCanvas" class="share-canvas" width="600" height="315"></canvas>
-      <div class="scm-controls">
-        <select id="scmFact" class="scm-select">
-          <option value="">— Pick a fact —</option>
-        </select>
-        <input type="text" id="scmCustom" class="scm-input" placeholder="Or type your own text…" maxlength="140"/>
-        <button class="scm-render" id="scmRender">🎨 Generate Card</button>
-        <button class="scm-download" id="scmDownload">⬇️ Download PNG</button>
-        <button class="scm-share-btn" id="scmShareBtn">📤 Share</button>
-      </div>
-    </div>
-  </div>
 
   <!-- STORY VIEWER LAUNCH (gallery area) -->
   <script src="firebase-config.js"></script>
   <script src="script.js"></script>
   <!-- LEAFLET JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- In-page search overlay -->
+  <div id="inPageSearchOverlay" class="ips-overlay" hidden>
+    <div class="ips-box">
+      <span class="ips-icon">🔎</span>
+      <input type="search" id="ipsInput" class="ips-input" placeholder="Search on this page…" autocomplete="off"/>
+      <span class="ips-count" id="ipsCount"></span>
+      <button class="ips-nav" id="ipsPrev">↑</button>
+      <button class="ips-nav" id="ipsNext">↓</button>
+      <button class="ips-close" id="ipsClose">✕</button>
+    </div>
+  </div>
+
+  <!-- Explore Score floating widget -->
+  <div class="explore-score-widget" id="exploreScore" title="Your exploration progress — visit more sections!">
+    <svg class="es-svg" viewBox="0 0 36 36">
+      <circle class="es-bg" cx="18" cy="18" r="15.9"/>
+      <circle class="es-fill" id="esFill" cx="18" cy="18" r="15.9" stroke-dasharray="0 100"/>
+    </svg>
+    <span class="es-pct" id="esPct">0%</span>
+    <span class="es-label">Explored</span>
+  </div>
+
   <!-- Enhanced features: auth, bookmarks, news, notifications, comments, learning, share, events -->
   <link rel="stylesheet" href="features.css">
   <script src="features.js" defer></script>
+
+  <!-- ══ TWEAKS v3.0 — T14–T43 HTML Shells ══════════════════════════════ -->
+
+  <!-- T14: Floating Table of Contents -->
+  <button id="tocFab" class="toc-fab" title="Table of Contents (Alt+T)" hidden>☰</button>
+  <div id="tocPanel" class="toc-panel" hidden></div>
+
+  <!-- T17: Theme Palette Picker -->
+  <div id="themePicker" class="theme-picker" hidden>
+    <span class="tp-label">Theme</span>
+    <button class="tp-swatch" data-theme="forest" data-color="#007A3D" title="Forest">🌿</button>
+    <button class="tp-swatch" data-theme="ocean"  data-color="#0284c7" title="Ocean">🌊</button>
+    <button class="tp-swatch" data-theme="sunset" data-color="#ea580c" title="Sunset">🌅</button>
+    <button class="tp-swatch" data-theme="royal"  data-color="#7c3aed" title="Royal">👑</button>
+    <button class="tp-swatch" data-theme="earth"  data-color="#92400e" title="Earth">🌍</button>
+    <button class="tp-swatch" data-theme="fire"   data-color="#dc2626" title="Fire">🔥</button>
+    <button id="themePickerClose" class="tp-close">✕</button>
+  </div>
+
+  <!-- T22: Keyboard Shortcuts Modal -->
+  <div id="shortcutsModal" class="modal-overlay" hidden>
+    <div class="modal-box shortcuts-box">
+      <div class="modal-hd"><h3>⌨️ Keyboard Shortcuts</h3><button class="modal-close" id="shortcutsClose">✕</button></div>
+      <div class="shortcuts-grid">
+        <div class="sk-row"><kbd>?</kbd><span>Show shortcuts</span></div>
+        <div class="sk-row"><kbd>Ctrl+K</kbd><span>Spotlight search</span></div>
+        <div class="sk-row"><kbd>Alt+T</kbd><span>Table of contents</span></div>
+        <div class="sk-row"><kbd>Alt+L</kbd><span>Cycle language</span></div>
+        <div class="sk-row"><kbd>Alt+D</kbd><span>Toggle dark mode</span></div>
+        <div class="sk-row"><kbd>Alt+R</kbd><span>Reading mode</span></div>
+        <div class="sk-row"><kbd>Alt+S</kbd><span>Ambient sounds</span></div>
+        <div class="sk-row"><kbd>Alt+P</kbd><span>Print mode</span></div>
+        <div class="sk-row"><kbd>Ctrl+F</kbd><span>In-page search</span></div>
+        <div class="sk-row"><kbd>Escape</kbd><span>Close any panel</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- T23: Spotlight Search Overlay -->
+  <div id="spotlightOverlay" class="spotlight-overlay" hidden>
+    <div class="spotlight-box">
+      <div class="spotlight-row">
+        <span class="spotlight-icon">🔍</span>
+        <input type="text" id="spotlightInput" class="spotlight-input" placeholder="Jump to any section…" autocomplete="off"/>
+        <kbd class="spotlight-esc-key">Esc</kbd>
+      </div>
+      <ul id="spotlightResults" class="spotlight-results"></ul>
+    </div>
+  </div>
+
+  <!-- T24: Tigrinya Flashcard Modal -->
+  <div id="flashcardModal" class="modal-overlay" hidden>
+    <div class="modal-box flashcard-box">
+      <div class="modal-hd"><h3>🃏 Tigrinya Flashcards</h3><button class="modal-close" id="flashcardClose">✕</button></div>
+      <div class="fc-progress-bar"><div id="fcProgress" class="fc-progress-fill"></div></div>
+      <div id="fcCard" class="fc-card" tabindex="0">
+        <div class="fc-inner" id="fcInner">
+          <div class="fc-face fc-front"><span id="fcFront"></span><small class="fc-hint-face">Tigrinya — click to reveal</small></div>
+          <div class="fc-face fc-back"><span id="fcBack"></span><small class="fc-hint-face">English meaning</small></div>
+        </div>
+      </div>
+      <div class="fc-controls">
+        <button id="fcWrong" class="fc-btn fc-btn-wrong">✗ Again</button>
+        <button id="fcFlip"  class="fc-btn fc-btn-flip">↩ Flip</button>
+        <button id="fcRight" class="fc-btn fc-btn-right">✓ Got it</button>
+      </div>
+      <div class="fc-stats"><span id="fcDone">0</span> done · <span id="fcLeft">0</span> left · <span id="fcPct">0</span>% mastered</div>
+    </div>
+  </div>
+
+  <!-- T25: Achievement Badge Drawer -->
+  <button id="badgeDrawerBtn" class="badge-drawer-btn" hidden title="My Achievements">🏅</button>
+  <div id="badgeDrawer" class="badge-drawer" hidden>
+    <div class="badge-drawer-hd"><span>🏅 Achievements</span><button id="badgeDrawerClose">✕</button></div>
+    <div id="badgeList" class="badge-list"></div>
+  </div>
+
+  <!-- T26: Share Card Modal -->
+  <div id="shareCardModal" class="modal-overlay" hidden>
+    <div class="modal-box share-card-box">
+      <div class="modal-hd"><h3>📤 Share Section</h3><button class="modal-close" id="shareCardClose">✕</button></div>
+      <canvas id="shareCanvas" width="800" height="420" style="max-width:100%;border-radius:12px;display:block;margin:0 auto 16px;"></canvas>
+      <div class="share-card-actions">
+        <button id="shareCardDownload" class="btn-primary">⬇️ Download PNG</button>
+        <button id="shareCardNative" class="btn-secondary">📤 Share</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- T28: Speed Quiz Modal -->
+  <div id="speedQuizModal" class="modal-overlay" hidden>
+    <div class="modal-box speed-quiz-box">
+      <div class="modal-hd"><h3>⚡ Speed Challenge</h3><button class="modal-close" id="speedQuizClose">✕</button></div>
+      <div class="sq-header" id="sqHeader">
+        <div id="sqTimer" class="sq-timer">60</div>
+        <div class="sq-score-wrap">Score: <strong id="sqScore">0</strong><span class="sq-combo" id="sqCombo"></span></div>
+      </div>
+      <div id="sqQuestion" class="sq-question"></div>
+      <div id="sqOptions"  class="sq-options"></div>
+      <div id="sqResult"   class="sq-result" hidden></div>
+      <button id="sqStartBtn" class="btn-primary sq-start-btn">⚡ Start 60-Second Challenge</button>
+    </div>
+  </div>
+
+  <!-- T32: Text Annotation Panel & Popup -->
+  <div id="annotPopup" class="annot-popup" hidden>
+    <input type="text" id="annotInput" class="annot-input" placeholder="Add a note about this…" maxlength="140"/>
+    <div class="annot-popup-actions">
+      <button id="annotSave" class="annot-btn-save">💾 Save</button>
+      <button id="annotCancel" class="annot-btn-cancel">✕</button>
+    </div>
+  </div>
+  <button id="annotPanelBtn" class="annot-panel-btn" hidden title="My Notes">📝</button>
+  <div id="annotPanel" class="annot-panel" hidden>
+    <div class="annot-panel-hd">📝 My Notes <button id="annotPanelClose">✕</button></div>
+    <div id="annotPanelList" class="annot-panel-list"></div>
+  </div>
+
+  <!-- T34: Dictionary Popup -->
+  <div id="dictPopup" class="dict-popup" hidden>
+    <button class="dict-close" id="dictClose">✕</button>
+    <span class="dict-word" id="dictWord"></span>
+    <div class="dict-body" id="dictBody">Looking up…</div>
+  </div>
+
+  <!-- T35: Journey Map Modal -->
+  <div id="journeyModal" class="modal-overlay" hidden>
+    <div class="modal-box journey-box">
+      <div class="modal-hd"><h3>🗺️ My Eritrea Journey</h3><button class="modal-close" id="journeyClose">✕</button></div>
+      <p class="journey-subtitle">Sections you've explored — keep going!</p>
+      <div id="journeyGrid" class="journey-grid"></div>
+      <button id="journeyExport" class="btn-secondary" style="margin-top:16px">📥 Export Progress JSON</button>
+    </div>
+  </div>
+
+  <!-- T36: History Timeline (injected into #history section by JS) -->
+
+  <!-- T38: Gallery Lightbox -->
+  <div id="galleryLb" class="gallery-lb" hidden>
+    <button class="glb-close" id="glbClose">✕</button>
+    <button class="glb-prev" id="glbPrev">‹</button>
+    <img id="glbImg" class="glb-img" src="" alt=""/>
+    <div class="glb-caption" id="glbCaption"></div>
+    <button class="glb-next" id="glbNext">›</button>
+    <div class="glb-counter" id="glbCounter"></div>
+  </div>
+
+  <!-- T39: Quick Currency Widget (float near economy section) -->
+  <div id="quickConverter" class="quick-converter" hidden>
+    <div class="qc-title">💱 Quick Converter</div>
+    <div class="qc-row">
+      <input type="number" id="qcAmt" class="qc-input" value="100" min="0" step="any"/>
+      <select id="qcCur" class="qc-select">
+        <option value="USD">USD 🇺🇸</option>
+        <option value="EUR">EUR 🇪🇺</option>
+        <option value="GBP">GBP 🇬🇧</option>
+        <option value="SAR">SAR 🇸🇦</option>
+        <option value="AED">AED 🇦🇪</option>
+        <option value="SEK">SEK 🇸🇪</option>
+        <option value="CAD">CAD 🇨🇦</option>
+      </select>
+    </div>
+    <div class="qc-result" id="qcResult">= — ERN</div>
+    <div class="qc-note">1 USD ≈ 15 ERN (official)</div>
+  </div>
+
+  <!-- T31: Ambient Sounds button injected by JS into navbar -->
+  <!-- T19: Print button injected by JS -->
+  <!-- T20: Font size buttons injected by JS -->
+  <!-- T40: Export Kit button injected by JS -->
 </body>
 </html>

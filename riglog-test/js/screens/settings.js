@@ -99,7 +99,7 @@ export function renderSettings() {
         </button>
         <div>
           <h1 class="text-xl font-black">Settings</h1>
-          <p class="text-xs" style="color:rgba(100,200,255,0.5)">RigLog TEST — isolated data</p>
+          <p class="text-xs" style="color:rgba(100,200,255,0.5)">RigLog — trucklogapp.com</p>
         </div>
         <button type="submit" form="settings-form" class="save-fab">Save</button>
       </div>
@@ -313,15 +313,11 @@ export function renderSettings() {
           </p>
         </div>
 
-        <!-- ── TEST ENV ── -->
-        <div class="glass-card space-y-2" style="border-color:rgba(8,145,178,0.3)">
-          <p class="settings-section-label" style="color:#0891b2">⚗ Test Environment</p>
-          <p class="settings-hint" style="margin:0 0 8px">All data is stored under isolated keys (rl_test_*) and never syncs to the cloud. Safe to clear at any time.</p>
-          <button id="clear-test-btn" class="w-full font-bold py-2.5 rounded-xl text-sm" style="background:rgba(8,145,178,0.15);color:#0891b2;border:1px solid rgba(8,145,178,0.3)">
-            Clear Test Data Only
-          </button>
+        <!-- ── DATA ── -->
+        <div class="glass-card space-y-2">
+          <p class="settings-section-label">Data</p>
           <button id="clear-btn" class="w-full font-bold py-2.5 rounded-xl text-sm" style="background:rgba(220,38,38,0.12);color:#f87171;border:1px solid rgba(220,38,38,0.2)">
-            Clear All Data
+            Clear All Local Data
           </button>
         </div>
 
@@ -483,29 +479,15 @@ export function renderSettings() {
       window.location.reload();
     });
 
-    container.querySelector('#clear-test-btn').addEventListener('click', () => {
-      confirmSheet(
-        'Clear test data?',
-        'Removes all rl_test_* entries from localStorage. Cloud data is untouched.',
-        'Clear Test Data',
-        () => {
-          ['rl_test_expenses','rl_test_trips','rl_test_dvirs','rl_test_detention','rl_test_fuel','rl_test_maintenance','rl_test_settings','rl_test_active_detention']
-            .forEach(k => localStorage.removeItem(k));
-          toast('Test data cleared ✓');
-          window.navigate('dashboard');
-        }
-      );
-    });
-
     container.querySelector('#clear-btn').addEventListener('click', () => {
       confirmSheet(
-        'Clear ALL data?',
-        'Deletes all test trips, expenses, fuel, DVIRs, maintenance. Cannot be undone.',
-        'Clear Everything',
+        'Clear all local data?',
+        'Removes all locally stored trips, expenses, fuel, DVIRs, and maintenance. Cloud data is preserved.',
+        'Clear Local Data',
         async () => {
-          ['rl_test_expenses','rl_test_trips','rl_test_dvirs','rl_test_detention','rl_test_fuel','rl_test_maintenance','rl_test_settings','rl_test_active_detention']
+          ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_maintenance','rl_settings','rl_active_detention']
             .forEach(k => localStorage.removeItem(k));
-          await clearCloudData();
+          toast('Local data cleared ✓');
           window.navigate('dashboard');
         }
       );

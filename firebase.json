@@ -2,7 +2,7 @@
   "hosting": [
     {
       "target": "eritrean-info",
-      "public": "firebase-public",
+      "public": "eritrean-info",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "headers": [
         {
@@ -22,7 +22,7 @@
     },
     {
       "target": "riglog",
-      "public": "riglog-test",
+      "public": "riglog",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "headers": [
         {

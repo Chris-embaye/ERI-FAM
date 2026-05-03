@@ -15,21 +15,6 @@
 button, a, [onclick] { touch-action: manipulation; }
 html, body { height: 100%; background: var(--bg-base); }
 
-/* ── TEST ENV BANNER ─────────────────────────────────────────── */
-body::before {
-  content: '⚗ TEST ENVIRONMENT — data is isolated';
-  display: block;
-  background: #075985;
-  color: #e0f9ff;
-  font-size: 0.6rem;
-  font-weight: 900;
-  letter-spacing: 2.5px;
-  text-align: center;
-  padding: 5px 0;
-  position: sticky;
-  top: 0;
-  z-index: 9999;
-}
 
 /* ── Ambient background orbs — static, no filter:blur ────────── */
 .ambient-bg {
