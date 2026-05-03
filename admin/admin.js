@@ -33,9 +33,11 @@ async function _loadFB() {
     return false;
   }
   try {
-    const appMod = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`);
-    const fs     = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-firestore.js`);
-    const au     = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-auth.js`);
+    const [appMod, fs, au] = await Promise.all([
+      import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`),
+      import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-firestore.js`),
+      import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-auth.js`),
+    ]);
     // Use existing app if already initialized (avoids duplicate-app error)
     const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
     _db   = fs.getFirestore(app);
@@ -284,14 +286,18 @@ const ROLE_LABELS = { super_admin: 'C.E.O', admin: 'Admin', editor: 'Editor', vi
 function setupUserDisplay() {
   const name     = currentUserData.name || currentUser.displayName || currentUser.email;
   const photoURL = currentUserData.photoURL || currentUser.photoURL || '';
-  document.getElementById('sbUserName').textContent = name;
-  document.getElementById('sbUserRole').textContent = ROLE_LABELS[currentUserData.role] || currentUserData.role.replace('_', ' ');
+  const nameEl = document.getElementById('sbUserName');
+  const roleEl = document.getElementById('sbUserRole');
   const avatarEl = document.getElementById('sbAvatar');
-  if (photoURL) {
-    avatarEl.innerHTML = `<img src="${photoURL}" alt="${esc(name)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>`;
-  } else {
-    avatarEl.innerHTML = '';
-    avatarEl.textContent = name.charAt(0).toUpperCase();
+  if (nameEl) nameEl.textContent = name;
+  if (roleEl) roleEl.textContent = ROLE_LABELS[currentUserData.role] || currentUserData.role.replace('_', ' ');
+  if (avatarEl) {
+    if (photoURL) {
+      avatarEl.innerHTML = `<img src="${photoURL}" alt="${esc(name)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>`;
+    } else {
+      avatarEl.innerHTML = '';
+      avatarEl.textContent = name.charAt(0).toUpperCase();
+    }
   }
 }
 
@@ -2111,7 +2117,7 @@ function countUp(el, target, duration = 700) {
 (function initSidebarClock() {
   const timeEl = document.getElementById('sbClockTime');
   const dateEl = document.getElementById('sbClockDate');
-  if (!timeEl) return;
+  if (!timeEl || !dateEl) return;
   function tick() {
     const now = new Date();
     const h = String(now.getHours()).padStart(2,'0');
@@ -5003,8 +5009,9 @@ loadDashboard = async function() {
     };
   }
 
-  // Auto-publish scheduler: check every 60 seconds
+  // Auto-publish scheduler: check every 60 seconds (paused when tab hidden)
   setInterval(async () => {
+    if (document.hidden) return;
     if (!_db || !fb.getDocs) return;
     try {
       const now = new Date();
@@ -6624,7 +6631,7 @@ handleMusicFiles = async function(files) {
     if (!window.currentUser) { setTimeout(waitLogin, 500); return; }
     inject();
     startTime = Date.now();
-    setInterval(tick, 1000);
+    setInterval(() => { if (!document.hidden) tick(); }, 30000);
   }
   waitLogin();
 })();

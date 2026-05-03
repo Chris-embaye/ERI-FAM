@@ -97,6 +97,11 @@ svg { display: block; flex-shrink: 0; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(124,114,255,0.52); }
 
 /* ── ANIMATED BACKGROUND ORBS ────────────────────────────────── */
+@media (max-width: 768px), (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none !important; }
+  #authScreen::before { animation: none !important; }
+  #authScreen::after  { animation: none !important; }
+}
 body::before, body::after {
   content: '';
   position: fixed; pointer-events: none; z-index: 0;
