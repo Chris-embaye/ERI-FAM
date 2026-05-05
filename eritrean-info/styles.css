@@ -4672,10 +4672,10 @@ html.dark .map-spinner-wrap { background: rgba(15,17,23,0.75); color: #94a3b8; }
   content: '';
   position: absolute;
   inset: -15% -12%;
-  background: radial-gradient(ellipse at 40% 35%,
-    rgba(0,160,80,0.14) 0%,
-    rgba(80,180,255,0.10) 35%,
-    transparent 68%);
+  background: radial-gradient(ellipse at 50% 40%,
+    rgba(30,80,160,0.22) 0%,
+    rgba(20,50,120,0.14) 40%,
+    transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
