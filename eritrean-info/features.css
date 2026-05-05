@@ -1484,3 +1484,83 @@ html.dark .annot-entry-text { color:#e2e8f0; }
 html.dark .reading-saver-toast { background:#0f172a; border-color:rgba(255,255,255,.08); color:#e2e8f0; }
 html.dark .theme-picker { background:#0f172a; border-color:rgba(255,255,255,.08); }
 html.dark .qc-input, html.dark .qc-select { background:#1e293b; border-color:rgba(255,255,255,.1); color:#e2e8f0; }
+
+/* ══════════════════════════════════════════════════════════════
+   SECTIONS v1.0 — Poetry · Facts · Sports · Flag · Diaspora
+                   Compare · Prayer · Tour · Cooking · Directory
+══════════════════════════════════════════════════════════════ */
+
+/* ── Poetry Corner ─────────────────────────────────────────── */
+.poetry-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; padding:4px 0; }
+.poetry-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:20px; }
+.pc-header { display:flex; gap:12px; align-items:flex-start; margin-bottom:14px; }
+.pc-emoji { font-size:2rem; line-height:1; }
+.pc-title { font-weight:700; font-size:1rem; color:var(--green,#4ade80); }
+.pc-meta  { font-size:.78rem; color:rgba(255,255,255,.5); margin-top:2px; }
+.pc-line  { margin-bottom:8px; }
+.pc-ti    { font-size:1rem; font-weight:600; color:#fff; }
+.pc-en    { font-size:.82rem; color:rgba(255,255,255,.55); margin-top:1px; }
+.pc-translation-label { margin-top:12px; font-size:.78rem; font-weight:700; color:var(--green,#4ade80); text-transform:uppercase; letter-spacing:.05em; }
+
+/* ── Fact Generator ────────────────────────────────────────── */
+.fact-gen-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:32px; max-width:560px; margin:0 auto; text-align:center; }
+.fg-icon  { font-size:3rem; margin-bottom:16px; }
+.fg-text  { font-size:1.05rem; line-height:1.6; color:rgba(255,255,255,.88); min-height:80px; }
+.fg-text.fg-anim { animation: fg-fadein .35s ease; }
+@keyframes fg-fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.fg-actions { display:flex; gap:10px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
+.fg-btn,.fg-share { padding:10px 22px; border-radius:24px; border:none; cursor:pointer; font-size:.9rem; font-weight:600; transition:opacity .2s; }
+.fg-btn   { background:var(--green,#007A3D); color:#fff; }
+.fg-share { background:rgba(255,255,255,.12); color:#fff; }
+.fg-btn:hover,.fg-share:hover { opacity:.85; }
+.fg-counter { font-size:.78rem; color:rgba(255,255,255,.4); margin-top:14px; }
+
+/* ── Diaspora Map ──────────────────────────────────────────── */
+.diaspora-map-el { display:flex; flex-direction:column; gap:10px; }
+.dm-bubble { display:grid; grid-template-columns:2.2rem 1fr 5.5rem 4.5rem; align-items:center; gap:10px; background:rgba(255,255,255,.05); border-radius:10px; padding:10px 14px; }
+.dm-flag   { font-size:1.4rem; text-align:center; }
+.dm-bar-wrap { background:rgba(255,255,255,.1); border-radius:4px; height:8px; overflow:hidden; }
+.dm-bar    { background:var(--green,#007A3D); height:8px; border-radius:4px; transition:width .6s ease; }
+.dm-country { font-size:.82rem; color:rgba(255,255,255,.8); font-weight:600; }
+.dm-pop    { font-size:.78rem; color:rgba(255,255,255,.5); text-align:right; }
+.diaspora-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px; text-align:center; }
+.dst-item  { background:rgba(255,255,255,.06); border-radius:12px; padding:16px 10px; }
+.dst-num   { font-size:1.4rem; font-weight:700; color:var(--green,#4ade80); }
+.dst-lbl   { font-size:.78rem; color:rgba(255,255,255,.55); margin-top:4px; }
+
+/* ── Country Compare ───────────────────────────────────────── */
+.compare-controls { margin-bottom:20px; }
+.compare-select { padding:10px 16px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#fff; font-size:.9rem; cursor:pointer; }
+.compare-select option { background:#1a2a1a; color:#fff; }
+.compare-table-wrap { overflow-x:auto; }
+.compare-table { width:100%; border-collapse:collapse; font-size:.88rem; }
+.compare-table th { padding:12px 16px; text-align:left; background:rgba(255,255,255,.08); font-weight:700; color:rgba(255,255,255,.8); border-bottom:1px solid rgba(255,255,255,.1); }
+.compare-table td { padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.06); color:rgba(255,255,255,.8); }
+.compare-table tr:hover td { background:rgba(255,255,255,.04); }
+.cmp-field { font-weight:600; color:rgba(255,255,255,.55); font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; }
+
+/* ── Cooking Videos ────────────────────────────────────────── */
+.cooking-video-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:18px; }
+.cv-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:14px; overflow:hidden; transition:transform .2s; }
+.cv-card:hover { transform:translateY(-2px); }
+.cv-thumb { position:relative; background:rgba(255,255,255,.08); height:130px; display:flex; align-items:center; justify-content:center; }
+.cv-thumb-inner { font-size:3.5rem; }
+.cv-play-btn { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.45); color:#fff; font-size:1.6rem; opacity:0; transition:opacity .2s; text-decoration:none; }
+.cv-card:hover .cv-play-btn { opacity:1; }
+.cv-body { padding:14px; }
+.cv-title   { font-weight:700; font-size:.9rem; color:#fff; margin-bottom:3px; }
+.cv-channel { font-size:.75rem; color:rgba(255,255,255,.45); margin-bottom:8px; }
+.cv-desc    { font-size:.82rem; color:rgba(255,255,255,.65); line-height:1.4; margin-bottom:10px; }
+.cv-link    { font-size:.8rem; color:var(--green,#4ade80); text-decoration:none; font-weight:600; }
+.cv-link:hover { text-decoration:underline; }
+
+/* ── Business Directory ────────────────────────────────────── */
+.dir-filter-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.dir-chip { padding:7px 16px; border-radius:24px; border:1px solid rgba(255,255,255,.15); background:transparent; color:rgba(255,255,255,.7); cursor:pointer; font-size:.82rem; transition:all .2s; }
+.dir-chip.active,.dir-chip:hover { background:var(--green,#007A3D); color:#fff; border-color:transparent; }
+.dir-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:16px; }
+.dir-card { display:flex; gap:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:16px; }
+.dir-flag { font-size:1.8rem; flex-shrink:0; }
+.dir-name { font-weight:700; font-size:.9rem; color:#fff; margin-bottom:3px; }
+.dir-city { font-size:.76rem; color:rgba(255,255,255,.45); margin-bottom:6px; }
+.dir-desc { font-size:.82rem; color:rgba(255,255,255,.65); line-height:1.4; }

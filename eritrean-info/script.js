@@ -50,10 +50,12 @@ function updateActiveNav() {
 const backToTop = document.getElementById('backToTop');
 
 window.addEventListener('scroll', () => {
-  if (window.scrollY > 400) {
-    backToTop.classList.add('visible');
-  } else {
-    backToTop.classList.remove('visible');
+  if (backToTop) {
+    if (window.scrollY > 400) {
+      backToTop.classList.add('visible');
+    } else {
+      backToTop.classList.remove('visible');
+    }
   }
   updateActiveNav();
 });
@@ -87,7 +89,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById(`tab-${tab}`).classList.add('active');
+    document.getElementById(`tab-${tab}`)?.classList.add('active');
   });
 });
 
@@ -814,6 +816,92 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
   if (searchEl) searchEl.addEventListener('input', () => renderWords(searchEl.value));
 })();
 
+// ── FIDEL ALPHABET GRID ──────────────────────
+(function initFidelAlphabet() {
+  const grid     = document.getElementById('fidelGrid');
+  const searchEl = document.getElementById('fidelSearch');
+  if (!grid) return;
+
+  // 33 consonants × 7 vowel orders (ä u i a e ə o) = 231 characters
+  const ROWS = [
+    { r:'H',    c:['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'] },
+    { r:'L',    c:['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'] },
+    { r:'Ḥ',    c:['ሐ','ሑ','ሒ','ሓ','ሔ','ሕ','ሖ'] },
+    { r:'M',    c:['መ','ሙ','ሚ','ማ','ሜ','ም','ሞ'] },
+    { r:'R',    c:['ረ','ሩ','ሪ','ራ','ሬ','ር','ሮ'] },
+    { r:'S',    c:['ሰ','ሱ','ሲ','ሳ','ሴ','ስ','ሶ'] },
+    { r:'Sh',   c:['ሸ','ሹ','ሺ','ሻ','ሼ','ሽ','ሾ'] },
+    { r:'Q',    c:['ቀ','ቁ','ቂ','ቃ','ቄ','ቅ','ቆ'] },
+    { r:'Qʷ',   c:['ቐ','ቑ','ቒ','ቓ','ቔ','ቕ','ቖ'] },
+    { r:'B',    c:['በ','ቡ','ቢ','ባ','ቤ','ብ','ቦ'] },
+    { r:'V',    c:['ቨ','ቩ','ቪ','ቫ','ቬ','ቭ','ቮ'] },
+    { r:'T',    c:['ተ','ቱ','ቲ','ታ','ቴ','ት','ቶ'] },
+    { r:'Ch',   c:['ቸ','ቹ','ቺ','ቻ','ቼ','ች','ቾ'] },
+    { r:'N',    c:['ነ','ኑ','ኒ','ና','ኔ','ን','ኖ'] },
+    { r:'Ny',   c:['ኘ','ኙ','ኚ','ኛ','ኜ','ኝ','ኞ'] },
+    { r:'ʾ',    c:['አ','ኡ','ኢ','ኣ','ኤ','እ','ኦ'] },
+    { r:'K',    c:['ከ','ኩ','ኪ','ካ','ኬ','ክ','ኮ'] },
+    { r:'Kh',   c:['ኸ','ኹ','ኺ','ኻ','ኼ','ኽ','ኾ'] },
+    { r:'W',    c:['ወ','ዉ','ዊ','ዋ','ዌ','ው','ዎ'] },
+    { r:'ʿ',    c:['ዐ','ዑ','ዒ','ዓ','ዔ','ዕ','ዖ'] },
+    { r:'Z',    c:['ዘ','ዙ','ዚ','ዛ','ዜ','ዝ','ዞ'] },
+    { r:'D\'',  c:['ዸ','ዹ','ዺ','ዻ','ዼ','ዽ','ዾ'] },
+    { r:'Y',    c:['የ','ዩ','ዪ','ያ','ዬ','ይ','ዮ'] },
+    { r:'D',    c:['ደ','ዱ','ዲ','ዳ','ዴ','ድ','ዶ'] },
+    { r:'J',    c:['ጀ','ጁ','ጂ','ጃ','ጄ','ጅ','ጆ'] },
+    { r:'G',    c:['ገ','ጉ','ጊ','ጋ','ጌ','ግ','ጎ'] },
+    { r:'Ṭ',    c:['ጠ','ጡ','ጢ','ጣ','ጤ','ጥ','ጦ'] },
+    { r:'Ch\'', c:['ጨ','ጩ','ጪ','ጫ','ጬ','ጭ','ጮ'] },
+    { r:'P\'',  c:['ጰ','ጱ','ጲ','ጳ','ጴ','ጵ','ጶ'] },
+    { r:'Ṣ',    c:['ጸ','ጹ','ጺ','ጻ','ጼ','ጽ','ጾ'] },
+    { r:'F',    c:['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ'] },
+    { r:'P',    c:['ፐ','ፑ','ፒ','ፓ','ፔ','ፕ','ፖ'] },
+  ];
+  const SOUNDS = ['ä','u','i','a','e','ə','o'];
+
+  function renderGrid(filter) {
+    const q = (filter || '').trim().toLowerCase();
+    const rows = q
+      ? ROWS.filter(row =>
+          row.c.some(ch => ch.includes(q)) ||
+          row.r.toLowerCase().startsWith(q)
+        )
+      : ROWS;
+
+    if (!rows.length) {
+      grid.innerHTML = '<p style="padding:16px;color:var(--text-muted,#888)">No match found.</p>';
+      return;
+    }
+
+    grid.innerHTML = rows.map(row =>
+      `<div class="fidel-row">` +
+      row.c.map((ch, i) =>
+        `<div class="fidel-cell" title="${row.r + SOUNDS[i]}">` +
+          `<span class="fidel-char">${ch}</span>` +
+          `<span class="fidel-sound">${row.r + SOUNDS[i]}</span>` +
+        `</div>`
+      ).join('') +
+      `</div>`
+    ).join('');
+
+    grid.querySelectorAll('.fidel-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        if ('speechSynthesis' in window) {
+          const u = new SpeechSynthesisUtterance(cell.querySelector('.fidel-char').textContent);
+          u.lang = 'ti'; u.rate = 0.7;
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(u);
+        }
+        grid.querySelectorAll('.fidel-cell').forEach(c => c.classList.remove('active'));
+        cell.classList.add('active');
+      });
+    });
+  }
+
+  renderGrid('');
+  if (searchEl) searchEl.addEventListener('input', () => renderGrid(searchEl.value));
+})();
+
 // ── NATIONAL ANTHEM PLAYER ───────────────────
 const anthemAudio     = document.getElementById('anthemAudio');
 const anthemPlayBtn   = document.getElementById('anthemPlay');
@@ -1521,12 +1609,8 @@ if (readingBar) {
     { id:'proverbs',         icon:'💬', title:'Eritrean Proverbs',            desc:'Ancient Tigrinya wisdom and sayings' },
     { id:'poetry',           icon:'📝', title:'Eritrean Poetry',              desc:'Famous Tigrinya poems with translation' },
     { id:'facts',            icon:'🌟', title:'Fact Generator',               desc:'Random fascinating facts about Eritrea' },
-    { id:'sports-tracker',   icon:'🚴', title:'Sports Tracker',              desc:'Cycling, running, football — Eritrean athletes' },
-    { id:'flag-explorer',    icon:'🚩', title:'Flag Explorer',                desc:'Eritrean flag history, colors, and symbolism' },
     { id:'diaspora-map',     icon:'🌍', title:'Diaspora Map',                 desc:'Eritrean communities around the world' },
     { id:'compare',          icon:'📊', title:'Country Comparisons',          desc:'Compare Eritrea to other nations' },
-    { id:'prayer-times',     icon:'🕌', title:'Prayer Times',                 desc:'Daily Islamic prayer times for Eritrea' },
-    { id:'asmara-tour',      icon:'🏛️', title:'Asmara Virtual Tour',          desc:'UNESCO Art Deco architecture, historic buildings' },
     { id:'cooking-videos',   icon:'🎬', title:'Cooking Videos',               desc:'Video tutorials for Eritrean dishes' },
     { id:'events',           icon:'📅', title:'Events & News',                desc:'Upcoming Eritrean community events' },
     { id:'directory',        icon:'📋', title:'Directory',                    desc:'Eritrean businesses, services, and organizations' },

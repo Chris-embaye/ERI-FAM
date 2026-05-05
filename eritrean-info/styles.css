@@ -4423,3 +4423,125 @@ html.dark .nav-anthem-mini {
   margin-top: 2px;
 }
 .fwc-speak:hover { opacity: 1; }
+
+/* ── Site Footer Bar ─────────────────────────────────────── */
+.site-footer-bar {
+  background: rgba(0,0,0,.35);
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding: 18px 24px;
+}
+.sfb-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.sfb-brand {
+  font-weight: 700;
+  font-size: .9rem;
+  color: rgba(255,255,255,.8);
+}
+.sfb-copy {
+  font-size: .8rem;
+  color: rgba(255,255,255,.4);
+  flex: 1;
+  text-align: center;
+}
+.sfb-about-link {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--green, #4ade80);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.sfb-about-link:hover { text-decoration: underline; }
+@media (max-width: 500px) {
+  .sfb-copy { order: 3; width: 100%; text-align: left; }
+}
+
+/* ── Fidel Alphabet Grid ─────────────────────────────────── */
+.fidel-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.fidel-search {
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: .9rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  width: 220px;
+}
+.fidel-search:focus { outline: none; border-color: var(--green); }
+.fidel-hint { font-size: .78rem; color: var(--text-muted); }
+.fidel-table-wrap { overflow-x: auto; }
+
+/* 7 equal columns — header and rows both use this */
+.fidel-header-row,
+.fidel-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.fidel-header-row { margin-bottom: 4px; }
+.fidel-hcell {
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--green);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 4px 2px;
+}
+.fidel-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 360px;
+}
+.fidel-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.fidel-cell:hover  { border-color: var(--green); background: rgba(0,122,61,.08); }
+.fidel-cell.active { border-color: var(--green); background: rgba(0,122,61,.18); }
+/* First cell in each row = base (ä) form — highlighted */
+.fidel-cell:first-child {
+  border-color: rgba(0,122,61,.4);
+  background: rgba(0,122,61,.07);
+}
+.fidel-char {
+  font-family: 'Noto Serif Ethiopic', 'Noto Sans Ethiopic', serif;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: var(--text);
+}
+.fidel-sound {
+  font-size: .58rem;
+  color: var(--text-muted);
+  letter-spacing: .02em;
+  line-height: 1;
+}
+@media (max-width: 600px) {
+  .fidel-char  { font-size: 1.1rem; }
+  .fidel-sound { display: none; }
+  .fidel-cell  { padding: 6px 2px; }
+  .fidel-grid  { min-width: 280px; }
+}

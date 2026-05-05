@@ -257,7 +257,7 @@ async function bootAuth() {
           document.getElementById('hubApp').hidden     = true;
           switchAuthView('pending');
           const btn = document.getElementById('loginBtn');
-          btn.textContent = 'Sign In'; btn.disabled = false;
+          if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
           return;
         }
       }
@@ -266,7 +266,7 @@ async function bootAuth() {
       document.getElementById('authScreen').hidden = true;
       document.getElementById('hubApp').hidden     = false;
       const btn = document.getElementById('loginBtn');
-      btn.textContent = 'Sign In'; btn.disabled = false;
+      if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
       setupUserDisplay();
       loadDashboard();
       loadPendingBadge();
@@ -277,7 +277,7 @@ async function bootAuth() {
       document.getElementById('authScreen').hidden = false;
       document.getElementById('hubApp').hidden     = true;
       const btn = document.getElementById('loginBtn');
-      btn.textContent = 'Sign In'; btn.disabled = false;
+      if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
     }
   });
 }

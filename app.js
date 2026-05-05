@@ -187,10 +187,10 @@ function toast(msg, dur=2400) {
   toastTimer = setTimeout(() => el.classList.remove('show'), dur);
 }
 
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function openPanel(id) { document.getElementById(id).classList.add('open'); }
-function closePanel(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id)  { const el = document.getElementById(id); if (el) el.classList.add('open'); }
+function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('open'); }
+function openPanel(id)  { const el = document.getElementById(id); if (el) el.classList.add('open'); }
+function closePanel(id) { const el = document.getElementById(id); if (el) el.classList.remove('open'); }
 
 // ── Persistence helpers ────────────────────────────────────────
 async function saveSettings() {
@@ -577,11 +577,11 @@ function updatePlayerUI() {
   if (t.artwork) {
     document.getElementById('fpArtImg').src = t.artwork;
     document.getElementById('fpArtImg').style.display = '';
-    document.getElementById('fpArt').querySelector('.fp-art-ph').style.display = 'none';
+    document.getElementById('fpArt')?.querySelector('.fp-art-ph')?.style.setProperty('display', 'none');
     document.getElementById('fpBg').style.background = `linear-gradient(180deg, rgba(0,0,0,0.6) 0%, var(--bg) 100%)`;
   } else {
     document.getElementById('fpArtImg').style.display = 'none';
-    document.getElementById('fpArt').querySelector('.fp-art-ph').style.display = '';
+    document.getElementById('fpArt')?.querySelector('.fp-art-ph')?.style.setProperty('display', '');
   }
   // Like button
   document.getElementById('likeBtn').classList.toggle('liked', S.likedIds.has(t.id));

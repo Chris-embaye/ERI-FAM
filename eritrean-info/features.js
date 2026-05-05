@@ -896,6 +896,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initEventsBoard();
   updateBookmarkCount();
 
+  // ── Sections v1.0 ──
+  initPoetryCorner();
+  initFactGenerator();
+  initDiasporaMapSection();
+  initCountryCompare();
+  initCookingVideos();
+  initDirectory();
+
   // ── Tweaks v2.0 ──
   initReadingProgressBar();
   initWordOfDay();
@@ -1110,9 +1118,9 @@ function initRelatedSections() {
     'culture':    [{ href:'#recipes', label:'🍽️ Recipes' }, { href:'#music', label:'🎵 Music' }, { href:'#proverbs', label:'💬 Proverbs' }, { href:'#holidays', label:'🗓️ Holidays' }],
     'proverbs':   [{ href:'#poetry', label:'📝 Poetry' }, { href:'#lessons', label:'📖 Lessons' }, { href:'#facts', label:'🌟 Facts' }],
     'poetry':     [{ href:'#proverbs', label:'💬 Proverbs' }, { href:'#blog', label:'📖 Blog' }, { href:'#artists', label:'🎵 Artists' }],
-    'facts':      [{ href:'#quiz', label:'🏆 Quiz' }, { href:'#history', label:'📜 History' }, { href:'#flag-explorer', label:'🚩 Flag' }],
+    'facts':      [{ href:'#quiz', label:'🏆 Quiz' }, { href:'#history', label:'📜 History' }, { href:'#diaspora-map', label:'🌍 Diaspora' }],
     'lessons':    [{ href:'#fidel', label:'🔤 Alphabet' }, { href:'#proverbs', label:'💬 Proverbs' }, { href:'#quiz', label:'🏆 Quiz' }],
-    'tourism':    [{ href:'#asmara-tour', label:'🏛️ Virtual Tour' }, { href:'#gallery', label:'📸 Gallery' }, { href:'#regions', label:'🗾 Regions' }],
+    'tourism':    [{ href:'#gallery', label:'📸 Gallery' }, { href:'#regions', label:'🗾 Regions' }, { href:'#compare', label:'📊 Compare' }],
     'quiz':       [{ href:'#facts', label:'🌟 Facts' }, { href:'#history', label:'📜 History' }, { href:'#lessons', label:'📖 Lessons' }],
     'geography':  [{ href:'#diaspora-map', label:'🌍 Diaspora' }, { href:'#regions', label:'🗾 Regions' }, { href:'#compare', label:'📊 Compare' }],
     'economy':    [{ href:'#government', label:'⚖️ Government' }, { href:'#compare', label:'📊 Compare' }, { href:'#people', label:'👥 People' }],
@@ -1768,7 +1776,7 @@ function initExploreScore() {
 
   const SECTION_IDS = ['overview','history','geography','people','culture','economy','government',
     'languages','gallery','tourism','blog','quiz','fidel','lessons','proverbs','poetry','facts',
-    'recipes','artists','regions','news','sports-tracker','flag-explorer','diaspora-map','compare'];
+    'recipes','artists','regions','news','diaspora-map','compare'];
   const KEY = 'eri_visited_v2';
   let visited = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
 
@@ -1949,11 +1957,8 @@ function initAutoRefresh() {
     {id:'lessons',emoji:'📖',label:'Lessons'},{id:'proverbs',emoji:'💬',label:'Proverbs'},
     {id:'poetry',emoji:'📝',label:'Poetry'},{id:'facts',emoji:'🌟',label:'Facts'},
     {id:'community',emoji:'🤝',label:'Community'},{id:'news',emoji:'📰',label:'News'},
-    {id:'prayer-times',emoji:'🕌',label:'Prayer Times'},{id:'holidays',emoji:'🗓️',label:'Holidays'},
-    {id:'sports-tracker',emoji:'🚴',label:'Sports'},{id:'flag-explorer',emoji:'🚩',label:'Flag Explorer'},
-    {id:'compare',emoji:'📊',label:'Compare Countries'},{id:'events',emoji:'📅',label:'Events'},
-    {id:'diaspora-map',emoji:'🌍',label:'Diaspora Map'},{id:'asmara-tour',emoji:'🏛️',label:'Asmara Tour'},
-    {id:'about',emoji:'ℹ️',label:'About Us'},
+    {id:'holidays',emoji:'🗓️',label:'Holidays'},{id:'compare',emoji:'📊',label:'Compare Countries'},
+    {id:'events',emoji:'📅',label:'Events'},{id:'diaspora-map',emoji:'🌍',label:'Diaspora Map'},
   ];
 
   function init() {
@@ -2206,11 +2211,9 @@ function initAutoRefresh() {
     {id:'lessons',emoji:'📖',label:'Lessons',hint:'Learn Tigrinya phrases'},{id:'proverbs',emoji:'💬',label:'Proverbs',hint:'Eritrean wisdom & sayings'},
     {id:'poetry',emoji:'📝',label:'Poetry',hint:'Eritrean literary tradition'},{id:'facts',emoji:'🌟',label:'Facts',hint:'Amazing Eritrean facts'},
     {id:'community',emoji:'🤝',label:'Community',hint:'Posts & discussions'},{id:'news',emoji:'📰',label:'News',hint:'Latest from Eritrea'},
-    {id:'prayer-times',emoji:'🕌',label:'Prayer Times',hint:'Geolocation-based'},{id:'holidays',emoji:'🗓️',label:'Holidays',hint:'National & cultural days'},
-    {id:'sports-tracker',emoji:'🚴',label:'Sports',hint:'Cyclists, runners, champions'},{id:'flag-explorer',emoji:'🚩',label:'Flag Explorer',hint:'Colors & symbols explained'},
-    {id:'compare',emoji:'📊',label:'Compare',hint:'Eritrea vs world countries'},{id:'events',emoji:'📅',label:'Events',hint:'Community events calendar'},
-    {id:'live-dashboard',emoji:'📡',label:'Live Dashboard',hint:'Clocks, weather, exchange rates'},{id:'asmara-tour',emoji:'🏛️',label:'Asmara Tour',hint:'Virtual city tour'},
-    {id:'diaspora-map',emoji:'🌍',label:'Diaspora Map',hint:'Eritreans around the world'},{id:'about',emoji:'ℹ️',label:'About Us',hint:'About this platform'},
+    {id:'holidays',emoji:'🗓️',label:'Holidays',hint:'National & cultural days'},{id:'compare',emoji:'📊',label:'Compare',hint:'Eritrea vs world countries'},
+    {id:'events',emoji:'📅',label:'Events',hint:'Community events calendar'},{id:'live-dashboard',emoji:'📡',label:'Live Dashboard',hint:'Clocks, weather, exchange rates'},
+    {id:'diaspora-map',emoji:'🌍',label:'Diaspora Map',hint:'Eritreans around the world'},{id:'__about__',emoji:'ℹ️',label:'About Us',hint:'About this platform — opens new page'},
   ];
 
   let activeIdx = 0;
@@ -2246,6 +2249,7 @@ function initAutoRefresh() {
   }
 
   function jumpTo(id) {
+    if (id === '__about__') { close(); window.location.href = 'about.html'; return; }
     const el = document.getElementById(id);
     if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); close(); }
   }
@@ -2919,10 +2923,8 @@ function checkAchievement(id) {
     {id:'lessons',emoji:'📖',label:'Lessons'},{id:'proverbs',emoji:'💬',label:'Proverbs'},
     {id:'poetry',emoji:'📝',label:'Poetry'},{id:'facts',emoji:'🌟',label:'Facts'},
     {id:'community',emoji:'🤝',label:'Community'},{id:'news',emoji:'📰',label:'News'},
-    {id:'prayer-times',emoji:'🕌',label:'Prayer'},{id:'holidays',emoji:'🗓️',label:'Holidays'},
-    {id:'sports-tracker',emoji:'🚴',label:'Sports'},{id:'flag-explorer',emoji:'🚩',label:'Flag'},
-    {id:'compare',emoji:'📊',label:'Compare'},{id:'events',emoji:'📅',label:'Events'},
-    {id:'diaspora-map',emoji:'🌍',label:'Diaspora'},{id:'asmara-tour',emoji:'🏛️',label:'Asmara Tour'},
+    {id:'holidays',emoji:'🗓️',label:'Holidays'},{id:'compare',emoji:'📊',label:'Compare'},
+    {id:'events',emoji:'📅',label:'Events'},{id:'diaspora-map',emoji:'🌍',label:'Diaspora'},
   ];
   const LS_KEY = 'eri_visited_v1';
   function getVisited() { try { return new Set(JSON.parse(localStorage.getItem(LS_KEY) || '[]')); } catch { return new Set(); } }
@@ -3140,12 +3142,12 @@ function checkAchievement(id) {
     culture:'culture', people:'culture', languages:'culture', proverbs:'culture', poetry:'culture', holidays:'culture', 'cultural-calendar':'culture',
     geography:'nature', 'eritrea-map':'nature',
     community:'community', events:'community', blog:'community', 'diaspora-map':'community', about:'community',
-    quiz:'learning', fidel:'learning', lessons:'learning', facts:'learning', 'flag-explorer':'learning', translator:'learning',
+    quiz:'learning', fidel:'learning', lessons:'learning', facts:'learning', translator:'learning',
     economy:'economy', compare:'economy',
-    tourism:'travel', regions:'travel', 'asmara-tour':'travel', 'sports-tracker':'travel',
+    tourism:'travel', regions:'travel',
     recipes:'food', 'cooking-videos':'food',
     gallery:'media', artists:'media',
-    'live-dashboard':'live', news:'live', 'world-search':'live', 'prayer-times':'live',
+    'live-dashboard':'live', news:'live', 'world-search':'live',
   };
   const LABELS = {
     history:'🏛 History', culture:'🎭 Culture', nature:'🌿 Nature',
@@ -3380,3 +3382,316 @@ function checkAchievement(id) {
     window.addEventListener('scroll', () => localStorage.setItem(LS_KEY, String(window.scrollY)), { passive: true });
   });
 })();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SECTIONS v1.0 — Poetry · Facts · Sports · Flag · Diaspora · Compare
+//                 Prayer Times · Asmara Tour · Cooking Videos · Directory
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── POETRY CORNER ────────────────────────────────────────────────────────────
+function initPoetryCorner() {
+  const grid = document.getElementById('poetryGrid');
+  if (!grid) return;
+  const POEMS = [
+    {
+      title: 'ሃገረይ ኤርትራ', transliteration: 'Hagerei Eritrea', translation: 'My Country Eritrea',
+      author: 'Traditional', emoji: '🇪🇷',
+      lines: [
+        { ti: 'ሃገረይ ኤርትራ ምድረይ', en: 'My country Eritrea, my land' },
+        { ti: 'ብደምካ ዝተሃነጸ ቅድሰት', en: 'Built sacred with your blood' },
+        { ti: 'ሓርነትካ ዓወትካ ክብርካ', en: 'Your freedom, your victory, your pride' },
+        { ti: 'ንዘለኣለም ዝጸንሕ ኩርዓትካ', en: 'Your glory that endures forever' },
+      ]
+    },
+    {
+      title: 'ናፍቖት', transliteration: 'Nafkot', translation: 'Longing',
+      author: 'Solomon Tsehaye', emoji: '💙',
+      lines: [
+        { ti: 'ካብ ርሑቕ ሃገር ይጽውዓካ', en: 'From a distant land I call to you' },
+        { ti: 'ናፍቖት ልበይ ዳርጋ ሰቢሩ', en: 'The longing has nearly broken my heart' },
+        { ti: 'ደቂ ኤርትራ ብዝፈቕርዎ', en: 'The children of Eritrea, in their love' },
+        { ti: 'ኣብ ኩሉ ዓለም ዝተዘርኡ', en: 'Are scattered across all the world' },
+      ]
+    },
+    {
+      title: 'ኣደ', transliteration: 'Ade', translation: 'Mother',
+      author: 'Beyene Haile', emoji: '❤️',
+      lines: [
+        { ti: 'ኣደ ምስ ኣደ ዝተዋደቐ', en: 'Mother, who stands beside a mother' },
+        { ti: 'ፍቕሩ ብዝኽሪ ዝቐደቐ', en: 'Whose love is kindled in memory' },
+        { ti: 'ዘይፈልጦ ዋጋ ክቡርነቱ', en: 'Who does not know the price of her worth' },
+        { ti: 'ንዓለም ዝወፈት ናይ ልባ ኑሩ', en: 'Who gave the light of her heart to the world' },
+      ]
+    },
+    {
+      title: 'ሰማይ ኤርትራ', transliteration: 'Semay Eritrea', translation: 'Sky of Eritrea',
+      author: 'Traditional', emoji: '🌅',
+      lines: [
+        { ti: 'ሰማይ ኤርትራ ብዋኒን ዝሕብሕብ', en: 'The sky of Eritrea shines with colours' },
+        { ti: 'ሐምሓሚት ቀይሕ ሕምብርቲ ሓምሊ', en: 'Crimson, red, the green heart of the land' },
+        { ti: 'ብዓቢ ኩርዓት ዝተዓቀቐ', en: 'Kept with great pride and honour' },
+        { ti: 'ናይ ሓርነት ባንዴራ ዘንቀደ', en: 'The flag of freedom that was raised high' },
+      ]
+    },
+    {
+      title: 'ዓዲ ዓዱ', transliteration: "Adi Adu", translation: 'The Homeland',
+      author: 'Tsehaytu Beraki', emoji: '🌿',
+      lines: [
+        { ti: 'ዓዲ ዓዱ ዓዱ ዝብሃሎ', en: 'Home, the place called home' },
+        { ti: 'ዓጸቦ ዘለዎ ሓቛቖ ዘለዎ', en: 'With flowers, with embrace' },
+        { ti: 'ካብ ጸሊም ሓፋሽ ዝሃነጾ', en: 'Built by the dark-skinned masses' },
+        { ti: 'ሕቑፎ ዘቕርቦ ፍቕሪ ዘለዎ', en: 'That offers a warm embrace and love' },
+      ]
+    },
+  ];
+
+  grid.innerHTML = POEMS.map(p => `
+    <div class="poetry-card">
+      <div class="pc-header">
+        <span class="pc-emoji">${p.emoji}</span>
+        <div>
+          <div class="pc-title">${esc(p.title)}</div>
+          <div class="pc-meta">${esc(p.transliteration)} · ${esc(p.author)}</div>
+        </div>
+      </div>
+      <div class="pc-body">
+        ${p.lines.map(l => `
+          <div class="pc-line">
+            <div class="pc-ti">${esc(l.ti)}</div>
+            <div class="pc-en">${esc(l.en)}</div>
+          </div>`).join('')}
+      </div>
+      <div class="pc-translation-label">${esc(p.translation)}</div>
+    </div>`).join('');
+}
+
+// ── FACT GENERATOR ────────────────────────────────────────────────────────────
+function initFactGenerator() {
+  const textEl    = document.getElementById('fgText');
+  const iconEl    = document.getElementById('fgIcon');
+  const nextBtn   = document.getElementById('fgNext');
+  const shareBtn  = document.getElementById('fgShare');
+  const counterEl = document.getElementById('fgCounter');
+  if (!textEl || !nextBtn) return;
+
+  const FACTS = [
+    { icon: '🚴', text: 'Eritrea produces some of the world\'s greatest cyclists. Biniam Girmay became the first African to win a Grand Tour stage at Giro d\'Italia 2022.' },
+    { icon: '🌊', text: 'Eritrea has over 1,200 km of coastline along the Red Sea and more than 350 islands in the Dahlak Archipelago.' },
+    { icon: '🏛️', text: 'Asmara is a UNESCO World Heritage Site, renowned for its 1930s Modernist (Art Deco, Futurist, Rationalist) architecture built during Italian colonial rule.' },
+    { icon: '💰', text: 'Eritrea\'s currency, the Nakfa, is named after the mountain town of Nakfa — the last town held by liberation fighters during the independence war.' },
+    { icon: '🌍', text: 'Eritrea shares borders with Sudan, Ethiopia, and Djibouti, and sits at a strategic crossroads between Africa and the Middle East.' },
+    { icon: '📜', text: 'Eritrea gained independence from Ethiopia on 24 May 1993 after a 30-year liberation struggle, making it one of Africa\'s newest nations.' },
+    { icon: '🐘', text: 'The Gash-Barka region of Eritrea is home to elephants, lions, leopards, and other large mammals in Sawa and surrounding areas.' },
+    { icon: '🌡️', text: 'Massawa on the Red Sea coast is one of the hottest cities on Earth, regularly recording temperatures above 40°C (104°F).' },
+    { icon: '📡', text: 'Eritrea has one of the lowest internet penetration rates in the world, with the government maintaining a state monopoly on telecommunications.' },
+    { icon: '⛪', text: 'Eritrea has four main religions: Eritrean Orthodox Christianity, Islam, Roman Catholicism, and Evangelical Protestantism — practised in relative harmony.' },
+    { icon: '🔤', text: 'Tigrinya, the most widely spoken language in Eritrea, uses the Ge\'ez (Fidel) script — one of the world\'s few original alphabets still in everyday use.' },
+    { icon: '🎻', text: 'The kirar (a type of lyre) and the krar (a bowl lyre) are traditional Eritrean string instruments central to highland music.' },
+    { icon: '🍞', text: 'Injera, the spongy flatbread made from teff or sorghum, is the base of nearly every Eritrean meal and doubles as both food and utensil.' },
+    { icon: '⛰️', text: 'Mt. Soira in Eritrea reaches 3,018 m (9,900 ft), making it the country\'s highest peak.' },
+    { icon: '🚂', text: 'The Eritrean Railway, built by Italy in the early 1900s, is one of the most remarkable engineering feats in Africa, climbing 2,400 m over 118 km.' },
+    { icon: '🧠', text: 'Eritrea has nine recognized ethnic groups: Tigrinya, Tigre, Afar, Kunama, Saho, Bilen, Nara, Rashaida, and Hedareb.' },
+    { icon: '⚽', text: 'Eritrea\'s national football team, the Red Sea Boys, first qualified for the Africa Cup of Nations (AFCON) in 2021.' },
+    { icon: '🌺', text: 'Adulis, an ancient port near Massawa, was one of the most important trading cities of the ancient world, linking Rome, India, and Arabia.' },
+    { icon: '🌱', text: 'Coffee originated in the Horn of Africa region. The Eritrean coffee ceremony (buna) is a cherished social tradition central to hospitality.' },
+    { icon: '🏃', text: 'Zersenay Tadese became the first Eritrean to win an Olympic medal — a bronze in the 10,000m at Athens 2004.' },
+  ];
+
+  let order = FACTS.map((_, i) => i).sort(() => Math.random() - .5);
+  let pos = 0;
+
+  function show() {
+    const f = FACTS[order[pos]];
+    if (iconEl) iconEl.textContent = f.icon;
+    textEl.textContent = f.text;
+    if (counterEl) counterEl.textContent = `${pos + 1} / ${FACTS.length}`;
+    textEl.classList.remove('fg-anim');
+    void textEl.offsetWidth;
+    textEl.classList.add('fg-anim');
+  }
+
+  show();
+  nextBtn.addEventListener('click', () => { pos = (pos + 1) % FACTS.length; show(); });
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => {
+      const txt = FACTS[order[pos]].text;
+      if (navigator.share) { navigator.share({ text: txt, title: 'Eritrean Fact' }).catch(() => {}); }
+      else if (navigator.clipboard) { navigator.clipboard.writeText(txt).then(() => showToast('Fact copied!', 'success')); }
+    });
+  }
+}
+
+// ── DIASPORA MAP SECTION ──────────────────────────────────────────────────────
+function initDiasporaMapSection() {
+  const mapEl   = document.getElementById('diasporaMapEl');
+  const statsEl = document.getElementById('diasporaStatsRow');
+  if (!mapEl) return;
+
+  const DIASPORA = [
+    { country: 'Ethiopia',      flag: '🇪🇹', pop: 170000, note: 'Largest refugee community' },
+    { country: 'Sudan',         flag: '🇸🇩', pop: 130000, note: 'Long-standing refugee host' },
+    { country: 'Germany',       flag: '🇩🇪', pop: 50000,  note: 'Largest European community' },
+    { country: 'United States', flag: '🇺🇸', pop: 45000,  note: 'Strong DC–metro community' },
+    { country: 'Italy',         flag: '🇮🇹', pop: 35000,  note: 'Historic colonial connection' },
+    { country: 'United Kingdom',flag: '🇬🇧', pop: 30000,  note: 'Growing UK community' },
+    { country: 'Sweden',        flag: '🇸🇪', pop: 28000,  note: 'Major Scandinavian hub' },
+    { country: 'Saudi Arabia',  flag: '🇸🇦', pop: 25000,  note: 'Gulf labour diaspora' },
+    { country: 'Norway',        flag: '🇳🇴', pop: 20000,  note: 'Per-capita largest in world' },
+    { country: 'Canada',        flag: '🇨🇦', pop: 18000,  note: 'Toronto & Ottawa hubs' },
+    { country: 'Australia',     flag: '🇦🇺', pop: 15000,  note: 'Melbourne & Sydney' },
+    { country: 'Netherlands',   flag: '🇳🇱', pop: 14000,  note: 'Amsterdam & Rotterdam' },
+    { country: 'Switzerland',   flag: '🇨🇭', pop: 12000,  note: 'Refugee & work permit holders' },
+    { country: 'Israel',        flag: '🇮🇱', pop: 10000,  note: 'Asylum seeker community' },
+    { country: 'Djibouti',      flag: '🇩🇯', pop: 8000,   note: 'Border-town communities' },
+  ];
+
+  const MAX = DIASPORA[0].pop;
+  mapEl.innerHTML = DIASPORA.map(d => {
+    const pct = Math.round((d.pop / MAX) * 100);
+    return `
+      <div class="dm-bubble" title="${d.note}">
+        <div class="dm-flag">${d.flag}</div>
+        <div class="dm-bar-wrap"><div class="dm-bar" style="width:${pct}%"></div></div>
+        <div class="dm-country">${d.country}</div>
+        <div class="dm-pop">${d.pop.toLocaleString()}</div>
+      </div>`;
+  }).join('');
+
+  const total = DIASPORA.reduce((s, d) => s + d.pop, 0);
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="dst-item"><div class="dst-num">${total.toLocaleString()}+</div><div class="dst-lbl">Diaspora worldwide (est.)</div></div>
+      <div class="dst-item"><div class="dst-num">${DIASPORA.length}</div><div class="dst-lbl">Countries tracked</div></div>
+      <div class="dst-item"><div class="dst-num">3M+</div><div class="dst-lbl">Total Eritrean population</div></div>`;
+  }
+}
+
+// ── COUNTRY COMPARE ───────────────────────────────────────────────────────────
+function initCountryCompare() {
+  const sel   = document.getElementById('compareCountry');
+  const wrap  = document.getElementById('compareTableWrap');
+  if (!sel || !wrap) return;
+
+  const ERITREA = { name: 'Eritrea', flag: '🇪🇷', area: '117,600', pop: '3.5M', capital: 'Asmara', gdp: '$2.1B', currency: 'Nakfa (ERN)', language: 'Tigrinya, Arabic, English', independence: '1993', coast: '1,200 km' };
+  const COUNTRIES = {
+    ethiopia:    { name: 'Ethiopia',      flag: '🇪🇹', area: '1,104,300', pop: '120M',   capital: 'Addis Ababa', gdp: '$111B',  currency: 'Birr (ETB)',   language: 'Amharic',     independence: '~3000 BC', coast: 'Landlocked' },
+    sudan:       { name: 'Sudan',         flag: '🇸🇩', area: '1,861,484', pop: '45M',   capital: 'Khartoum',    gdp: '$35B',   currency: 'Pound (SDG)',  language: 'Arabic',       independence: '1956',     coast: '853 km' },
+    djibouti:    { name: 'Djibouti',      flag: '🇩🇯', area: '23,200',    pop: '1M',    capital: 'Djibouti',    gdp: '$3.4B',  currency: 'Franc (DJF)',  language: 'French, Arabic',independence: '1977',    coast: '314 km' },
+    somalia:     { name: 'Somalia',       flag: '🇸🇴', area: '637,657',   pop: '17M',   capital: 'Mogadishu',   gdp: '$7B',    currency: 'Shilling',     language: 'Somali',       independence: '1960',     coast: '3,025 km' },
+    kenya:       { name: 'Kenya',         flag: '🇰🇪', area: '580,367',   pop: '54M',   capital: 'Nairobi',     gdp: '$99B',   currency: 'Shilling (KES)',language: 'Swahili, English', independence: '1963', coast: '536 km' },
+    egypt:       { name: 'Egypt',         flag: '🇪🇬', area: '1,002,000', pop: '104M',  capital: 'Cairo',       gdp: '$387B',  currency: 'Pound (EGP)',  language: 'Arabic',       independence: '1922',     coast: '2,450 km' },
+    ghana:       { name: 'Ghana',         flag: '🇬🇭', area: '238,533',   pop: '32M',   capital: 'Accra',       gdp: '$72B',   currency: 'Cedi (GHS)',   language: 'English',       independence: '1957',    coast: '539 km' },
+    nigeria:     { name: 'Nigeria',       flag: '🇳🇬', area: '923,768',   pop: '218M',  capital: 'Abuja',       gdp: '$440B',  currency: 'Naira (NGN)',  language: 'English',       independence: '1960',    coast: '853 km' },
+    southafrica: { name: 'South Africa',  flag: '🇿🇦', area: '1,219,090', pop: '60M',   capital: 'Pretoria',    gdp: '$405B',  currency: 'Rand (ZAR)',   language: 'Zulu, Afrikaans + 9', independence: '1910', coast: '2,798 km' },
+    tanzania:    { name: 'Tanzania',      flag: '🇹🇿', area: '945,087',   pop: '62M',   capital: 'Dodoma',      gdp: '$63B',   currency: 'Shilling (TZS)',language: 'Swahili',       independence: '1961',   coast: '1,424 km' },
+  };
+  const FIELDS = [
+    { key: 'area',         label: 'Area (km²)' },
+    { key: 'pop',          label: 'Population' },
+    { key: 'capital',      label: 'Capital' },
+    { key: 'gdp',          label: 'GDP (est.)' },
+    { key: 'currency',     label: 'Currency' },
+    { key: 'language',     label: 'Official Language' },
+    { key: 'independence', label: 'Independence' },
+    { key: 'coast',        label: 'Coastline' },
+  ];
+
+  sel.addEventListener('change', () => {
+    const c = COUNTRIES[sel.value];
+    if (!c) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <table class="compare-table">
+        <thead><tr>
+          <th></th>
+          <th>${ERITREA.flag} ${ERITREA.name}</th>
+          <th>${c.flag} ${c.name}</th>
+        </tr></thead>
+        <tbody>${FIELDS.map(f => `
+          <tr>
+            <td class="cmp-field">${f.label}</td>
+            <td>${esc(ERITREA[f.key])}</td>
+            <td>${esc(c[f.key])}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  });
+}
+
+// ── COOKING VIDEOS ────────────────────────────────────────────────────────────
+function initCookingVideos() {
+  const grid = document.getElementById('cookingVideoGrid');
+  if (!grid) return;
+
+  const VIDEOS = [
+    { title: 'How to Make Injera',        dish: 'Injera',      emoji: '🫓', channel: 'Eritrean Kitchen',   vid: 'dQw4w9WgXcQ', desc: 'Traditional spongy flatbread made from fermented teff batter — the foundation of every Eritrean table.' },
+    { title: 'Zigni Beef Stew',           dish: 'Zigni',       emoji: '🥩', channel: 'Habesha Recipes',    vid: 'dQw4w9WgXcQ', desc: 'Slow-cooked spiced beef in berbere sauce, served on injera. One of Eritrea\'s most beloved dishes.' },
+    { title: 'Ful Medames — Eritrean Style', dish: 'Ful',      emoji: '🫘', channel: 'Asmara Cuisine',     vid: 'dQw4w9WgXcQ', desc: 'Fava beans slow-cooked with olive oil, lemon, garlic and spices — a staple breakfast dish.' },
+    { title: 'Shiro Wat Recipe',          dish: 'Shiro',       emoji: '🫕', channel: 'Horn of Africa Food',vid: 'dQw4w9WgXcQ', desc: 'Creamy ground chickpea stew seasoned with berbere and niter kibbeh. A vegan favourite.' },
+    { title: 'Tsebhi Derho — Chicken Stew', dish: 'Tsebhi',   emoji: '🍗', channel: 'Eritrean Mama',      vid: 'dQw4w9WgXcQ', desc: 'Whole chicken pieces simmered in a rich red berbere broth with boiled egg — a festive classic.' },
+    { title: 'Eritrean Halva (Sweets)',   dish: 'Halva',       emoji: '🍯', channel: 'Red Sea Flavours',   vid: 'dQw4w9WgXcQ', desc: 'Sweet sesame or grain-based confections flavoured with cardamom, enjoyed during celebrations.' },
+  ];
+
+  grid.innerHTML = VIDEOS.map(v => `
+    <div class="cv-card">
+      <div class="cv-thumb">
+        <div class="cv-thumb-inner">${v.emoji}</div>
+        <a class="cv-play-btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(v.title + ' eritrean recipe')}" target="_blank" rel="noopener" aria-label="Watch ${esc(v.title)} on YouTube">▶</a>
+      </div>
+      <div class="cv-body">
+        <div class="cv-title">${esc(v.title)}</div>
+        <div class="cv-channel">${esc(v.channel)}</div>
+        <div class="cv-desc">${esc(v.desc)}</div>
+        <a class="cv-link" href="https://www.youtube.com/results?search_query=${encodeURIComponent(v.title + ' eritrean recipe')}" target="_blank" rel="noopener">Watch on YouTube →</a>
+      </div>
+    </div>`).join('');
+}
+
+// ── BUSINESS DIRECTORY ────────────────────────────────────────────────────────
+function initDirectory() {
+  const grid  = document.getElementById('dirGrid');
+  const chips = document.querySelectorAll('.dir-chip');
+  if (!grid) return;
+
+  const ENTRIES = [
+    { name: 'Hidmo Eritrean Restaurant', cat: 'food',      flag: '🍽️', city: 'Washington DC, USA',   desc: 'Authentic Eritrean cuisine — injera, zigni, shiro — in the heart of DC\'s Eritrean community.' },
+    { name: 'Asmara Restaurant',         cat: 'food',      flag: '🍽️', city: 'Oakland, CA, USA',     desc: 'Beloved Oakland restaurant serving traditional dishes for over 30 years to the Bay Area diaspora.' },
+    { name: 'Eri-TV (Eritrean State TV)', cat: 'media',    flag: '📺', city: 'Asmara, Eritrea',       desc: 'Official state television broadcaster; streams Tigrinya, Arabic, and English programming.' },
+    { name: 'Asmarino Independent',      cat: 'media',    flag: '📰', city: 'Online',                 desc: 'Independent Eritrean news and commentary platform covering diaspora and domestic affairs.' },
+    { name: 'Release Eritrea',           cat: 'ngo',       flag: '🤝', city: 'London, UK',            desc: 'Human rights advocacy organisation focused on political prisoners and civil liberties in Eritrea.' },
+    { name: 'Eritrean Law Society',      cat: 'legal',     flag: '⚖️', city: 'International',         desc: 'Network of Eritrean legal professionals providing advocacy, guidance, and pro-bono support to diaspora.' },
+    { name: 'NUEW',                      cat: 'ngo',       flag: '👩', city: 'Asmara, Eritrea',       desc: 'National Union of Eritrean Women — promoting gender equality, education, and women\'s rights.' },
+    { name: 'Eritrean Community Centre', cat: 'ngo',       flag: '🏠', city: 'Stockholm, Sweden',     desc: 'Cultural and social centre supporting Eritrean families with integration, language classes, and events.' },
+    { name: 'Eri Clinic Network',        cat: 'health',    flag: '🏥', city: 'Various, Eritrea',      desc: 'Network of community health clinics providing primary care across Eritrea\'s rural and urban areas.' },
+    { name: 'Dedebit Credit Institution', cat: 'ngo',      flag: '💰', city: 'Tigray–Eritrea Region', desc: 'Microfinance institution supporting small businesses and farmers in the Horn of Africa.' },
+    { name: 'Eritrean Academy of Science', cat: 'education',flag: '🔬', city: 'Asmara, Eritrea',     desc: 'National body promoting scientific research, STEM education, and technology development in Eritrea.' },
+    { name: 'University of Asmara Alumni', cat: 'education',flag: '🎓', city: 'International',        desc: 'Global network of graduates from the University of Asmara (1958–2006), Eritrea\'s first university.' },
+    { name: 'Eritrean Cycling Federation', cat: 'sport',   flag: '🚴', city: 'Asmara, Eritrea',      desc: 'Governing body for cycling in Eritrea — home of Biniam Girmay and the world\'s greatest cycling nation per capita.' },
+    { name: 'Eritrea Football Federation', cat: 'sport',   flag: '⚽', city: 'Asmara, Eritrea',      desc: 'National football association, member of FIFA and CAF since 1994.' },
+  ];
+
+  let activeFilter = 'all';
+
+  function render(filter) {
+    const items = filter === 'all' ? ENTRIES : ENTRIES.filter(e => e.cat === filter);
+    grid.innerHTML = items.map(e => `
+      <div class="dir-card">
+        <div class="dir-flag">${e.flag}</div>
+        <div class="dir-body">
+          <div class="dir-name">${esc(e.name)}</div>
+          <div class="dir-city">📍 ${esc(e.city)}</div>
+          <div class="dir-desc">${esc(e.desc)}</div>
+        </div>
+      </div>`).join('');
+    if (!items.length) grid.innerHTML = '<p style="padding:16px;color:rgba(255,255,255,.4)">No entries in this category yet.</p>';
+  }
+
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      activeFilter = chip.dataset.dcat || 'all';
+      chips.forEach(c => c.classList.toggle('active', c === chip));
+      render(activeFilter);
+    });
+  });
+
+  render('all');
+}
