@@ -117,8 +117,8 @@ export function renderMore() {
 
         <!-- Version -->
         <div class="glass-card" style="padding:14px 16px;text-align:center">
-          <p style="font-weight:800;font-size:0.85rem;color:rgba(8,145,178,0.9)">Rig Log · TEST BUILD</p>
-          <p style="font-size:0.7rem;color:rgba(100,116,139,0.7);margin-top:3px">v3.2 · owner-operator toolkit · isolated data</p>
+          <p style="font-weight:800;font-size:0.85rem;color:rgba(148,163,184,0.8)">RigLog</p>
+          <p style="font-size:0.7rem;color:rgba(100,116,139,0.7);margin-top:3px">v3.2 · owner-operator toolkit</p>
         </div>
 
       </div>

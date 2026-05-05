@@ -4,10 +4,8 @@ import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 import { ACCENT_PRESETS, BG_PRESETS, applyTheme, loadTheme, saveTheme } from '../theme.js';
 
 const ALL_LOCAL_KEYS = [
-  'rl_test_expenses','rl_test_trips','rl_test_dvirs','rl_test_detention',
-  'rl_test_fuel','rl_test_maintenance','rl_test_settings','rl_test_active_detention',
-  'rl_test_p_trips','rl_test_p_fuel','rl_test_p_expenses','rl_test_p_maintenance','rl_test_p_settings',
-  'rl_test_mode',
+  'rl_expenses','rl_trips','rl_dvirs','rl_detention',
+  'rl_fuel','rl_maintenance','rl_settings','rl_active_detention','rl_mode',
 ];
 
 function collectExportData(user) {
@@ -24,7 +22,7 @@ function downloadBackup(user) {
   const blob = new Blob([JSON.stringify(collectExportData(user), null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = Object.assign(document.createElement('a'), {
-    href: url, download: `riglog-test-backup-${new Date().toISOString().slice(0,10)}.json`,
+    href: url, download: `riglog-backup-${new Date().toISOString().slice(0,10)}.json`,
   });
   a.click();
   URL.revokeObjectURL(url);
@@ -33,11 +31,11 @@ function downloadBackup(user) {
 async function shareBackup(user) {
   const file = new File(
     [JSON.stringify(collectExportData(user), null, 2)],
-    `riglog-test-backup-${new Date().toISOString().slice(0,10)}.json`,
+    `riglog-backup-${new Date().toISOString().slice(0,10)}.json`,
     { type: 'application/json' }
   );
   if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: 'RigLog TEST Backup' }); return; }
+    try { await navigator.share({ files: [file], title: 'RigLog Backup' }); return; }
     catch (e) { if (e.name === 'AbortError') return; }
   }
   downloadBackup(user);
