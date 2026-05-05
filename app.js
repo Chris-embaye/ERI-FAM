@@ -2642,17 +2642,24 @@ const ytState = {
   queue: [],        // current search results
   currentIndex: -1, // index of playing video in queue
   repeat: false,    // loop current video
+  shuffle: false,   // randomise play order
   invBase: null,    // winning Invidious instance from search (used for audio extraction only)
   audioMode: false, // true = playing via native <audio> element (real background play)
 };
 
 // Listen for YouTube iframe postMessage events (video ended, etc.)
+let _ytvEndedAt = 0;
 window.addEventListener('message', e => {
   if (!e.data || typeof e.data !== 'string') return;
   try {
     const d = JSON.parse(e.data);
-    // YouTube iframe API sends info: state 0 = ended
-    if (d.event === 'infoDelivery' && d.info?.playerState === 0) {
+    // Handle both infoDelivery (periodic) and onStateChange (explicit) — state 0 = ended
+    const isEnded = (d.event === 'infoDelivery' && d.info?.playerState === 0) ||
+                    (d.event === 'onStateChange' && d.info === 0);
+    if (isEnded) {
+      const now = Date.now();
+      if (now - _ytvEndedAt < 2000) return; // debounce duplicate events
+      _ytvEndedAt = now;
       if (ytState.repeat) {
         window.ytvPlayIndex(ytState.currentIndex);
       } else {
@@ -2675,7 +2682,12 @@ window.ytvPlayIndex = function ytvPlayIndex(idx) {
 function ytvNext() {
   const q = ytState.queue;
   if (!q.length) return;
-  const next = (ytState.currentIndex + 1) % q.length;
+  let next;
+  if (ytState.shuffle && q.length > 1) {
+    do { next = Math.floor(Math.random() * q.length); } while (next === ytState.currentIndex);
+  } else {
+    next = (ytState.currentIndex + 1) % q.length;
+  }
   window.ytvPlayIndex(next);
 }
 
@@ -2855,7 +2867,13 @@ async function ytvSearch(query) {
 
 function ytvRenderResults(results) {
   const grid = document.getElementById('ytvGrid');
-  const filtered = results.filter(v => v.videoId);
+  // Deduplicate by videoId so the same song can't appear twice
+  const seen = new Set();
+  const filtered = results.filter(v => {
+    if (!v.videoId || seen.has(v.videoId)) return false;
+    seen.add(v.videoId);
+    return true;
+  });
   if (!filtered.length) { grid.innerHTML = '<p class="ytv-empty">No results found.</p>'; return; }
   ytState.queue = filtered;
   if (ytState.currentIndex >= filtered.length) ytState.currentIndex = -1;
@@ -3016,9 +3034,14 @@ document.getElementById('ytvPipBtn').addEventListener('click', () => {
 
 document.getElementById('ytvCloseBtn').addEventListener('click', ytvStop);
 
-// Prev / Next / Repeat controls
+// Prev / Next / Shuffle / Repeat controls
 document.getElementById('ytvPrevBtn').addEventListener('click', ytvPrev);
 document.getElementById('ytvNextBtn').addEventListener('click', ytvNext);
+document.getElementById('ytvShuffleBtn').addEventListener('click', () => {
+  ytState.shuffle = !ytState.shuffle;
+  document.getElementById('ytvShuffleBtn').classList.toggle('active', ytState.shuffle);
+  toast(ytState.shuffle ? '🔀 Shuffle ON' : '🔀 Shuffle OFF');
+});
 document.getElementById('ytvRepeatBtn').addEventListener('click', () => {
   ytState.repeat = !ytState.repeat;
   document.getElementById('ytvRepeatBtn').classList.toggle('active', ytState.repeat);
