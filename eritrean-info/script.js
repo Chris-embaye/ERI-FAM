@@ -3893,3 +3893,370 @@ initRelatedSections();
     obs.observe(sec);
   });
 })();
+
+// ── NOW READING STICKY BAR ────────────────────────────────────────────────────
+(function initNowReading() {
+  const bar     = document.getElementById('nowReadingBar');
+  const secEl   = document.getElementById('nrbSection');
+  const fillEl  = document.getElementById('nrbFill');
+  const backBtn = document.getElementById('nrbBack');
+  if (!bar || !secEl || !fillEl) return;
+
+  function updateProgress() {
+    const scrolled = window.scrollY;
+    const total    = document.documentElement.scrollHeight - window.innerHeight;
+    const pct      = total > 0 ? Math.min(100, (scrolled / total) * 100) : 0;
+    fillEl.style.width = pct + '%';
+    bar.classList.toggle('visible', scrolled > 300);
+  }
+
+  const sections = Array.from(document.querySelectorAll('section[id]'));
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const h = e.target.querySelector('h2, h3');
+        if (h) secEl.textContent = h.textContent.trim().substring(0, 32);
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => { if (s.id !== 'hero') obs.observe(s); });
+
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+
+  if (backBtn) backBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+})();
+
+// ── ASMARA CLOCK + LIVE WEATHER ──────────────────────────────────────────────
+(function initHeroLive() {
+  const el = document.getElementById('heroClock');
+  if (!el) return;
+  let wx = '';
+  function renderClock() {
+    const now = new Date();
+    let h = now.getUTCHours() + 3;
+    if (h >= 24) h -= 24;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12  = h % 12 || 12;
+    const mm   = String(now.getUTCMinutes()).padStart(2, '0');
+    el.textContent = `🕐 Asmara · ${h12}:${mm} ${ampm}${wx}`;
+  }
+  function fetchWx() {
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=15.34&longitude=38.93&current_weather=true')
+      .then(r => r.json())
+      .then(({ current_weather: w }) => {
+        const map = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',80:'🌦️',81:'🌧️',82:'⛈️',95:'⛈️'};
+        wx = ` · ${map[w.weathercode] || '🌡️'} ${Math.round(w.temperature)}°C`;
+        renderClock();
+      }).catch(() => {});
+  }
+  renderClock();
+  setInterval(renderClock, 60000);
+  fetchWx();
+  setInterval(fetchWx, 30 * 60 * 1000);
+})();
+
+// ── HERO CONTENT: WOTD · FACTS · CONTINUE ────────────────────────────────────
+(function initHeroContent() {
+  // Word of the Day
+  const WORDS = [
+    {ti:'ሰላም',      rom:'selam',       en:'"Hello / Peace"'},
+    {ti:'ሃገር',      rom:'hager',       en:'"Country"'},
+    {ti:'ፍቕሪ',      rom:'fiqri',       en:'"Love"'},
+    {ti:'ናጽነት',    rom:'natsnet',     en:'"Independence"'},
+    {ti:'ጀጋኑ',      rom:'jeganu',      en:'"Heroes"'},
+    {ti:'ብርሃን',    rom:'brihan',      en:'"Light"'},
+    {ti:'ምድሪ',      rom:'mdri',        en:'"Earth"'},
+    {ti:'ፀሓይ',      rom:'tsehay',      en:'"Sun"'},
+    {ti:'ሰማይ',      rom:'semay',       en:'"Sky"'},
+    {ti:'ህዝቢ',      rom:'hizbi',       en:'"People"'},
+    {ti:'ቃንቃ',      rom:'qanqa',       en:'"Language"'},
+    {ti:'ታሪኽ',      rom:'tarikh',      en:'"History"'},
+    {ti:'ባህሊ',      rom:'bahli',       en:'"Culture"'},
+    {ti:'ዓዲ',       rom:'adi',         en:'"Village"'},
+    {ti:'ፍትሒ',      rom:'fithi',       en:'"Justice"'},
+    {ti:'ሓቂ',       rom:'haqi',        en:'"Truth"'},
+    {ti:'ተስፋ',      rom:'tesfa',       en:'"Hope"'},
+    {ti:'ዓወት',      rom:'awet',        en:'"Victory"'},
+    {ti:'ዕዳጋ',      rom:'edaga',       en:'"Market"'},
+    {ti:'ቀይሕ ባሕሪ', rom:'qeyih bahri', en:'"Red Sea"'},
+    {ti:'ኣቦ',       rom:'abo',         en:'"Father"'},
+    {ti:'ኣደ',       rom:'ade',         en:'"Mother"'},
+    {ti:'ኣሕዋት',     rom:'ahwat',       en:'"Siblings"'},
+    {ti:'ሽምዓ',      rom:'shimea',      en:'"Candle"'},
+    {ti:'ሓርነት',     rom:'harnet',      en:'"Freedom"'},
+    {ti:'ኩሉ',       rom:'kulu',        en:'"Everything"'},
+    {ti:'ዳሕሪ',      rom:'dahri',       en:'"Later"'},
+    {ti:'ምሕረት',     rom:'mihret',      en:'"Mercy"'},
+    {ti:'ሰላምታ',    rom:'selamta',     en:'"Greeting"'},
+    {ti:'ዋዒ',       rom:'wai',         en:'"Warmth"'},
+  ];
+  const word = WORDS[Math.floor(Date.now() / 86400000) % WORDS.length];
+  const set  = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('wotdTi', word.ti); set('wotdRom', word.rom); set('wotdEn', word.en);
+  const speakBtn = document.getElementById('wotdSpeak');
+  if (speakBtn) speakBtn.addEventListener('click', () => {
+    const u = new SpeechSynthesisUtterance(word.ti);
+    u.lang = 'ti'; u.rate = 0.8;
+    const v = speechSynthesis.getVoices().find(v => v.lang.startsWith('ti') || v.lang.startsWith('am'));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  });
+
+  // Rotating Did You Know facts
+  const FACTS = [
+    'Eritrea has over 1,200 km of Red Sea coastline',
+    'Asmara is a UNESCO World Heritage city for its Art Deco architecture',
+    'The Ge\'ez script is one of the oldest alphabets still in active use',
+    'Eritrea gained independence after a 30-year liberation struggle in 1993',
+    'The Dahlak Archipelago contains over 350 Red Sea islands',
+    'Eritrea is home to 9 ethnic groups, each with their own language',
+  ];
+  const factEl = document.getElementById('heroFactText');
+  const dotsEl = document.getElementById('heroFactDots');
+  if (factEl && dotsEl) {
+    FACTS.forEach((_, i) => {
+      const d = document.createElement('span');
+      d.className = 'fact-dot' + (i === 0 ? ' active' : '');
+      dotsEl.appendChild(d);
+    });
+    let fi = 0;
+    factEl.textContent = FACTS[0];
+    setInterval(() => {
+      factEl.style.opacity = '0';
+      setTimeout(() => {
+        fi = (fi + 1) % FACTS.length;
+        factEl.textContent = FACTS[fi];
+        factEl.style.opacity = '1';
+        dotsEl.querySelectorAll('.fact-dot').forEach((d, i) => d.classList.toggle('active', i === fi));
+      }, 400);
+    }, 6000);
+  }
+
+  // One-tap Tigrinya greeting
+  const greetBtn = document.getElementById('heroGreetBtn');
+  if (greetBtn) {
+    const greetings = ['ሰላም!', 'ከመይ ኣለኻ?', 'ሰናይ ምሸት!', 'ሰናይ ጽባሕ!'];
+    let gi = 0;
+    greetBtn.addEventListener('click', () => {
+      const u = new SpeechSynthesisUtterance(greetings[gi]);
+      u.lang = 'ti'; u.rate = 0.75;
+      const v = speechSynthesis.getVoices().find(v => v.lang.startsWith('ti') || v.lang.startsWith('am'));
+      if (v) u.voice = v;
+      speechSynthesis.speak(u);
+      gi = (gi + 1) % greetings.length;
+      const labels = ['🔊 ሰላም!', '🔊 ከመይ?', '🔊 ሰናይ ምሸት!', '🔊 ሰናይ ጽባሕ!'];
+      greetBtn.textContent = labels[gi];
+    });
+  }
+
+  // Continue reading — track via IntersectionObserver, restore on load
+  const contEl   = document.getElementById('heroContinue');
+  const contLink = document.getElementById('heroContinueLink');
+  if (contEl && contLink) {
+    const last = sessionStorage.getItem('eri_last_section');
+    const lbl  = sessionStorage.getItem('eri_last_label');
+    if (last && lbl) {
+      contLink.href = last; contLink.textContent = lbl + ' →';
+      contEl.style.display = 'flex';
+    }
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const h = e.target.querySelector('h2, h3');
+          if (h) {
+            sessionStorage.setItem('eri_last_section', '#' + e.target.id);
+            sessionStorage.setItem('eri_last_label', h.textContent.trim().substring(0, 28));
+          }
+        }
+      });
+    }, { threshold: 0.35 });
+    document.querySelectorAll('section[id]').forEach(s => { if (s.id !== 'hero') obs.observe(s); });
+  }
+})();
+
+// ── HERO CENTER PANEL ────────────────────────────────────────────────────────
+(function initHeroCenterPanel() {
+  // 1. Independence counter
+  const INDEP_MS = new Date('1993-05-24T00:00:00Z').getTime();
+  const iEls = {
+    yrs:  document.getElementById('indYears'),
+    days: document.getElementById('indDays'),
+    hrs:  document.getElementById('indHours'),
+    min:  document.getElementById('indMins'),
+    sec:  document.getElementById('indSecs'),
+  };
+  if (iEls.yrs) {
+    function tickInd() {
+      const diff = Date.now() - INDEP_MS;
+      const ts   = Math.floor(diff / 1000);
+      const sec  = ts % 60;
+      const tm   = Math.floor(ts / 60);
+      const min  = tm % 60;
+      const th   = Math.floor(tm / 60);
+      const hrs  = th % 24;
+      const td   = Math.floor(th / 24);
+      const yrs  = Math.floor(td / 365.25);
+      const days = Math.floor(td - yrs * 365.25);
+      iEls.yrs.textContent  = yrs;
+      iEls.days.textContent = days;
+      iEls.hrs.textContent  = String(hrs).padStart(2,'0');
+      iEls.min.textContent  = String(min).padStart(2,'0');
+      iEls.sec.textContent  = String(sec).padStart(2,'0');
+    }
+    tickInd(); setInterval(tickInd, 1000);
+  }
+
+  // 2. Multi-city weather
+  const CITIES = [
+    { id:'wxAsmara',  lat:15.34, lon:38.93 },
+    { id:'wxMassawa', lat:15.61, lon:39.45 },
+    { id:'wxKeren',   lat:15.78, lon:38.45 },
+    { id:'wxAssab',   lat:13.00, lon:42.73 },
+  ];
+  const WXM = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',51:'🌦️',61:'🌧️',80:'🌦️',95:'⛈️'};
+  CITIES.forEach(c => {
+    const el = document.getElementById(c.id);
+    if (!el) return;
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current_weather=true`)
+      .then(r => r.json())
+      .then(({ current_weather: w }) => {
+        const ic  = el.querySelector('.wx-ic');
+        const tmp = el.querySelector('.wx-tmp');
+        if (ic)  ic.textContent  = WXM[w.weathercode] || '🌡️';
+        if (tmp) tmp.textContent = Math.round(w.temperature) + '°C';
+      }).catch(() => {});
+  });
+
+  // 3. Proverb of the day
+  const PROVERBS = [
+    { ti:'ሕቡር ሓይሊ ዓለባ ይስብር',          rom:'Hibur hayli aleba yisbir',     en:'United strength can break even stone' },
+    { ti:'ሓደ ኢድ ድምጺ የብሉን',              rom:'Hade id dimtsi yebelun',        en:'One hand makes no sound' },
+    { ti:'ቃልሲ ዘይብሉ ዓወት የለን',           rom:'Qalsi zeyblu awet yelen',       en:'Without struggle there is no victory' },
+    { ti:'ሓቂ ዝናር ኣይብልን',                rom:'Haqi znar ayiblin',             en:'Truth needs no belt — it stands alone' },
+    { ti:'ሰናይ ዝዛረብ ሰናይ ይሰምዕ',          rom:'Senay zezareb senay yiseme',    en:'He who speaks good things hears good things' },
+    { ti:'ዕድመ ሓጺር፣ ጥበብ ነዊሕ',           rom:'Idme hatsir, tibeb newih',      en:'Life is short, wisdom is long' },
+    { ti:'ጽቡቕ ሰብ ኩሉ ዓለም ፈልጦ',          rom:'Tsibuk seb kulu alem feltho',   en:'A good person is known by all the world' },
+    { ti:'ሕሰም ሰብ ዘይርስዕ',                rom:'Hisem seb zeyrse',              en:'The suffering of another is not forgotten' },
+    { ti:'ዝሓሰብካ ትዓቢ፡ ዝሓሰብካ ትነብር',      rom:'Zhasebka teabi, zhasebka tenebir', en:'As you think, so you grow and live' },
+    { ti:'ሓቀኛ ሰብ ዘሕፍሮ የብሉን',           rom:'Haqena seb zehfiro yebelun',    en:'An honest person has nothing to be ashamed of' },
+  ];
+  const prov = PROVERBS[Math.floor(Date.now() / 86400000) % PROVERBS.length];
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set('provTi',  prov.ti);
+  set('provRom', prov.rom);
+  set('provEn',  '"' + prov.en + '"');
+})();
+
+// ── HERO LOWER: POPULATION + ON THIS DAY ─────────────────────────────────────
+(function initHeroLower() {
+  // Live population counter
+  const popEl = document.getElementById('heroPopNum');
+  const popEls = [popEl, document.getElementById('heroPopNum2')].filter(Boolean);
+  if (popEls.length) {
+    const BASE_POP  = 3547000;
+    const BASE_MS   = new Date('2024-01-01T00:00:00Z').getTime();
+    const PER_SEC   = (BASE_POP * 0.021) / 31536000;
+    function tickPop() {
+      const pop = Math.floor(BASE_POP + PER_SEC * ((Date.now() - BASE_MS) / 1000));
+      const txt = pop.toLocaleString();
+      popEls.forEach(e => e.textContent = txt);
+    }
+    tickPop(); setInterval(tickPop, 1000);
+  }
+
+  // On This Day
+  const dateEl = document.getElementById('otdDate2');
+  const textEl = document.getElementById('otdText2');
+  if (textEl) {
+    const EVENTS = [
+      { m:1,  d:1,  e:'Eritrea enters the new year as a young independent nation (est. 1993)' },
+      { m:2,  d:10, e:'The EPLF formed its first central committee, uniting the liberation movement' },
+      { m:3,  d:15, e:'Battle of Afabet — a decisive turning point in the liberation struggle (1988)' },
+      { m:3,  d:23, e:'Liberation of Massawa, the ancient Red Sea port city (1990)' },
+      { m:4,  d:19, e:'EPLF enters Asmara — the capital is liberated after 30 years of struggle (1991)' },
+      { m:5,  d:24, e:'🎉 Independence Day — Eritrea officially gained independence (1993)' },
+      { m:5,  d:29, e:'UN Security Council officially recognized Eritrean independence (1993)' },
+      { m:6,  d:20, e:'Martyrs\' Day — honoring the 65,000+ who gave their lives for freedom' },
+      { m:7,  d:1,  e:'Asmara established as the capital of Italian Eritrea (1897)' },
+      { m:8,  d:5,  e:'Eritrea becomes a member of the African Union (1993)' },
+      { m:9,  d:1,  e:'The armed struggle for independence was launched (1961)' },
+      { m:10, d:3,  e:'Eritrea\'s first post-independence constitution ratified (1997)' },
+      { m:11, d:14, e:'Eritrea admitted as a full member of the United Nations (1993)' },
+      { m:12, d:23, e:'International recognition of Eritrea\'s right to self-determination affirmed' },
+    ];
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let match = EVENTS.find(e => e.m === m && e.d === d);
+    if (!match) {
+      const sorted = EVENTS.map(e => ({ ...e, diff: Math.abs((m * 31 + d) - (e.m * 31 + e.d)) }));
+      sorted.sort((a, b) => a.diff - b.diff);
+      match = sorted[0];
+    }
+    const dateStr = MONTHS[match.m - 1] + ' ' + match.d;
+    const evtStr  = match.e;
+    if (dateEl) dateEl.textContent = dateStr;
+    textEl.textContent = evtStr;
+    const d3 = document.getElementById('otdDate3');
+    const t3 = document.getElementById('otdText3');
+    if (d3) d3.textContent = dateStr;
+    if (t3) t3.textContent = evtStr;
+  }
+})();
+
+// ── HERO TRIVIA ───────────────────────────────────────────────────────────────
+(function initHeroTrivia() {
+  const qEl    = document.getElementById('triviaQ');
+  const optsEl = document.getElementById('triviaOpts');
+  const resEl  = document.getElementById('triviaResult');
+  const nextBtn= document.getElementById('triviaNext');
+  if (!qEl || !optsEl) return;
+
+  const TRIVIA = [
+    { q: 'What year did Eritrea gain independence?', opts: ['1991','1993','1995','1998'], a: 1 },
+    { q: 'What sea borders Eritrea to the east?', opts: ['Arabian Sea','Indian Ocean','Red Sea','Persian Gulf'], a: 2 },
+    { q: 'What is the capital of Eritrea?', opts: ['Massawa','Keren','Mendefera','Asmara'], a: 3 },
+    { q: 'How many ethnic groups does Eritrea have?', opts: ['5','7','9','12'], a: 2 },
+    { q: 'Which script is used for Tigrinya?', opts: ["Latin","Ge'ez (Fidel)","Arabic","Cyrillic"], a: 1 },
+    { q: 'How long is Eritrea\'s Red Sea coastline?', opts: ['600 km','900 km','1,200 km','1,800 km'], a: 2 },
+    { q: 'Asmara is a UNESCO city famous for its…', opts: ['Pyramids','Art Deco architecture','Ancient temples','Ottoman bazaars'], a: 1 },
+    { q: 'The Dahlak Archipelago contains over how many islands?', opts: ['50','150','350','500'], a: 2 },
+  ];
+
+  let idx = Math.floor(Math.random() * TRIVIA.length);
+  let answered = false;
+
+  function load() {
+    answered = false;
+    const t = TRIVIA[idx];
+    qEl.textContent = t.q;
+    optsEl.innerHTML = '';
+    resEl.textContent = '';
+    t.opts.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'trivia-opt';
+      btn.textContent = opt;
+      btn.addEventListener('click', () => {
+        if (answered) return;
+        answered = true;
+        if (i === t.a) {
+          btn.classList.add('correct');
+          resEl.textContent = '✓ Correct!';
+        } else {
+          btn.classList.add('wrong');
+          resEl.textContent = '✗ The answer is: ' + t.opts[t.a];
+          optsEl.children[t.a].classList.add('correct');
+        }
+      });
+      optsEl.appendChild(btn);
+    });
+  }
+
+  load();
+  if (nextBtn) nextBtn.addEventListener('click', () => {
+    idx = (idx + 1) % TRIVIA.length;
+    load();
+  });
+})();

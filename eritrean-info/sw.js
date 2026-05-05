@@ -3,7 +3,7 @@
    Caches all app assets for offline use
    ============================================ */
 
-const CACHE_NAME    = 'eritrean-info-v32';
+const CACHE_NAME    = 'eritrean-info-v60';
 const OFFLINE_URL   = './index.html';
 
 const PRECACHE_ASSETS = [
@@ -46,9 +46,10 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (event.request.url.startsWith('chrome-extension://')) return;
 
-  // Translation API: network only
+  // External APIs: network only (never cache dynamic data)
   if (event.request.url.includes('mymemory.translated.net') ||
-      event.request.url.includes('api.mymemory')) {
+      event.request.url.includes('api.mymemory') ||
+      event.request.url.includes('api.open-meteo.com')) {
     return;
   }
 

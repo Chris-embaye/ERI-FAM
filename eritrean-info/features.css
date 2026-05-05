@@ -941,18 +941,22 @@ html.dark .copy-btn { background: rgba(255,255,255,.08); }
 .explore-score-widget {
   position: fixed; bottom: 80px; left: 16px; z-index: 95;
   display: flex; flex-direction: column; align-items: center;
-  background: var(--bg, #fff); border: 2px solid var(--green, #007A3D);
-  border-radius: 14px; padding: 8px 10px; gap: 2px;
-  box-shadow: 0 4px 20px rgba(0,122,61,.2);
-  cursor: pointer; transition: transform .2s;
-  width: 64px;
+  background: rgba(15,17,23,0.55);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-top: 1px solid rgba(255,255,255,0.30);
+  border-radius: 18px; padding: 10px 12px; gap: 2px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
+  cursor: pointer; transition: transform .2s, box-shadow .2s;
+  width: 68px;
 }
-.explore-score-widget:hover { transform: scale(1.06); }
-.es-svg { width: 44px; height: 44px; transform: rotate(-90deg); }
-.es-bg { fill: none; stroke: var(--border, #e0e0e0); stroke-width: 3; }
+.explore-score-widget:hover { transform: scale(1.07); box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,200,100,0.3); }
+.es-svg { width: 46px; height: 46px; transform: rotate(-90deg); }
+.es-bg { fill: none; stroke: rgba(255,255,255,0.10); stroke-width: 3; }
 .es-fill { fill: none; stroke: var(--green, #007A3D); stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray .6s ease; }
-.es-pct { font-size: .75rem; font-weight: 800; color: var(--green, #007A3D); margin-top: -4px; }
-.es-label { font-size: .55rem; color: var(--text-muted, #888); text-transform: uppercase; letter-spacing: .06em; }
+.es-pct { font-size: .75rem; font-weight: 800; color: #4ade80; margin-top: -4px; }
+.es-label { font-size: .55rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .06em; }
 @media (max-width: 480px) { .explore-score-widget { display: none; } }
 
 /* ── DARK MODE FIXES FOR NEW COMPONENTS ─────────────────────────── */
@@ -962,8 +966,8 @@ html.dark .cws-city:hover { background: rgba(255,255,255,.04); }
 html.dark .cws-name { color: #e2e8f0; }
 html.dark .news-tab { border-color: rgba(255,255,255,.12); color: #94a3b8; }
 html.dark .news-tab:hover { border-color: #4ade80; color: #4ade80; }
-html.dark .explore-score-widget { background: #171b26; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
-html.dark .es-bg { stroke: rgba(255,255,255,.1); }
+html.dark .explore-score-widget { background: rgba(15,17,23,0.70); }
+html.dark .es-bg { stroke: rgba(255,255,255,.08); }
 
 /* ══ TWEAKS v3.0 CSS — T14–T43 ════════════════════════════════════════ */
 

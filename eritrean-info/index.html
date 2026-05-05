@@ -60,8 +60,6 @@
 
 
   <!-- NAVIGATION -->
-  <!-- Reading progress bar -->
-  <div id="readingBar" class="reading-bar"></div>
 
   <!-- Word of the Day strip -->
   <div id="wodBar" class="wod-bar" hidden>
@@ -171,39 +169,226 @@
     ✍️ <span>Share Story</span>
   </button>
 
+  <!-- Now Reading sticky bar -->
+  <div id="nowReadingBar" aria-hidden="true">
+    <span class="nrb-label">Now reading</span>
+    <span class="nrb-section" id="nrbSection">Overview</span>
+    <span class="nrb-sep">·</span>
+    <span class="nrb-progress"><span class="nrb-fill" id="nrbFill"></span></span>
+    <button class="nrb-back" id="nrbBack" title="Back to top">↑</button>
+  </div>
+
   <!-- HERO -->
   <section id="hero">
     <div class="hero-bg"></div>
+
+    <!-- Flag + info cluster (moved inside hero-content below) -->
+    <div class="hero-tr-cluster" style="display:none">
+      <div class="hero-flag-tr" aria-label="Eritrean flag">
+        <div class="fwave-pole"></div>
+        <div class="fwave-cloth">
+        <svg width="120" height="72" viewBox="0 0 110 66" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="fwf2" x="-5%" y="-5%" width="120%" height="120%">
+              <feTurbulence type="turbulence" baseFrequency="0.022 0.09" numOctaves="2" seed="5" result="noise">
+                <animate attributeName="baseFrequency" values="0.022 0.09;0.022 0.13;0.022 0.09" dur="1.9s" repeatCount="indefinite"/>
+              </feTurbulence>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+            </filter>
+          </defs>
+          <g filter="url(#fwf2)">
+            <polygon points="0,0 110,0 110,33" fill="#007A3D"/>
+            <polygon points="0,66 110,66 110,33" fill="#4189DD"/>
+            <polygon points="0,0 0,66 110,33" fill="#CE1126"/>
+            <path d="M 25,44 C 14,43 10,36 10,30 C 10,24 14,20 20,20" fill="none" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="36" x2="7"  y2="35" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="11" y1="29" x2="6"  y2="29" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="13" y1="23" x2="9"  y2="21" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="17" y1="20" x2="15" y2="16" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <path d="M 25,44 C 36,43 40,36 40,30 C 40,24 36,20 30,20" fill="none" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="38" y1="36" x2="43" y2="35" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="39" y1="29" x2="44" y2="29" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="37" y1="23" x2="41" y2="21" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="33" y1="20" x2="35" y2="16" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="25" cy="44" r="2.2" fill="#FFC62C"/>
+            <line x1="25" y1="43" x2="25" y2="22" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="25" y1="40" x2="20" y2="36" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="25" y1="37" x2="30" y2="33" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="25" y1="34" x2="20" y2="30" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="25" y1="31" x2="30" y2="27" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="25" y1="28" x2="20" y2="24" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+            <line x1="25" y1="25" x2="30" y2="21" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+          </g>
+        </svg>
+        </div>
+      </div>
+
+      <!-- Info cards stacked below flag -->
+      <div class="hero-popcount">
+        <span class="popc-label">Live Population</span>
+        <span class="popc-num" id="heroPopNum">3,547,000</span>
+        <span class="popc-sub">Eritrea · est. 2025</span>
+      </div>
+      <div class="hero-otd">
+        <span class="otd-chip">📅 On This Day</span>
+        <span class="otd-date" id="otdDate2"></span>
+        <span class="otd-text2" id="otdText2">Loading…</span>
+      </div>
+
+      <!-- Mission Control Strip -->
+      <div class="hero-mission">
+        <div class="mc-item"><span class="mc-val">2,325<span class="mc-unit">m</span></span><span class="mc-key">Asmara Alt.</span></div>
+        <div class="mc-item"><span class="mc-val">15°N<span class="mc-unit"> 39°E</span></span><span class="mc-key">Coords</span></div>
+        <div class="mc-item"><span class="mc-val">UTC<span class="mc-unit">+3</span></span><span class="mc-key">EAT</span></div>
+        <div class="mc-item"><span class="mc-val">1,200<span class="mc-unit">km</span></span><span class="mc-key">Coastline</span></div>
+      </div>
+
+      <!-- 6 Regions -->
+      <div class="hero-regions">
+        <p class="regions-label">6 Regions</p>
+        <div class="regions-grid">
+          <div class="region-card" style="--rc:#007A3D"><span class="rc-name">Maekel</span><span class="rc-fact">Asmara</span></div>
+          <div class="region-card" style="--rc:#4189DD"><span class="rc-name">Debub</span><span class="rc-fact">S. highlands</span></div>
+          <div class="region-card" style="--rc:#8B5CF6"><span class="rc-name">Anseba</span><span class="rc-fact">Keren</span></div>
+          <div class="region-card" style="--rc:#F59E0B"><span class="rc-name">Gash‑Barka</span><span class="rc-fact">Largest</span></div>
+          <div class="region-card" style="--rc:#06B6D4"><span class="rc-name">N. Red Sea</span><span class="rc-fact">Massawa</span></div>
+          <div class="region-card" style="--rc:#CE1126"><span class="rc-name">S. Red Sea</span><span class="rc-fact">Dahlak</span></div>
+        </div>
+      </div>
+
+    </div>
+
     <div class="hero-content">
       <div class="hero-flag-stripe green"></div>
       <div class="hero-flag-stripe blue"></div>
       <div class="hero-flag-stripe red"></div>
       <div class="hero-text">
-        <h1>Eritrea</h1>
-        <p class="hero-subtitle">ኤርትራ &nbsp;|&nbsp; <span translate="no" class="notranslate">إريتريا</span></p>
-        <p class="hero-desc">The State of Eritrea — a land of ancient civilizations, stunning landscapes, and a people forged by one of Africa's longest independence struggles.</p>
+        <div class="hero-flag-accent"></div>
+        <p class="hero-clock" id="heroClock">🕐 Asmara · --:-- EAT</p>
+        <p class="hero-eyebrow">The Heart of the Red Sea</p>
+        <p class="hero-subtitle">ሃገረ ኤርትራ &nbsp;|&nbsp; <span translate="no" class="notranslate">إريتريا</span></p>
+        <button class="hero-greet" id="heroGreetBtn" aria-label="Hear Tigrinya greeting">🔊 ሰላም!</button>
+        <p class="hero-tagline">Pearl of the Red Sea</p>
+        <p class="hero-stamp">Est. 1993 &nbsp;·&nbsp; Horn of Africa &nbsp;·&nbsp; Red Sea</p>
+        <p class="hero-motto"><span class="hero-motto-ti">ሰላም · ዲሞክራሲ · ፍትሒ</span><span class="hero-motto-en">Peace · Democracy · Justice</span></p>
         <div class="hero-badges">
           <span>🌍 East Africa</span>
           <span>🏙️ Capital: Asmara</span>
           <span>📅 Independence: 1993</span>
           <span>🌊 Red Sea Coast</span>
         </div>
-        <div class="hero-stats">
-          <div class="hero-stat"><span class="hs-num" data-target="3500000" data-fmt="M+">0</span><span class="hs-label">Population</span></div>
-          <div class="hero-stat"><span class="hs-num" data-target="1993" data-fmt="year">1993</span><span class="hs-label">Independence</span></div>
-          <div class="hero-stat"><span class="hs-num" data-target="117600" data-fmt="K km²">0</span><span class="hs-label">Area</span></div>
-          <div class="hero-stat"><span class="hs-num" data-target="9" data-fmt="num">0</span><span class="hs-label">Languages</span></div>
-          <div class="hero-stat"><span class="hs-num" data-target="30" data-fmt="yr war">0</span><span class="hs-label">Yrs of Struggle</span></div>
-        </div>
         <div class="hero-btn-group">
           <a href="#overview" class="hero-btn">Explore Eritrea</a>
           <button class="hero-btn hero-install-btn" id="heroInstallBtn">&#11015; Download App</button>
         </div>
+        <div class="hero-jumps">
+          <a href="#history"    class="hero-jump">📖 History</a>
+          <a href="#gallery"    class="hero-jump">🖼 Gallery</a>
+          <a href="#translator" class="hero-jump">🌐 Translate</a>
+          <a href="#eritrea-map"class="hero-jump">🗺 Map</a>
+          <a href="#culture"    class="hero-jump">🎶 Culture</a>
+        </div>
+
+        <!-- Word of the Day -->
+        <div class="hero-wotd">
+          <span class="wotd-label">Word · Today</span>
+          <span class="wotd-ti"  id="wotdTi">ሰላም</span>
+          <span class="wotd-rom" id="wotdRom">selam</span>
+          <span class="wotd-en"  id="wotdEn">"Hello / Peace"</span>
+          <button class="wotd-speak" id="wotdSpeak" aria-label="Hear pronunciation">🔊</button>
+        </div>
+
+        <!-- Did You Know? rotating fact -->
+        <div class="hero-fact">
+          <span class="fact-icon">💡</span>
+          <span class="fact-text" id="heroFactText"></span>
+          <span class="fact-dots" id="heroFactDots"></span>
+        </div>
+
+        <!-- Quick Trivia -->
+        <div class="hero-trivia" id="heroTrivia">
+          <div class="trivia-q" id="triviaQ">Loading trivia…</div>
+          <div class="trivia-opts" id="triviaOpts"></div>
+          <div class="trivia-result" id="triviaResult"></div>
+          <button class="trivia-next" id="triviaNext">Next question ›</button>
+        </div>
+
+        <!-- Continue reading — shows after first scroll -->
+        <div class="hero-continue" id="heroContinue" style="display:none">
+          <span>↩ Continue:</span>
+          <a id="heroContinueLink" href="#overview">Overview →</a>
+        </div>
       </div>
 
+      <!-- ── HERO CENTER PANEL ─────────────────────────────── -->
+      <div class="hero-center-panel">
+
+        <!-- 1. Independence Counter -->
+        <div class="hcp-card hcp-independence">
+          <span class="hcp-label">🇪🇷 Independence</span>
+          <div class="ind-counter">
+            <div class="ind-unit"><span class="ind-val" id="indYears">32</span><span class="ind-key">yrs</span></div>
+            <div class="ind-dot">·</div>
+            <div class="ind-unit"><span class="ind-val" id="indDays">000</span><span class="ind-key">days</span></div>
+            <div class="ind-dot">·</div>
+            <div class="ind-unit"><span class="ind-val" id="indHours">00</span><span class="ind-key">h</span></div>
+            <div class="ind-unit"><span class="ind-val" id="indMins">00</span><span class="ind-key">m</span></div>
+            <div class="ind-unit"><span class="ind-val" id="indSecs">00</span><span class="ind-key">s</span></div>
+          </div>
+          <span class="hcp-sub">Since May 24, 1993 · ናጽነት</span>
+        </div>
+
+        <!-- 2. Multi-City Weather -->
+        <div class="hcp-card hcp-weather">
+          <span class="hcp-label">🌡 City Weather</span>
+          <div class="wx-grid">
+            <div class="wx-city" id="wxAsmara"><span class="wx-nm">Asmara</span><span class="wx-ic">—</span><span class="wx-tmp">—°</span></div>
+            <div class="wx-city" id="wxMassawa"><span class="wx-nm">Massawa</span><span class="wx-ic">—</span><span class="wx-tmp">—°</span></div>
+            <div class="wx-city" id="wxKeren"><span class="wx-nm">Keren</span><span class="wx-ic">—</span><span class="wx-tmp">—°</span></div>
+            <div class="wx-city" id="wxAssab"><span class="wx-nm">Assab</span><span class="wx-ic">—</span><span class="wx-tmp">—°</span></div>
+          </div>
+        </div>
+
+        <!-- 3. Proverb of the Day -->
+        <div class="hcp-card hcp-proverb">
+          <span class="hcp-label">📜 Proverb · Today</span>
+          <p class="prov-ti" id="provTi">ሕቡር ሓይሊ ዓለባ ይስብር</p>
+          <p class="prov-rom" id="provRom"></p>
+          <p class="prov-en" id="provEn"></p>
+        </div>
+
+        <!-- 4. Where in the World -->
+        <div class="hcp-card hcp-locator">
+          <span class="hcp-label">📍 Location</span>
+          <div class="loc-compass">
+            <div class="loc-n">🌊 Red Sea · Yemen</div>
+            <div class="loc-row">
+              <span class="loc-w">← Sudan</span>
+              <div class="loc-center">🇪🇷 Eritrea<br><small>15°N 39°E</small></div>
+              <span class="loc-e">Red Sea →</span>
+            </div>
+            <div class="loc-s">Ethiopia · Djibouti ↓</div>
+          </div>
+        </div>
+
+        <!-- 5. Diaspora Top 5 -->
+        <div class="hcp-card hcp-diaspora">
+          <span class="hcp-label">🌍 Global Diaspora</span>
+          <div class="diasp-bars">
+            <div class="db-row"><span class="db-c">Sudan</span><div class="db-b"><div class="db-f" style="width:100%;background:#4189DD"></div></div><span class="db-n">~600K</span></div>
+            <div class="db-row"><span class="db-c">Ethiopia</span><div class="db-b"><div class="db-f" style="width:42%;background:#007A3D"></div></div><span class="db-n">~250K</span></div>
+            <div class="db-row"><span class="db-c">Germany</span><div class="db-b"><div class="db-f" style="width:17%;background:#8B5CF6"></div></div><span class="db-n">~100K</span></div>
+            <div class="db-row"><span class="db-c">USA</span><div class="db-b"><div class="db-f" style="width:13%;background:#F59E0B"></div></div><span class="db-n">~80K</span></div>
+            <div class="db-row"><span class="db-c">Sweden</span><div class="db-b"><div class="db-f" style="width:9%;background:#CE1126"></div></div><span class="db-n">~55K</span></div>
+          </div>
+        </div>
+
+      </div>
+      <!-- ── END CENTER PANEL ──────────────────────────────── -->
+
       <!-- Futuristic Eritrea map visualization -->
-      <div class="hero-map-viz" aria-hidden="true">
-        <svg viewBox="0 0 300 440" xmlns="http://www.w3.org/2000/svg" class="eri-map-svg" overflow="visible">
+      <div class="hero-map-viz">
+        <svg viewBox="0 0 300 415" xmlns="http://www.w3.org/2000/svg" class="eri-map-svg" overflow="visible" aria-hidden="true">
           <defs>
             <filter id="eriGlow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="4" result="blur"/>
@@ -224,6 +409,20 @@
               <stop offset="100%" stop-color="#041520" stop-opacity="0.4"/>
             </linearGradient>
           </defs>
+
+          <!-- Coordinate grid (lon 38/40/42°E · lat 16/14°N) -->
+          <g class="eri-grid" clip-path="url(#mapClip)">
+            <line x1="75"  y1="0"   x2="75"  y2="415"/>
+            <line x1="158" y1="0"   x2="158" y2="415"/>
+            <line x1="241" y1="0"   x2="241" y2="415"/>
+            <line x1="0"   y1="158" x2="300" y2="158"/>
+            <line x1="0"   y1="296" x2="300" y2="296"/>
+            <text x="73"  y="11" text-anchor="end">38°</text>
+            <text x="156" y="11" text-anchor="end">40°</text>
+            <text x="239" y="11" text-anchor="end">42°</text>
+            <text x="3"   y="162">16°N</text>
+            <text x="3"   y="300">14°N</text>
+          </g>
 
           <!-- Country body — path from real GeoJSON (mledoze/countries), RDP-simplified to 83pts -->
           <!-- Coord transform: x=5+(lon-36.3)*290/7  y=5+(18.2-lat)*430/6.2 -->
@@ -269,74 +468,194 @@
           <!-- Scan line -->
           <rect class="eri-scan" x="-10" y="-2" width="320" height="3" fill="rgba(120,220,255,0.07)" clip-path="url(#mapClip)"/>
 
-          <!-- CITY NODES — all positions from real lat/lon via same transform -->
+          <!-- CITY NODES — wrapped in .city-node for hover tooltips -->
           <!-- Asmara ★ 38.93°E 15.34°N → (114, 204) — flag-green pulse -->
-          <circle cx="114" cy="204" r="18" fill="none" stroke="rgba(0,180,80,0.5)" stroke-width="1.2">
-            <animate attributeName="r" from="8" to="26" dur="2.4s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" from="0.7" to="0" dur="2.4s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="114" cy="204" r="10" fill="none" stroke="rgba(0,220,100,0.25)" stroke-width="1">
-            <animate attributeName="r" from="6" to="18" dur="2.4s" begin="0.6s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" from="0.5" to="0" dur="2.4s" begin="0.6s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="114" cy="204" r="6" fill="rgba(0,200,90,0.9)" filter="url(#eriGlow)"/>
-          <circle cx="114" cy="204" r="3" fill="#fff"/>
+          <g class="city-node">
+            <circle cx="114" cy="204" r="18" fill="none" stroke="rgba(0,180,80,0.5)" stroke-width="1.2">
+              <animate attributeName="r" from="8" to="26" dur="2.4s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" from="0.7" to="0" dur="2.4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="114" cy="204" r="10" fill="none" stroke="rgba(0,220,100,0.25)" stroke-width="1">
+              <animate attributeName="r" from="6" to="18" dur="2.4s" begin="0.6s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" from="0.5" to="0" dur="2.4s" begin="0.6s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="114" cy="204" r="6" fill="rgba(0,200,90,0.9)" filter="url(#eriGlow)"/>
+            <circle cx="114" cy="204" r="3" fill="#fff"/>
+            <g class="city-tip" transform="translate(121,185)">
+              <rect x="0" y="0" width="82" height="26" rx="3" fill="rgba(6,16,35,0.94)" stroke="rgba(0,200,90,0.55)" stroke-width="0.9"/>
+              <text x="5" y="11" font-size="6.5" fill="rgba(200,255,200,0.95)" font-family="Montserrat,sans-serif" font-weight="700">★ ASMARA</text>
+              <text x="5" y="21" font-size="5.5" fill="rgba(150,220,150,0.75)" font-family="Montserrat,sans-serif">Capital · 2,325m · 800K pop</text>
+            </g>
+          </g>
 
           <!-- Massawa 39.47°E 15.61°N → (136, 185) -->
-          <circle cx="136" cy="185" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
-            <animate attributeName="r" from="6" to="16" dur="2.4s" begin="0.4s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="0.4s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="136" cy="185" r="4.5" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+          <g class="city-node">
+            <circle cx="136" cy="185" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+              <animate attributeName="r" from="6" to="16" dur="2.4s" begin="0.4s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="0.4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="136" cy="185" r="4.5" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+            <g class="city-tip" transform="translate(143,167)">
+              <rect x="0" y="0" width="78" height="26" rx="3" fill="rgba(6,16,35,0.94)" stroke="rgba(80,200,255,0.45)" stroke-width="0.9"/>
+              <text x="5" y="11" font-size="6.5" fill="rgba(200,235,255,0.95)" font-family="Montserrat,sans-serif" font-weight="700">MASSAWA</text>
+              <text x="5" y="21" font-size="5.5" fill="rgba(140,200,255,0.75)" font-family="Montserrat,sans-serif">Ancient port · Red Sea</text>
+            </g>
+          </g>
 
           <!-- Keren 38.45°E 15.78°N → (94, 173) -->
-          <circle cx="94" cy="173" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
-            <animate attributeName="r" from="6" to="15" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="94" cy="173" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+          <g class="city-node">
+            <circle cx="94" cy="173" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+              <animate attributeName="r" from="6" to="15" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="94" cy="173" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+            <g class="city-tip" transform="translate(14,158)">
+              <rect x="0" y="0" width="68" height="26" rx="3" fill="rgba(6,16,35,0.94)" stroke="rgba(80,200,255,0.45)" stroke-width="0.9"/>
+              <text x="5" y="11" font-size="6.5" fill="rgba(200,235,255,0.95)" font-family="Montserrat,sans-serif" font-weight="700">KEREN</text>
+              <text x="5" y="21" font-size="5.5" fill="rgba(140,200,255,0.75)" font-family="Montserrat,sans-serif">North · 1,391m</text>
+            </g>
+          </g>
 
           <!-- Mendefera 38.82°E 14.89°N → (109, 235) -->
-          <circle cx="109" cy="235" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
-            <animate attributeName="r" from="6" to="15" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="109" cy="235" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+          <g class="city-node">
+            <circle cx="109" cy="235" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+              <animate attributeName="r" from="6" to="15" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="109" cy="235" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+            <g class="city-tip" transform="translate(22,241)">
+              <rect x="0" y="0" width="75" height="26" rx="3" fill="rgba(6,16,35,0.94)" stroke="rgba(80,200,255,0.45)" stroke-width="0.9"/>
+              <text x="5" y="11" font-size="6.5" fill="rgba(200,235,255,0.95)" font-family="Montserrat,sans-serif" font-weight="700">MENDEFERA</text>
+              <text x="5" y="21" font-size="5.5" fill="rgba(140,200,255,0.75)" font-family="Montserrat,sans-serif">South · 2,370m</text>
+            </g>
+          </g>
 
           <!-- Barentu 37.59°E 15.11°N → (59, 219) -->
-          <circle cx="59" cy="219" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
-            <animate attributeName="r" from="6" to="15" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="59" cy="219" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+          <g class="city-node">
+            <circle cx="59" cy="219" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+              <animate attributeName="r" from="6" to="15" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="59" cy="219" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+            <g class="city-tip" transform="translate(66,205)">
+              <rect x="0" y="0" width="68" height="26" rx="3" fill="rgba(6,16,35,0.94)" stroke="rgba(80,200,255,0.45)" stroke-width="0.9"/>
+              <text x="5" y="11" font-size="6.5" fill="rgba(200,235,255,0.95)" font-family="Montserrat,sans-serif" font-weight="700">BARENTU</text>
+              <text x="5" y="21" font-size="5.5" fill="rgba(140,200,255,0.75)" font-family="Montserrat,sans-serif">West · 638m</text>
+            </g>
+          </g>
 
           <!-- Nakfa 38.29°E 16.66°N → (87, 112) -->
-          <circle cx="87" cy="112" r="5" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
-            <animate attributeName="r" from="5" to="13" dur="2.4s" begin="2.0s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" from="0.5" to="0" dur="2.4s" begin="2.0s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="87" cy="112" r="3.5" fill="rgba(140,215,255,0.9)" filter="url(#eriGlowSm)"/>
+          <g class="city-node">
+            <circle cx="87" cy="112" r="5" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+              <animate attributeName="r" from="5" to="13" dur="2.4s" begin="2.0s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" from="0.5" to="0" dur="2.4s" begin="2.0s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="87" cy="112" r="3.5" fill="rgba(140,215,255,0.9)" filter="url(#eriGlowSm)"/>
+            <g class="city-tip" transform="translate(42,94)">
+              <rect x="0" y="0" width="76" height="26" rx="3" fill="rgba(6,16,35,0.94)" stroke="rgba(80,200,255,0.45)" stroke-width="0.9"/>
+              <text x="5" y="11" font-size="6.5" fill="rgba(200,235,255,0.95)" font-family="Montserrat,sans-serif" font-weight="700">NAKFA</text>
+              <text x="5" y="21" font-size="5.5" fill="rgba(140,200,255,0.75)" font-family="Montserrat,sans-serif">Historic stronghold</text>
+            </g>
+          </g>
 
           <!-- Assab 42.73°E 13.0°N → (271, 366) -->
-          <circle cx="271" cy="366" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
-            <animate attributeName="r" from="6" to="15" dur="2.4s" begin="2.4s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="2.4s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="271" cy="366" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+          <g class="city-node">
+            <circle cx="271" cy="366" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+              <animate attributeName="r" from="6" to="15" dur="2.4s" begin="2.4s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="2.4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="271" cy="366" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+            <g class="city-tip" transform="translate(188,350)">
+              <rect x="0" y="0" width="68" height="26" rx="3" fill="rgba(6,16,35,0.94)" stroke="rgba(80,200,255,0.45)" stroke-width="0.9"/>
+              <text x="5" y="11" font-size="6.5" fill="rgba(200,235,255,0.95)" font-family="Montserrat,sans-serif" font-weight="700">ASSAB</text>
+              <text x="5" y="21" font-size="5.5" fill="rgba(140,200,255,0.75)" font-family="Montserrat,sans-serif">Southern port</text>
+            </g>
+          </g>
 
-          <!-- City labels -->
-          <text x="119" y="200" font-size="7.5" fill="rgba(220,245,255,0.95)" font-family="Montserrat,sans-serif" font-weight="700" letter-spacing="0.4">★ ASMARA</text>
-          <text x="94"  y="179" font-size="6.5" fill="rgba(180,225,255,0.85)" font-family="Montserrat,sans-serif" font-weight="600">MASSAWA</text>
-          <text x="46"  y="170" font-size="6.5" fill="rgba(180,225,255,0.85)" font-family="Montserrat,sans-serif" font-weight="600">KEREN</text>
-          <text x="113" y="248" font-size="6"   fill="rgba(180,225,255,0.8)"  font-family="Montserrat,sans-serif" font-weight="600">MENDEFERA</text>
-          <text x="14"  y="225" font-size="6"   fill="rgba(180,225,255,0.8)"  font-family="Montserrat,sans-serif" font-weight="600">BARENTU</text>
-          <text x="91"  y="106" font-size="6"   fill="rgba(180,225,255,0.8)"  font-family="Montserrat,sans-serif" font-weight="600">NAKFA</text>
-          <text x="218" y="362" font-size="6.5" fill="rgba(180,225,255,0.85)" font-family="Montserrat,sans-serif" font-weight="600">ASSAB</text>
+          <!-- City labels — fade in after border draw completes -->
+          <g class="eri-labels">
+            <text x="119" y="200" font-size="7.5" fill="rgba(220,245,255,0.95)" font-family="Montserrat,sans-serif" font-weight="700" letter-spacing="0.4">★ ASMARA</text>
+            <text x="94"  y="179" font-size="6.5" fill="rgba(180,225,255,0.85)" font-family="Montserrat,sans-serif" font-weight="600">MASSAWA</text>
+            <text x="46"  y="170" font-size="6.5" fill="rgba(180,225,255,0.85)" font-family="Montserrat,sans-serif" font-weight="600">KEREN</text>
+            <text x="113" y="248" font-size="6"   fill="rgba(180,225,255,0.8)"  font-family="Montserrat,sans-serif" font-weight="600">MENDEFERA</text>
+            <text x="14"  y="225" font-size="6"   fill="rgba(180,225,255,0.8)"  font-family="Montserrat,sans-serif" font-weight="600">BARENTU</text>
+            <text x="91"  y="106" font-size="6"   fill="rgba(180,225,255,0.8)"  font-family="Montserrat,sans-serif" font-weight="600">NAKFA</text>
+            <text x="218" y="362" font-size="6.5" fill="rgba(180,225,255,0.85)" font-family="Montserrat,sans-serif" font-weight="600">ASSAB</text>
+            <!-- Red Sea label -->
+            <text x="185" y="88" font-size="8" fill="rgba(100,195,255,0.55)" font-family="Georgia,serif" font-style="italic" font-weight="400" letter-spacing="1.5" transform="rotate(-30,185,88)">Red Sea</text>
+          </g>
         </svg>
+        <h1 data-text="ERI·TREA">ERI<span class="h1-dot">·</span>TREA</h1>
+      </div>
+
+      <!-- ── TR-CLUSTER as flex item ───────────────────────── -->
+      <div class="hero-tr-inline">
+        <div class="hero-flag-tr2" aria-label="Eritrean flag">
+          <div class="fwave-pole"></div>
+          <div class="fwave-cloth">
+            <svg width="110" height="66" viewBox="0 0 110 66" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="fwf3" x="-5%" y="-5%" width="120%" height="120%">
+                  <feTurbulence type="turbulence" baseFrequency="0.022 0.09" numOctaves="2" seed="7" result="noise">
+                    <animate attributeName="baseFrequency" values="0.022 0.09;0.022 0.13;0.022 0.09" dur="1.9s" repeatCount="indefinite"/>
+                  </feTurbulence>
+                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+                </filter>
+              </defs>
+              <g filter="url(#fwf3)">
+                <polygon points="0,0 110,0 110,33" fill="#007A3D"/>
+                <polygon points="0,66 110,66 110,33" fill="#4189DD"/>
+                <polygon points="0,0 0,66 110,33" fill="#CE1126"/>
+                <path d="M 25,44 C 14,43 10,36 10,30 C 10,24 14,20 20,20" fill="none" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="12" y1="36" x2="7"  y2="35" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="11" y1="29" x2="6"  y2="29" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="13" y1="23" x2="9"  y2="21" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="17" y1="20" x2="15" y2="16" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <path d="M 25,44 C 36,43 40,36 40,30 C 40,24 36,20 30,20" fill="none" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="38" y1="36" x2="43" y2="35" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="39" y1="29" x2="44" y2="29" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="37" y1="23" x2="41" y2="21" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="33" y1="20" x2="35" y2="16" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="25" cy="44" r="2.2" fill="#FFC62C"/>
+                <line x1="25" y1="43" x2="25" y2="22" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="25" y1="40" x2="20" y2="36" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="25" y1="37" x2="30" y2="33" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="25" y1="34" x2="20" y2="30" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="25" y1="31" x2="30" y2="27" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="25" y1="28" x2="20" y2="24" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+                <line x1="25" y1="25" x2="30" y2="21" stroke="#FFC62C" stroke-width="2" stroke-linecap="round"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="hcp-card"><span class="hcp-label">Live Population</span><span class="popc-num" id="heroPopNum2" style="font-size:1.1rem;font-weight:800;color:#fff;display:block">3,547,000</span><span class="hcp-sub">Eritrea · est. 2025</span></div>
+        <div class="hcp-card"><span class="otd-chip">📅 On This Day</span><span class="otd-date" id="otdDate3" style="display:block;font-size:0.7rem;font-weight:700;color:rgba(255,215,80,0.85);margin:4px 0"></span><span class="otd-text2" id="otdText3" style="font-size:0.68rem;color:rgba(255,255,255,0.7);line-height:1.4">Loading…</span></div>
+        <div class="hero-mission" style="border-radius:10px">
+          <div class="mc-item"><span class="mc-val">2,325<span class="mc-unit">m</span></span><span class="mc-key">Altitude</span></div>
+          <div class="mc-item"><span class="mc-val">15°N<span class="mc-unit"> 39°E</span></span><span class="mc-key">Coords</span></div>
+          <div class="mc-item"><span class="mc-val">UTC<span class="mc-unit">+3</span></span><span class="mc-key">EAT</span></div>
+          <div class="mc-item"><span class="mc-val">1,200<span class="mc-unit">km</span></span><span class="mc-key">Coast</span></div>
+        </div>
+        <div class="hero-regions"><p class="regions-label">6 Regions</p>
+          <div class="regions-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="region-card" style="--rc:#007A3D"><span class="rc-name">Maekel</span><span class="rc-fact">Asmara</span></div>
+            <div class="region-card" style="--rc:#4189DD"><span class="rc-name">Debub</span><span class="rc-fact">S. highlands</span></div>
+            <div class="region-card" style="--rc:#8B5CF6"><span class="rc-name">Anseba</span><span class="rc-fact">Keren</span></div>
+            <div class="region-card" style="--rc:#F59E0B"><span class="rc-name">Gash‑Barka</span><span class="rc-fact">Largest</span></div>
+            <div class="region-card" style="--rc:#06B6D4"><span class="rc-name">N. Red Sea</span><span class="rc-fact">Massawa</span></div>
+            <div class="region-card" style="--rc:#CE1126"><span class="rc-name">S. Red Sea</span><span class="rc-fact">Dahlak</span></div>
+          </div>
+        </div>
       </div>
 
     </div>
-    <div class="hero-scroll-hint">↓ Scroll to explore</div>
+
+
+    <div class="hero-scroll-hint">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.45;margin-top:-10px"><polyline points="6 9 12 15 18 9"/></svg>
+      <span>Scroll to explore</span>
+    </div>
   </section>
 
   <!-- ON THIS DAY -->
