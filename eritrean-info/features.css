@@ -1257,47 +1257,38 @@ mark.annot-mark { background:#fef08a; border-radius:2px; cursor:pointer; }
 .journey-item .ji-check { font-size:.9rem; }
 
 /* T36: History Timeline ----------------------------------------------- */
-.eri-timeline { padding:8px 0 24px; position:relative; }
-.eri-timeline::before { content:''; position:absolute; left:21px; top:0; bottom:0;
-  width:2px; background:linear-gradient(to bottom,var(--green,#007A3D) 80%,transparent);
-  border-radius:2px; }
-.tl-item { display:flex; align-items:flex-start; gap:14px;
-  margin-bottom:10px; position:relative; padding-left:46px; }
-.tl-item:nth-child(odd), .tl-item:nth-child(even) { flex-direction:row; }
-.tl-dot { position:absolute; left:14px; top:14px; width:14px; height:14px;
-  border-radius:50%; background:var(--green,#007A3D);
-  border:3px solid var(--bg,#fff); box-shadow:0 0 0 2px var(--green,#007A3D);
-  flex-shrink:0; z-index:1; }
-.tl-item:nth-child(3n+2) .tl-dot { background:var(--blue,#4189DD); box-shadow:0 0 0 2px var(--blue,#4189DD); }
-.tl-item:nth-child(3n+3) .tl-dot { background:var(--red,#CE1126);  box-shadow:0 0 0 2px var(--red,#CE1126); }
-.tl-content { flex:1;
+.eri-timeline { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px; padding:8px 0 24px; }
+.eri-timeline::before { display:none; }
+.tl-item { display:flex; flex-direction:column; }
+.tl-dot { display:none; }
+.tl-content { flex:1; position:relative; overflow:hidden;
   background:rgba(255,255,255,.65);
   backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
   border:1px solid rgba(255,255,255,.8); border-radius:14px;
-  padding:10px 14px; cursor:pointer; transition:all .2s;
+  padding:14px; cursor:pointer; transition:all .2s;
   box-shadow:0 2px 12px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.5); }
+.tl-content::before { content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:var(--green,#007A3D); border-radius:14px 14px 0 0; }
+.tl-item:nth-child(3n+2) .tl-content::before { background:var(--blue,#4189DD); }
+.tl-item:nth-child(3n+3) .tl-content::before { background:var(--red,#CE1126); }
 html.dark .tl-content { background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.12);
   box-shadow:0 2px 16px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06); }
-.tl-content:hover { border-color:var(--green,#007A3D); transform:translateX(4px);
-  box-shadow:0 4px 20px rgba(0,122,61,.18),inset 0 1px 0 rgba(255,255,255,.5); }
-html.dark .tl-content:hover { box-shadow:0 4px 20px rgba(0,122,61,.35),inset 0 1px 0 rgba(255,255,255,.06); }
-.tl-item:nth-child(3n+2) .tl-content:hover { border-color:var(--blue,#4189DD); }
-.tl-item:nth-child(3n+3) .tl-content:hover { border-color:var(--red,#CE1126); }
+.tl-content:hover { transform:translateY(-4px);
+  box-shadow:0 8px 24px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.6); }
+html.dark .tl-content:hover { box-shadow:0 8px 28px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08); }
 .tl-content.open { background:rgba(255,255,255,.88); }
 html.dark .tl-content.open { background:rgba(255,255,255,.1); }
 .tl-year { font-weight:800; font-size:.72rem; letter-spacing:.05em; text-transform:uppercase;
-  color:var(--green,#007A3D); }
+  color:var(--green,#007A3D); margin-bottom:4px; }
 .tl-item:nth-child(3n+2) .tl-year { color:var(--blue,#4189DD); }
 .tl-item:nth-child(3n+3) .tl-year { color:var(--red,#CE1126); }
-.tl-title { font-weight:700; font-size:.88rem; margin:2px 0; color:var(--text,#1a1a1a); }
-.tl-desc { font-size:.8rem; color:var(--text-muted,#888); line-height:1.55; display:none; }
-.tl-content.open .tl-desc { display:block; margin-top:8px; }
-@media(max-width:600px) {
-  .eri-timeline::before { left:17px; }
-  .tl-item { padding-left:40px; }
-  .tl-dot { left:10px; }
-}
+.tl-title { font-weight:700; font-size:.9rem; margin:0; color:var(--text,#1a1a1a); }
+.tl-desc { font-size:.8rem; color:var(--text-muted,#888); line-height:1.55; display:none; margin-top:8px; }
+.tl-content.open .tl-desc { display:block; }
+@media(max-width:600px) { .eri-timeline { grid-template-columns:1fr 1fr; gap:8px; } }
+@media(max-width:380px) { .eri-timeline { grid-template-columns:1fr; } }
 
 /* T37: Language cycle toast done inline */
 
@@ -1482,7 +1473,6 @@ html.dark .fc-face span { color:#e2e8f0; }
 html.dark .badge-drawer, html.dark .annot-panel, html.dark .dict-popup, html.dark .quick-converter { background:#0f172a; border-color:rgba(255,255,255,.08); }
 html.dark .sq-question, html.dark .sq-score-wrap { color:#e2e8f0; }
 html.dark .sq-opt { background:#1e293b; border-color:rgba(255,255,255,.1); color:#e2e8f0; }
-html.dark .tl-content { background:#0f172a; border-color:rgba(255,255,255,.08); }
 html.dark .tl-title { color:#e2e8f0; }
 html.dark .journey-item { border-color:rgba(255,255,255,.1); color:#e2e8f0; }
 html.dark .journey-item.visited { border-color:#4ade80; background:rgba(74,222,128,.1); color:#4ade80; }
