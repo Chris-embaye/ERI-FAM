@@ -1,139 +1,182 @@
 <!DOCTYPE html>
-<html lang="en" id="htmlRoot">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About — Eritrean Info</title>
   <meta name="theme-color" content="#007A3D" />
-  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
-  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <link rel="icon" type="image/png" href="icons/eri-logo.png" />
+  <link rel="apple-touch-icon" href="icons/eri-logo.png" />
   <meta name="description" content="About Eritrean Info — a comprehensive public resource about Eritrea built for the global Eritrean community." />
-  <link rel="stylesheet" href="styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Noto+Serif+Ethiopic:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
   <style>
-    /* ── About page layout ── */
-    .about-page { min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: 'Montserrat', system-ui, sans-serif;
+      background: #080e0a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    a { text-decoration: none; color: inherit; }
+    img { display: block; max-width: 100%; }
 
-    /* Nav bar */
+    /* ── NAV ── */
     .ab-nav {
       position: sticky; top: 0; z-index: 200;
-      background: rgba(10,26,18,.92); backdrop-filter: blur(12px);
+      background: rgba(8,14,10,.92); backdrop-filter: blur(14px);
       border-bottom: 1px solid rgba(255,255,255,.08);
-      padding: 0 24px; height: 56px;
+      padding: 0 24px; height: 58px;
       display: flex; align-items: center; justify-content: space-between;
     }
     .ab-nav-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
-    .ab-nav-flag  { font-size:1.4rem; }
+    .ab-nav-logo  { width:34px; height:34px; object-fit:contain; }
     .ab-nav-name  { font-weight:700; font-size:1rem; color:#fff; }
     .ab-nav-back  {
       display:flex; align-items:center; gap:6px; color:rgba(255,255,255,.7);
       text-decoration:none; font-size:.85rem; font-weight:600;
-      padding:6px 14px; border-radius:20px; border:1px solid rgba(255,255,255,.15);
+      padding:6px 16px; border-radius:20px; border:1px solid rgba(255,255,255,.15);
       transition:all .2s;
     }
     .ab-nav-back:hover { background:rgba(255,255,255,.08); color:#fff; }
 
-    /* Hero */
+    /* ── HERO ── */
     .ab-hero {
-      background: linear-gradient(135deg, #051a0e 0%, #0a1520 60%, #0d1a12 100%);
-      padding: 80px 24px 64px;
+      background: linear-gradient(135deg, #051a0e 0%, #0a1520 55%, #0d1a12 100%);
+      padding: 72px 24px 60px;
       text-align: center;
       border-bottom: 1px solid rgba(255,255,255,.07);
+      position: relative;
+      overflow: hidden;
     }
-    .ab-hero-flag { font-size: 4rem; margin-bottom: 16px; display:block; }
+    .ab-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 60%, rgba(0,122,61,.3) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 30%, rgba(65,137,221,.2) 0%, transparent 60%);
+    }
+    .ab-hero-logo {
+      width: 100px; height: 100px; object-fit: contain;
+      margin: 0 auto 20px; position: relative; z-index: 1;
+      filter: drop-shadow(0 4px 24px rgba(0,122,61,.5));
+    }
     .ab-hero-title {
       font-size: clamp(2rem,5vw,3.2rem); font-weight: 800;
-      color: #fff; margin: 0 0 14px;
+      margin: 0 0 14px; position: relative; z-index: 1;
       background: linear-gradient(135deg, #fff 40%, #4ade80);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .ab-hero-sub {
       font-size: 1.05rem; color: rgba(255,255,255,.65);
       max-width: 520px; margin: 0 auto; line-height: 1.65;
+      position: relative; z-index: 1;
     }
 
-    /* Main content */
-    .ab-content { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+    /* ── CONTENT ── */
+    .ab-content { max-width: 960px; margin: 0 auto; padding: 56px 24px 80px; }
     .ab-section { margin-bottom: 56px; }
     .ab-section-title {
-      font-size: 1.25rem; font-weight: 700; color: #fff;
+      font-size: 1.1rem; font-weight: 700; color: #fff;
       margin: 0 0 20px; padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      border-bottom: 1px solid rgba(255,255,255,.1);
       display: flex; align-items: center; gap: 10px;
     }
 
-    /* Stats row */
-    .ab-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 16px; margin-bottom: 56px; }
-    .ab-stat  {
-      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+    /* Stats */
+    .ab-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 14px; margin-bottom: 56px;
+    }
+    .ab-stat {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
       border-radius: 14px; padding: 22px 16px; text-align: center;
+      transition: all .2s;
     }
-    .ab-stat-num { font-size: 1.9rem; font-weight: 800; color: #4ade80; }
-    .ab-stat-lbl { font-size: .78rem; color: rgba(255,255,255,.55); margin-top: 5px; }
+    .ab-stat:hover { background: rgba(0,122,61,.12); border-color: rgba(0,122,61,.4); transform: translateY(-3px); }
+    .ab-stat-num { font-size: 1.9rem; font-weight: 800; color: #4ade80; line-height: 1; }
+    .ab-stat-lbl { font-size: .75rem; color: rgba(255,255,255,.5); margin-top: 6px; }
 
-    /* Mission / prose */
+    /* Mission */
     .ab-prose {
-      font-size: .95rem; line-height: 1.75; color: rgba(255,255,255,.75);
-      background: rgba(255,255,255,.04); border-left: 3px solid #007A3D;
-      border-radius: 0 10px 10px 0; padding: 18px 22px;
+      font-size: .95rem; line-height: 1.8; color: rgba(255,255,255,.75);
+      background: rgba(255,255,255,.04);
+      border-left: 3px solid #007A3D;
+      border-radius: 0 10px 10px 0; padding: 20px 24px;
     }
 
-    /* Feature grid */
-    .ab-features { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 16px; }
+    /* Features grid */
+    .ab-features { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 14px; }
     .ab-feature {
-      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
-      border-radius: 12px; padding: 18px; display: flex; gap: 14px; align-items: flex-start;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 12px; padding: 18px;
+      display: flex; gap: 14px; align-items: flex-start;
+      transition: all .2s;
     }
+    .ab-feature:hover { background: rgba(0,122,61,.1); border-color: rgba(0,122,61,.35); }
     .ab-feature-icon { font-size: 1.6rem; flex-shrink: 0; }
-    .ab-feature-title { font-weight: 700; font-size: .9rem; color: #fff; margin-bottom: 4px; }
-    .ab-feature-desc  { font-size: .8rem; color: rgba(255,255,255,.55); line-height: 1.4; }
+    .ab-feature-title { font-weight: 700; font-size: .9rem; color: #fff; margin-bottom: 5px; }
+    .ab-feature-desc  { font-size: .8rem; color: rgba(255,255,255,.5); line-height: 1.45; }
 
     /* Values */
     .ab-values { display: flex; flex-wrap: wrap; gap: 10px; }
     .ab-value-chip {
       background: rgba(0,122,61,.15); border: 1px solid rgba(0,122,61,.3);
-      color: #4ade80; border-radius: 20px; padding: 7px 16px; font-size: .85rem; font-weight: 600;
+      color: #4ade80; border-radius: 20px; padding: 7px 16px;
+      font-size: .85rem; font-weight: 600;
     }
 
-    /* Sections list */
-    .ab-sections-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(190px,1fr)); gap: 10px; }
+    /* Site links */
+    .ab-sections-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 10px; }
     .ab-section-link {
       display: flex; align-items: center; gap: 10px;
       background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
-      border-radius: 10px; padding: 10px 14px; text-decoration: none;
+      border-radius: 10px; padding: 10px 14px;
       color: rgba(255,255,255,.75); font-size: .85rem; font-weight: 600;
       transition: all .2s;
     }
     .ab-section-link:hover { background: rgba(0,122,61,.12); border-color: rgba(0,122,61,.4); color: #fff; }
 
     /* Contact */
-    .ab-contact-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 14px; }
+    .ab-contact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 14px; }
     .ab-contact-card {
       background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
       border-radius: 12px; padding: 18px; display: flex; gap: 12px; align-items: center;
     }
-    .ab-contact-icon { font-size: 1.5rem; }
+    .ab-contact-icon { font-size: 1.5rem; flex-shrink: 0; }
     .ab-contact-label { font-weight: 700; font-size: .85rem; color: #fff; }
-    .ab-contact-val   { font-size: .8rem; color: rgba(255,255,255,.5); margin-top: 2px; }
+    .ab-contact-val   { font-size: .8rem; color: rgba(255,255,255,.45); margin-top: 3px; line-height: 1.4; }
 
-    /* Footer bar */
+    /* Footer */
     .ab-footer {
-      background: rgba(0,0,0,.3); border-top: 1px solid rgba(255,255,255,.07);
-      text-align: center; padding: 24px;
-      font-size: .82rem; color: rgba(255,255,255,.4);
+      background: rgba(0,0,0,.4); border-top: 1px solid rgba(255,255,255,.07);
+      text-align: center; padding: 28px 24px;
+      font-size: .82rem; color: rgba(255,255,255,.35);
     }
+    .ab-footer-sig { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px; }
+    .ab-footer-sig img { width:28px; height:28px; object-fit:contain; }
+    .ab-footer-sig span { font-weight:700; font-size:.95rem; color:rgba(255,255,255,.65); }
     .ab-footer a { color: #4ade80; text-decoration: none; }
     .ab-footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .ab-hero { padding: 56px 16px 44px; }
+      .ab-content { padding: 36px 16px 60px; }
+      .ab-hero-logo { width: 72px; height: 72px; }
+    }
   </style>
 </head>
-<body class="about-page">
+<body>
 
   <!-- Nav -->
   <nav class="ab-nav">
     <a href="index.html" class="ab-nav-brand">
-      <span class="ab-nav-flag">🇪🇷</span>
+      <img src="icons/eri-logo.png" alt="Eritrean Info" class="ab-nav-logo" />
       <span class="ab-nav-name">Eritrean Info</span>
     </a>
     <a href="index.html" class="ab-nav-back">← Back to site</a>
@@ -141,7 +184,7 @@
 
   <!-- Hero -->
   <div class="ab-hero">
-    <span class="ab-hero-flag">🇪🇷</span>
+    <img src="icons/eri-logo.png" alt="Eritrean Info" class="ab-hero-logo" />
     <h1 class="ab-hero-title">About Eritrean Info</h1>
     <p class="ab-hero-sub">A free, comprehensive public resource about Eritrea — built with love for the Eritrean community worldwide.</p>
   </div>
@@ -153,17 +196,17 @@
     <div class="ab-stats">
       <div class="ab-stat"><div class="ab-stat-num">40+</div><div class="ab-stat-lbl">Content Sections</div></div>
       <div class="ab-stat"><div class="ab-stat-num">231</div><div class="ab-stat-lbl">Fidel Characters</div></div>
-      <div class="ab-stat"><div class="ab-stat-num">9</div><div class="ab-stat-lbl">Ethnic Groups Covered</div></div>
+      <div class="ab-stat"><div class="ab-stat-num">9</div><div class="ab-stat-lbl">Ethnic Groups</div></div>
+      <div class="ab-stat"><div class="ab-stat-num">16</div><div class="ab-stat-lbl">Languages Supported</div></div>
       <div class="ab-stat"><div class="ab-stat-num">100%</div><div class="ab-stat-lbl">Free & Open</div></div>
       <div class="ab-stat"><div class="ab-stat-num">PWA</div><div class="ab-stat-lbl">Works Offline</div></div>
-      <div class="ab-stat"><div class="ab-stat-num">🌍</div><div class="ab-stat-lbl">Global Diaspora</div></div>
     </div>
 
     <!-- Mission -->
     <div class="ab-section">
       <div class="ab-section-title">🎯 Our Mission</div>
       <div class="ab-prose">
-        Eritrean Info was created to be a single, trusted place where anyone — Eritrean or not — can learn about Eritrea honestly, comprehensively, and beautifully. We cover history, culture, language, geography, economy, sports, and much more. Everything is free, ad-light, and built to work offline on any device.
+        Eritrean Info was created to be a single, trusted place where anyone — Eritrean or not — can learn about Eritrea honestly, comprehensively, and beautifully. We cover history, culture, language, geography, economy, and much more. Everything is free, ad-light, and built to work offline on any device.
       </div>
     </div>
 
@@ -171,18 +214,18 @@
     <div class="ab-section">
       <div class="ab-section-title">📚 What's Inside</div>
       <div class="ab-features">
-        <div class="ab-feature"><div class="ab-feature-icon">📜</div><div><div class="ab-feature-title">History</div><div class="ab-feature-desc">From ancient Adulis to independence — a full timeline of Eritrea's story.</div></div></div>
+        <div class="ab-feature"><div class="ab-feature-icon">📜</div><div><div class="ab-feature-title">History Timeline</div><div class="ab-feature-desc">From ancient Adulis to independence — interactive glass card timeline.</div></div></div>
         <div class="ab-feature"><div class="ab-feature-icon">🔤</div><div><div class="ab-feature-title">Ge'ez Fidel Alphabet</div><div class="ab-feature-desc">All 231 Tigrinya characters with pronunciation — interactive and searchable.</div></div></div>
         <div class="ab-feature"><div class="ab-feature-icon">🌐</div><div><div class="ab-feature-title">Tigrinya Translator</div><div class="ab-feature-desc">AI-powered Tigrinya ↔ English translation with phonetic guides.</div></div></div>
-        <div class="ab-feature"><div class="ab-feature-icon">🚴</div><div><div class="ab-feature-title">Sports Tracker</div><div class="ab-feature-desc">Eritrea's world-class cyclists, runners, and footballers.</div></div></div>
         <div class="ab-feature"><div class="ab-feature-icon">🍽️</div><div><div class="ab-feature-title">Food & Recipes</div><div class="ab-feature-desc">Injera, zigni, shiro — traditional Eritrean dishes with cooking videos.</div></div></div>
-        <div class="ab-feature"><div class="ab-feature-icon">🗺️</div><div><div class="ab-feature-title">Geography & Regions</div><div class="ab-feature-desc">Interactive maps, regional profiles, and diaspora world map.</div></div></div>
-        <div class="ab-feature"><div class="ab-feature-icon">🎵</div><div><div class="ab-feature-title">Music</div><div class="ab-feature-desc">Eritrean artists, an integrated music player, and the national anthem.</div></div></div>
+        <div class="ab-feature"><div class="ab-feature-icon">🗺️</div><div><div class="ab-feature-title">Geography & Regions</div><div class="ab-feature-desc">Interactive Leaflet map, regional profiles, and diaspora world map.</div></div></div>
+        <div class="ab-feature"><div class="ab-feature-icon">🎵</div><div><div class="ab-feature-title">Artists & Music</div><div class="ab-feature-desc">Eritrean artists directory with an integrated music player.</div></div></div>
         <div class="ab-feature"><div class="ab-feature-icon">📅</div><div><div class="ab-feature-title">Community Events</div><div class="ab-feature-desc">Diaspora events board with calendar download and submission form.</div></div></div>
-        <div class="ab-feature"><div class="ab-feature-icon">🏛️</div><div><div class="ab-feature-title">Asmara Virtual Tour</div><div class="ab-feature-desc">Walk through UNESCO Art Deco buildings in the "City of the Future."</div></div></div>
-        <div class="ab-feature"><div class="ab-feature-icon">🕌</div><div><div class="ab-feature-title">Prayer Times</div><div class="ab-feature-desc">Daily salah times for Asmara, Massawa, and Keren — updated live.</div></div></div>
         <div class="ab-feature"><div class="ab-feature-icon">🏆</div><div><div class="ab-feature-title">Quiz</div><div class="ab-feature-desc">Test your Eritrea knowledge with a community leaderboard.</div></div></div>
-        <div class="ab-feature"><div class="ab-feature-icon">📖</div><div><div class="ab-feature-title">Language Lessons</div><div class="ab-feature-desc">5 beginner Tigrinya lessons with vocabulary, phrases, and streak tracking.</div></div></div>
+        <div class="ab-feature"><div class="ab-feature-icon">📖</div><div><div class="ab-feature-title">Language Lessons</div><div class="ab-feature-desc">Beginner Tigrinya lessons with vocabulary, phrases, and streak tracking.</div></div></div>
+        <div class="ab-feature"><div class="ab-feature-icon">📸</div><div><div class="ab-feature-title">Photo Gallery</div><div class="ab-feature-desc">Curated photos of Eritrea's landscapes, people, and culture.</div></div></div>
+        <div class="ab-feature"><div class="ab-feature-icon">💬</div><div><div class="ab-feature-title">Proverbs & Poetry</div><div class="ab-feature-desc">Traditional Tigrinya proverbs and modern Eritrean poetry.</div></div></div>
+        <div class="ab-feature"><div class="ab-feature-icon">📡</div><div><div class="ab-feature-title">Live News & Weather</div><div class="ab-feature-desc">Live news ticker and real-time weather for 5 Eritrean cities.</div></div></div>
       </div>
     </div>
 
@@ -201,35 +244,34 @@
       </div>
     </div>
 
-    <!-- Navigate -->
+    <!-- Explore -->
     <div class="ab-section">
       <div class="ab-section-title">🧭 Explore the Site</div>
       <div class="ab-sections-grid">
-        <a href="index.html#overview"      class="ab-section-link">🏛️ Overview</a>
-        <a href="index.html#history"       class="ab-section-link">📜 History</a>
-        <a href="index.html#geography"     class="ab-section-link">🗺️ Geography</a>
-        <a href="index.html#people"        class="ab-section-link">👥 People</a>
-        <a href="index.html#culture"       class="ab-section-link">🎭 Culture</a>
-        <a href="index.html#economy"       class="ab-section-link">💰 Economy</a>
-        <a href="index.html#government"    class="ab-section-link">⚖️ Government</a>
-        <a href="index.html#famous"        class="ab-section-link">⭐ Famous People</a>
-        <a href="index.html#artists"       class="ab-section-link">🎵 Artists</a>
-        <a href="index.html#gallery"       class="ab-section-link">📸 Gallery</a>
-        <a href="index.html#translator"    class="ab-section-link">🌐 Translator</a>
-        <a href="index.html#recipes"       class="ab-section-link">🍽️ Recipes</a>
-        <a href="index.html#tourism"       class="ab-section-link">✈️ Tourism</a>
-        <a href="index.html#quiz"          class="ab-section-link">🏆 Quiz</a>
-        <a href="index.html#fidel"         class="ab-section-link">🔤 Fidel Alphabet</a>
-        <a href="index.html#lessons"       class="ab-section-link">📖 Lessons</a>
-        <a href="index.html#proverbs"      class="ab-section-link">💬 Proverbs</a>
-        <a href="index.html#poetry"        class="ab-section-link">📝 Poetry</a>
-        <a href="index.html#events"        class="ab-section-link">📅 Events</a>
-        <a href="index.html#directory"     class="ab-section-link">🏢 Directory</a>
-        <a href="index.html#news"          class="ab-section-link">📰 News</a>
+        <a href="index.html#overview"   class="ab-section-link">🏛️ Overview</a>
+        <a href="index.html#history"    class="ab-section-link">📜 History</a>
+        <a href="index.html#geography"  class="ab-section-link">🗺️ Geography</a>
+        <a href="index.html#people"     class="ab-section-link">👥 People</a>
+        <a href="index.html#culture"    class="ab-section-link">🎭 Culture</a>
+        <a href="index.html#economy"    class="ab-section-link">💰 Economy</a>
+        <a href="index.html#government" class="ab-section-link">⚖️ Government</a>
+        <a href="index.html#famous"     class="ab-section-link">⭐ Famous People</a>
+        <a href="index.html#artists"    class="ab-section-link">🎵 Artists</a>
+        <a href="index.html#gallery"    class="ab-section-link">📸 Gallery</a>
+        <a href="index.html#translator" class="ab-section-link">🌐 Translator</a>
+        <a href="index.html#recipes"    class="ab-section-link">🍽️ Recipes</a>
+        <a href="index.html#tourism"    class="ab-section-link">✈️ Tourism</a>
+        <a href="index.html#quiz"       class="ab-section-link">🏆 Quiz</a>
+        <a href="index.html#fidel"      class="ab-section-link">🔤 Fidel Alphabet</a>
+        <a href="index.html#lessons"    class="ab-section-link">📖 Lessons</a>
+        <a href="index.html#proverbs"   class="ab-section-link">💬 Proverbs</a>
+        <a href="index.html#poetry"     class="ab-section-link">📝 Poetry</a>
+        <a href="index.html#events"     class="ab-section-link">📅 Events</a>
+        <a href="index.html#news"       class="ab-section-link">📰 News</a>
       </div>
     </div>
 
-    <!-- Contact / links -->
+    <!-- Contact -->
     <div class="ab-section">
       <div class="ab-section-title">📬 Contact & Links</div>
       <div class="ab-contact-grid">
@@ -237,7 +279,7 @@
           <div class="ab-contact-icon">🌐</div>
           <div>
             <div class="ab-contact-label">Website</div>
-            <div class="ab-contact-val">eritrean-info.web.app</div>
+            <div class="ab-contact-val">eritreaninfo.com</div>
           </div>
         </div>
         <div class="ab-contact-card">
@@ -268,16 +310,13 @@
 
   <!-- Footer -->
   <footer class="ab-footer">
-    <p>© 2025 Eritrean Info · Built with ❤️ for the Eritrean community worldwide</p>
-    <p style="margin-top:6px"><a href="index.html">← Back to Eritrean Info</a></p>
+    <div class="ab-footer-sig">
+      <img src="icons/eri-logo.png" alt="" />
+      <span>Eritrean Info</span>
+    </div>
+    <p>© 2025 · Built with ❤️ for the Eritrean community worldwide</p>
+    <p style="margin-top:8px"><a href="index.html">← Back to Eritrean Info</a></p>
   </footer>
 
-  <script>
-    // Respect dark mode stored in localStorage
-    const darkPref = localStorage.getItem('eri_dark');
-    if (darkPref === '1' || (!darkPref && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    }
-  </script>
 </body>
 </html>
