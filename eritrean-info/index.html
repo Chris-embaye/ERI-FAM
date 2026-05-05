@@ -188,6 +188,13 @@
           <span>📅 Independence: 1993</span>
           <span>🌊 Red Sea Coast</span>
         </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><span class="hs-num" data-target="3500000" data-fmt="M+">0</span><span class="hs-label">Population</span></div>
+          <div class="hero-stat"><span class="hs-num" data-target="1993" data-fmt="year">1993</span><span class="hs-label">Independence</span></div>
+          <div class="hero-stat"><span class="hs-num" data-target="117600" data-fmt="K km²">0</span><span class="hs-label">Area</span></div>
+          <div class="hero-stat"><span class="hs-num" data-target="9" data-fmt="num">0</span><span class="hs-label">Languages</span></div>
+          <div class="hero-stat"><span class="hs-num" data-target="30" data-fmt="yr war">0</span><span class="hs-label">Yrs of Struggle</span></div>
+        </div>
         <div class="hero-btn-group">
           <a href="#overview" class="hero-btn">Explore Eritrea</a>
           <button class="hero-btn hero-install-btn" id="heroInstallBtn">&#11015; Download App</button>
@@ -419,7 +426,12 @@
         <h2>Explore Eritrea</h2>
         <p>Click any city pin to learn about it — major cities, ports, and landmarks</p>
       </div>
-      <div id="eritreaLeafletMap" class="eritrea-map-wrap"></div>
+      <div id="eritreaLeafletMap" class="eritrea-map-wrap">
+        <div id="mapSpinner" class="map-spinner-wrap">
+          <div class="map-spinner"></div>
+          <span>Loading map…</span>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1277,7 +1289,18 @@
             <p>Rashaida woman in traditional gold jewelry and embroidered attire</p>
           </div>
         </div>
-        <div id="galleryDynamic"></div>
+        <div id="galleryDynamic">
+          <div id="gallerySkelGrid" class="gallery-skel-wrap">
+            <div class="gallery-skel-item skel"></div>
+            <div class="gallery-skel-item skel"></div>
+            <div class="gallery-skel-item skel"></div>
+            <div class="gallery-skel-item skel"></div>
+            <div class="gallery-skel-item skel"></div>
+            <div class="gallery-skel-item skel"></div>
+            <div class="gallery-skel-item skel"></div>
+            <div class="gallery-skel-item skel"></div>
+          </div>
+        </div>
 
       </div>
     </div>

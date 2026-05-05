@@ -2171,6 +2171,7 @@ if (gallerySection) {
 async function loadDynamicGallery() {
   const dyn = document.getElementById('galleryDynamic');
   if (!dyn) return;
+  document.getElementById('gallerySkelGrid')?.remove();
   try {
     const [appMod, fsMod] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
@@ -2726,11 +2727,16 @@ function initLeafletMap() {
   container.dataset.inited = '1';
 
   const map = L.map('eritreaLeafletMap', { center: [15.1794, 39.7823], zoom: 7, zoomControl: true });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
     maxZoom: 15
   }).addTo(map);
   setTimeout(() => map.invalidateSize(), 400);
+  const _mapSpinner = document.getElementById('mapSpinner');
+  if (_mapSpinner) {
+    tileLayer.once('tileload', () => _mapSpinner.classList.add('gone'));
+    setTimeout(() => _mapSpinner?.classList.add('gone'), 4000);
+  }
 
   ERI_CITIES.forEach(city => {
     const marker = L.marker([city.lat, city.lng]).addTo(map);
@@ -3828,4 +3834,55 @@ initRelatedSections();
       header.appendChild(launchBtn);
     }
   }
+})();
+
+// ── TWEAK 3: HERO STAT COUNTERS ──────────────────────────────────────────────
+(function initHeroCounters() {
+  const els = document.querySelectorAll('.hs-num');
+  if (!els.length) return;
+  const DURATION = 1800;
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+  function formatVal(val, fmt) {
+    if (fmt === 'M+')      return (val / 1e6).toFixed(1) + 'M+';
+    if (fmt === 'K km²')   return Math.round(val / 1000) + 'K km²';
+    if (fmt === 'yr war')  return val + ' yrs';
+    return String(val);
+  }
+  function animateCounter(el) {
+    const target = +el.dataset.target;
+    const fmt    = el.dataset.fmt || 'num';
+    if (fmt === 'year') { el.textContent = target; return; }
+    const start = performance.now();
+    function tick(now) {
+      const t   = Math.min((now - start) / DURATION, 1);
+      const val = Math.round(target * easeOut(t));
+      el.textContent = formatVal(val, fmt);
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  const obs = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    obs.disconnect();
+    els.forEach(animateCounter);
+  }, { threshold: 0.4 });
+  const hero = document.getElementById('hero');
+  if (hero) obs.observe(hero);
+})();
+
+// ── TWEAK 5: SECTION FADE-IN REVEAL ─────────────────────────────────────────
+(function initSectionReveal() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('revealed');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.07, rootMargin: '0px 0px -30px 0px' });
+  document.querySelectorAll('section').forEach(sec => {
+    if (sec.id === 'hero') return;
+    sec.classList.add('section-reveal');
+    obs.observe(sec);
+  });
 })();

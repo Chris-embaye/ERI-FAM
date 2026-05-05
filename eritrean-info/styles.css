@@ -59,7 +59,8 @@ html.dark .religion-card,
 html.dark .tourism-card,
 html.dark .asmara-content,
 html.dark .geo-borders {
-  background: #1a1e2e;
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
   color: #e2e8f0;
 }
 html.dark .timeline-card h3,
@@ -92,7 +93,7 @@ html.dark .section-tag { background: rgba(0,122,61,0.2); color: #4ade80; }
 html.dark .overview-text blockquote { background: rgba(0,122,61,0.15); }
 html.dark .lang-family { background: rgba(255,255,255,0.08); }
 html.dark .border-item { background: #1a1e2e; color: #e2e8f0; }
-html.dark .famous-card { background: #1a1e2e; }
+html.dark .famous-card { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
 html.dark .famous-info p { color: #94a3b8; }
 html.dark .famous-name { color: #e2e8f0; }
 
@@ -4469,4 +4470,134 @@ html.dark .blog-card:hover {
   .fidel-sound { display: none; }
   .fidel-cell  { padding: 6px 2px; }
   .fidel-grid  { min-width: 280px; }
+}
+
+/* ============================================
+   TWEAK 1 — GLASS CARDS (all section cards)
+   ============================================ */
+.timeline-card, .geo-card, .ethnic-card, .culture-card, .economy-card,
+.gov-card, .lang-card, .religion-card, .tourism-card, .famous-card,
+.geo-borders, .asmara-content {
+  background: rgba(255,255,255,0.68);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.8);
+}
+html.dark .timeline-card, html.dark .geo-card, html.dark .ethnic-card,
+html.dark .culture-card, html.dark .economy-card, html.dark .gov-card,
+html.dark .lang-card, html.dark .religion-card, html.dark .tourism-card,
+html.dark .famous-card, html.dark .geo-borders, html.dark .asmara-content {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ============================================
+   TWEAK 2 — SKELETON SHIMMER LOADERS
+   ============================================ */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.skel {
+  background: linear-gradient(90deg,rgba(0,0,0,.06) 25%,rgba(0,0,0,.13) 50%,rgba(0,0,0,.06) 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 6px;
+  display: block;
+}
+html.dark .skel {
+  background: linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.13) 50%,rgba(255,255,255,.05) 75%);
+  background-size: 600px 100%;
+}
+.gallery-skel-wrap {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 16px;
+  margin-top: 8px;
+}
+.gallery-skel-item {
+  border-radius: var(--radius);
+  aspect-ratio: 4/3;
+}
+@media(max-width:768px) { .gallery-skel-wrap { grid-template-columns: repeat(2,1fr); } }
+
+/* ============================================
+   TWEAK 3 — HERO STATS BAR
+   ============================================ */
+.hero-stats {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 20px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  min-width: 90px;
+  transition: var(--transition);
+}
+.hero-stat:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
+.hs-num {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.hs-label {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ============================================
+   TWEAK 4 — MAP LOAD SPINNER
+   ============================================ */
+.eritrea-map-wrap { position: relative; }
+.map-spinner-wrap {
+  position: absolute; inset: 0; z-index: 500;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  background: rgba(212,233,212,0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: inherit;
+  font-size: 0.85rem; color: #555;
+  transition: opacity 0.5s ease;
+}
+html.dark .map-spinner-wrap { background: rgba(15,17,23,0.75); color: #94a3b8; }
+.map-spinner-wrap.gone { opacity: 0; pointer-events: none; }
+.map-spinner {
+  width: 38px; height: 38px;
+  border: 3px solid rgba(0,122,61,0.25);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: mapSpin 0.85s linear infinite;
+}
+@keyframes mapSpin { to { transform: rotate(360deg); } }
+
+/* ============================================
+   TWEAK 5 — SECTION FADE-IN REVEAL
+   ============================================ */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.section-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-reveal { opacity: 1; transform: none; transition: none; }
 }
