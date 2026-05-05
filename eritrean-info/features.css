@@ -1375,18 +1375,6 @@ mark.annot-mark { background:#fef08a; border-radius:2px; cursor:pointer; }
 .install-confirm-btn:hover { background: #e8f5ee; }
 .install-dismiss-btn { background: none; border: none; color: rgba(255,255,255,0.65); font-size: 1.1rem; cursor: pointer; padding: 4px 6px; flex-shrink: 0; }
 
-/* ── T47: Announcement Bar ───────────────────────────────────────────────── */
-.announce-bar {
-  background: linear-gradient(90deg, #004d27, #007A3D 60%, #004d27);
-  color: #fff; padding: 8px 16px;
-  display: flex; align-items: center; gap: 10px;
-  font-size: .8rem; position: sticky; top: 0; z-index: 9970;
-  max-height: 48px; overflow: hidden; transition: max-height .3s, padding .3s, opacity .3s;
-}
-.announce-text { flex: 1; text-align: center; font-weight: 500; }
-.announce-text a { color: #a8ffcf; text-decoration: underline; margin-left: 4px; }
-.announce-close { background: none; border: none; color: rgba(255,255,255,.6); cursor: pointer; font-size: .95rem; padding: 2px 6px; transition: color .2s; }
-.announce-close:hover { color: #fff; }
 
 /* ── T48: Newsletter Popup ───────────────────────────────────────────────── */
 .nl-popup-overlay {

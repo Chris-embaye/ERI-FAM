@@ -3280,25 +3280,6 @@ function checkAchievement(id) {
   });
 })();
 
-// ── T47: "WHAT'S NEW" ANNOUNCEMENT BAR ───────────────────────────────────
-(function T47_AnnouncementBar() {
-  const KEY = 'eri_announce_v2';
-  if (localStorage.getItem(KEY)) return;
-  function init() {
-    const bar = document.getElementById('announceBar');
-    if (!bar) return;
-    bar.hidden = false;
-    document.getElementById('announceClose')?.addEventListener('click', () => {
-      bar.hidden = true;
-      localStorage.setItem(KEY, '1');
-    });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
 
 // ── T48: TIMED NEWSLETTER POPUP ───────────────────────────────────────────
 (function T48_NewsletterPopup() {
