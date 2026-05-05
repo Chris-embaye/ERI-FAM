@@ -304,9 +304,18 @@ html.dark .nav-dd-item:hover, html.dark .nav-dd-item.active {
 .hero-content {
   position: relative;
   z-index: 2;
-  text-align: center;
-  padding: 120px 24px 80px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  padding: 100px 60px 70px;
+  max-width: 1320px;
+  margin: 0 auto;
+  text-align: left;
+  width: 100%;
 }
+.hero-text { flex: 1; min-width: 0; }
 .hero-text h1 {
   font-size: clamp(3rem, 8vw, 7rem);
   font-weight: 800;
@@ -323,8 +332,8 @@ html.dark .nav-dd-item:hover, html.dark .nav-dd-item.active {
   letter-spacing: 4px;
 }
 .hero-desc {
-  max-width: 640px;
-  margin: 0 auto 32px;
+  max-width: 520px;
+  margin: 0 0 32px;
   color: rgba(255,255,255,0.85);
   font-size: 1.1rem;
   line-height: 1.7;
@@ -335,7 +344,7 @@ html.dark .nav-dd-item:hover, html.dark .nav-dd-item.active {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  justify-content: center;
+  justify-content: flex-start;
   margin-bottom: 40px;
 }
 .hero-badges span {
@@ -369,6 +378,7 @@ html.dark .nav-dd-item:hover, html.dark .nav-dd-item.active {
   gap: 14px;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
 }
 .hero-install-btn {
   display: inline-block;
@@ -4603,4 +4613,68 @@ html.dark .map-spinner-wrap { background: rgba(15,17,23,0.75); color: #94a3b8; }
 }
 @media (prefers-reduced-motion: reduce) {
   .section-reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* ============================================
+   HERO MAP VISUALIZATION
+   ============================================ */
+.hero-map-viz {
+  flex-shrink: 0;
+  width: min(300px, 32vw);
+  align-self: center;
+}
+.eri-map-svg {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 28px rgba(80,180,255,0.4)) drop-shadow(0 0 8px rgba(0,122,61,0.3));
+}
+
+/* Border draw animation */
+.eri-border-draw {
+  stroke-dasharray: 2200;
+  stroke-dashoffset: 2200;
+  animation: eriBorderDraw 3.5s ease forwards 0.5s;
+}
+@keyframes eriBorderDraw { to { stroke-dashoffset: 0; } }
+
+/* Connection lines */
+.eri-conn {
+  stroke-dasharray: 350;
+  stroke-dashoffset: 350;
+  animation: eriConnDraw 1.5s ease forwards;
+}
+.eri-conn:nth-of-type(1)  { animation-delay: 1.2s; }
+.eri-conn:nth-of-type(2)  { animation-delay: 1.5s; }
+.eri-conn:nth-of-type(3)  { animation-delay: 1.8s; }
+.eri-conn:nth-of-type(4)  { animation-delay: 2.0s; }
+.eri-conn:nth-of-type(5)  { animation-delay: 2.2s; }
+.eri-conn:nth-of-type(6)  { animation-delay: 2.4s; }
+.eri-conn:nth-of-type(7)  { animation-delay: 2.6s; }
+@keyframes eriConnDraw { to { stroke-dashoffset: 0; } }
+
+/* Scan line */
+.eri-scan {
+  animation: eriScanMove 5s linear infinite;
+}
+@keyframes eriScanMove {
+  0%   { transform: translateY(-440px); opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { transform: translateY(880px); opacity: 0; }
+}
+
+/* Mobile: stack vertically, map on top */
+@media (max-width: 900px) {
+  .hero-content {
+    flex-direction: column;
+    text-align: center;
+    padding: 80px 24px 40px;
+    gap: 28px;
+  }
+  .hero-text { width: 100%; }
+  .hero-text h1 { text-align: center; }
+  .hero-subtitle, .hero-desc { text-align: center; }
+  .hero-desc { margin: 0 auto 28px; }
+  .hero-badges, .hero-stats, .hero-btn-group { justify-content: center; }
+  .hero-map-viz { width: min(200px, 60vw); order: -1; }
 }
