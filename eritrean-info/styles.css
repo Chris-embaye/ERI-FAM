@@ -4620,7 +4620,7 @@ html.dark .map-spinner-wrap { background: rgba(15,17,23,0.75); color: #94a3b8; }
    ============================================ */
 .hero-map-viz {
   flex-shrink: 0;
-  width: min(400px, 40vw);
+  width: min(340px, 36vw);
   align-self: flex-start;
   margin-top: -20px;
 }

@@ -248,14 +248,11 @@
           <path class="eri-border-draw" d="M108.5,42.9 L122.6,104.1 L128.0,158.4 L134.4,173.6 L135.9,190.8 L139.9,189.6 L142.4,193.5 L146.7,221.1 L150.8,221.3 L152.3,213.7 L148.8,199.4 L153.4,193.0 L160.4,206.9 L165.0,228.4 L170.8,233.1 L177.1,226.3 L186.2,233.6 L191.7,247.4 L206.8,252.4 L227.7,300.7 L239.3,306.1 L248.8,325.7 L250.6,327.5 L248.4,319.2 L252.9,325.7 L256.7,350.7 L265.0,354.4 L270.8,362.4 L274.5,376.4 L280.3,379.4 L282.7,373.0 L285.9,377.5 L287.6,385.9 L275.2,397.6 L275.0,404.8 L270.1,409.8 L263.3,400.0 L260.0,398.3 L257.7,402.4 L249.0,383.0 L240.2,375.4 L232.1,350.9 L209.0,323.7 L192.0,286.2 L177.7,278.2 L167.7,265.5 L162.6,263.7 L155.0,266.6 L149.6,260.7 L145.4,262.0 L138.9,257.1 L136.6,261.1 L127.8,263.4 L122.5,253.4 L117.9,250.9 L112.4,261.6 L94.0,267.3 L86.3,249.2 L76.9,246.1 L71.8,235.0 L57.7,289.2 L46.1,264.9 L39.6,266.1 L34.4,278.1 L26.7,273.5 L19.0,274.4 L15.1,278.1 L10.9,216.5 L15.1,210.7 L21.5,174.7 L32.9,138.9 L29.7,121.7 L34.4,103.3 L33.8,83.1 L40.5,87.2 L51.5,85.9 L55.2,65.8 L71.1,57.6 L77.7,49.9 L81.0,53.6 L86.3,51.1 L100.3,19.2 L108.5,42.9 Z"
             fill="none" stroke="rgba(130,215,255,0.95)" stroke-width="1.8" filter="url(#eriGlowBorder)"/>
 
-          <!-- Dahlak Archipelago islands (from GeoJSON poly 0+1, Red Sea east of Massawa) -->
-          <g filter="url(#eriGlowSm)" opacity="0.85">
-            <circle cx="163" cy="179" r="4"   fill="rgba(80,180,255,0.3)" stroke="rgba(150,225,255,0.85)" stroke-width="1.2"/>
-            <circle cx="175" cy="190" r="3"   fill="rgba(80,180,255,0.25)" stroke="rgba(150,225,255,0.75)" stroke-width="1"/>
-            <circle cx="168" cy="167" r="2.5" fill="rgba(80,180,255,0.2)"  stroke="rgba(150,225,255,0.7)"  stroke-width="0.9"/>
-            <circle cx="160" cy="155" r="3.5" fill="rgba(80,180,255,0.25)" stroke="rgba(150,225,255,0.8)"  stroke-width="1.1"/>
-            <circle cx="155" cy="166" r="2"   fill="rgba(80,180,255,0.18)" stroke="rgba(150,225,255,0.6)"  stroke-width="0.8"/>
-            <circle cx="172" cy="161" r="1.8" fill="rgba(80,180,255,0.15)" stroke="rgba(150,225,255,0.55)" stroke-width="0.7"/>
+          <!-- Dahlak Archipelago (3 subtle islands, Red Sea east of Massawa) -->
+          <g filter="url(#eriGlowSm)" opacity="0.7">
+            <circle cx="163" cy="179" r="3"   fill="rgba(80,180,255,0.2)" stroke="rgba(150,225,255,0.7)" stroke-width="0.9"/>
+            <circle cx="160" cy="155" r="2.2" fill="rgba(80,180,255,0.15)" stroke="rgba(150,225,255,0.6)" stroke-width="0.8"/>
+            <circle cx="172" cy="165" r="1.6" fill="rgba(80,180,255,0.12)" stroke="rgba(150,225,255,0.5)" stroke-width="0.7"/>
           </g>
 
           <!-- City connection lines (dashed, animated) -->
@@ -273,12 +270,16 @@
           <rect class="eri-scan" x="-10" y="-2" width="320" height="3" fill="rgba(120,220,255,0.07)" clip-path="url(#mapClip)"/>
 
           <!-- CITY NODES — all positions from real lat/lon via same transform -->
-          <!-- Asmara ★ 38.93°E 15.34°N → (114, 204) -->
-          <circle cx="114" cy="204" r="18" fill="none" stroke="rgba(160,230,255,0.35)" stroke-width="1">
-            <animate attributeName="r" from="10" to="22" dur="2.4s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" from="0.6" to="0" dur="2.4s" repeatCount="indefinite"/>
+          <!-- Asmara ★ 38.93°E 15.34°N → (114, 204) — flag-green pulse -->
+          <circle cx="114" cy="204" r="18" fill="none" stroke="rgba(0,180,80,0.5)" stroke-width="1.2">
+            <animate attributeName="r" from="8" to="26" dur="2.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.7" to="0" dur="2.4s" repeatCount="indefinite"/>
           </circle>
-          <circle cx="114" cy="204" r="6" fill="rgba(200,240,255,0.95)" filter="url(#eriGlow)"/>
+          <circle cx="114" cy="204" r="10" fill="none" stroke="rgba(0,220,100,0.25)" stroke-width="1">
+            <animate attributeName="r" from="6" to="18" dur="2.4s" begin="0.6s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.5" to="0" dur="2.4s" begin="0.6s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="114" cy="204" r="6" fill="rgba(0,200,90,0.9)" filter="url(#eriGlow)"/>
           <circle cx="114" cy="204" r="3" fill="#fff"/>
 
           <!-- Massawa 39.47°E 15.61°N → (136, 185) -->
