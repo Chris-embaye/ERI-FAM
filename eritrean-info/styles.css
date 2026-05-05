@@ -309,7 +309,7 @@ html.dark .nav-dd-item:hover, html.dark .nav-dd-item.active {
   align-items: center;
   justify-content: center;
   gap: 28px;
-  padding: 100px 60px 120px;
+  padding: 100px 60px 80px;
   max-width: 1320px;
   margin: 0 auto;
   text-align: left;
@@ -4539,9 +4539,9 @@ html.dark .skel {
    ============================================ */
 .hero-stats {
   display: flex;
-  gap: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
   margin-bottom: 40px;
 }
 .hero-stat {
@@ -4549,13 +4549,14 @@ html.dark .skel {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 14px 20px;
+  padding: 10px 14px;
   background: rgba(255,255,255,0.1);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: 16px;
-  min-width: 90px;
+  min-width: 62px;
+  flex: 1;
   transition: var(--transition);
 }
 .hero-stat:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
@@ -4623,6 +4624,8 @@ html.dark .map-spinner-wrap { background: rgba(15,17,23,0.75); color: #94a3b8; }
   width: min(340px, 36vw);
   align-self: flex-start;
   margin-top: -20px;
+  overflow: visible;
+  padding-right: 12px;
 }
 .eri-map-svg {
   width: 100%;
