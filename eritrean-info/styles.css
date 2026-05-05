@@ -154,6 +154,9 @@ h1,h2,h3,h4 { line-height: 1.25; }
 }
 .nav-logo strong { color: var(--green); }
 .logo-flag { font-size: 1.5rem; }
+.nav-logo-img { width: 36px; height: 36px; object-fit: contain; display: block; }
+.footer-logo-img { width: 32px; height: 32px; object-fit: contain; vertical-align: middle; }
+.sfb-logo-img { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; }
 /* Nav right cluster */
 .nav-right {
   display: flex;

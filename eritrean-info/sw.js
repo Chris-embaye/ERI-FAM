@@ -3,7 +3,7 @@
    Caches all app assets for offline use
    ============================================ */
 
-const CACHE_NAME    = 'eritrean-info-v22';
+const CACHE_NAME    = 'eritrean-info-v23';
 const OFFLINE_URL   = './index.html';
 
 const PRECACHE_ASSETS = [
@@ -14,7 +14,7 @@ const PRECACHE_ASSETS = [
   './features.js',
   './features.css',
   './manifest.json',
-  './icons/icon.svg',
+  './icons/eri-logo.png',
   './leaflet.css',
   './leaflet.js',
 ];
