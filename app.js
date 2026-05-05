@@ -319,6 +319,35 @@ async function importFiles(files) {
   }
 }
 
+// ── Add track from direct URL ──────────────────────────────────
+function titleFromUrl(url) {
+  try {
+    const name = new URL(url).pathname.split('/').pop() || '';
+    return decodeURIComponent(name).replace(/\.[^.]+$/, '').replace(/[-_+]/g, ' ').trim() || 'Untitled';
+  } catch { return 'Untitled'; }
+}
+
+async function addTrackFromUrl() {
+  const input = document.getElementById('urlAddInput');
+  const url   = input.value.trim();
+  if (!url.startsWith('http')) { toast('Enter a valid https:// URL', 'error'); return; }
+  const all = [...S.tracks, ...S.cloudTracks];
+  if (all.find(t => t.url === url)) { toast('Already in your library'); return; }
+  const id    = uid();
+  const track = {
+    id, title: titleFromUrl(url), artist: '',
+    album: '', duration: 0, size: 0,
+    addedAt: Date.now(), playCount: 0, liked: false,
+    type: 'link', url,
+  };
+  await idbPut('tracks', track);
+  S.tracks.push(track);
+  input.value = '';
+  toast('✅ Added — tap ⋯ to edit title & artist');
+  renderTracks();
+  updateStats();
+}
+
 // ── Load local tracks from IDB ─────────────────────────────────
 async function loadLocalTracks() {
   const rows = await idbGetAll('tracks');
@@ -367,7 +396,7 @@ async function playTrack(track, queueTracks) {
     saveQueueState();
   }
 
-  let src = track.type === 'cloud' ? track.url : await getBlobUrl(track);
+  let src = (track.type === 'cloud' || track.type === 'link') ? track.url : await getBlobUrl(track);
   if (!src) { toast('⚠ Could not load track'); return; }
 
   audio.src = src;
@@ -1000,6 +1029,9 @@ folderInput.addEventListener('change', e => { importFiles(e.target.files); folde
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
 uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); importFiles(e.dataTransfer.files); });
+
+document.getElementById('urlAddBtn').addEventListener('click', addTrackFromUrl);
+document.getElementById('urlAddInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTrackFromUrl(); });
 
 // ── Filter chips ───────────────────────────────────────────────
 document.querySelectorAll('.filter-chip').forEach(btn => {
