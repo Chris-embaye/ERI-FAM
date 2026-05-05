@@ -267,15 +267,21 @@ function openBookmarksPanel() {
   if (!bms.length) {
     list.innerHTML = '<p class="bmp-empty">No bookmarks yet.<br>Tap 🔖 on any recipe, proverb, or article.</p>';
   } else {
-    list.innerHTML = bms.map(b => `
+    list.innerHTML = bms.map((b, i) => `
       <div class="bmp-item">
         <span class="bmp-emoji">${b.emoji || (b.type==='recipe'?'🍽️':b.type==='proverb'?'💬':b.type==='person'?'⭐':'📖')}</span>
         <div class="bmp-info">
           <p class="bmp-title">${esc(b.title)}</p>
           <p class="bmp-type">${esc(b.type)}</p>
         </div>
-        <button class="bmp-remove" onclick="toggleBookmark('${b.id}','${esc(b.title)}','${b.type}');renderBookmarkPanel()">✕</button>
+        <button class="bmp-remove" data-bmp-idx="${i}">✕</button>
       </div>`).join('');
+    list.querySelectorAll('.bmp-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const b = bms[+btn.dataset.bmpIdx];
+        if (b) { toggleBookmark(b.id, b.title, b.type); openBookmarksPanel(); }
+      });
+    });
   }
   panel.classList.add('open');
 }

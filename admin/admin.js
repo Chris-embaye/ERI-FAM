@@ -305,7 +305,7 @@ function setupUserDisplay() {
 document.querySelectorAll('.sb-item[data-page]').forEach(btn => {
   btn.addEventListener('click', () => {
     showPage(btn.dataset.page);
-    document.getElementById('mobTitle').textContent = btn.querySelector('span').textContent.trim();
+    document.getElementById('mobTitle').textContent = btn.querySelector('span')?.textContent?.trim() || btn.dataset.page;
     // Close mobile sidebar
     document.getElementById('sidebar').classList.remove('mob-open');
     document.getElementById('sidebarOverlay').hidden = true;
