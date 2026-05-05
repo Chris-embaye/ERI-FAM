@@ -57,6 +57,12 @@
     </div>
   </div>
 
+  <!-- WHAT'S NEW ANNOUNCEMENT BAR -->
+  <div id="announceBar" class="announce-bar" hidden>
+    <span class="announce-text">🎉 New: Interactive History Timeline + Quiz Leaderboard + Social Sharing added! <a href="#history">Explore →</a></span>
+    <button id="announceClose" class="announce-close" aria-label="Dismiss">✕</button>
+  </div>
+
   <!-- NAVIGATION -->
   <!-- Reading progress bar -->
   <div id="readingBar" class="reading-bar"></div>
@@ -1692,6 +1698,30 @@
   </footer>
 
   <a href="#hero" class="back-to-top" id="backToTop" title="Back to top">↑</a>
+
+  <!-- COOKIE CONSENT BANNER -->
+  <div id="cookieBanner" class="cookie-banner" hidden>
+    <span class="cookie-text">🍪 We use cookies to save your preferences (dark mode, bookmarks, language). No tracking or ads. <a href="#about">Learn more</a></span>
+    <div class="cookie-actions">
+      <button id="cookieAccept" class="cookie-accept">Got it</button>
+      <button id="cookieDecline" class="cookie-decline">Dismiss</button>
+    </div>
+  </div>
+
+  <!-- NEWSLETTER POPUP -->
+  <div id="nlPopupOverlay" class="nl-popup-overlay" hidden>
+    <div class="nl-popup" role="dialog" aria-modal="true" aria-label="Newsletter signup">
+      <button id="nlPopupClose" class="nl-popup-close" aria-label="Close">✕</button>
+      <div class="nl-popup-flag">🇪🇷</div>
+      <h2 class="nl-popup-title">Stay Connected to Eritrea</h2>
+      <p class="nl-popup-sub">Get new content, cultural stories, and Tigrinya word of the week — straight to your inbox.</p>
+      <div class="nl-popup-form">
+        <input id="nlPopupEmail" class="nl-popup-input" type="email" placeholder="your@email.com" />
+        <button id="nlPopupBtn" class="nl-popup-btn">Subscribe</button>
+      </div>
+      <p id="nlPopupSkip" class="nl-popup-skip">No thanks</p>
+    </div>
+  </div>
 
   <!-- Offline toast -->
   <div class="offline-toast" id="offlineToast">📡 You're offline — app still works!</div>

@@ -3166,6 +3166,181 @@ function checkAchievement(id) {
   document.addEventListener('DOMContentLoaded', () => setTimeout(inject, 600));
 })();
 
+// ── T44: COOKIE / GDPR CONSENT BANNER ────────────────────────────────────
+(function T44_CookieBanner() {
+  if (localStorage.getItem('eri_cookie_ok')) return;
+  document.addEventListener('DOMContentLoaded', () => {
+    const banner = document.getElementById('cookieBanner');
+    if (!banner) return;
+    banner.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => banner.classList.add('show')));
+    document.getElementById('cookieAccept').addEventListener('click', () => {
+      localStorage.setItem('eri_cookie_ok', '1');
+      banner.classList.remove('show');
+      setTimeout(() => { banner.hidden = true; }, 350);
+    });
+    document.getElementById('cookieDecline').addEventListener('click', () => {
+      banner.classList.remove('show');
+      setTimeout(() => { banner.hidden = true; }, 350);
+    });
+  });
+})();
+
+// ── T45: SOCIAL SHARE BUTTONS ON CONTENT ─────────────────────────────────
+(function T45_SocialShare() {
+  function buildShareUrl(platform, url, text) {
+    const u = encodeURIComponent(url), t = encodeURIComponent(text);
+    if (platform === 'wa') return `https://api.whatsapp.com/send?text=${t}%20${u}`;
+    if (platform === 'tw') return `https://twitter.com/intent/tweet?text=${t}&url=${u}`;
+    if (platform === 'fb') return `https://www.facebook.com/sharer/sharer.php?u=${u}`;
+  }
+  function makeRow(title) {
+    const row = document.createElement('div');
+    row.className = 'social-share-row';
+    const url = window.location.href;
+    ['wa','tw','fb'].forEach(p => {
+      const a = document.createElement('a');
+      a.className = `ss-btn ss-${p}`;
+      a.href = buildShareUrl(p, url, title);
+      a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.textContent = p === 'wa' ? '💬 WhatsApp' : p === 'tw' ? '𝕏 Twitter' : 'f Facebook';
+      row.appendChild(a);
+    });
+    const copy = document.createElement('button');
+    copy.className = 'ss-btn ss-cp';
+    copy.textContent = '🔗 Copy link';
+    copy.addEventListener('click', () => {
+      navigator.clipboard.writeText(url + ' — ' + title).then(() => {
+        copy.textContent = '✓ Copied!';
+        setTimeout(() => { copy.textContent = '🔗 Copy link'; }, 2000);
+      }).catch(() => prompt('Copy this link:', url));
+    });
+    row.appendChild(copy);
+    return row;
+  }
+  function inject() {
+    document.querySelectorAll('.news-card .news-body').forEach(body => {
+      if (body.querySelector('.social-share-row')) return;
+      const title = body.querySelector('.news-title')?.textContent?.trim() || 'Eritrean Info';
+      body.appendChild(makeRow(title));
+    });
+    document.querySelectorAll('.blog-card, .article-card').forEach(card => {
+      if (card.querySelector('.social-share-row')) return;
+      const title = card.querySelector('h2,h3')?.textContent?.trim() || 'Eritrean Info';
+      card.appendChild(makeRow(title));
+    });
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(inject, 1600);
+    const newsGrid = document.getElementById('newsGrid');
+    if (newsGrid) new MutationObserver(inject).observe(newsGrid, { childList: true, subtree: true });
+  });
+})();
+
+// ── T46: PWA INSTALL PROMPT ───────────────────────────────────────────────
+(function T46_PWAInstall() {
+  const KEY = 'eri_pwa_dismissed';
+  if (localStorage.getItem(KEY)) return;
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    setTimeout(() => {
+      const banner = document.getElementById('installBanner');
+      if (!banner) return;
+      banner.style.display = '';
+      requestAnimationFrame(() => requestAnimationFrame(() => banner.classList.add('show')));
+    }, 5000);
+  });
+  document.addEventListener('DOMContentLoaded', () => {
+    const banner     = document.getElementById('installBanner');
+    const installBtn = document.getElementById('installBtn');
+    const dismissBtn = document.getElementById('installDismiss');
+    function hideBanner() {
+      banner?.classList.remove('show');
+      setTimeout(() => { if (banner) banner.style.display = 'none'; }, 350);
+      localStorage.setItem(KEY, '1');
+    }
+    installBtn?.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      hideBanner();
+      if (outcome === 'accepted') showToast('🇪🇷 App installed! Find it on your home screen.', 'success');
+    });
+    dismissBtn?.addEventListener('click', hideBanner);
+  });
+  window.addEventListener('appinstalled', () => {
+    localStorage.setItem(KEY, '1');
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'none';
+  });
+})();
+
+// ── T47: "WHAT'S NEW" ANNOUNCEMENT BAR ───────────────────────────────────
+(function T47_AnnouncementBar() {
+  const KEY = 'eri_announce_v2';
+  if (localStorage.getItem(KEY)) return;
+  document.addEventListener('DOMContentLoaded', () => {
+    const bar = document.getElementById('announceBar');
+    if (!bar) return;
+    bar.hidden = false;
+    document.getElementById('announceClose').addEventListener('click', () => {
+      bar.style.maxHeight = '0';
+      bar.style.padding = '0';
+      bar.style.opacity = '0';
+      localStorage.setItem(KEY, '1');
+      setTimeout(() => { bar.hidden = true; }, 320);
+    });
+  });
+})();
+
+// ── T48: TIMED NEWSLETTER POPUP ───────────────────────────────────────────
+(function T48_NewsletterPopup() {
+  const KEY = 'eri_nl_popup_v1';
+  if (localStorage.getItem(KEY)) return;
+  let shown = false;
+  function showPopup() {
+    if (shown) return;
+    const overlay = document.getElementById('nlPopupOverlay');
+    if (!overlay) return;
+    shown = true;
+    overlay.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('show')));
+  }
+  function hidePopup() {
+    const overlay = document.getElementById('nlPopupOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('show');
+    setTimeout(() => { overlay.hidden = true; }, 310);
+    localStorage.setItem(KEY, '1');
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const timer = setTimeout(showPopup, 30000);
+    const onScroll = () => {
+      const pct = window.scrollY / Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      if (pct >= 0.7) { showPopup(); window.removeEventListener('scroll', onScroll); }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.getElementById('nlPopupClose')?.addEventListener('click', () => { hidePopup(); clearTimeout(timer); });
+    document.getElementById('nlPopupSkip')?.addEventListener('click', () => { hidePopup(); clearTimeout(timer); });
+    document.getElementById('nlPopupOverlay')?.addEventListener('click', e => { if (e.target === e.currentTarget) { hidePopup(); clearTimeout(timer); } });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && shown) hidePopup(); });
+    document.getElementById('nlPopupBtn')?.addEventListener('click', () => {
+      const emailEl = document.getElementById('nlPopupEmail');
+      const email = emailEl?.value?.trim();
+      if (!email || !email.includes('@')) { showToast('Please enter a valid email', 'info'); return; }
+      const footerEmail = document.getElementById('nlEmail');
+      const footerBtn   = document.getElementById('nlSubmit');
+      if (footerEmail && footerBtn) { footerEmail.value = email; footerBtn.click(); }
+      showToast('🇪🇷 Subscribed! Welcome to the community.', 'success');
+      hidePopup();
+      clearTimeout(timer);
+    });
+  });
+})();
+
 // ── T42: PARALLAX HERO EFFECT ────────────────────────────────────────────
 (function T42_Parallax() {
   document.addEventListener('DOMContentLoaded', () => {

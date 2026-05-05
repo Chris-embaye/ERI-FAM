@@ -1321,6 +1321,99 @@ mark.annot-mark { background:#fef08a; border-radius:2px; cursor:pointer; }
   box-shadow:0 3px 12px rgba(0,122,61,.35); transition:opacity .2s; }
 .export-kit-btn:hover { opacity:.85; }
 
+/* ── T44: Cookie Consent Banner ──────────────────────────────────────────── */
+.cookie-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 9990;
+  background: rgba(10,10,28,0.97);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 14px 20px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  backdrop-filter: blur(10px);
+  transform: translateY(100%);
+  transition: transform 0.35s ease;
+  box-shadow: 0 -4px 24px rgba(0,0,0,.4);
+}
+.cookie-banner.show { transform: translateY(0); }
+.cookie-text { flex: 1; min-width: 200px; font-size: .82rem; color: rgba(255,255,255,0.82); line-height: 1.4; }
+.cookie-text a { color: #4caf87; text-decoration: underline; }
+.cookie-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.cookie-accept { padding: 8px 18px; background: #007A3D; color: #fff; border: none; border-radius: 20px; font-size: .82rem; font-weight: 700; cursor: pointer; transition: background .2s; }
+.cookie-accept:hover { background: #005a2d; }
+.cookie-decline { padding: 8px 14px; background: transparent; color: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; font-size: .82rem; cursor: pointer; transition: color .2s; }
+.cookie-decline:hover { color: rgba(255,255,255,0.85); }
+
+/* ── T45: Social Share Row ───────────────────────────────────────────────── */
+.social-share-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.ss-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 11px; border-radius: 16px; font-size: .72rem; font-weight: 600;
+  border: none; cursor: pointer; text-decoration: none; color: #fff;
+  transition: opacity .2s, transform .15s;
+}
+.ss-btn:hover { opacity: .82; transform: translateY(-1px); }
+.ss-wa { background: #25D366; }
+.ss-tw { background: #000; }
+.ss-fb { background: #1877F2; }
+.ss-cp { background: rgba(120,120,120,0.12); color: var(--text,#1a1a1a); border: 1px solid var(--border,#ddd) !important; }
+
+/* ── T46: PWA Install Banner ─────────────────────────────────────────────── */
+.install-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9980;
+  background: linear-gradient(90deg, #005a2d, #007A3D);
+  color: #fff; padding: 10px 16px;
+  transform: translateY(-100%);
+  transition: transform 0.35s ease;
+  box-shadow: 0 3px 16px rgba(0,0,0,.3);
+}
+.install-banner.show { transform: translateY(0); }
+.install-banner-inner { display: flex; align-items: center; gap: 12px; max-width: 900px; margin: 0 auto; }
+.install-icon { font-size: 1.4rem; flex-shrink: 0; }
+.install-text { flex: 1; min-width: 0; }
+.install-text strong { display: block; font-size: .88rem; font-weight: 700; }
+.install-text span { font-size: .74rem; opacity: .85; }
+.install-confirm-btn { padding: 7px 16px; background: #fff; color: #007A3D; border: none; border-radius: 20px; font-weight: 700; font-size: .8rem; cursor: pointer; flex-shrink: 0; transition: background .2s; }
+.install-confirm-btn:hover { background: #e8f5ee; }
+.install-dismiss-btn { background: none; border: none; color: rgba(255,255,255,0.65); font-size: 1.1rem; cursor: pointer; padding: 4px 6px; flex-shrink: 0; }
+
+/* ── T47: Announcement Bar ───────────────────────────────────────────────── */
+.announce-bar {
+  background: linear-gradient(90deg, #004d27, #007A3D 60%, #004d27);
+  color: #fff; padding: 8px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: .8rem; position: sticky; top: 0; z-index: 9970;
+  max-height: 48px; overflow: hidden; transition: max-height .3s, padding .3s, opacity .3s;
+}
+.announce-text { flex: 1; text-align: center; font-weight: 500; }
+.announce-text a { color: #a8ffcf; text-decoration: underline; margin-left: 4px; }
+.announce-close { background: none; border: none; color: rgba(255,255,255,.6); cursor: pointer; font-size: .95rem; padding: 2px 6px; transition: color .2s; }
+.announce-close:hover { color: #fff; }
+
+/* ── T48: Newsletter Popup ───────────────────────────────────────────────── */
+.nl-popup-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 9995;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.nl-popup-overlay.show { opacity: 1; pointer-events: all; }
+.nl-popup {
+  background: var(--bg,#fff); border-radius: 22px; padding: 36px 30px 28px;
+  max-width: 420px; width: 90%; position: relative; text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,.4);
+  transform: scale(0.88) translateY(20px); transition: transform .3s;
+}
+.nl-popup-overlay.show .nl-popup { transform: scale(1) translateY(0); }
+.nl-popup-flag { font-size: 2.8rem; margin-bottom: 10px; line-height: 1; }
+.nl-popup-title { font-size: 1.25rem; font-weight: 800; margin: 0 0 8px; color: var(--text,#1a1a1a); }
+.nl-popup-sub { font-size: .84rem; color: var(--text-muted,#666); margin-bottom: 22px; line-height: 1.55; }
+.nl-popup-form { display: flex; gap: 8px; }
+.nl-popup-input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border,#ddd); border-radius: 24px; font-size: .84rem; outline: none; background: var(--bg,#fff); color: var(--text,#1a1a1a); min-width: 0; }
+.nl-popup-input:focus { border-color: #007A3D; }
+.nl-popup-btn { padding: 10px 16px; background: #007A3D; color: #fff; border: none; border-radius: 24px; font-weight: 700; font-size: .84rem; cursor: pointer; white-space: nowrap; transition: background .2s; }
+.nl-popup-btn:hover { background: #005a2d; }
+.nl-popup-skip { margin-top: 14px; font-size: .75rem; color: var(--text-muted,#999); cursor: pointer; text-decoration: underline; display: inline-block; }
+.nl-popup-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted,#888); line-height: 1; padding: 4px; }
+
 /* T41: Section Color Badges ------------------------------------------- */
 .section-badge { display:inline-block; font-size:.65rem; font-weight:700;
   padding:2px 8px; border-radius:12px; text-transform:uppercase; letter-spacing:.05em;
