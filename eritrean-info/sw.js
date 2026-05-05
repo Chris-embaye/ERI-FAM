@@ -3,7 +3,7 @@
    Caches all app assets for offline use
    ============================================ */
 
-const CACHE_NAME    = 'eritrean-info-v16';
+const CACHE_NAME    = 'eritrean-info-v17';
 const OFFLINE_URL   = './index.html';
 
 const PRECACHE_ASSETS = [
@@ -15,10 +15,8 @@ const PRECACHE_ASSETS = [
   './features.css',
   './manifest.json',
   './icons/icon.svg',
-  // Leaflet for offline map rendering
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  // Map tiles: can't precache all, but cache a few Asmara-area tiles on fetch
+  './leaflet.css',
+  './leaflet.js',
 ];
 
 // ── INSTALL: cache core assets ────────────────
@@ -45,19 +43,17 @@ self.addEventListener('activate', (event) => {
 
 // ── FETCH: network-first, fall back to cache ─
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET and chrome-extension requests
   if (event.request.method !== 'GET') return;
   if (event.request.url.startsWith('chrome-extension://')) return;
 
-  // For translation API calls: network only (no caching)
+  // Translation API: network only
   if (event.request.url.includes('mymemory.translated.net') ||
       event.request.url.includes('api.mymemory')) {
     return;
   }
 
-  // Leaflet + map tiles: cache-first so map works offline
-  if (event.request.url.includes('unpkg.com/leaflet') ||
-      event.request.url.includes('tile.openstreetmap.org')) {
+  // Map tiles: cache-first so map works offline
+  if (event.request.url.includes('tile.openstreetmap.org')) {
     event.respondWith(
       caches.match(event.request).then(cached => cached || fetch(event.request).then(res => {
         if (res && res.status === 200) {
@@ -70,7 +66,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For external images (Wikimedia, picsum): network first, no offline fallback
+  // External images & fonts: network first, no offline fallback
   if (event.request.url.includes('wikimedia.org') ||
       event.request.url.includes('picsum.photos') ||
       event.request.url.includes('googleapis.com') ||
@@ -81,13 +77,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For local assets: cache first, then network
+  // Local assets: cache first, then network
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
-
       return fetch(event.request).then((networkResponse) => {
-        // Cache successful responses
         if (networkResponse && networkResponse.status === 200) {
           const clone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -96,7 +90,6 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Offline fallback
         if (event.request.headers.get('Accept')?.includes('text/html')) {
           return caches.match(OFFLINE_URL);
         }
@@ -104,13 +97,6 @@ self.addEventListener('fetch', (event) => {
       });
     })
   );
-});
-
-// ── BACKGROUND SYNC: retry failed translations ─
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-translations') {
-    // handled in main script
-  }
 });
 
 // ── PUSH NOTIFICATIONS (future use) ──────────

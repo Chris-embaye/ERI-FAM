@@ -2826,17 +2826,26 @@ function initLeafletMap() {
   });
 }
 
-// Try to init map after Leaflet script loads
-window.addEventListener('load', () => setTimeout(initLeafletMap, 800));
-// Also try when scrolled into view
+// Init map — poll until Leaflet (deferred) is ready, then init on scroll into view
 (function() {
   const sec = document.getElementById('eritrea-map');
   if (!sec) return;
   let inited = false;
+
+  function tryInit() {
+    if (inited) return;
+    if (typeof L === 'undefined') { setTimeout(tryInit, 200); return; }
+    inited = true;
+    initLeafletMap();
+  }
+
   const obs = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting && !inited) { inited = true; setTimeout(initLeafletMap, 300); obs.disconnect(); }
-  }, { threshold: 0.1 });
+    if (entries[0].isIntersecting) { obs.disconnect(); tryInit(); }
+  }, { threshold: 0.05 });
   obs.observe(sec);
+
+  // Also attempt after full page load as a fallback
+  window.addEventListener('load', () => setTimeout(tryInit, 500), { once: true });
 })();
 
 // ── FEATURE 12: ON THIS DAY ───────────────────────────────────
