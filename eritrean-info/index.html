@@ -200,6 +200,141 @@
           <button class="hero-btn hero-install-btn" id="heroInstallBtn">&#11015; Download App</button>
         </div>
       </div>
+
+      <!-- Futuristic Eritrea map visualization -->
+      <div class="hero-map-viz" aria-hidden="true">
+        <svg viewBox="0 0 300 440" xmlns="http://www.w3.org/2000/svg" class="eri-map-svg">
+          <defs>
+            <filter id="eriGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="eriGlowSm" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="eriGlowBorder" x="-5%" y="-5%" width="110%" height="110%">
+              <feGaussianBlur stdDeviation="2.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <clipPath id="mapClip"><rect x="0" y="0" width="300" height="440"/></clipPath>
+            <linearGradient id="mapFill" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   stop-color="#0e4a7a" stop-opacity="0.6"/>
+              <stop offset="50%"  stop-color="#082840" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#041520" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Country body fill — path computed from real lat/lon coords -->
+          <!-- x=(lon-36)*35+10  y=(18.5-lat)*55  (lon 36-44°E, lat 18.5-11°N) -->
+          <path d="M28,55 L28,39 L45,28 L63,28 L80,22 L105,19 L115,28 L116,55 L122,110 L133,159 L157,193 L178,220 L202,248 L220,275 L238,292 L245,303 L255,330 L259,336 L245,385 L202,385 L150,330 L133,314 L116,275 L98,248 L80,220 L73,204 L63,182 L42,165 L35,138 L28,110 L28,83 Z"
+            fill="url(#mapFill)"/>
+
+          <!-- Interior triangle mesh -->
+          <g stroke="rgba(80,180,255,0.18)" stroke-width="0.8" fill="none">
+            <line x1="28"  y1="55"  x2="133" y2="159"/>
+            <line x1="105" y1="19"  x2="42"  y2="165"/>
+            <line x1="116" y1="55"  x2="63"  y2="182"/>
+            <line x1="28"  y1="110" x2="178" y2="220"/>
+            <line x1="133" y1="159" x2="63"  y2="182"/>
+            <line x1="113" y1="174" x2="66"  y2="186"/>
+            <line x1="113" y1="174" x2="109" y2="198"/>
+            <line x1="109" y1="198" x2="66"  y2="186"/>
+            <line x1="113" y1="174" x2="178" y2="220"/>
+            <line x1="109" y1="198" x2="178" y2="220"/>
+            <line x1="178" y1="220" x2="245" y2="303"/>
+          </g>
+
+          <!-- Neon border (animated draw) -->
+          <path class="eri-border-draw" d="M28,55 L28,39 L45,28 L63,28 L80,22 L105,19 L115,28 L116,55 L122,110 L133,159 L157,193 L178,220 L202,248 L220,275 L238,292 L245,303 L255,330 L259,336 L245,385 L202,385 L150,330 L133,314 L116,275 L98,248 L80,220 L73,204 L63,182 L42,165 L35,138 L28,110 L28,83 Z"
+            fill="none" stroke="rgba(130,215,255,0.95)" stroke-width="1.8" filter="url(#eriGlowBorder)"/>
+
+          <!-- Dahlak Archipelago (Red Sea, east of Massawa coast) -->
+          <g filter="url(#eriGlowSm)" opacity="0.85">
+            <circle cx="158" cy="152" r="4"   fill="rgba(80,180,255,0.3)" stroke="rgba(150,225,255,0.85)" stroke-width="1.2"/>
+            <circle cx="170" cy="165" r="3"   fill="rgba(80,180,255,0.25)" stroke="rgba(150,225,255,0.75)" stroke-width="1"/>
+            <circle cx="163" cy="141" r="2.5" fill="rgba(80,180,255,0.2)"  stroke="rgba(150,225,255,0.7)"  stroke-width="0.9"/>
+            <circle cx="178" cy="175" r="2"   fill="rgba(80,180,255,0.2)"  stroke="rgba(150,225,255,0.65)" stroke-width="0.8"/>
+            <circle cx="168" cy="178" r="1.8" fill="rgba(80,180,255,0.18)" stroke="rgba(150,225,255,0.6)"  stroke-width="0.7"/>
+            <circle cx="174" cy="147" r="1.5" fill="rgba(80,180,255,0.15)" stroke="rgba(150,225,255,0.55)" stroke-width="0.7"/>
+          </g>
+
+          <!-- City connection lines (dashed, animated) -->
+          <g clip-path="url(#mapClip)" stroke="rgba(100,200,255,0.5)" stroke-width="0.9" fill="none" stroke-dasharray="5 4">
+            <line class="eri-conn" x1="113" y1="174" x2="132" y2="159"/>
+            <line class="eri-conn" x1="113" y1="174" x2="96"  y2="150"/>
+            <line class="eri-conn" x1="113" y1="174" x2="109" y2="198"/>
+            <line class="eri-conn" x1="96"  y1="150" x2="90"  y2="101"/>
+            <line class="eri-conn" x1="96"  y1="150" x2="66"  y2="186"/>
+            <line class="eri-conn" x1="109" y1="198" x2="66"  y2="186"/>
+            <line class="eri-conn" x1="109" y1="198" x2="245" y2="303"/>
+          </g>
+
+          <!-- Scan line -->
+          <rect class="eri-scan" x="-10" y="-2" width="320" height="3" fill="rgba(120,220,255,0.07)" clip-path="url(#mapClip)"/>
+
+          <!-- CITY NODES — positions from real coordinates -->
+          <!-- Asmara (capital) 38.93°E 15.34°N -->
+          <circle cx="113" cy="174" r="18" fill="none" stroke="rgba(160,230,255,0.35)" stroke-width="1">
+            <animate attributeName="r" from="10" to="22" dur="2.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.6" to="0" dur="2.4s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="113" cy="174" r="6" fill="rgba(200,240,255,0.95)" filter="url(#eriGlow)"/>
+          <circle cx="113" cy="174" r="3" fill="#fff"/>
+
+          <!-- Massawa 39.47°E 15.61°N -->
+          <circle cx="132" cy="159" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+            <animate attributeName="r" from="6" to="16" dur="2.4s" begin="0.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="0.4s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="132" cy="159" r="4.5" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+
+          <!-- Keren 38.45°E 15.78°N -->
+          <circle cx="96" cy="150" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+            <animate attributeName="r" from="6" to="15" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="0.8s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="96" cy="150" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+
+          <!-- Mendefera 38.82°E 14.89°N -->
+          <circle cx="109" cy="198" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+            <animate attributeName="r" from="6" to="15" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="109" cy="198" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+
+          <!-- Barentu 37.59°E 15.11°N -->
+          <circle cx="66" cy="186" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+            <animate attributeName="r" from="6" to="15" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="66" cy="186" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+
+          <!-- Nakfa 38.29°E 16.66°N -->
+          <circle cx="90" cy="101" r="5" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+            <animate attributeName="r" from="5" to="13" dur="2.4s" begin="2.0s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.5" to="0" dur="2.4s" begin="2.0s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="90" cy="101" r="3.5" fill="rgba(140,215,255,0.9)" filter="url(#eriGlowSm)"/>
+
+          <!-- Assab 42.73°E 13.0°N -->
+          <circle cx="245" cy="303" r="6" fill="none" stroke="rgba(130,210,255,0.4)" stroke-width="1">
+            <animate attributeName="r" from="6" to="15" dur="2.4s" begin="2.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.55" to="0" dur="2.4s" begin="2.4s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="245" cy="303" r="4" fill="rgba(140,215,255,0.95)" filter="url(#eriGlowSm)"/>
+
+          <!-- City labels -->
+          <text x="119" y="170" font-size="7.5" fill="rgba(220,245,255,0.95)" font-family="Montserrat,sans-serif" font-weight="700" letter-spacing="0.4">★ ASMARA</text>
+          <text x="97"  y="153" font-size="6.5" fill="rgba(180,225,255,0.85)" font-family="Montserrat,sans-serif" font-weight="600">MASSAWA</text>
+          <text x="46"  y="146" font-size="6.5" fill="rgba(180,225,255,0.85)" font-family="Montserrat,sans-serif" font-weight="600">KEREN</text>
+          <text x="113" y="211" font-size="6"   fill="rgba(180,225,255,0.8)"  font-family="Montserrat,sans-serif" font-weight="600">MENDEFERA</text>
+          <text x="20"  y="192" font-size="6"   fill="rgba(180,225,255,0.8)"  font-family="Montserrat,sans-serif" font-weight="600">BARENTU</text>
+          <text x="94"  y="96"  font-size="6"   fill="rgba(180,225,255,0.8)"  font-family="Montserrat,sans-serif" font-weight="600">NAKFA</text>
+          <text x="248" y="317" font-size="6.5" fill="rgba(180,225,255,0.85)" font-family="Montserrat,sans-serif" font-weight="600">ASSAB</text>
+        </svg>
+      </div>
+
     </div>
     <div class="hero-scroll-hint">↓ Scroll to explore</div>
   </section>
