@@ -323,7 +323,7 @@ export function renderSettings() {
         'Deletes all trips, expenses, fuel, and DVIRs from this device and the cloud. Cannot be undone.',
         'Clear Everything',
         async () => {
-          ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_active_detention'].forEach(k =>
+          ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_settings','rl_active_detention'].forEach(k =>
             localStorage.removeItem(k)
           );
           await clearCloudData();

@@ -3174,12 +3174,12 @@ function checkAchievement(id) {
     if (!banner) return;
     banner.hidden = false;
     requestAnimationFrame(() => requestAnimationFrame(() => banner.classList.add('show')));
-    document.getElementById('cookieAccept').addEventListener('click', () => {
+    document.getElementById('cookieAccept')?.addEventListener('click', () => {
       localStorage.setItem('eri_cookie_ok', '1');
       banner.classList.remove('show');
       setTimeout(() => { banner.hidden = true; }, 350);
     });
-    document.getElementById('cookieDecline').addEventListener('click', () => {
+    document.getElementById('cookieDecline')?.addEventListener('click', () => {
       banner.classList.remove('show');
       setTimeout(() => { banner.hidden = true; }, 350);
     });
@@ -3286,7 +3286,7 @@ function checkAchievement(id) {
     const bar = document.getElementById('announceBar');
     if (!bar) return;
     bar.hidden = false;
-    document.getElementById('announceClose').addEventListener('click', () => {
+    document.getElementById('announceClose')?.addEventListener('click', () => {
       bar.style.maxHeight = '0';
       bar.style.padding = '0';
       bar.style.opacity = '0';

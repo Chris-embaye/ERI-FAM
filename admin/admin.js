@@ -76,10 +76,11 @@ function switchAuthView(view) {
 
 function showAuthError(id, msg) {
   const el = document.getElementById(id);
+  if (!el) return;
   el.textContent = msg;
   el.hidden = false;
 }
-function hideAuthError(id) { document.getElementById(id).hidden = true; }
+function hideAuthError(id) { const el = document.getElementById(id); if (el) el.hidden = true; }
 
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
@@ -1171,9 +1172,9 @@ document.getElementById('trackCoverFile').addEventListener('change', async funct
   const preview  = document.getElementById('trackCoverPreview');
   const img      = document.getElementById('trackCoverPreviewImg');
   const statusEl = document.getElementById('trackCoverStatus');
-  preview.style.display = 'flex';
-  statusEl.textContent  = 'Uploading…';
-  img.style.opacity     = '0.4';
+  if (preview)  preview.style.display = 'flex';
+  if (statusEl) statusEl.textContent  = 'Uploading…';
+  if (img)      img.style.opacity     = '0.4';
   try {
     const url = await uploadToCloudinary(file);
     document.getElementById('trackCover').value = url;
@@ -1595,9 +1596,9 @@ document.getElementById('profilePicInput').addEventListener('change', async func
   const progWrap = document.getElementById('profileUploadProgress');
   const bar      = document.getElementById('profileUpBar');
   const status   = document.getElementById('profileUpStatus');
-  progWrap.hidden   = false;
-  bar.style.width   = '0%';
-  status.textContent = 'Uploading…';
+  if (progWrap) progWrap.hidden    = false;
+  if (bar)      bar.style.width   = '0%';
+  if (status)   status.textContent = 'Uploading…';
 
   try {
     const photoURL = await uploadToCloudinary(file, pct => { bar.style.width = (pct * 100) + '%'; });
@@ -2178,9 +2179,9 @@ document.getElementById('postMImageFile').addEventListener('change', async funct
   const preview  = document.getElementById('postMImagePreview');
   const img      = document.getElementById('postMImagePreviewImg');
   const statusEl = document.getElementById('postMImageStatus');
-  preview.style.display = 'block';
-  statusEl.textContent  = 'Uploading…';
-  img.style.opacity     = '0.4';
+  if (preview)  preview.style.display = 'block';
+  if (statusEl) statusEl.textContent  = 'Uploading…';
+  if (img)      img.style.opacity     = '0.4';
   try {
     const url = await uploadToCloudinary(file);
     document.getElementById('postMImageUrl').value = url;
@@ -3241,9 +3242,9 @@ document.getElementById('plCoverFile')?.addEventListener('change', async functio
   const preview  = document.getElementById('plCoverPreview');
   const img      = document.getElementById('plCoverPreviewImg');
   const statusEl = document.getElementById('plCoverStatus');
-  preview.style.display = 'flex';
-  statusEl.textContent  = 'Uploading…';
-  img.style.opacity = '0.4';
+  if (preview)  preview.style.display = 'flex';
+  if (statusEl) statusEl.textContent  = 'Uploading…';
+  if (img)      img.style.opacity     = '0.4';
   try {
     const url = await uploadToCloudinary(file);
     document.getElementById('plCover').value = url;
@@ -3925,10 +3926,10 @@ document.getElementById('saveAllVersionsBtn').addEventListener('click', async ()
     const saves = [...cards].map(card => {
       const id    = card.dataset.appid;
       const data  = {
-        current:     card.querySelector('.ver-current').value.trim(),
-        minRequired: card.querySelector('.ver-min').value.trim(),
-        notes:       card.querySelector('.ver-notes').value.trim(),
-        forceUpdate: card.querySelector('.ver-force').checked,
+        current:     card.querySelector('.ver-current')?.value.trim() || '',
+        minRequired: card.querySelector('.ver-min')?.value.trim()     || '',
+        notes:       card.querySelector('.ver-notes')?.value.trim()   || '',
+        forceUpdate: card.querySelector('.ver-force')?.checked        ?? false,
         updatedAt:   fb.serverTimestamp()
       };
       return fb.setDoc(fb.doc(_db, 'hub_versions', id), data, { merge: true });

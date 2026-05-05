@@ -4560,10 +4560,10 @@ document.getElementById('skipFwdBtn')?.addEventListener('click', () => {
     });
   }
 
-  // Record track on each play
+  // Record track on each play (async to preserve await playTrack() call sites)
   const _basePTH = playTrack;
-  playTrack = function(track, queueTracks) {
-    _basePTH(track, queueTracks);
+  playTrack = async function(track, queueTracks) {
+    await _basePTH(track, queueTracks);
     addHistoryEntry(track);
   };
 
