@@ -931,8 +931,6 @@ function anthemSetPlayIcon(playing) {
   const icon = playing ? '&#9646;&#9646;' : '&#9654;';
   if (anthemPlayBtn)    anthemPlayBtn.innerHTML    = icon;
   if (anthemBarPlayBtn) anthemBarPlayBtn.innerHTML = icon;
-  const nb = document.getElementById('namPlay');
-  if (nb) nb.innerHTML = icon;
 }
 
 anthemAudio.addEventListener('play',  () => anthemSetPlayIcon(true));
@@ -960,13 +958,6 @@ anthemTrack.addEventListener('click', e => {
 anthemPlayBtn.addEventListener('click',    anthemTogglePlay);
 anthemBarPlayBtn.addEventListener('click', anthemTogglePlay);
 
-// ── Nav mini anthem player ──────────────────────────────
-const namPlayBtn = document.getElementById('namPlay');
-const namFill    = document.getElementById('namFill');
-const namTrack   = document.getElementById('namTrack');
-const namTime    = document.getElementById('namTime');
-
-if (namPlayBtn) namPlayBtn.addEventListener('click', anthemTogglePlay);
 
 anthemAudio.addEventListener('play',  () => { if (namPlayBtn) namPlayBtn.innerHTML = '&#9646;&#9646;'; });
 anthemAudio.addEventListener('pause', () => { if (namPlayBtn) namPlayBtn.innerHTML = '&#9654;'; });
