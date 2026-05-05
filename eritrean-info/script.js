@@ -2739,7 +2739,14 @@ function initLeafletMap() {
   }
 
   ERI_CITIES.forEach(city => {
-    const marker = L.marker([city.lat, city.lng]).addTo(map);
+    const icon = L.divIcon({
+      className: '',
+      html: '<div style="width:32px;height:32px;background:#007A3D;border:3px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:pointer">' + city.ico + '</div>',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -18]
+    });
+    const marker = L.marker([city.lat, city.lng], { icon }).addTo(map);
     marker.bindPopup(
       '<div style="font-family:Montserrat,sans-serif;max-width:200px">' +
       '<div style="font-size:1.4rem;margin-bottom:4px">' + city.ico + ' <strong>' + city.name + '</strong></div>' +
