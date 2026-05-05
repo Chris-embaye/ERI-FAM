@@ -3,6 +3,7 @@
     {
       "target": "eritrean-info",
       "public": "eritrean-info",
+      "cleanUrls": true,
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "headers": [
         {
