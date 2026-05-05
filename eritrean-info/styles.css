@@ -308,8 +308,8 @@ html.dark .nav-dd-item:hover, html.dark .nav-dd-item.active {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 48px;
-  padding: 100px 60px 70px;
+  gap: 28px;
+  padding: 100px 60px 120px;
   max-width: 1320px;
   margin: 0 auto;
   text-align: left;
@@ -4663,6 +4663,27 @@ html.dark .map-spinner-wrap { background: rgba(15,17,23,0.75); color: #94a3b8; }
   95%  { opacity: 1; }
   100% { transform: translateY(880px); opacity: 0; }
 }
+
+/* Glowing halo behind map */
+.hero-map-viz {
+  position: relative;
+}
+.hero-map-viz::before {
+  content: '';
+  position: absolute;
+  inset: -15% -12%;
+  background: radial-gradient(ellipse at 40% 35%,
+    rgba(0,160,80,0.14) 0%,
+    rgba(80,180,255,0.10) 35%,
+    transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+.eri-map-svg { position: relative; z-index: 1; }
+
+/* Hide read-time and TTS badges in hero — not suited for the showcase area */
+.hero-text .read-time-badge,
+.hero-text .tts-btn { display: none !important; }
 
 /* Mobile: stack vertically, map on top */
 @media (max-width: 900px) {
