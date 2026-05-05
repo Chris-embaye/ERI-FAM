@@ -1895,31 +1895,37 @@ async function init() {
   // Restore queue with local + cached cloud tracks
   restoreQueueState();
 
-  if (navigator.onLine) {
-    syncCloud().then(() => {
-      // ── Step 4: Wire up audio for cloud tracks (available after sync) ──
-      if (lastId && lastMeta?.type === 'cloud') {
-        const cloudTrack = S.cloudTracks.find(t => t.id === lastId);
-        if (cloudTrack) {
-          S.currentTrack = cloudTrack;
-          if (!audio.src) {
-            audio.src = cloudTrack.url;
-            audio.volume = S.volume;
-            audio.addEventListener('loadedmetadata', () => {
-              if (lastPos > 1 && lastPos < (audio.duration || 0) - 2) audio.currentTime = lastPos;
-            }, { once: true });
-            updateMediaSession();
-          }
-          updatePlayerUI();
-          showMiniPlayer();
+  // Always attempt sync — navigator.onLine is unreliable in PWA standalone mode
+  // (returns false on some devices even when connection is fine)
+  syncCloud().then(() => {
+    // ── Step 4: Wire up audio for cloud tracks (available after sync) ──
+    if (lastId && lastMeta?.type === 'cloud') {
+      const cloudTrack = S.cloudTracks.find(t => t.id === lastId);
+      if (cloudTrack) {
+        S.currentTrack = cloudTrack;
+        if (!audio.src) {
+          audio.src = cloudTrack.url;
+          audio.volume = S.volume;
+          audio.addEventListener('loadedmetadata', () => {
+            if (lastPos > 1 && lastPos < (audio.duration || 0) - 2) audio.currentTime = lastPos;
+          }, { once: true });
+          updateMediaSession();
         }
+        updatePlayerUI();
+        showMiniPlayer();
       }
-      // Re-run queue restore now that fresh cloud tracks are available
-      restoreQueueState();
-    }).catch(() => {});
-    loadPromos();
-    registerAppSession();
-  }
+    }
+    // Re-run queue restore now that fresh cloud tracks are available
+    restoreQueueState();
+  }).catch(() => {});
+  loadPromos();
+  registerAppSession();
+
+  // Retry sync after 4s if no tracks loaded yet — handles slow/unreliable
+  // network at PWA home-screen launch where network isn't ready at startup
+  setTimeout(() => {
+    if (!S.cloudTracks.length) syncCloud().catch(() => {});
+  }, 4000);
 }
 
 async function registerAppSession() {
