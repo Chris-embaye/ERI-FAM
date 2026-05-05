@@ -271,7 +271,7 @@ export function renderSettings() {
     });
 
     container.querySelector('#reset-pw-btn')?.addEventListener('click', async () => {
-      if (!user?.email) return;
+      if (!user?.email || !window.firebase?.auth) return;
       const btn = container.querySelector('#reset-pw-btn');
       btn.textContent = 'Sending…'; btn.disabled = true;
       try {

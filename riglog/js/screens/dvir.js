@@ -200,7 +200,7 @@ export function renderDVIR() {
     function applyState(el, state) {
       const { cls, badge } = itemState(state);
       el.className = `dvir-item ${cls} border rounded-xl p-3 flex justify-between items-center cursor-pointer`;
-      el.querySelector('.dvir-badge').innerHTML = badge;
+      el.querySelector('.dvir-badge')?.innerHTML = badge;
     }
 
     container.querySelectorAll('.dvir-item').forEach(el => {
@@ -240,7 +240,7 @@ export function renderDVIR() {
       const items    = { ...stateMap };
 
       if (!Object.values(items).some(v => v !== null)) {
-        alert('Please inspect at least one item before submitting.');
+        toast('Please inspect at least one item before submitting.', 'info');
         return;
       }
 
