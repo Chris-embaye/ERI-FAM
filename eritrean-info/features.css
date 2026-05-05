@@ -1257,27 +1257,46 @@ mark.annot-mark { background:#fef08a; border-radius:2px; cursor:pointer; }
 .journey-item .ji-check { font-size:.9rem; }
 
 /* T36: History Timeline ----------------------------------------------- */
-.eri-timeline { padding:24px 0; position:relative; }
-.eri-timeline::before { content:''; position:absolute; left:50%; top:0; bottom:0;
-  width:2px; background:var(--border,#e0e0e0); transform:translateX(-50%); }
-.tl-item { display:flex; gap:20px; align-items:flex-start; margin-bottom:24px; position:relative; }
-.tl-item:nth-child(odd)  { flex-direction:row; }
-.tl-item:nth-child(even) { flex-direction:row-reverse; }
-.tl-content { flex:1; background:var(--bg,#fff); border:1.5px solid var(--border,#e0e0e0);
-  border-radius:12px; padding:12px 14px; cursor:pointer; transition:all .2s;
-  box-shadow:0 2px 8px rgba(0,0,0,.05); }
-.tl-content:hover { border-color:var(--green,#007A3D); box-shadow:0 4px 16px rgba(0,122,61,.12); }
-.tl-year { font-weight:800; color:var(--green,#007A3D); font-size:.9rem; }
-.tl-title { font-weight:700; font-size:.9rem; margin:3px 0; color:var(--text,#1a1a1a); }
-.tl-desc { font-size:.78rem; color:var(--text-muted,#888); line-height:1.5; display:none; }
-.tl-content.open .tl-desc { display:block; margin-top:6px; }
-.tl-dot { width:14px; height:14px; border-radius:50%; background:var(--green,#007A3D);
+.eri-timeline { padding:8px 0 24px; position:relative; }
+.eri-timeline::before { content:''; position:absolute; left:21px; top:0; bottom:0;
+  width:2px; background:linear-gradient(to bottom,var(--green,#007A3D) 80%,transparent);
+  border-radius:2px; }
+.tl-item { display:flex; align-items:flex-start; gap:14px;
+  margin-bottom:10px; position:relative; padding-left:46px; }
+.tl-item:nth-child(odd), .tl-item:nth-child(even) { flex-direction:row; }
+.tl-dot { position:absolute; left:14px; top:14px; width:14px; height:14px;
+  border-radius:50%; background:var(--green,#007A3D);
   border:3px solid var(--bg,#fff); box-shadow:0 0 0 2px var(--green,#007A3D);
-  flex-shrink:0; margin-top:14px; z-index:1; }
+  flex-shrink:0; z-index:1; }
+.tl-item:nth-child(3n+2) .tl-dot { background:var(--blue,#4189DD); box-shadow:0 0 0 2px var(--blue,#4189DD); }
+.tl-item:nth-child(3n+3) .tl-dot { background:var(--red,#CE1126);  box-shadow:0 0 0 2px var(--red,#CE1126); }
+.tl-content { flex:1;
+  background:rgba(255,255,255,.65);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.8); border-radius:14px;
+  padding:10px 14px; cursor:pointer; transition:all .2s;
+  box-shadow:0 2px 12px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.5); }
+html.dark .tl-content { background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 2px 16px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06); }
+.tl-content:hover { border-color:var(--green,#007A3D); transform:translateX(4px);
+  box-shadow:0 4px 20px rgba(0,122,61,.18),inset 0 1px 0 rgba(255,255,255,.5); }
+html.dark .tl-content:hover { box-shadow:0 4px 20px rgba(0,122,61,.35),inset 0 1px 0 rgba(255,255,255,.06); }
+.tl-item:nth-child(3n+2) .tl-content:hover { border-color:var(--blue,#4189DD); }
+.tl-item:nth-child(3n+3) .tl-content:hover { border-color:var(--red,#CE1126); }
+.tl-content.open { background:rgba(255,255,255,.88); }
+html.dark .tl-content.open { background:rgba(255,255,255,.1); }
+.tl-year { font-weight:800; font-size:.72rem; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--green,#007A3D); }
+.tl-item:nth-child(3n+2) .tl-year { color:var(--blue,#4189DD); }
+.tl-item:nth-child(3n+3) .tl-year { color:var(--red,#CE1126); }
+.tl-title { font-weight:700; font-size:.88rem; margin:2px 0; color:var(--text,#1a1a1a); }
+.tl-desc { font-size:.8rem; color:var(--text-muted,#888); line-height:1.55; display:none; }
+.tl-content.open .tl-desc { display:block; margin-top:8px; }
 @media(max-width:600px) {
-  .eri-timeline::before { left:20px; }
-  .tl-item, .tl-item:nth-child(even) { flex-direction:row; }
-  .tl-dot { order:-1; margin-left:14px; }
+  .eri-timeline::before { left:17px; }
+  .tl-item { padding-left:40px; }
+  .tl-dot { left:10px; }
 }
 
 /* T37: Language cycle toast done inline */
