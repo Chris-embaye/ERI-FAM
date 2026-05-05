@@ -2812,6 +2812,7 @@ function initLeafletMap() {
     attribution: '© OpenStreetMap contributors',
     maxZoom: 15
   }).addTo(map);
+  setTimeout(() => map.invalidateSize(), 400);
 
   ERI_CITIES.forEach(city => {
     const marker = L.marker([city.lat, city.lng]).addTo(map);

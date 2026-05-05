@@ -3284,18 +3284,20 @@ function checkAchievement(id) {
 (function T47_AnnouncementBar() {
   const KEY = 'eri_announce_v2';
   if (localStorage.getItem(KEY)) return;
-  document.addEventListener('DOMContentLoaded', () => {
+  function init() {
     const bar = document.getElementById('announceBar');
     if (!bar) return;
     bar.hidden = false;
     document.getElementById('announceClose')?.addEventListener('click', () => {
-      bar.style.maxHeight = '0';
-      bar.style.padding = '0';
-      bar.style.opacity = '0';
+      bar.hidden = true;
       localStorage.setItem(KEY, '1');
-      setTimeout(() => { bar.hidden = true; }, 320);
     });
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 
 // ── T48: TIMED NEWSLETTER POPUP ───────────────────────────────────────────
