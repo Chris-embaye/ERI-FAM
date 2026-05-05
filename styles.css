@@ -906,6 +906,18 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 .sleep-opt:hover { background: var(--accent); color: white; }
 .sleep-opt.active { background: var(--accent); color: white; }
 
+/* ── SPEED MODAL ────────────────────────────────────────── */
+.speed-opts { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
+.speed-opt {
+  padding: 11px 16px; background: var(--card); border-radius: var(--radius-sm);
+  font-size: 0.9rem; font-weight: 600; color: var(--text); text-align: left;
+  transition: all 0.18s;
+}
+.speed-opt:hover { background: var(--card-hover); }
+.speed-opt.active { background: rgba(200,145,74,0.18); color: var(--accent); }
+.extra-btn.active { color: var(--accent); }
+.extra-btn.active svg { stroke: var(--accent); }
+
 /* ── DUPLICATES ─────────────────────────────────────────── */
 .dup-list { max-height: 300px; overflow-y: auto; margin: 12px 0; }
 .dup-group { background: var(--card); border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; }

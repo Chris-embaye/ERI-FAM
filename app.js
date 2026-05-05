@@ -372,6 +372,7 @@ async function playTrack(track, queueTracks) {
 
   audio.src = src;
   audio.volume = S.volume;
+  if (S.playbackSpeed && S.playbackSpeed !== 1) audio.playbackRate = S.playbackSpeed;
   try {
     await audio.play();
     S.playing = true;
@@ -535,7 +536,7 @@ function updateProgress() {
   if (ringDot)  ringDot.setAttribute('transform', `rotate(${ratio * 360} 150 150)`);
 
   if ('mediaSession' in navigator && dur) {
-    navigator.mediaSession.setPositionState({ duration: dur, position: cur, playbackRate: 1 });
+    navigator.mediaSession.setPositionState({ duration: dur, position: cur, playbackRate: S.playbackSpeed || 1 });
   }
 }
 
@@ -4421,3 +4422,200 @@ loadLocalTracks = async function() {
   await _baseLoadLocalTracks();
   setTimeout(renderRecentlyPlayed, 100);
 };
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 11 — Skip Forward 15 Seconds
+   ════════════════════════════════════════════════════════════════ */
+document.getElementById('skipFwdBtn')?.addEventListener('click', () => {
+  if (!audio.duration) return;
+  audio.currentTime = Math.min(audio.currentTime + 15, audio.duration);
+});
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 12 — Playback Speed Control (0.5× – 2×)
+   ════════════════════════════════════════════════════════════════ */
+{
+  S.playbackSpeed = parseFloat(localStorage.getItem('erifam_speed') || '1');
+  audio.playbackRate = S.playbackSpeed;
+
+  function updateSpeedUI() {
+    const sp = S.playbackSpeed;
+    const label = document.getElementById('speedLabel');
+    if (label) label.textContent = sp === 1 ? '1×' : sp + '×';
+    document.getElementById('speedBtn')?.classList.toggle('active', sp !== 1);
+    document.querySelectorAll('.speed-opt').forEach(b =>
+      b.classList.toggle('active', parseFloat(b.dataset.speed) === sp)
+    );
+  }
+
+  document.getElementById('speedBtn')?.addEventListener('click', () => openModal('speedModal'));
+  document.getElementById('speedModalClose')?.addEventListener('click', () => closeModal('speedModal'));
+  document.getElementById('speedModal')?.addEventListener('click', e => {
+    if (e.target.id === 'speedModal') closeModal('speedModal');
+  });
+
+  document.querySelectorAll('.speed-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.playbackSpeed = parseFloat(btn.dataset.speed);
+      audio.playbackRate = S.playbackSpeed;
+      localStorage.setItem('erifam_speed', String(S.playbackSpeed));
+      updateSpeedUI();
+      closeModal('speedModal');
+      toast(`⏩ Speed: ${S.playbackSpeed}×`);
+    });
+  });
+
+  updateSpeedUI();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 13 — "Play Next" in Track Options Sheet
+   ════════════════════════════════════════════════════════════════ */
+{
+  const _baseOTS = openTrackSheet;
+  openTrackSheet = function(id) {
+    _baseOTS(id);
+    const track = [...S.tracks, ...S.cloudTracks].find(t => t.id === id);
+    if (!track) return;
+    const actions = document.getElementById('sheetActions');
+    const playNextBtn = document.createElement('button');
+    playNextBtn.className = 'sheet-action';
+    playNextBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>Play Next`;
+    playNextBtn.addEventListener('click', () => {
+      const insertIdx = Math.min(S.queueIndex + 1, S.queue.length);
+      S.queue.splice(insertIdx, 0, track);
+      saveQueueState();
+      toast('▶ Will play next');
+      closeSheet();
+    });
+    const queueBtn = actions.querySelector('#sheetQueue');
+    if (queueBtn) actions.insertBefore(playNextBtn, queueBtn);
+    else actions.appendChild(playNextBtn);
+  };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 14 — Listening History Page
+   Stores the last 100 played tracks with timestamps
+   ════════════════════════════════════════════════════════════════ */
+{
+  const HIST_KEY = 'erifam_history';
+  const MAX_HIST = 100;
+
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch { return []; }
+  }
+
+  function saveHistory(hist) {
+    localStorage.setItem(HIST_KEY, JSON.stringify(hist.slice(0, MAX_HIST)));
+  }
+
+  function addHistoryEntry(track) {
+    if (!track?.id) return;
+    const hist = loadHistory();
+    const filtered = hist.filter(h => h.id !== track.id);
+    filtered.unshift({ id: track.id, title: track.title || 'Unknown', artist: track.artist || '—', playedAt: Date.now() });
+    saveHistory(filtered);
+  }
+
+  function fmtHistDate(ts) {
+    const d = new Date(ts);
+    const diffMins = Math.floor((Date.now() - ts) / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHrs = Math.floor(diffMins / 60);
+    if (diffHrs < 24) return `${diffHrs}h ago`;
+    const diffDays = Math.floor(diffHrs / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    if (!list) return;
+    const hist = loadHistory();
+    if (!hist.length) {
+      list.innerHTML = '<p class="empty-msg" style="padding:40px 0;text-align:center">No listening history yet.<br><small style="color:var(--text-dim)">Play some tracks to see them here.</small></p>';
+      return;
+    }
+    const allTracks = [...S.tracks, ...S.cloudTracks];
+    list.innerHTML = hist.map((h, i) => {
+      const track = allTracks.find(t => t.id === h.id);
+      return `<div class="track-row hist-row" data-hist-idx="${i}" style="cursor:pointer">
+        <div class="tr-art">${track ? artEl(track, 'list') : '<div style="width:44px;height:44px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:1.2rem">🎵</div>'}</div>
+        <div class="tr-info">
+          <div class="tr-title">${esc(h.title)}</div>
+          <div class="tr-artist">${esc(h.artist)}</div>
+        </div>
+        <span class="tr-dur" style="white-space:nowrap;color:var(--text-dim);font-size:0.72rem">${fmtHistDate(h.playedAt)}</span>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.hist-row').forEach((row, i) => {
+      row.addEventListener('click', () => {
+        const h = hist[i];
+        const track = allTracks.find(t => t.id === h.id);
+        if (track) { playTrack(track, allTracks); switchView('home'); }
+        else toast('Track not in library');
+      });
+    });
+  }
+
+  // Record track on each play
+  const _basePTH = playTrack;
+  playTrack = function(track, queueTracks) {
+    _basePTH(track, queueTracks);
+    addHistoryEntry(track);
+  };
+
+  // Render history when view opens
+  const _baseSVH = switchView;
+  switchView = function(viewName) {
+    _baseSVH(viewName);
+    if (viewName === 'history') renderHistory();
+  };
+  window.switchView = switchView;
+
+  document.getElementById('clearHistoryBtn')?.addEventListener('click', () => {
+    if (!confirm('Clear all listening history?')) return;
+    localStorage.removeItem(HIST_KEY);
+    renderHistory();
+    toast('🗑 History cleared');
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 15 — Lyrics Auto-Scroll While Playing
+   Smoothly scrolls the lyrics panel in sync with playback progress
+   ════════════════════════════════════════════════════════════════ */
+{
+  let lyricsAutoScroll = true;
+
+  function autoScrollLyrics() {
+    const panel = document.getElementById('lyricsPanel');
+    if (!panel?.classList.contains('open')) return;
+    if (!lyricsAutoScroll) return;
+    const dur = audio.duration;
+    const cur = audio.currentTime;
+    if (!dur || !cur) return;
+    const body = document.getElementById('lyricsBody');
+    if (!body) return;
+    const scrollRange = body.scrollHeight - body.clientHeight;
+    if (scrollRange <= 0) return;
+    const target = scrollRange * (cur / dur);
+    body.scrollTo({ top: target, behavior: 'smooth' });
+  }
+
+  let _lastLyricsScroll = 0;
+  audio.addEventListener('timeupdate', () => {
+    const now = Date.now();
+    if (now - _lastLyricsScroll < 3000) return;
+    _lastLyricsScroll = now;
+    autoScrollLyrics();
+  });
+
+  document.getElementById('lyricsBody')?.addEventListener('scroll', () => {
+    lyricsAutoScroll = false;
+    clearTimeout(window._lyricsScrollTimer);
+    window._lyricsScrollTimer = setTimeout(() => { lyricsAutoScroll = true; }, 5000);
+  }, { passive: true });
+}
