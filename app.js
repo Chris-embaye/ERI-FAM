@@ -3824,25 +3824,7 @@ function ytvHideVideo(videoId) {
   // Remove from current queue too
   ytState.queue = ytState.queue.filter(v => v.videoId !== videoId);
 }
-// Filter hidden videos from any render result
-const _origRenderResults = ytvRenderResults;
-// (Already called inline via ytvRenderResults — hidden videos filtered in search chain below)
-// Override ytvSearch to filter hidden after results arrive:
-const _ytvSearchOrig = ytvSearch;
-async function ytvSearch(query, skipHistory = false) {
-  // Will call _ytvSearchOrig then filter hidden — but we can't easily wrap an async here.
-  // Instead, filter in ytvRenderResults at call site (see below override).
-  return _ytvSearchOrig(query, skipHistory);
-}
-// Filter not-interested in render: patch ytState.queue after render
-const _renderOrig = ytvRenderResults;
-// We override the inline filter inside ytvRenderResults by adding to the `seen` filter:
-// (hidden filtering is applied via the patched seen set in ytvRenderResults)
-// Actually the cleanest approach: override the global function reference
-window._ytvRenderWithFilter = function(results) {
-  const hidden = new Set(ytvGetHidden());
-  return results.filter(v => !hidden.has(v.videoId));
-};
+// Hidden video filtering is handled by the ytvRenderResults patch at the bottom of round-3.
 
 // ── 5. Share bottom sheet ────────────────────────────────────
 function ytvOpenShareSheet(entry) {
@@ -3979,7 +3961,7 @@ async function ytvAutoQueueMore() {
 }
 // Hook into ytvNextWithCountdown: when we reach end of queue, auto-fetch more
 const _origYtvNextWC = ytvNextWithCountdown;
-function ytvNextWithCountdown() {
+ytvNextWithCountdown = function() {
   const q = ytState.queue;
   const isLast = !ytState.shuffle && (ytState.currentIndex + 1 >= q.length);
   if (isLast && !ytState.repeatAll) {
@@ -3987,7 +3969,7 @@ function ytvNextWithCountdown() {
     return;
   }
   _origYtvNextWC();
-}
+};
 
 // ── 9. Custom playlists ──────────────────────────────────────
 function ytvGetPlaylists() {
