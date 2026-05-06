@@ -737,7 +737,7 @@
 <nav class="hub-nav">
   <button class="hnav-btn active" data-view="learn"><div class="hnav-icon">🎓</div>Learn</button>
   <button class="hnav-btn" data-view="community"><div class="hnav-icon-wrap">🌍<span class="nav-badge show" id="communityBadge"></span></div>Community</button>
-  <button class="hnav-btn" data-view="money"><div class="hnav-icon">💸</div>Send Money</button>
+  <button class="hnav-btn" data-view="money" id="moneyNavBtn" style="display:none"><div class="hnav-icon">💸</div>Send Money</button>
 </nav>
 
 <div class="hub-toast" id="hubToast"></div>
@@ -1772,7 +1772,17 @@ function updateSyncBar() {
   const msg = document.getElementById('syncMsg');
   const btn = document.getElementById('syncBarBtn');
   const dot = document.getElementById('syncDot');
+  const moneyBtn = document.getElementById('moneyNavBtn');
   if (!msg) return;
+
+  const isParent = syncProfile && syncProfile.role === 'parent';
+  if (moneyBtn) moneyBtn.style.display = isParent ? '' : 'none';
+
+  /* if current view is money but user lost access, go to learn */
+  if (!isParent && document.getElementById('view-money')?.classList.contains('active')) {
+    showView('learn');
+  }
+
   if (!syncUser) {
     dot && dot.classList.remove('active');
     msg.textContent = '☁ Sign in to save your progress';
