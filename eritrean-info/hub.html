@@ -547,9 +547,81 @@
       transition: background 0.15s; flex-shrink: 0;
     }
     .sync-bar-btn:hover { background: var(--green-light); }
+
+    /* ── AUTH GATE ── */
+    .auth-gate {
+      position: fixed; inset: 0; z-index: 500;
+      background: linear-gradient(155deg, var(--green) 0%, #0f4c25 100%);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .auth-gate.hidden { display: none; }
+    .auth-card {
+      background: var(--card); border-radius: 22px;
+      padding: 34px 26px 28px; width: 100%; max-width: 380px;
+      box-shadow: 0 12px 48px rgba(0,0,0,.28);
+    }
+    .auth-logo { font-size: 2.6rem; text-align: center; margin-bottom: 4px; }
+    .auth-title { font-size: 1.35rem; font-weight: 900; text-align: center; color: var(--text); letter-spacing: -.4px; }
+    .auth-sub { font-size: 0.76rem; color: var(--text-sub); text-align: center; margin: 4px 0 22px; }
+    .auth-role-pick { display: flex; gap: 9px; margin-bottom: 16px; }
+    .role-btn {
+      flex: 1; padding: 11px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 700;
+      border: 2px solid var(--border); color: var(--text-sub); transition: all .15s; background: var(--bg);
+    }
+    .role-btn.active { border-color: var(--green); color: var(--green); background: var(--green-light); }
+    .auth-input {
+      width: 100%; padding: 11px 14px; border-radius: 11px;
+      border: 1.5px solid var(--border); background: var(--bg);
+      color: var(--text); font-size: 0.87rem; margin-bottom: 10px; display: block;
+      outline: none; transition: border .15s;
+    }
+    .auth-input:focus { border-color: var(--green); }
+    .auth-err { font-size: 0.72rem; color: var(--red); min-height: 16px; margin-bottom: 6px; }
+    .auth-submit {
+      width: 100%; padding: 13px; border-radius: 13px;
+      background: var(--green); color: white; font-size: 0.92rem; font-weight: 800;
+      transition: background .15s; margin-bottom: 14px; border: none; cursor: pointer;
+    }
+    .auth-submit:hover:not(:disabled) { background: var(--green-d); }
+    .auth-submit:disabled { background: #94a3b8; cursor: default; }
+    .auth-switch { font-size: 0.73rem; color: var(--text-sub); text-align: center; }
+    .auth-switch span { color: var(--green); font-weight: 700; cursor: pointer; }
+    .auth-divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
   </style>
 </head>
 <body>
+
+<!-- ══ AUTH GATE — shown until signed in ══ -->
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-logo">🇪🇷</div>
+    <div class="auth-title">Eritrean Hub</div>
+    <p class="auth-sub" id="authSub">Create your account to start learning</p>
+
+    <!-- Sign-Up Panel -->
+    <div id="authSignupPanel">
+      <div class="auth-role-pick">
+        <button class="role-btn active" data-role="student">👦 Student</button>
+        <button class="role-btn" data-role="parent">👨‍👩‍👧 Parent</button>
+      </div>
+      <input class="auth-input" id="suName" type="text" placeholder="Full name" autocomplete="name">
+      <input class="auth-input" id="suEmail" type="email" placeholder="Email address" autocomplete="email">
+      <input class="auth-input" id="suPass" type="password" placeholder="Password (min 6 chars)" autocomplete="new-password">
+      <div class="auth-err" id="suErr"></div>
+      <button class="auth-submit" id="suBtn">Create Account →</button>
+      <p class="auth-switch">Already have an account? <span id="goSignIn">Sign in</span></p>
+    </div>
+
+    <!-- Sign-In Panel -->
+    <div id="authSigninPanel" style="display:none">
+      <input class="auth-input" id="siEmail" type="email" placeholder="Email address" autocomplete="email">
+      <input class="auth-input" id="siPass" type="password" placeholder="Password" autocomplete="current-password">
+      <div class="auth-err" id="siErr"></div>
+      <button class="auth-submit" id="siBtn">Sign In →</button>
+      <p class="auth-switch">New here? <span id="goSignUp">Create account</span></p>
+    </div>
+  </div>
+</div>
 
 <div class="page-wrap">
   <header class="hub-header">
@@ -2379,20 +2451,18 @@ function hubToast(msg) {
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
 /* ═══════════════════════════════
-   FIREBASE SYNC
+   FIREBASE AUTH + SYNC
 ═══════════════════════════════ */
 let syncUser = null, syncProfile = null, _syncDb = null;
+let authRole = 'student';
 
 function syncProgress() {
   if (!syncUser || !syncProfile || syncProfile.role !== 'student' || !_syncDb) return;
   const sid = syncProfile.studentId;
   if (!sid) return;
   _syncDb.collection('progress').doc(sid).set({
-    xp: prog.xp,
-    streak: prog.streak,
-    stars: prog.stars,
-    quizBest: prog.quizBest || 0,
-    catStars: getCatStars(),
+    xp: prog.xp, streak: prog.streak, stars: prog.stars,
+    quizBest: prog.quizBest || 0, catStars: getCatStars(),
     lessonsCompleted: getLessonsDone(),
     lastActive: new Date().toDateString(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -2405,15 +2475,9 @@ function updateSyncBar() {
   const dot = document.getElementById('syncDot');
   const moneyBtn = document.getElementById('moneyNavBtn');
   if (!msg) return;
-
   const isParent = syncProfile && syncProfile.role === 'parent';
   if (moneyBtn) moneyBtn.style.display = isParent ? '' : 'none';
-
-  /* if current view is money but user lost access, go to learn */
-  if (!isParent && document.getElementById('view-money')?.classList.contains('active')) {
-    showView('learn');
-  }
-
+  if (!isParent && document.getElementById('view-money')?.classList.contains('active')) showView('learn');
   if (!syncUser) {
     dot && dot.classList.remove('active');
     msg.textContent = '☁ Sign in to save your progress';
@@ -2426,20 +2490,98 @@ function updateSyncBar() {
   }
 }
 
+/* ── Auth gate helpers ── */
+function showAuthGate() { document.getElementById('authGate').classList.remove('hidden'); }
+function hideAuthGate() { document.getElementById('authGate').classList.add('hidden'); }
+
+/* ── Role picker ── */
+document.querySelectorAll('.role-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    authRole = btn.dataset.role;
+  });
+});
+
+/* ── Panel toggle ── */
+document.getElementById('goSignIn').addEventListener('click', () => {
+  document.getElementById('authSignupPanel').style.display = 'none';
+  document.getElementById('authSigninPanel').style.display = 'block';
+  document.getElementById('authSub').textContent = 'Welcome back!';
+});
+document.getElementById('goSignUp').addEventListener('click', () => {
+  document.getElementById('authSigninPanel').style.display = 'none';
+  document.getElementById('authSignupPanel').style.display = 'block';
+  document.getElementById('authSub').textContent = 'Create your account to start learning';
+});
+
 if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
   try {
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     _syncDb = firebase.firestore();
+
+    /* ── Sign Up ── */
+    document.getElementById('suBtn').addEventListener('click', async () => {
+      const name  = document.getElementById('suName').value.trim();
+      const email = document.getElementById('suEmail').value.trim();
+      const pass  = document.getElementById('suPass').value;
+      const errEl = document.getElementById('suErr');
+      errEl.textContent = '';
+      if (!name)          { errEl.textContent = 'Please enter your name.'; return; }
+      if (!email)         { errEl.textContent = 'Please enter your email.'; return; }
+      if (pass.length < 6){ errEl.textContent = 'Password must be at least 6 characters.'; return; }
+      const btn = document.getElementById('suBtn');
+      btn.disabled = true; btn.textContent = 'Creating account…';
+      try {
+        const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+        const uid = cred.user.uid;
+        await _syncDb.collection('users').doc(uid).set({
+          name, email, role: authRole, studentId: uid,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        /* onAuthStateChanged will fire next and hide the gate */
+      } catch(e) {
+        errEl.textContent = e.message || 'Sign up failed. Please try again.';
+        btn.disabled = false; btn.textContent = 'Create Account →';
+      }
+    });
+
+    /* ── Sign In ── */
+    document.getElementById('siBtn').addEventListener('click', async () => {
+      const email = document.getElementById('siEmail').value.trim();
+      const pass  = document.getElementById('siPass').value;
+      const errEl = document.getElementById('siErr');
+      errEl.textContent = '';
+      if (!email || !pass) { errEl.textContent = 'Please fill in all fields.'; return; }
+      const btn = document.getElementById('siBtn');
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, pass);
+        /* onAuthStateChanged fires next and hides the gate */
+      } catch(e) {
+        errEl.textContent = e.message || 'Sign in failed. Check your email and password.';
+        btn.disabled = false; btn.textContent = 'Sign In →';
+      }
+    });
+
+    /* ── Auth state ── */
     firebase.auth().onAuthStateChanged(async function(user) {
       syncUser = user;
-      if (!user) { syncProfile = null; updateSyncBar(); return; }
+      if (!user) {
+        syncProfile = null;
+        updateSyncBar();
+        showAuthGate();
+        return;
+      }
       try {
         const snap = await _syncDb.collection('users').doc(user.uid).get();
         syncProfile = snap.data() || null;
       } catch(e) { syncProfile = null; }
+      hideAuthGate();
       updateSyncBar();
       if (syncProfile && syncProfile.role === 'student') syncProgress();
     });
+
   } catch(e) { /* Firebase unavailable */ }
 }
 </script>
