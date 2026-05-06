@@ -13,6 +13,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Fidel">
   <meta name="mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8021114161012516" crossorigin="anonymous"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,9 +37,12 @@
     }
     html, body { height: 100%; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Ethiopic', sans-serif;
       background: var(--bg); color: var(--text); line-height: 1.5;
       -webkit-font-smoothing: antialiased; transition: background .2s, color .2s;
+    }
+    .fidel, .vc-tig, .fc-tig, .quiz-word, .lw-tig, .dict-tig, .pz-cell, .sc-tile {
+      font-family: 'Noto Sans Ethiopic', 'Ebrima', 'Nyala', sans-serif;
     }
     button { border: none; cursor: pointer; background: none; font-family: inherit; color: inherit; }
     a { color: inherit; text-decoration: none; }
@@ -1000,7 +1006,7 @@
 <div class="page-wrap">
   <header class="hub-header">
     <div class="hub-logo">
-      <div class="hub-logo-icon">🇪🇷</div>
+      <div class="hub-logo-icon"><img src="./icons/eri-logo.png" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle"></div>
       <div>
         <div class="hub-title">Fidel</div>
         <div class="hub-subtitle">Learn · Translate · Community</div>
@@ -1439,7 +1445,7 @@
 </div>
 
 <div class="install-banner" id="installBanner">
-  <div class="install-banner-icon">🇪🇷</div>
+  <div class="install-banner-icon"><img src="./icons/eri-logo.png" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover"></div>
   <div class="install-banner-text">
     <div class="install-banner-title">Install Fidel</div>
     <div class="install-banner-sub">Add to home screen for the full app experience</div>

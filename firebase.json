@@ -17,6 +17,13 @@
           ]
         }
       ],
+      "redirects": [
+        {
+          "source": "/hub",
+          "destination": "https://eri-tigrinya-school.web.app",
+          "type": 301
+        }
+      ],
       "rewrites": [
         {
           "source": "**",
