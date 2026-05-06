@@ -2948,7 +2948,10 @@ let _installPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   _installPrompt = e;
-  document.getElementById('installBanner').classList.add('show');
+  const dismissed = localStorage.getItem('hub-install-dismissed');
+  if (!dismissed || Date.now() - Number(dismissed) > 30 * 24 * 60 * 60 * 1000) {
+    document.getElementById('installBanner').classList.add('show');
+  }
 });
 document.getElementById('installBtn').addEventListener('click', () => {
   if (!_installPrompt) return;
@@ -2960,9 +2963,11 @@ document.getElementById('installBtn').addEventListener('click', () => {
 });
 document.getElementById('installDismiss').addEventListener('click', () => {
   document.getElementById('installBanner').classList.remove('show');
+  localStorage.setItem('hub-install-dismissed', String(Date.now()));
 });
 window.addEventListener('appinstalled', () => {
   document.getElementById('installBanner').classList.remove('show');
+  localStorage.setItem('hub-install-dismissed', String(Date.now()));
   _installPrompt = null;
 });
 </script>
