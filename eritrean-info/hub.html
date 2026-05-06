@@ -477,6 +477,31 @@
     .book-read-btn:hover { background:var(--green-d); }
     .lib-empty { text-align:center; padding:40px 0; color:var(--text-dim); font-size:0.85rem; }
 
+    /* ── BOOK READER ── */
+    .book-reader { position:fixed; inset:0; background:var(--bg); z-index:300; display:none; flex-direction:column; }
+    .book-reader.open { display:flex; }
+    .reader-hdr { background:linear-gradient(135deg,var(--green),var(--green-d)); color:white; padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .reader-close { font-size:1.1rem; background:rgba(255,255,255,.2); width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s; }
+    .reader-close:hover { background:rgba(255,255,255,.3); }
+    .reader-hdr-info { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+    .reader-emoji { font-size:1.7rem; flex-shrink:0; }
+    .reader-title { font-size:0.92rem; font-weight:800; }
+    .reader-author { font-size:0.66rem; opacity:.85; }
+    .reader-body { flex:1; overflow-y:auto; padding:20px 16px 40px; max-width:680px; margin:0 auto; width:100%; }
+    .reader-ch { margin-bottom:28px; }
+    .reader-ch h3 { font-size:0.95rem; font-weight:800; color:var(--green); margin-bottom:10px; border-bottom:2px solid var(--green-light); padding-bottom:6px; }
+    .reader-ch p { font-size:0.86rem; line-height:1.72; color:var(--text); margin-bottom:10px; }
+    .reader-ch ul { padding-left:18px; margin-bottom:10px; }
+    .reader-ch li { font-size:0.84rem; line-height:1.65; color:var(--text); margin-bottom:4px; }
+    .reader-ch strong { color:var(--text); }
+    .tig-block { background:var(--card); border-radius:var(--radius-sm); padding:9px 12px; margin-bottom:7px; border:1px solid var(--border); }
+    .tig-script { font-size:1.05rem; font-weight:700; }
+    .tig-rom { font-size:0.75rem; color:var(--text-sub); font-style:italic; }
+    .tig-eng { font-size:0.75rem; color:var(--text-dim); margin-top:1px; }
+    .dialogue { border-left:3px solid var(--green); padding-left:12px; margin:6px 0; }
+    .dialogue p { margin-bottom:5px; }
+    .recipe-block { background:var(--card); border-radius:var(--radius-sm); padding:10px 13px; margin-bottom:8px; border:1px solid var(--border); font-size:0.82rem; line-height:1.6; }
+
     /* ── SYNC BAR ── */
     .sync-bar {
       background: var(--card); border-bottom: 1px solid var(--border);
@@ -773,6 +798,20 @@
   <button class="hnav-btn" data-view="library"><div class="hnav-icon">📚</div>Library</button>
   <button class="hnav-btn" data-view="money" id="moneyNavBtn" style="display:none"><div class="hnav-icon">💸</div>Send Money</button>
 </nav>
+
+<div class="book-reader" id="bookReader">
+  <div class="reader-hdr">
+    <button class="reader-close" id="readerClose">✕</button>
+    <div class="reader-hdr-info">
+      <div class="reader-emoji" id="readerEmoji"></div>
+      <div>
+        <div class="reader-title" id="readerTitle"></div>
+        <div class="reader-author" id="readerAuthor"></div>
+      </div>
+    </div>
+  </div>
+  <div class="reader-body" id="readerBody"></div>
+</div>
 
 <div class="hub-toast" id="hubToast"></div>
 
@@ -1770,65 +1809,164 @@ function speak(text) {
 ═══════════════════════════════ */
 const BOOKS = [
   /* ── Language ── */
-  { id:1, emoji:'📘', title:'Tigrinya for Beginners', author:'Eritrean Language Institute', cat:'language',
+  {
+    id:1, emoji:'📘', title:'Tigrinya for Beginners', author:'Eritrean Language Institute', cat:'language',
     desc:'A step-by-step guide to reading, writing and speaking Tigrinya — perfect for diaspora learners starting from scratch.',
-    url:'' },
-  { id:2, emoji:'✍', title:"Ge'ez Script Workbook", author:'Tekle Haile', cat:'language',
-    desc:'Practice every Fidel character with tracing exercises, phonics guides and pronunciation tips.',
-    url:'' },
-  { id:3, emoji:'💬', title:'Tigrinya Phrase Handbook', author:'Asmara Press', cat:'language',
-    desc:'500+ everyday phrases covering greetings, shopping, health, travel and family — with Tigrinya script and romanization.',
-    url:'' },
-  { id:4, emoji:'🗣', title:'Speak Tigrinya Today', author:'Meron Tesfaye', cat:'language',
-    desc:'Conversational Tigrinya course focused on real-life dialogue, common expressions and cultural context.',
-    url:'' },
-
+    chapters:[
+      { title:'Welcome to Tigrinya', body:`<p>Tigrinya (ትግርኛ) is a Semitic language spoken by about 7 million people, mainly in Eritrea and the Tigray region of Ethiopia. It is written in the ancient Ge'ez script (Fidel) — one of the oldest alphabets still in active use today.</p><p>Learning Tigrinya connects you to a rich culture, deep history, and a warm global community. Whether you grew up hearing it at home or are starting from zero, this guide will take you step by step.</p>` },
+      { title:'Your First Words', body:`<p>The most important word in Tigrinya is:</p><div class="tig-block"><div class="tig-script">ሰላም</div><div class="tig-rom">Selam</div><div class="tig-eng">Hello / Peace</div></div><p>In Eritrean culture, greeting someone properly is a sign of deep respect. Here are a few more essential words:</p><div class="tig-block"><div class="tig-script">ጽቡቕ</div><div class="tig-rom">Ts'buq</div><div class="tig-eng">Good / Fine</div></div><div class="tig-block"><div class="tig-script">የቐንየለይ</div><div class="tig-rom">Yeqenyeley</div><div class="tig-eng">Thank you</div></div><div class="tig-block"><div class="tig-script">ይቅርታ</div><div class="tig-rom">Yiqirta</div><div class="tig-eng">Sorry / Excuse me</div></div><div class="tig-block"><div class="tig-script">እወ</div><div class="tig-rom">Iwe</div><div class="tig-eng">Yes</div></div><div class="tig-block"><div class="tig-script">ኣይፋሉ</div><div class="tig-rom">Ayfalu</div><div class="tig-eng">No</div></div>` },
+      { title:'The Alphabet — Fidel', body:`<p>Tigrinya uses the Ge'ez alphabet (Fidel). Each base character has 7 forms — one for each vowel sound. There are 32 base characters, giving around 230 total characters. Once you learn the pattern, the whole system clicks.</p><p>The 7 vowel orders are: <strong>ä · u · i · a · e · ə · o</strong></p><p>Here is the M-row as an example:</p><div class="tig-block"><div class="tig-script">መ · ሙ · ሚ · ማ · ሜ · ም · ሞ</div><div class="tig-rom">mä · mu · mi · ma · me · m · mo</div></div><p>Visit the Alphabet tab in the Learn section to explore all 24 rows interactively.</p>` },
+      { title:'Your First Sentences', body:`<div class="tig-block"><div class="tig-script">ስምካ መን ኢዩ?</div><div class="tig-rom">Simka men iyu?</div><div class="tig-eng">What is your name? (to male)</div></div><div class="tig-block"><div class="tig-script">ስምኪ መን ኢዩ?</div><div class="tig-rom">Simki men iyu?</div><div class="tig-eng">What is your name? (to female)</div></div><div class="tig-block"><div class="tig-script">ስመይ … ኢዩ</div><div class="tig-rom">Simey … iyu</div><div class="tig-eng">My name is …</div></div><div class="tig-block"><div class="tig-script">ካበይ ኢኻ?</div><div class="tig-rom">Kabey ikha?</div><div class="tig-eng">Where are you from? (to male)</div></div><div class="tig-block"><div class="tig-script">ካብ ኤርትራ ኢየ</div><div class="tig-rom">Kab Eritrea iye</div><div class="tig-eng">I am from Eritrea</div></div><p>Practice these phrases out loud. The vocabulary and flashcard sections of the Hub will help you build from here!</p>` },
+    ]
+  },
+  {
+    id:2, emoji:'✍', title:"Ge'ez Script Workbook", author:'Tekle Haile', cat:'language',
+    desc:"Practice every Fidel character with phonics guides and pronunciation tips for every vowel order.",
+    chapters:[
+      { title:"Understanding the Fidel System", body:`<p>The Ge'ez script is an <strong>abugida</strong> — each symbol represents a consonant with a built-in vowel sound, modified by its order. There are 7 vowel orders and 32 base characters, creating around 230 total characters. The good news: once you learn the pattern of one row, the rest follow naturally.</p>` },
+      { title:'The Seven Vowel Orders', body:`<p>Every row follows this exact pattern:</p><div class="tig-block"><div class="tig-script">Order 1 — ä</div><div class="tig-rom">like "a" in "about" (most common)</div></div><div class="tig-block"><div class="tig-script">Order 2 — u</div><div class="tig-rom">like "oo" in "moon"</div></div><div class="tig-block"><div class="tig-script">Order 3 — i</div><div class="tig-rom">like "ee" in "see"</div></div><div class="tig-block"><div class="tig-script">Order 4 — a</div><div class="tig-rom">like "a" in "father"</div></div><div class="tig-block"><div class="tig-script">Order 5 — e</div><div class="tig-rom">like "e" in "bed"</div></div><div class="tig-block"><div class="tig-script">Order 6 — ə</div><div class="tig-rom">neutral vowel, barely voiced — often a pure consonant</div></div><div class="tig-block"><div class="tig-script">Order 7 — o</div><div class="tig-rom">like "o" in "go"</div></div>` },
+      { title:'Practice: The S-Row (ሰ family)', body:`<p>Let's practice the full S-row — you'll recognise it from ሰላም (Selam):</p><div class="tig-block"><div class="tig-script">ሰ · ሱ · ሲ · ሳ · ሴ · ስ · ሶ</div><div class="tig-rom">sä · su · si · sa · se · s · so</div></div><p>Read these words aloud and find them in the Vocabulary section:</p><div class="tig-block"><div class="tig-script">ሰላም</div><div class="tig-rom">Se-la-m</div><div class="tig-eng">Hello / Peace (ሰ + ላ + ም)</div></div><div class="tig-block"><div class="tig-script">ሰሙን</div><div class="tig-rom">Se-mun</div><div class="tig-eng">Week (ሰ + ሙ + ን)</div></div>` },
+      { title:'Practice: Reading Your First Word', body:`<p>Break down ሰላም letter by letter:</p><ul><li><strong>ሰ</strong> = sä (S-row, order 1)</li><li><strong>ላ</strong> = la (L-row, order 4)</li><li><strong>ም</strong> = m (M-row, order 6 — neutral/final consonant)</li></ul><p>Together: <strong>sä · la · m = ሰላም</strong> (Selam)</p><p>Use the Alphabet tab in the Hub to tap any character and hear its sound. Practice reading one row every day and you will have the full script in a month.</p>` },
+    ]
+  },
+  {
+    id:3, emoji:'💬', title:'Tigrinya Phrase Handbook', author:'Asmara Press', cat:'language',
+    desc:'Essential phrases for greetings, shopping, travel and daily life — with Tigrinya script and romanization.',
+    chapters:[
+      { title:'Greetings & Courtesy', body:`<div class="tig-block"><div class="tig-script">ሰናይ ምዓልቲ</div><div class="tig-rom">Senay m'alti</div><div class="tig-eng">Good morning / Good day</div></div><div class="tig-block"><div class="tig-script">ሰናይ ምሸት</div><div class="tig-rom">Senay mishet</div><div class="tig-eng">Good evening</div></div><div class="tig-block"><div class="tig-script">ሰናይ ሕደር</div><div class="tig-rom">Senay h'der</div><div class="tig-eng">Good night</div></div><div class="tig-block"><div class="tig-script">ሰናይ ምርኻብ</div><div class="tig-rom">Senay mirkab</div><div class="tig-eng">Nice to meet you</div></div><div class="tig-block"><div class="tig-script">ሰናይ ጉዕዞ</div><div class="tig-rom">Senay gu'ezo</div><div class="tig-eng">Safe travels</div></div>` },
+      { title:'Getting Around', body:`<div class="tig-block"><div class="tig-script">ኣበይ ኣሎ …?</div><div class="tig-rom">Abey alo …?</div><div class="tig-eng">Where is …?</div></div><div class="tig-block"><div class="tig-script">ናበይ ትኸይድ?</div><div class="tig-rom">Nabey tikheyid?</div><div class="tig-eng">Where are you going?</div></div><div class="tig-block"><div class="tig-script">ቀጥ ኢልካ ኺድ</div><div class="tig-rom">Qet ilka khid</div><div class="tig-eng">Go straight</div></div><div class="tig-block"><div class="tig-script">የማን / ጸጋም</div><div class="tig-rom">Yemen / Tsegam</div><div class="tig-eng">Right / Left</div></div><div class="tig-block"><div class="tig-script">ቅርብ ኣሎ?</div><div class="tig-rom">Q'rib alo?</div><div class="tig-eng">Is it nearby?</div></div>` },
+      { title:'Shopping & Money', body:`<div class="tig-block"><div class="tig-script">ክንደይ ዋጋ?</div><div class="tig-rom">Kindey waga?</div><div class="tig-eng">How much does it cost?</div></div><div class="tig-block"><div class="tig-script">ኣዝዩ ክቡር ኢዩ</div><div class="tig-rom">Azyu kibur iyu</div><div class="tig-eng">It is very expensive</div></div><div class="tig-block"><div class="tig-script">ሕሱር ግበሮ</div><div class="tig-rom">H'sur gibero</div><div class="tig-eng">Please make it cheaper</div></div><div class="tig-block"><div class="tig-script">ይሓይሽ</div><div class="tig-rom">Yihayish</div><div class="tig-eng">That's fine / OK</div></div>` },
+      { title:'Health & Emergency', body:`<div class="tig-block"><div class="tig-script">ሓግዘኒ!</div><div class="tig-rom">Hagizeni!</div><div class="tig-eng">Help me!</div></div><div class="tig-block"><div class="tig-script">ሓሚመ ኣለኹ</div><div class="tig-rom">Hamime alekhu</div><div class="tig-eng">I am sick</div></div><div class="tig-block"><div class="tig-script">ሆስፒታል ኣበይ ኣሎ?</div><div class="tig-rom">Hospital abey alo?</div><div class="tig-eng">Where is the hospital?</div></div><div class="tig-block"><div class="tig-script">ሓኪም ደሊ</div><div class="tig-rom">Hakim deli</div><div class="tig-eng">I need a doctor</div></div>` },
+    ]
+  },
+  {
+    id:4, emoji:'🗣', title:'Speak Tigrinya Today', author:'Meron Tesfaye', cat:'language',
+    desc:'Real conversations in Tigrinya — meet people, shop at the market, and describe your day.',
+    chapters:[
+      { title:'Conversation 1 — Meeting Someone', body:`<div class="dialogue"><p><strong>Abebe:</strong> ሰላም! ስምካ መን ኢዩ? <em>(Selam! Simka men iyu?)</em> — Hello! What is your name?</p><p><strong>Liya:</strong> ሰላም! ስመይ ሊያ ኢዩ። ስምካ ከ? <em>(Simey Liya iyu. Simka ke?)</em> — My name is Liya. And yours?</p><p><strong>Abebe:</strong> ስመይ ኣበበ ኢዩ። ካበይ ኢኺ? <em>(Simey Abebe iyu. Kabey ikhi?)</em> — My name is Abebe. Where are you from?</p><p><strong>Liya:</strong> ካብ ኣስመራ ኢያ። ንስኻ ከ? <em>(Kab Asmara iya. Nis'kha ke?)</em> — I am from Asmara. And you?</p><p><strong>Abebe:</strong> ካብ ኬረን ኢየ። ሰናይ ምርኻብ! <em>(Kab Keren iye. Senay mirkab!)</em> — I am from Keren. Nice to meet you!</p></div>` },
+      { title:'Conversation 2 — At the Market', body:`<div class="dialogue"><p><strong>Customer:</strong> ሰላም! ክንደይ ዋጋ ኢዩ እዚ? <em>(Selam! Kindey waga iyu ezi?)</em> — Hello! How much is this?</p><p><strong>Seller:</strong> ዓሰርተ ናቕፋ ኢዩ። <em>(Aserte naqfa iyu.)</em> — It is ten Nakfa.</p><p><strong>Customer:</strong> ኣዝዩ ክቡር ኢዩ። ሸሞንተ ትኸውን? <em>(Azyu kibur iyu. Shemonte tikhewun?)</em> — That is very expensive. Can it be eight?</p><p><strong>Seller:</strong> ጽቡቕ። ሸሞንተ ናቕፋ ይኸውን። <em>(Ts'buq. Shemonte naqfa yikhewun.)</em> — Okay. Eight Nakfa it is.</p><p><strong>Customer:</strong> የቐንየለይ! <em>(Yeqenyeley!)</em> — Thank you!</p></div>` },
+      { title:'Conversation 3 — Asking for Directions', body:`<div class="dialogue"><p><strong>Visitor:</strong> ሰላም። ቤት ምግቢ ኣበይ ኣሎ? <em>(Selam. Bet migbi abey alo?)</em> — Hello. Where is the restaurant?</p><p><strong>Local:</strong> ቀጥ ኢልካ ኺድ፣ ደሓር የማን ቅረብ። <em>(Qet ilka khid, dehan yemen q'reb.)</em> — Go straight, then turn right.</p><p><strong>Visitor:</strong> ቅርብ ኣሎ? <em>(Q'rib alo?)</em> — Is it nearby?</p><p><strong>Local:</strong> እወ፣ ሓሙሽተ ደቓይቕ ጥራይ ኢዩ። <em>(Iwe, hamushte deqayiq t'ray iyu.)</em> — Yes, only five minutes.</p><p><strong>Visitor:</strong> የቐንየለይ ብዙሕ! <em>(Yeqenyeley bizu'h!)</em> — Thank you very much!</p></div>` },
+    ]
+  },
   /* ── Children ── */
-  { id:5, emoji:'🦁', title:'The Clever Hare', author:'Eritrean Folktales Series', cat:'children',
+  {
+    id:5, emoji:'🦁', title:'The Clever Hare', author:'Eritrean Folktales Series', cat:'children',
     desc:'A beloved Eritrean fable about a clever hare who outsmarts a lion — teaching wisdom over strength.',
-    url:'' },
-  { id:6, emoji:'🎨', title:'Colors of Eritrea', author:'Selam Books', cat:'children',
-    desc:'A vibrant picture book that teaches colors in Tigrinya and English using landscapes, animals and food of Eritrea.',
-    url:'' },
-  { id:7, emoji:'🌆', title:'Asmara, My City', author:'Lula Abraham', cat:'children',
-    desc:'A young girl explores the beautiful art deco streets of Asmara — introducing children to Eritrea\'s capital.',
-    url:'' },
-  { id:8, emoji:'☕', title:'Mama\'s Coffee Ceremony', author:'Rahel Tekeste', cat:'children',
-    desc:'Follow a family through the traditional Eritrean coffee ceremony, celebrating togetherness and cultural pride.',
-    url:'' },
-
+    chapters:[
+      { title:'The Story Begins', body:`<p>Long ago in the highlands of Eritrea, a great Lion ruled over all the animals. Every day, one animal had to walk to the Lion's den and give itself as food. Finally, it was the turn of the Hare.</p><p>The other animals felt sorry for her. "You are so small," said the Elephant. "The Lion will swallow you in one bite!"</p><p>But the Hare only smiled. "Do not worry about me," she said calmly. "I have a plan."</p>` },
+      { title:'The Clever Trick', body:`<p>The Hare walked very slowly to the Lion's den, arriving hours late. The Lion roared with fury.</p><p>"Why are you late?! I am starving!"</p><p>"Forgive me, great Lion," said the Hare, bowing low. "I was on my way to you when I met ANOTHER lion — a giant one — who said he was the true king of this land. He tried to eat me! I barely escaped!"</p><p>The Lion's eyes went wide with rage. "Another lion?! Show me this impostor at once!"</p>` },
+      { title:'The Reflection', body:`<p>The clever Hare led the furious Lion to a deep well at the edge of the forest. "Look inside," she whispered. "That is where he lives."</p><p>The Lion peered into the well — and saw his own reflection staring back at him, fierce and enormous in the dark water.</p><p>"ROAAAAR!" he bellowed. The reflection roared back. With a mighty leap, the Lion jumped into the well to destroy his enemy — and was never seen again.</p><p>From that day on, the animals lived in peace. The little Hare was celebrated as the wisest creature in all the land.</p><p style="text-align:center;margin-top:16px;font-weight:800;color:var(--green)">The End.<br>Moral: Wisdom is stronger than strength.</p>` },
+    ]
+  },
+  {
+    id:6, emoji:'🎨', title:'Colors of Eritrea', author:'Selam Books', cat:'children',
+    desc:'Learn colors in Tigrinya and English through the beautiful landscapes, animals and food of Eritrea.',
+    chapters:[
+      { title:'Red — ቀይሕ (Qeyih)', body:`<p>The roses in Asmara's gardens are <strong>red</strong>. The flag of Eritrea has a red triangle pointing from left to right — the color of the brave men and women who fought for freedom.</p><div class="tig-block"><div class="tig-script">ቀይሕ</div><div class="tig-rom">Qeyih</div><div class="tig-eng">Red — the color of bravery and love</div></div>` },
+      { title:'Green — ቀጠልያ (Qetelya)', body:`<p>After the summer rains, the hills of Eritrea turn <strong>green</strong>. Olive trees and terraced farmland glow with life. The green stripe on our flag stands for the fertile land that feeds us all.</p><div class="tig-block"><div class="tig-script">ቀጠልያ</div><div class="tig-rom">Qetelya</div><div class="tig-eng">Green — the color of the land and life</div></div>` },
+      { title:'Blue — ሰማያዊ (Semayawi)', body:`<p>The sky above Massawa is the deepest <strong>blue</strong>. The Red Sea itself shimmers blue and turquoise in the afternoon light. Blue is the color of peace — ሰላም.</p><div class="tig-block"><div class="tig-script">ሰማያዊ</div><div class="tig-rom">Semayawi</div><div class="tig-eng">Blue — the color of sky and sea</div></div>` },
+      { title:'Yellow & White', body:`<p>The wheat fields of Eritrea glow <strong>yellow</strong> (ብጫ — Bicha) at harvest time. The sun rising over Asmara is golden and warm.</p><div class="tig-block"><div class="tig-script">ብጫ</div><div class="tig-rom">Bicha</div><div class="tig-eng">Yellow — the color of sunshine and harvest</div></div><p>The freshly woven cotton shawls worn on feast days are <strong>white</strong> (ጻዕዳ — Tsa'da). White means purity and new beginnings.</p><div class="tig-block"><div class="tig-script">ጻዕዳ</div><div class="tig-rom">Tsa'da</div><div class="tig-eng">White — the color of purity and new beginnings</div></div>` },
+    ]
+  },
+  {
+    id:7, emoji:'🌆', title:'Asmara, My City', author:'Lula Abraham', cat:'children',
+    desc:"A young girl explores the art deco streets of Eritrea's capital — a love letter to the most beautiful city in Africa.",
+    chapters:[
+      { title:'The Capital on the Hill', body:`<p>My name is Selam, and I live in Asmara — the most beautiful city in Africa. Our city sits high on a plateau, 2,325 meters above the sea. The air is always cool and fresh, and the streets are lined with tall palm trees and colorful flowers.</p><p>People in Europe call our city <em>"Little Rome"</em> because of its beautiful buildings from the 1930s. When you walk down Liberation Avenue in the morning, you feel like you are inside a painting.</p>` },
+      { title:'The Buildings', body:`<p>Every morning, I walk past buildings that look like they belong in an old movie. My favorite is the <strong>Cinema Impero</strong> — it looks like a rocket ship pointing to the stars! And the <strong>Fiat Tagliero</strong> building has enormous wings and no columns — it stretches out like an airplane ready to fly.</p><p>The architects who built these places were very brave. When the Fiat Tagliero was finished, the builder had to point a gun at his workers to make them remove the temporary supports — he was so sure his building would not fall. It did not fall. It is still standing today, just as proud as ever.</p>` },
+      { title:'Friday Evening on Liberation Avenue', body:`<p>What I love most is Friday evening. Everyone comes out to walk — families, old men playing chess, young people talking and laughing. The vendors sell toasted seeds and fresh mangoes. The smell of coffee floats out from every open doorway.</p><p>We call this walk the <em>passeggiata</em> — an Italian word that means a slow, happy walk just for the joy of it. Asmara has its own word for it too: መሓደር (mehader).</p><p>Asmara is my city. One day I will tell my children about its streets, its buildings, its smell and its light. This city is alive — and it lives inside my heart.</p>` },
+    ]
+  },
+  {
+    id:8, emoji:'☕', title:"Mama's Coffee Ceremony", author:'Rahel Tekeste', cat:'children',
+    desc:'Follow a family through the traditional Eritrean coffee ceremony — a story of togetherness, warmth and culture.',
+    chapters:[
+      { title:'The Green Beans', body:`<p>Every Sunday morning, Mama wakes up early. She brings out the small clay pan and washes the green coffee beans — once, twice, three times — until the water runs clear. The whole house fills with a fresh, earthy smell.</p><p>"Can I help, Mama?" I ask from the doorway.</p><p>"Of course," she smiles. "Come sit with me."</p>` },
+      { title:'The Roasting', body:`<p>Mama places the pan over the charcoal fire and begins to roast the beans slowly, stirring with a long wooden spoon. The beans turn from green to gold to a deep, rich brown. Steam rises. A wonderful smell drifts out through our window.</p><p>Our neighbor Auntie Marta appears at the door. Then Uncle Tesfay arrives, then the children from next door. This always happens — the smell of coffee calls people together. Mama says it is the coffee's way of saying: <em>come, sit, stay a while.</em></p>` },
+      { title:'Three Cups', body:`<p>In our tradition, you must drink three cups. Each one has a name:</p><ul><li><strong>ፈለማ (Felema)</strong> — the first cup, for family</li><li><strong>ካላኣይ (Kala'ay)</strong> — the second cup, for friends</li><li><strong>በረኸት (Berekat)</strong> — the third cup, which means <em>blessing</em></li></ul><p>As we drink, we talk about our week, our memories, our hopes. The coffee grows lighter with each round, but the warmth in the room grows stronger.</p><p>I hold my small cup with both hands. The steam rises and curls. I take a slow sip.</p><p>"The coffee is not just a drink," Mama says softly. "It is a reason to sit together and remember what matters."</p><p>I think I understand.</p>` },
+    ]
+  },
   /* ── History ── */
-  { id:9, emoji:'🏛', title:'Eritrea: Road to Freedom', author:'Dr. Bereket Habte Selassie', cat:'history',
-    desc:'A comprehensive account of Eritrea\'s 30-year independence struggle — from federation to liberation in 1991.',
-    url:'' },
-  { id:10, emoji:'⚔', title:'Ancient Axum & the Horn', author:'Yonas Kidane', cat:'history',
-    desc:'Explores the ancient Axumite empire and its deep roots in what is now Eritrea, Ethiopia and beyond.',
-    url:'' },
-  { id:11, emoji:'🌍', title:'Eritrean Heroes & Heroines', author:'National Heritage Foundation', cat:'history',
+  {
+    id:9, emoji:'🏛', title:'Eritrea: Road to Freedom', author:'Heritage Press', cat:'history',
+    desc:"The story of Eritrea's 30-year liberation struggle — from federation to independence on May 24, 1991.",
+    chapters:[
+      { title:'The Long Struggle', body:`<p>Eritrea's independence was won after <strong>30 years of armed struggle</strong> — one of the longest liberation wars in African history. From 1961 to 1991, the Eritrean People's Liberation Front (EPLF) fought against Ethiopian military rule.</p><p>On <strong>May 24, 1991</strong>, Eritrean freedom fighters entered Asmara. The streets erupted in celebration. After three decades of war, the country was finally free.</p><p>Today, May 24 is celebrated as <strong>Independence Day</strong> every year, with ceremonies, music and gatherings across the Eritrean diaspora worldwide.</p>` },
+      { title:'The Referendum of 1993', body:`<p>On April 23–25, 1993, Eritreans voted in a UN-supervised referendum on independence. The results were extraordinary:</p><ul><li>Voter turnout: <strong>98.5%</strong> — one of the highest ever recorded anywhere in the world</li><li>Votes in favour of independence: <strong>99.83%</strong></li></ul><p>On May 24, 1993 — exactly two years after liberation — Eritrea was officially declared an independent nation, becoming the <strong>182nd member of the United Nations</strong>.</p>` },
+      { title:'A Nation Rebuilt', body:`<p>After independence, Eritrea faced enormous challenges. Decades of war had destroyed roads, schools and hospitals. Millions had been displaced. Yet the Eritrean people — known for their resilience, discipline and unity — began rebuilding from the ground up.</p><p>Asmara, largely intact and beautiful, became the symbol of the new nation. Ten national languages were recognized. A new generation — born free — inherited a country built on sacrifice and determination.</p><p>The liberation struggle remains one of the most remarkable chapters in African history: a small nation, outnumbered and outgunned, that refused to give up.</p>` },
+    ]
+  },
+  {
+    id:10, emoji:'⚔', title:'Ancient Axum & the Horn', author:'Yonas Kidane', cat:'history',
+    desc:"Eritrea's roots in the ancient Axumite empire — one of the most powerful civilizations of the ancient world.",
+    chapters:[
+      { title:'The Axumite Empire', body:`<p>Over 2,000 years ago, one of the most powerful empires in the ancient world rose in the Horn of Africa — the <strong>Kingdom of Axum</strong>. At its height (1st–7th century CE), Axum controlled trade routes linking the Mediterranean, Arabia, India and sub-Saharan Africa.</p><p>Its territory included much of what is now Eritrea and northern Ethiopia. Eritrea's ancient port city of <strong>Adulis</strong> — near modern-day Massawa — was one of the most important trading harbors in the ancient world, mentioned by Greek and Roman merchants.</p>` },
+      { title:"The Ge'ez Script", body:`<p>The Axumites developed the <strong>Ge'ez alphabet</strong> — the same script used to write Tigrinya today. It is one of the oldest continuously used writing systems in the world.</p><p>Ancient Ge'ez inscriptions have been found carved on massive stone obelisks (stelae), some still standing today. The Axumites were also among the <strong>first people in the world</strong> to adopt Christianity as a state religion — in the 4th century CE, before most of Europe.</p>` },
+      { title:"Eritrea's Ancient Heritage", body:`<p>Modern Eritrea sits at the very heart of this ancient civilization. The ruins of <strong>Qohaito</strong>, <strong>Metera</strong> and <strong>Adulis</strong> contain temples, inscriptions and artifacts thousands of years old.</p><p>The Dahlak Archipelago — islands off Eritrea's Red Sea coast — was a major trading hub visited by merchants from three continents.</p><p>When Eritreans speak Tigrinya and write in Ge'ez script today, they are continuing a tradition stretching back over two millennia — connected to one of humanity's most ancient and remarkable civilizations.</p>` },
+    ]
+  },
+  {
+    id:11, emoji:'🌍', title:'Eritrean Heroes & Heroines', author:'National Heritage Foundation', cat:'history',
     desc:'Profiles of the men and women who shaped Eritrea — freedom fighters, scholars, artists and leaders.',
-    url:'' },
-
+    chapters:[
+      { title:'Hamid Idris Awate — Father of the Armed Struggle', body:`<p>On <strong>September 1, 1961</strong>, Hamid Idris Awate fired the first shots of the Eritrean liberation war in the mountains of western Eritrea. A former Italian colonial soldier turned resistance fighter, Awate had watched his people suffer for decades under foreign rule.</p><p>He died just a year later in 1962 — but his name lives on as the man who started the struggle that would last 30 years and end in victory. September 1 is now celebrated as <strong>Armed Struggle Day</strong> across Eritrea.</p>` },
+      { title:"Women of the Revolution", body:`<p>Eritrean women made up nearly <strong>30% of the EPLF's fighting forces</strong> — one of the highest rates of female combatants in any liberation movement in history. They did not just fight alongside men — they fought for gender equality within the revolution itself.</p><p>Women held leadership roles in military, medical, educational and administrative departments. Many were as young as 16 when they joined. Their courage transformed Eritrean society permanently — the 1997 constitution guaranteed equal rights for women and men.</p><p>Their names may not all be remembered, but their impact is woven into every part of modern Eritrea.</p>` },
+      { title:'Abraham Afwerki — Voice of a Generation', body:`<p>Born in 1966 in Asmara, Abraham Afwerki became the greatest Tigrinya musician of his generation. His voice — rich, clear, aching with emotion — could fill a stadium or break your heart alone in a room.</p><p>His song <strong>"Nsu Tikheyid"</strong> (He is Leaving) remains one of the most beloved songs in Eritrean history. His music spoke of longing, love, homeland and hope — and reached Eritreans in every corner of the diaspora.</p><p>He died tragically young in 2006, at age 39. He left behind a body of work that will outlast every generation — a reminder that art is also a form of courage.</p>` },
+    ]
+  },
   /* ── Culture ── */
-  { id:12, emoji:'🍽', title:'The Eritrean Kitchen', author:'Tigest Haile', cat:'culture',
-    desc:'Over 80 authentic recipes — injera, zigni, shiro, kitcha — with cultural stories behind each dish.',
-    url:'' },
-  { id:13, emoji:'🎵', title:'Music of the Horn', author:'Asmara Music Academy', cat:'culture',
-    desc:'A guide to traditional Eritrean music, instruments like the krar and wata, and the great artists of every era.',
-    url:'' },
-  { id:14, emoji:'👘', title:'Habesha Traditions', author:'Cultural Heritage Press', cat:'culture',
-    desc:'Weddings, holidays, coffee ceremonies, and seasonal festivals — a full portrait of Eritrean cultural life.',
-    url:'' },
-
+  {
+    id:12, emoji:'🍽', title:'The Eritrean Kitchen', author:'Tigest Haile', cat:'culture',
+    desc:'Authentic Eritrean recipes — injera, shiro, zigni — with the cultural stories behind each dish.',
+    chapters:[
+      { title:'Injera — The Heart of Every Meal', body:`<p>Injera (እንጀራ) is not just bread — it is a plate, a utensil, and a symbol of togetherness. Made from fermented teff flour, injera is spongy, slightly sour and perfect for scooping up stews. Everyone eats from the same large injera — sharing is built into the meal itself.</p><div class="recipe-block"><strong>Basic Injera Recipe:</strong><br>• 2 cups teff flour + 2½ cups water<br>• Mix and let ferment 2–3 days at room temperature<br>• Add ½ tsp salt; stir well<br>• Pour thin circles onto a hot non-stick pan (like a large crêpe)<br>• Cook until bubbles form all over and the surface looks dry — do not flip<br>• Serve with stews ladled on top</div>` },
+      { title:'Shiro — The Everyday Stew', body:`<p>Shiro (ሽሮ) is a thick, deeply flavored stew made from spiced chickpea flour. It is eaten across Eritrea and Ethiopia every day — affordable, nutritious and endlessly satisfying.</p><div class="recipe-block"><strong>Shiro Recipe:</strong><br>• 1 cup shiro powder (spiced chickpea flour)<br>• 1 onion, finely chopped; 3 garlic cloves, minced<br>• 3 tbsp niter kibbeh (spiced butter) or regular butter<br>• Salt to taste<br>• Fry onion in butter until soft; add garlic<br>• Add 2 cups water; bring to boil<br>• Whisk in shiro powder; stir constantly for 15 min until thick<br>• Serve over injera with a drizzle of extra butter</div>` },
+      { title:'The Coffee Ceremony', body:`<p>Eritrean coffee (ቡን, Bun) is not instant — it is a full ceremony that can last an hour. Fresh green beans are roasted, ground, and boiled in a clay pot called a <em>jebena</em>. Three rounds are served: the first strong, the last light.</p><div class="recipe-block"><strong>The Three Rounds:</strong><br>• <strong>ፈለማ (Felema)</strong> — first pour, strong and rich<br>• <strong>ካላኣይ (Kala'ay)</strong> — second pour, medium strength<br>• <strong>በረኸት (Berekat)</strong> — third pour, light; means "blessing"<br><br>Serve with popcorn, toasted barley, or bread. Sugar is served separately — never stir it in for guests without asking.</div>` },
+    ]
+  },
+  {
+    id:13, emoji:'🎵', title:'Music of the Horn', author:'Asmara Music Academy', cat:'culture',
+    desc:'Traditional Eritrean instruments, musical forms, and the legendary artists who carried the music to the world.',
+    chapters:[
+      { title:'The Krar — Voice of the Highlands', body:`<p>The <strong>krar</strong> (ክራር) is a five- or six-stringed lyre and one of the most beloved traditional instruments of Eritrea and Ethiopia. Played by plucking the strings with the fingers, it produces a bright, resonant sound perfect for accompanying song and dance.</p><p>The krar is thousands of years old — Greek and Roman writers described similar instruments in the Horn of Africa in the 1st century CE. In skilled hands, it can sound like joy, like longing, like rain on a tin roof in the highlands.</p>` },
+      { title:'The Wata & the Begena', body:`<p>The <strong>wata</strong> (ዋታ) is a bowed lute — the only bowed string instrument in traditional Eritrean music. Its deep, mournful tone is used in ceremonial music and lullabies. Hearing it played at night in a highland village is an unforgettable sound.</p><p>The <strong>begena</strong> is a large ten-string lyre historically associated with spiritual meditation. Its low, buzzing resonance — like a cello and a sitar combined — is unlike anything else in world music. It is said that David, king of Israel, played an instrument much like the begena.</p>` },
+      { title:'Yemane Barya & Abraham Afwerki', body:`<p><strong>Yemane Barya</strong> (1944–1997) is known simply as "the Voice of Eritrea." His songs of love, homeland and longing became the soundtrack of the liberation era. He sang of the mountains, the people, and the dream of freedom — and his music spread wherever Eritreans went.</p><p><strong>Abraham Afwerki</strong> (1966–2006) carried that tradition into the modern era. His voice and his songs touched millions across the diaspora. His music still plays at every Eritrean gathering in the world — at weddings, New Year celebrations, and quiet evenings far from home.</p><p>Today, a new generation blends Tigrinya lyrics with contemporary R&B, hip-hop and electronic sounds — keeping the music alive and growing.</p>` },
+    ]
+  },
+  {
+    id:14, emoji:'👘', title:'Habesha Traditions', author:'Cultural Heritage Press', cat:'culture',
+    desc:'Weddings, the New Year, coffee ceremonies, fasting and feasting — a complete portrait of Eritrean cultural life.',
+    chapters:[
+      { title:'The Wedding — ሰርግ (Serg)', body:`<p>An Eritrean wedding is not a single evening — it is a week-long celebration involving the entire community. The ceremony begins with the <em>meher</em> (pre-wedding gathering) where families come together.</p><p>On the wedding day, women wear the <strong>zuria</strong> — a white cotton dress with intricate colorful embroidery at the hem. Men wear the white <strong>kuta</strong>. Gold jewelry passed down through generations is worn by the bride. The wedding dance — the <strong>guayla</strong> — is performed in a large circle, with clapping and rhythmic stepping that can go on all night.</p>` },
+      { title:'Enkutatash — Eritrean New Year', body:`<p><strong>Enkutatash</strong> (or Qiddus Yohannes in Eritrea) falls on September 1st in the Ge'ez calendar — coinciding with the end of the rainy season and the blooming of yellow flowers across the highlands.</p><p>Children collect wildflowers and go door to door singing New Year songs. Families prepare a feast, slaughter a sheep, and share food with every neighbor. It is a time of gratitude, renewal and hope — a fresh beginning marked by the smell of flowers, roasting coffee and the sound of children's songs in the streets.</p>` },
+      { title:'Fasting & Feasting', body:`<p>Eritrea's Orthodox Christians observe long fasting periods — during fasts, only plant-based food is eaten. This has led to a rich tradition of vegetarian dishes: shiro, lentil stews, fava beans and greens prepared with skill and spice.</p><p>The end of a fast is celebrated with feasts: fresh injera, <strong>zigni</strong> (spicy beef stew), <strong>kitcha</strong> (flatbread), and <em>tej</em> (honey wine). Muslim Eritreans celebrate Eid al-Fitr and Eid al-Adha with similar community gatherings — food shared generously with neighbors of every background.</p><p>In Eritrea, food is never just fuel. It is an act of love, a mark of identity, and an invitation to sit together.</p>` },
+    ]
+  },
   /* ── Stories ── */
-  { id:15, emoji:'📖', title:'Tales from the Horn', author:'Various Authors', cat:'stories',
-    desc:'A collection of traditional Eritrean folk stories passed down through generations — wisdom, humor and magic.',
-    url:'' },
-  { id:16, emoji:'✈', title:'Diaspora Dreams', author:'Miriam Ghebrehiwet', cat:'stories',
-    desc:'Short stories following Eritrean families navigating identity, belonging and hope across continents.',
-    url:'' },
-  { id:17, emoji:'🌾', title:'Village Voices', author:'Eritrean Writers Collective', cat:'stories',
-    desc:'Stories of rural Eritrean life — farmers, shepherds and weavers sharing their wisdom with the next generation.',
-    url:'' },
+  {
+    id:15, emoji:'📖', title:'Tales from the Horn', author:'Various Authors', cat:'stories',
+    desc:'Traditional Eritrean folk stories passed down through generations — wisdom, humor and magic.',
+    chapters:[
+      { title:'Why the Sun and Moon Live Apart', body:`<p>In the beginning, the Sun and the Moon were married and lived in harmony. They were equals — both bright, both beautiful. But one day, they quarreled.</p><p>"I am more beautiful," said the Moon, glowing silver.</p><p>"I give more light and warmth," replied the Sun, blazing gold.</p><p>They fought so bitterly that the stars tried to separate them. In the struggle, the Moon was scratched — and that is why, to this day, you can see the marks on the Moon's face.</p><p>The Sun, ashamed of arguing in front of their children (the stars), chose to shine only in the day. The Moon, more gentle, agreed to light the night. And the stars scattered themselves as far apart as possible — which is why they are so spread across the sky.</p><p>To this day, the Sun and Moon take turns, never sharing the same sky. Perhaps one day they will make peace.</p>` },
+      { title:'Why the Hyena Laughs', body:`<p>Once, all the animals gathered to choose a new leader, now that the Lion had gone. Each animal argued their case.</p><p>The Elephant said: "I am the largest — I should be king!"<br>The Eagle said: "I fly highest — I should rule!"<br>The Crocodile said: "I am the most feared — bow to me!"</p><p>The Hyena said nothing. She only watched, and listened, and smiled to herself.</p><p>Finally the animals voted — and chose the quiet old <strong>Tortoise</strong> as their leader, for his wisdom, patience and calm.</p><p>The Hyena found this so wonderfully unexpected — so perfectly absurd — that she burst out laughing. And once she started, she could not stop.</p><p>They say the Hyena is still laughing about that meeting. And now you know why.</p>` },
+    ]
+  },
+  {
+    id:16, emoji:'✈', title:'Diaspora Dreams', author:'Miriam Ghebrehiwet', cat:'stories',
+    desc:'Stories of Eritrean families navigating identity, belonging and hope across continents.',
+    chapters:[
+      { title:'The Flight', body:`<p>The day Meron left Asmara, she packed one suitcase. Inside: three dresses, her mother's coffee cup wrapped in a shirt, and a small photograph of the street where she grew up. She was twenty-two years old.</p><p>At the airport, her mother held her for a long time without speaking. There are no words, Meron thought, for what this moment is. Some feelings are too large for language — even for Tigrinya, which has a word for almost everything.</p><p>The plane climbed above the Red Sea. She watched Eritrea grow small below her — the golden coast, the brown mountains, the green highlands — until clouds swallowed it all. She did not cry until the clouds closed.</p>` },
+      { title:'Finding Eritrea in Stockholm', body:`<p>Five years later, Meron lived in Stockholm. She had a job, an apartment, a small circle of friends — Eritreans and Swedes alike. She had learned Swedish. She had learned to be cold.</p><p>But every Saturday, she went to a small Eritrean restaurant on the south side of the city. The owner, an old man from Keren, always played Tigrinya music softly from a speaker in the corner. She would order shiro and injera, and for a while — in that small warm room smelling of spices and roasted coffee — she was home again.</p><p>"We carry Eritrea inside us," the old man told her once, refilling her tea without being asked. "No visa required."</p><p>She smiled. She thought of her mother's coffee cup, wrapped in a shirt, on a shelf in her apartment. Still waiting to be used.</p><p>The next Saturday, she brought it in and asked the old man to fill it.</p>` },
+    ]
+  },
+  {
+    id:17, emoji:'🌾', title:'Village Voices', author:'Eritrean Writers Collective', cat:'stories',
+    desc:'Stories of rural Eritrean life — farmers, weavers and shepherds sharing their wisdom.',
+    chapters:[
+      { title:"The Farmer's Wisdom", body:`<p>Old Tesfay had farmed the same terraced hillside for fifty years. Every morning before sunrise — long before his family was awake — he walked his fields, checking the soil, reading the sky, feeling the air with his palms.</p><p>His grandson Daniel, home from university in Asmara for the summer, followed him one morning. "Grandfather," Daniel asked, "with all the weather apps and forecasts — why do you still come out here yourself at 4am?"</p><p>Old Tesfay crouched and pressed a handful of dark soil in his palm. He held it out to Daniel.</p><p>"The phone tells you what happened yesterday," he said quietly. "The soil tells you what will happen tomorrow."</p><p>Daniel looked at the soil in his grandfather's hand. He was a computer science student. He thought of sensors and algorithms and satellite data.</p><p>Then he reached down and picked up his own handful of earth. It was cool and alive and smelled of rain that had not yet fallen.</p><p>He began to understand.</p>` },
+      { title:"The Weaver's Song", body:`<p>In the village of Adi Teklezan, the women weavers began their work before full sunrise. The sound of their looms — a rhythmic clacking and sliding — mixed with birdsong and the distant bells of goats heading to pasture.</p><p>Almaz had been weaving for forty years. Her hands moved without thought, creating the intricate diamond patterns of the <em>habesha kemis</em> — the white ceremonial dress with brilliant colored borders at the hem.</p><p>"How do you remember all the patterns?" a young apprentice once asked her, watching in amazement.</p><p>Almaz did not look up from the loom. "I don't remember them," she said. "My hands do."</p><p>The girl watched the hands — moving faster than seemed possible, choosing threads by feel alone in the low morning light — and decided that some kinds of knowledge live deeper than memory. Deeper than thought.</p><p>She sat down at the neighboring loom and began to learn.</p>` },
+    ]
+  },
 ];
 
 let libCat = 'all', libQuery = '';
@@ -1850,17 +1988,35 @@ function renderBooks() {
         '<div class="book-desc">' + b.desc + '</div>' +
         '<div class="book-footer">' +
           '<span class="book-cat">' + b.cat + '</span>' +
-          (b.url
-            ? '<a href="' + b.url + '" target="_blank" rel="noopener" class="book-read-btn">Read →</a>'
-            : '<button class="book-read-btn book-soon" data-bid="' + b.id + '">Preview →</button>') +
+          '<button class="book-read-btn" data-bid="' + b.id + '">Read →</button>' +
         '</div>' +
       '</div>' +
     '</div>'
   ).join('');
-  grid.querySelectorAll('.book-soon').forEach(btn =>
-    btn.addEventListener('click', () => hubToast('Coming soon! 📚'))
+  grid.querySelectorAll('.book-read-btn').forEach(btn =>
+    btn.addEventListener('click', () => openBook(+btn.dataset.bid))
   );
 }
+
+function openBook(id) {
+  const book = BOOKS.find(b => b.id === id);
+  if (!book) return;
+  document.getElementById('readerEmoji').textContent = book.emoji;
+  document.getElementById('readerTitle').textContent = book.title;
+  document.getElementById('readerAuthor').textContent = 'by ' + book.author;
+  document.getElementById('readerBody').innerHTML = book.chapters.map(ch =>
+    '<div class="reader-ch"><h3>' + ch.title + '</h3>' + ch.body + '</div>'
+  ).join('');
+  const reader = document.getElementById('bookReader');
+  reader.classList.add('open');
+  reader.querySelector('.reader-body').scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+
+document.getElementById('readerClose').addEventListener('click', () => {
+  document.getElementById('bookReader').classList.remove('open');
+  document.body.style.overflow = '';
+});
 
 document.querySelectorAll('#libTabs .tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1876,10 +2032,6 @@ document.getElementById('libSearch').addEventListener('input', e => {
   renderBooks();
 });
 
-/* initial render when Library tab is first shown via nav */
-document.querySelector('.hnav-btn[data-view="library"]').addEventListener('click', () => {
-  if (!document.getElementById('bookGrid').innerHTML) renderBooks();
-});
 renderBooks();
 
 /* ═══════════════════════════════
