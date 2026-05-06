@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Eritrean Hub — Learn · Community · Money</title>
+  <title>Tigrinya School — Learn · Translate · Community</title>
   <link rel="icon" href="./icons/icon-512.png">
   <link rel="apple-touch-icon" href="./icons/icon-512.png">
   <link rel="manifest" href="./hub-manifest.json">
-  <meta name="description" content="Learn Tigrinya, explore Eritrean community news and events, compare money transfer services">
+  <meta name="description" content="Learn Tigrinya, translate between Tigrinya and English, explore Eritrean community and news">
   <meta name="theme-color" content="#16a34a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Eritrean Hub">
+  <meta name="apple-mobile-web-app-title" content="Tigrinya School">
   <meta name="mobile-web-app-capable" content="yes">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8021114161012516" crossorigin="anonymous"></script>
   <style>
@@ -559,6 +559,60 @@
     }
     .sync-bar-btn:hover { background: var(--green-light); }
 
+    /* ── TRANSLATOR ── */
+    .trans-card {
+      background: var(--card); border-radius: var(--radius); border: 1.5px solid var(--border);
+      box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px;
+    }
+    .trans-dir-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; gap: 8px;
+    }
+    .trans-lang-lbl { font-size: 0.8rem; font-weight: 800; color: var(--text); flex: 1; text-align: center; }
+    .trans-swap {
+      font-size: 0.75rem; font-weight: 700; color: var(--green);
+      border: 1.5px solid var(--green); border-radius: 20px; padding: 5px 12px;
+      background: none; transition: background .15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .trans-swap:hover { background: var(--green-light); }
+    .trans-input {
+      width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg); color: var(--text); font-size: 0.9rem; padding: 10px 12px;
+      resize: none; outline: none; transition: border .15s; font-family: inherit;
+    }
+    .trans-input:focus { border-color: var(--green); }
+    .trans-controls { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
+    .trans-char { font-size: 0.65rem; color: var(--text-dim); }
+    .trans-btn {
+      font-size: 0.82rem; font-weight: 800; color: white; background: var(--green);
+      padding: 9px 20px; border-radius: 20px; transition: background .15s;
+    }
+    .trans-btn:hover:not(:disabled) { background: var(--green-d); }
+    .trans-btn:disabled { background: #94a3b8; cursor: default; }
+    .trans-output {
+      min-height: 72px; padding: 12px; border-radius: var(--radius-sm);
+      background: var(--bg); border: 1.5px solid var(--border); font-size: 0.92rem; line-height: 1.7;
+    }
+    .trans-ph { color: var(--text-dim); font-style: italic; font-size: 0.82rem; }
+    .trans-status { font-size: 0.7rem; color: var(--green); margin-top: 6px; min-height: 16px; }
+    .trans-copy {
+      width: 100%; margin-top: 10px; padding: 9px; border-radius: var(--radius-sm);
+      font-size: 0.78rem; font-weight: 700; background: var(--green-light); color: var(--green);
+      transition: background .15s;
+    }
+    .trans-copy:hover { background: #bbf7d0; }
+    .trans-tips {
+      background: var(--card); border-radius: var(--radius); border: 1.5px solid var(--border);
+      padding: 14px 16px;
+    }
+    .trans-tips-title { font-size: 0.8rem; font-weight: 800; margin-bottom: 8px; color: var(--text); }
+    .trans-tip {
+      font-size: 0.76rem; color: var(--text-sub); padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .trans-tip:last-child { border-bottom: none; }
+    .trans-tip strong { color: var(--text); }
+
     /* ── INSTALL BANNER ── */
     .install-banner {
       position: fixed;
@@ -628,7 +682,7 @@
 <div class="auth-gate" id="authGate">
   <div class="auth-card">
     <div class="auth-logo">🇪🇷</div>
-    <div class="auth-title">Eritrean Hub</div>
+    <div class="auth-title">Tigrinya School</div>
     <p class="auth-sub" id="authSub">Create your account to start learning</p>
 
     <!-- Sign-Up Panel -->
@@ -662,8 +716,8 @@
     <div class="hub-logo">
       <div class="hub-logo-icon">🇪🇷</div>
       <div>
-        <div class="hub-title">Eritrean Hub</div>
-        <div class="hub-subtitle">Learn · Community · Money</div>
+        <div class="hub-title">Tigrinya School</div>
+        <div class="hub-subtitle">Learn · Translate · Community</div>
       </div>
     </div>
     <div class="hub-hdr-right">
@@ -927,13 +981,44 @@
     <div id="bookGrid"></div>
   </div>
 
+  <!-- ══ VIEW — TRANSLATE ══ -->
+  <div class="view" id="view-translate">
+    <div class="s-head">
+      <h2>🔤 Translate</h2>
+      <p>Tigrinya ↔ English</p>
+    </div>
+    <div class="trans-card">
+      <div class="trans-dir-row">
+        <span class="trans-lang-lbl" id="transFromLbl">English</span>
+        <button class="trans-swap" id="transSwapBtn">⇄ Swap</button>
+        <span class="trans-lang-lbl" id="transToLbl">ትግርኛ Tigrinya</span>
+      </div>
+      <textarea class="trans-input" id="transInput" placeholder="Type English here…" rows="4" maxlength="500"></textarea>
+      <div class="trans-controls">
+        <span class="trans-char" id="transChar">0 / 500</span>
+        <button class="trans-btn" id="transBtn">Translate →</button>
+      </div>
+      <div class="trans-output" id="transOutput"><span class="trans-ph">Translation will appear here</span></div>
+      <div class="trans-status" id="transStatus"></div>
+      <button class="trans-copy" id="transCopyBtn" style="display:none">📋 Copy translation</button>
+    </div>
+    <div class="trans-tips">
+      <div class="trans-tips-title">💡 Tips</div>
+      <div class="trans-tip">Keep sentences short for the best results</div>
+      <div class="trans-tip">Tigrinya uses the ancient Ge'ez script — ፊደል (fidel)</div>
+      <div class="trans-tip">Try: <em>"Hello, how are you?"</em> → <strong>ሰላም ከመይ ኣለካ?</strong></div>
+      <div class="trans-tip">Try: <em>"Thank you very much"</em> → <strong>የቐንየለይ ብዙሕ</strong></div>
+    </div>
+  </div>
+
 </div><!-- /page-wrap -->
 
 <nav class="hub-nav">
   <button class="hnav-btn active" data-view="learn"><div class="hnav-icon">🎓</div>Learn</button>
+  <button class="hnav-btn" data-view="translate"><div class="hnav-icon">🔤</div>Translate</button>
   <button class="hnav-btn" data-view="community"><div class="hnav-icon-wrap">🌍<span class="nav-badge show" id="communityBadge"></span></div>Community</button>
   <button class="hnav-btn" data-view="library"><div class="hnav-icon">📚</div>Library</button>
-  <button class="hnav-btn" data-view="money" id="moneyNavBtn" style="display:none"><div class="hnav-icon">💸</div>Send Money</button>
+  <button class="hnav-btn" data-view="money" id="moneyNavBtn" style="display:none"><div class="hnav-icon">💸</div>Money</button>
 </nav>
 
 <div class="book-reader" id="bookReader">
@@ -953,7 +1038,7 @@
 <div class="install-banner" id="installBanner">
   <div class="install-banner-icon">🇪🇷</div>
   <div class="install-banner-text">
-    <div class="install-banner-title">Install Eritrean Hub</div>
+    <div class="install-banner-title">Install Tigrinya School</div>
     <div class="install-banner-sub">Add to home screen for the full app experience</div>
   </div>
   <button class="install-banner-btn" id="installBtn">Install</button>
@@ -1703,7 +1788,7 @@ document.getElementById('quizAgain').addEventListener('click', () => {
 });
 /* TWEAK 7: SHARE SCORE */
 document.getElementById('quizShareBtn').addEventListener('click', () => {
-  const text = '📝 Eritrean Hub Quiz: ' + quizScore + '/' + QUIZ_LEN + ' ' + '⭐'.repeat(lastQuizStars) + ' +' + (quizScore * 5) + ' XP — eritreaninfo.com/hub';
+  const text = '📝 Tigrinya School Quiz: ' + quizScore + '/' + QUIZ_LEN + ' ' + '⭐'.repeat(lastQuizStars) + ' +' + (quizScore * 5) + ' XP — eritreaninfo.com/hub';
   navigator.clipboard?.writeText(text).then(() => hubToast('Copied to clipboard!')).catch(() => hubToast('Could not copy'));
 });
 
@@ -2476,6 +2561,82 @@ document.getElementById('libSearch').addEventListener('input', e => {
 });
 
 renderBooks();
+
+/* ═══════════════════════════════
+   TRANSLATOR
+═══════════════════════════════ */
+let _transDir = 'en-ti';
+
+document.getElementById('transSwapBtn').addEventListener('click', () => {
+  _transDir = _transDir === 'en-ti' ? 'ti-en' : 'en-ti';
+  const inp = document.getElementById('transInput');
+  const from = document.getElementById('transFromLbl');
+  const to   = document.getElementById('transToLbl');
+  if (_transDir === 'en-ti') {
+    from.textContent = 'English';
+    to.textContent   = 'ትግርኛ Tigrinya';
+    inp.placeholder  = 'Type English here…';
+    inp.style.fontFamily = '';
+  } else {
+    from.textContent = 'ትግርኛ Tigrinya';
+    to.textContent   = 'English';
+    inp.placeholder  = 'ትግርኛ ኣብዚ ጸሓፍ…';
+    inp.style.fontFamily = 'serif';
+  }
+  document.getElementById('transOutput').innerHTML = '<span class="trans-ph">Translation will appear here</span>';
+  document.getElementById('transCopyBtn').style.display = 'none';
+  document.getElementById('transStatus').textContent = '';
+});
+
+document.getElementById('transInput').addEventListener('input', e => {
+  document.getElementById('transChar').textContent = e.target.value.length + ' / 500';
+});
+
+document.getElementById('transBtn').addEventListener('click', async () => {
+  const text   = document.getElementById('transInput').value.trim();
+  const outEl  = document.getElementById('transOutput');
+  const statEl = document.getElementById('transStatus');
+  const btn    = document.getElementById('transBtn');
+  const copyBtn = document.getElementById('transCopyBtn');
+  if (!text) {
+    outEl.innerHTML = '<span class="trans-ph">Please enter some text first.</span>';
+    return;
+  }
+  const [src, tgt] = _transDir === 'en-ti' ? ['en', 'ti'] : ['ti', 'en'];
+  btn.disabled = true; btn.textContent = 'Translating…';
+  statEl.textContent = ''; statEl.style.color = '';
+  outEl.innerHTML = '<span class="trans-ph">Translating…</span>';
+  copyBtn.style.display = 'none';
+  try {
+    const res  = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=' + src + '|' + tgt);
+    const data = await res.json();
+    if (data.responseStatus === 200 && data.responseData?.translatedText) {
+      const tmp = document.createElement('textarea');
+      tmp.innerHTML = data.responseData.translatedText;
+      const translation = tmp.value;
+      outEl.innerHTML = '';
+      const p = document.createElement('p');
+      p.style.cssText = tgt === 'ti'
+        ? 'font-family:serif;font-size:1.1rem;line-height:1.9;'
+        : 'font-size:0.95rem;line-height:1.7;';
+      p.textContent = translation;
+      outEl.appendChild(p);
+      statEl.style.color = 'var(--green)';
+      statEl.textContent = '✓ Translation complete';
+      copyBtn.style.display = '';
+      copyBtn.onclick = () => navigator.clipboard?.writeText(translation)
+        .then(() => hubToast('Copied!')).catch(() => {});
+    } else if (data.responseStatus === 429) {
+      outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Rate limit reached — please wait a moment and try again.</span>';
+    } else {
+      outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Translation failed. Try again.</span>';
+    }
+  } catch {
+    outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Network error. Check your connection.</span>';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Translate →';
+  }
+});
 
 /* ═══════════════════════════════
    TOAST

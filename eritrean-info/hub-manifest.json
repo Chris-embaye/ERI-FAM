@@ -1,7 +1,7 @@
 {
-  "name": "Eritrean Hub",
-  "short_name": "Eri Hub",
-  "description": "Learn Tigrinya, explore Eritrean community & compare money transfers",
+  "name": "Tigrinya School",
+  "short_name": "Tig School",
+  "description": "Learn Tigrinya, translate between Tigrinya and English, explore Eritrean community",
   "start_url": "./hub.html",
   "scope": "./",
   "display": "standalone",
@@ -29,6 +29,13 @@
       "name": "Learn Tigrinya",
       "short_name": "Learn",
       "description": "Start a Tigrinya lesson",
+      "url": "./hub.html",
+      "icons": [{ "src": "./icons/icon-512.png", "sizes": "512x512" }]
+    },
+    {
+      "name": "Translate",
+      "short_name": "Translate",
+      "description": "Translate Tigrinya ↔ English",
       "url": "./hub.html",
       "icons": [{ "src": "./icons/icon-512.png", "sizes": "512x512" }]
     },
