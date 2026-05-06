@@ -916,6 +916,17 @@
     .auth-switch { font-size: 0.73rem; color: var(--text-sub); text-align: center; }
     .auth-switch span { color: var(--green); font-weight: 700; cursor: pointer; }
     .auth-divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+    .auth-id-box {
+      font-family: monospace; font-size: 1.5rem; font-weight: 800; letter-spacing: 3px;
+      color: var(--green); background: var(--green-light); border-radius: 12px;
+      padding: 14px; text-align: center; margin-bottom: 10px;
+    }
+    .auth-id-copy {
+      font-size: 0.74rem; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 20px; padding: 6px 18px; font-weight: 600; color: var(--text-sub);
+      display: block; margin: 0 auto 16px;
+    }
+    .auth-id-note { font-size: 0.7rem; color: var(--text-dim); text-align: center; margin-bottom: 20px; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -933,12 +944,21 @@
         <button class="role-btn active" data-role="student">👦 Student</button>
         <button class="role-btn" data-role="parent">👨‍👩‍👧 Parent</button>
       </div>
-      <input class="auth-input" id="suName" type="text" placeholder="Full name" autocomplete="name">
       <input class="auth-input" id="suEmail" type="email" placeholder="Email address" autocomplete="email">
       <input class="auth-input" id="suPass" type="password" placeholder="Password (min 6 chars)" autocomplete="new-password">
       <div class="auth-err" id="suErr"></div>
       <button class="auth-submit" id="suBtn">Create Account →</button>
       <p class="auth-switch">Already have an account? <span id="goSignIn">Sign in</span></p>
+    </div>
+
+    <!-- Student ID success panel (shown after sign-up) -->
+    <div id="authSuccessPanel" style="display:none">
+      <div style="text-align:center;margin-bottom:6px;font-size:2rem">🎉</div>
+      <div style="font-weight:800;font-size:1rem;text-align:center;margin-bottom:4px">Account created!</div>
+      <p class="auth-id-note">This is your <strong>Student ID</strong>.<br>Write it down — you can use it to sign in.</p>
+      <div class="auth-id-box" id="authIdDisplay">ERI-000000</div>
+      <button class="auth-id-copy" id="authIdCopy">📋 Copy ID</button>
+      <button class="auth-submit" id="authGotItBtn">Start learning →</button>
     </div>
 
     <!-- Sign-In Panel -->
@@ -3750,13 +3770,15 @@ document.querySelectorAll('.role-btn').forEach(btn => {
 
 /* ── Panel toggle ── */
 document.getElementById('goSignIn').addEventListener('click', () => {
-  document.getElementById('authSignupPanel').style.display = 'none';
-  document.getElementById('authSigninPanel').style.display = 'block';
+  document.getElementById('authSignupPanel').style.display  = 'none';
+  document.getElementById('authSuccessPanel').style.display = 'none';
+  document.getElementById('authSigninPanel').style.display  = 'block';
   document.getElementById('authSub').textContent = 'Welcome back!';
 });
 document.getElementById('goSignUp').addEventListener('click', () => {
-  document.getElementById('authSigninPanel').style.display = 'none';
-  document.getElementById('authSignupPanel').style.display = 'block';
+  document.getElementById('authSigninPanel').style.display  = 'none';
+  document.getElementById('authSuccessPanel').style.display = 'none';
+  document.getElementById('authSignupPanel').style.display  = 'block';
   document.getElementById('authSub').textContent = 'Create your account to start learning';
 });
 
@@ -3784,30 +3806,46 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
     _syncDb = firebase.firestore();
 
     /* ── Sign Up ── */
+    let _showingIdPanel = false;
+
+    document.getElementById('authGotItBtn').addEventListener('click', () => {
+      _showingIdPanel = false;
+      hideAuthGate();
+    });
+    document.getElementById('authIdCopy').addEventListener('click', () => {
+      const id = document.getElementById('authIdDisplay').textContent;
+      navigator.clipboard?.writeText(id).then(() => hubToast('Student ID copied!')).catch(() => {});
+    });
+
     document.getElementById('suBtn').addEventListener('click', async () => {
-      const name  = document.getElementById('suName').value.trim();
       const email = document.getElementById('suEmail').value.trim();
       const pass  = document.getElementById('suPass').value;
       const errEl = document.getElementById('suErr');
       errEl.textContent = '';
-      if (!name)          { errEl.textContent = 'Please enter your name.'; return; }
-      if (!email)         { errEl.textContent = 'Please enter your email.'; return; }
-      if (pass.length < 6){ errEl.textContent = 'Password must be at least 6 characters.'; return; }
+      if (!email)          { errEl.textContent = 'Please enter your email.'; return; }
+      if (pass.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
       const btn = document.getElementById('suBtn');
       btn.disabled = true; btn.textContent = 'Creating account…';
       try {
         const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
         const uid = cred.user.uid;
         const studentId = authRole === 'student' ? genStudentId() : null;
-        const profile = { name, email, role: authRole, studentId, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-        await _syncDb.collection('users').doc(uid).set(profile);
+        await _syncDb.collection('users').doc(uid).set(
+          { email, role: authRole, studentId, createdAt: firebase.firestore.FieldValue.serverTimestamp() }
+        );
         if (studentId) {
           await _syncDb.collection('progress').doc(studentId).set(
-            { uid, name, studentId, email, xp:0, streak:0, stars:0, quizBest:0, lessonsCompleted:[], catStars:{}, lastActive:'', updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+            { uid, studentId, email, xp:0, streak:0, stars:0, quizBest:0, lessonsCompleted:[], catStars:{}, lastActive:'', updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
             { merge: true }
           ).catch(() => {});
+          // Show the student their ID before entering the app
+          _showingIdPanel = true;
+          document.getElementById('authIdDisplay').textContent = studentId;
+          document.getElementById('authSignupPanel').style.display = 'none';
+          document.getElementById('authSuccessPanel').style.display = '';
+          document.getElementById('authSub').textContent = 'Save your Student ID';
         }
-        /* onAuthStateChanged fires next and hides the gate */
+        /* For parents: onAuthStateChanged fires and hides the gate automatically */
       } catch(e) {
         errEl.textContent = authErr(e.code);
         btn.disabled = false; btn.textContent = 'Create Account →';
@@ -3875,7 +3913,7 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
         const snap = await _syncDb.collection('users').doc(user.uid).get();
         syncProfile = snap.data() || null;
       } catch(e) { syncProfile = null; }
-      hideAuthGate();
+      if (!_showingIdPanel) hideAuthGate();
       updateSyncBar();
       if (syncProfile && syncProfile.role === 'student') {
         syncProgress();
