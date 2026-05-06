@@ -368,14 +368,42 @@
         </div>
         <button class="ytv-search-btn" id="ytvSearchBtn">Search</button>
       </div>
+      <!-- Search history (populated by JS) -->
+      <div class="ytv-history-row" id="ytvHistoryRow" hidden></div>
+      <!-- Genre chips -->
       <div class="ytv-chips" id="ytvChips">
-        <button class="ytv-chip active" data-q="eritrean music 2024">🇪🇷 Eritrean</button>
+        <button class="ytv-chip active" data-q="eritrean music 2025">🇪🇷 Eritrean</button>
         <button class="ytv-chip" data-q="tigrinya music new">🎵 Tigrinya</button>
-        <button class="ytv-chip" data-q="eritrean comedy funny">😂 Comedy</button>
-        <button class="ytv-chip" data-q="eritrean news today">📰 News</button>
+        <button class="ytv-chip" data-q="tigre eritrean music">🎶 Tigre</button>
         <button class="ytv-chip" data-q="eritrean wedding songs">💒 Wedding</button>
+        <button class="ytv-chip" data-q="eritrean live concert performance">🎙 Live</button>
+        <button class="ytv-chip" data-q="eritrean music 90s classic">⏮ 90s</button>
+        <button class="ytv-chip" data-q="eritrean comedy funny">😂 Comedy</button>
         <button class="ytv-chip" data-q="eritrean gospel mezmur">✝ Gospel</button>
+        <button class="ytv-chip ytv-chip-liked" id="ytvLikedChip">❤ Liked</button>
       </div>
+      <!-- Year filter -->
+      <div class="ytv-year-row">
+        <span class="ytv-year-label">Year:</span>
+        <button class="ytv-year-btn active" data-year="">All</button>
+        <button class="ytv-year-btn" data-year="2025">2025</button>
+        <button class="ytv-year-btn" data-year="2024">2024</button>
+        <button class="ytv-year-btn" data-year="2023">2023</button>
+        <button class="ytv-year-btn" data-year="2022">2022</button>
+        <button class="ytv-year-btn" data-year="2021">2021</button>
+        <button class="ytv-year-btn" data-year="2020">2020</button>
+      </div>
+    </div>
+
+    <!-- Resume last-played bar -->
+    <div class="ytv-resume-bar" id="ytvResumeBar" hidden>
+      <img class="ytv-resume-thumb" id="ytvResumeThumb" src="" alt=""/>
+      <div class="ytv-resume-info">
+        <span class="ytv-resume-label">Resume watching</span>
+        <span class="ytv-resume-title" id="ytvResumeTitle"></span>
+      </div>
+      <button class="ytv-resume-play" id="ytvResumePlay">▶ Play</button>
+      <button class="ytv-resume-close" id="ytvResumeClose">✕</button>
     </div>
 
     <!-- Inline player -->
@@ -400,10 +428,27 @@
         </div>
         <div class="ytv-bar-btns">
           <button class="ytv-bar-btn" id="ytvAudioBtn" title="Audio-only mode (keeps playing)">🎵 Audio</button>
+          <button class="ytv-bar-btn" id="ytvQueueBtn"  title="Show queue">☰ Queue</button>
           <button class="ytv-bar-btn" id="ytvPipBtn"   title="Picture-in-Picture">⧉ PiP</button>
           <button class="ytv-bar-btn ytv-stop-btn" id="ytvCloseBtn">✕</button>
         </div>
       </div>
+    </div>
+
+    <!-- Queue panel -->
+    <div class="ytv-queue-panel" id="ytvQueuePanel" hidden>
+      <div class="ytv-qp-hdr">
+        <span>Up Next · <span id="ytvQpCount">0</span> videos</span>
+        <button class="ytv-qp-close" id="ytvQpClose">✕</button>
+      </div>
+      <div class="ytv-qp-list" id="ytvQpList"></div>
+    </div>
+
+    <!-- Autoplay countdown -->
+    <div class="ytv-countdown" id="ytvCountdown" hidden>
+      <span id="ytvCountdownText">▶ Next video in 5s</span>
+      <button id="ytvCountdownSkip">Skip Now</button>
+      <button class="ytv-countdown-cancel" id="ytvCountdownCancel">✕</button>
     </div>
 
     <!-- Status + results -->

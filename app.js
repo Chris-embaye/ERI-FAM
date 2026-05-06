@@ -2625,10 +2625,20 @@ function switchView(viewName) {
   if (ytFloat && ytState.videoId) {
     ytFloat.hidden = (viewName === 'youtube');
   }
-  // Auto-load Eritrean music on first YouTube view open
-  if (viewName === 'youtube' && !ytState.loaded) {
-    ytState.loaded = true;
-    ytvSearch('eritrean music 2024');
+  // Auto-load YouTube: use watch history for smarter first query, show resume bar
+  if (viewName === 'youtube') {
+    if (!ytState.loaded) {
+      ytState.loaded = true;
+      ytvShowResumeBar?.();
+      const wh = ytvGetWatchHistory?.();
+      if (wh?.length) {
+        ytvSearch('eritrean music 2025');
+      } else {
+        ytvSearch('eritrean music 2025');
+      }
+    } else {
+      ytvShowResumeBar?.();
+    }
   }
   // Load library content when switching to library view
   if (viewName === 'library') {
@@ -2683,6 +2693,9 @@ const ytState = {
   shuffle: false,   // randomise play order
   invBase: null,    // winning Invidious instance from search (used for audio extraction only)
   audioMode: false, // true = playing via native <audio> element (real background play)
+  lastQuery: '',    // last search query (for year re-filter)
+  yearFilter: '',   // active year filter ('' = all)
+  countdownTimer: null, // autoplay countdown timer handle
 };
 
 // Listen for YouTube iframe postMessage events (video ended, etc.)
@@ -2701,7 +2714,7 @@ window.addEventListener('message', e => {
       if (ytState.repeat) {
         window.ytvPlayIndex(ytState.currentIndex);
       } else {
-        ytvNext();
+        ytvNextWithCountdown();
       }
     }
   } catch { /* not JSON */ }
@@ -2710,10 +2723,12 @@ window.addEventListener('message', e => {
 window.ytvPlayIndex = function ytvPlayIndex(idx) {
   const q = ytState.queue;
   if (!q.length || idx < 0 || idx >= q.length) return;
+  ytvCancelCountdown();
   const v = q[idx];
   ytState.currentIndex = idx;
   document.querySelectorAll('.ytv-card').forEach((c, i) => c.classList.toggle('ytv-card-active', i === idx));
   ytvUpdateQueueCounter();
+  ytvUpdateQueuePanel();
   window.ytvPlay(v.videoId, v.title, v.thumb || `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`, v.author);
 };
 
@@ -2755,15 +2770,20 @@ function ytvUpdateMediaSession() {
   navigator.mediaSession.playbackState = 'playing';
 }
 
-async function ytvSearch(query) {
+async function ytvSearch(query, skipHistory = false) {
   const grid   = document.getElementById('ytvGrid');
   const status = document.getElementById('ytvStatus');
   if (!query.trim()) return;
   status.textContent = '⏳ Searching…';
   grid.innerHTML = '';
   ytState.invBase = null; // reset per-search so we re-race for best instance
+  ytState.lastQuery = query;
 
-  const q = encodeURIComponent(query);
+  if (!skipHistory) ytvSaveHistory(query);
+
+  // Append year to query if year filter is active
+  const fullQuery = ytState.yearFilter ? `${query} ${ytState.yearFilter}` : query;
+  const q = encodeURIComponent(fullQuery);
 
   // ── Official YouTube Data API v3 (requires key) ──
   if (typeof YOUTUBE_API_KEY !== 'undefined' && YOUTUBE_API_KEY) {
@@ -2915,21 +2935,29 @@ function ytvRenderResults(results) {
   if (!filtered.length) { grid.innerHTML = '<p class="ytv-empty">No results found.</p>'; return; }
   ytState.queue = filtered;
   if (ytState.currentIndex >= filtered.length) ytState.currentIndex = -1;
+  const liked = ytvGetLiked();
   grid.innerHTML = filtered.map((v, idx) => {
     const thumb = v.thumb || `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`;
     const dur   = v.lengthSeconds ? ytvFmtDur(v.lengthSeconds) : '';
     const views = v.viewCount     ? ytvFmtViews(v.viewCount)   : '';
     const isActive = idx === ytState.currentIndex;
+    const isLiked  = liked.some(l => l.videoId === v.videoId);
     return `
-      <div class="ytv-card${isActive ? ' ytv-card-active' : ''}" data-ytidx="${idx}" onclick="ytvPlayIndex(${idx})">
-        <div class="ytv-thumb-wrap">
+      <div class="ytv-card${isActive ? ' ytv-card-active' : ''}" data-ytidx="${idx}"
+           data-vid="${esc(v.videoId)}" data-title="${esc(v.title || '')}"
+           data-thumb="${esc(thumb)}" data-author="${esc(v.author || '')}">
+        <div class="ytv-thumb-wrap" onclick="ytvPlayIndex(${idx})">
           <img class="ytv-thumb" src="${thumb}" alt="" loading="lazy" onerror="this.parentNode.style.background='#222'"/>
           ${dur ? `<span class="ytv-dur">${dur}</span>` : ''}
           ${isActive ? '<span class="ytv-now-badge">▶ Now Playing</span>' : ''}
         </div>
-        <div class="ytv-card-info">
+        <div class="ytv-card-info" onclick="ytvPlayIndex(${idx})">
           <div class="ytv-card-title">${esc(v.title || '')}</div>
           <div class="ytv-card-meta">${esc(v.author || '')}${views ? ' · ' + views : ''}</div>
+        </div>
+        <div class="ytv-card-actions">
+          <button class="ytv-like-btn${isLiked ? ' liked' : ''}" data-action="like">${isLiked ? '❤' : '🤍'}</button>
+          <button class="ytv-share-btn" data-action="share">↗ Share</button>
         </div>
       </div>`;
   }).join('');
@@ -2940,6 +2968,10 @@ window.ytvPlay = function(videoId, title, thumb, author) {
   ytState.title   = title;
   ytState.thumb   = thumb || `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
   ytState.author  = author;
+
+  // Save to watch history + resume state
+  ytvSaveWatchHistory({ videoId, title, thumb: ytState.thumb, author });
+  ytvSaveResume({ videoId, title, thumb: ytState.thumb, author });
 
   const frame  = document.getElementById('ytvFrame');
   const player = document.getElementById('ytvPlayer');
@@ -2972,6 +3004,9 @@ function ytvStop() {
   frame.src = '';
   document.getElementById('ytvPlayer').hidden = true;
   document.getElementById('ytFloat').hidden   = true;
+  ytvCancelCountdown();
+  const qp = document.getElementById('ytvQueuePanel');
+  if (qp) qp.hidden = true;
   ytState.videoId      = null;
   ytState.currentIndex = -1;
   if (ytState.audioMode) { audio.pause(); audio.src = ''; S.playing = false; S.currentTrack = null; updatePlayIcons?.(); }
@@ -3101,8 +3136,8 @@ document.getElementById('ytvSearch').addEventListener('keydown', e => {
   if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) ytvSearch(q); }
 });
 
-// Preset chips
-document.querySelectorAll('.ytv-chip').forEach(chip => {
+// Preset chips (skip liked chip — handled separately in tweaks block)
+document.querySelectorAll('.ytv-chip:not(.ytv-chip-liked)').forEach(chip => {
   chip.addEventListener('click', () => {
     document.querySelectorAll('.ytv-chip').forEach(c => c.classList.remove('active'));
     chip.classList.add('active');
@@ -3122,6 +3157,253 @@ function ytvFmtViews(n) {
   if (n >= 1e3) return Math.round(n/1e3) + 'K';
   return String(n);
 }
+
+// ── YOUTUBE TWEAKS (features 1-10) ────────────────────────────
+
+// 1 & 2. Search History + Watch History helpers
+const YTV_HISTORY_KEY  = 'ytv_search_history';
+const YTV_WATCH_KEY    = 'ytv_watch_history';
+const YTV_RESUME_KEY   = 'ytv_resume';
+const YTV_LIKED_KEY    = 'ytv_liked';
+
+function ytvGetSearchHistory() {
+  try { return JSON.parse(localStorage.getItem(YTV_HISTORY_KEY) || '[]'); } catch { return []; }
+}
+function ytvSaveHistory(query) {
+  const q = query.trim();
+  if (!q || q.length < 2) return;
+  let h = ytvGetSearchHistory().filter(x => x !== q);
+  h.unshift(q);
+  if (h.length > 12) h = h.slice(0, 12);
+  localStorage.setItem(YTV_HISTORY_KEY, JSON.stringify(h));
+  ytvRenderHistoryRow();
+}
+function ytvRenderHistoryRow() {
+  const row = document.getElementById('ytvHistoryRow');
+  if (!row) return;
+  const h = ytvGetSearchHistory();
+  if (!h.length) { row.hidden = true; return; }
+  row.hidden = false;
+  row.innerHTML = h.map(q =>
+    `<button class="ytv-history-chip" data-q="${esc(q)}">
+       🕐 ${esc(q)}
+       <span class="ytv-hc-del" data-del="${esc(q)}">✕</span>
+     </button>`
+  ).join('');
+}
+
+// Event delegation for history chips
+document.getElementById('ytvHistoryRow')?.addEventListener('click', e => {
+  const delBtn = e.target.closest('.ytv-hc-del');
+  if (delBtn) {
+    let h = ytvGetSearchHistory().filter(x => x !== delBtn.dataset.del);
+    localStorage.setItem(YTV_HISTORY_KEY, JSON.stringify(h));
+    ytvRenderHistoryRow();
+    return;
+  }
+  const chip = e.target.closest('.ytv-history-chip');
+  if (chip && chip.dataset.q) {
+    document.getElementById('ytvSearch').value = chip.dataset.q;
+    ytvSearch(chip.dataset.q);
+  }
+});
+
+// Watch history
+function ytvGetWatchHistory() {
+  try { return JSON.parse(localStorage.getItem(YTV_WATCH_KEY) || '[]'); } catch { return []; }
+}
+function ytvSaveWatchHistory(entry) {
+  let h = ytvGetWatchHistory().filter(v => v.videoId !== entry.videoId);
+  h.unshift(entry);
+  if (h.length > 50) h = h.slice(0, 50);
+  localStorage.setItem(YTV_WATCH_KEY, JSON.stringify(h));
+}
+
+// 4. Resume last-played
+function ytvSaveResume(entry) {
+  localStorage.setItem(YTV_RESUME_KEY, JSON.stringify(entry));
+}
+function ytvShowResumeBar() {
+  const bar = document.getElementById('ytvResumeBar');
+  if (!bar) return;
+  try {
+    const entry = JSON.parse(localStorage.getItem(YTV_RESUME_KEY) || 'null');
+    if (!entry?.videoId) { bar.hidden = true; return; }
+    document.getElementById('ytvResumeThumb').src     = entry.thumb || '';
+    document.getElementById('ytvResumeTitle').textContent = entry.title || '';
+    bar.hidden = false;
+    document.getElementById('ytvResumePlay').onclick = () => {
+      bar.hidden = true;
+      window.ytvPlay(entry.videoId, entry.title, entry.thumb, entry.author);
+    };
+  } catch { bar.hidden = true; }
+}
+document.getElementById('ytvResumeClose')?.addEventListener('click', () => {
+  document.getElementById('ytvResumeBar').hidden = true;
+});
+
+// 3. Year filter
+document.querySelectorAll('.ytv-year-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ytv-year-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ytState.yearFilter = btn.dataset.year;
+    if (ytState.lastQuery) ytvSearch(ytState.lastQuery, true);
+  });
+});
+
+// 5. Liked videos
+function ytvGetLiked() {
+  try { return JSON.parse(localStorage.getItem(YTV_LIKED_KEY) || '[]'); } catch { return []; }
+}
+function ytvToggleLike(entry) {
+  let liked = ytvGetLiked();
+  const idx = liked.findIndex(v => v.videoId === entry.videoId);
+  if (idx >= 0) {
+    liked.splice(idx, 1);
+    toast('Removed from Liked');
+  } else {
+    liked.unshift(entry);
+    if (liked.length > 200) liked = liked.slice(0, 200);
+    toast('❤ Added to Liked');
+  }
+  localStorage.setItem(YTV_LIKED_KEY, JSON.stringify(liked));
+  return liked;
+}
+
+// Liked chip — show liked videos as a queue
+document.getElementById('ytvLikedChip')?.addEventListener('click', () => {
+  document.querySelectorAll('.ytv-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('ytvLikedChip').classList.add('active');
+  const liked = ytvGetLiked();
+  if (!liked.length) {
+    document.getElementById('ytvGrid').innerHTML = '<p class="ytv-empty">No liked videos yet — tap 🤍 on any card.</p>';
+    document.getElementById('ytvStatus').textContent = '';
+    return;
+  }
+  ytvRenderResults(liked);
+  document.getElementById('ytvStatus').textContent = '';
+});
+
+// 8. Share + event delegation on ytv-grid for like/share/play
+document.getElementById('ytvGrid')?.addEventListener('click', e => {
+  const likeBtn  = e.target.closest('.ytv-like-btn');
+  const shareBtn = e.target.closest('.ytv-share-btn');
+  if (!likeBtn && !shareBtn) return;
+  e.stopPropagation();
+
+  const card = e.target.closest('.ytv-card');
+  if (!card) return;
+  const { vid, title, thumb, author } = card.dataset;
+
+  if (likeBtn) {
+    const liked = ytvToggleLike({ videoId: vid, title, thumb, author });
+    const isNowLiked = liked.some(l => l.videoId === vid);
+    likeBtn.textContent = isNowLiked ? '❤' : '🤍';
+    likeBtn.classList.toggle('liked', isNowLiked);
+  }
+
+  if (shareBtn) {
+    const url = `https://www.youtube.com/watch?v=${vid}`;
+    if (navigator.share) {
+      navigator.share({ title: title || 'Eritrean Music', url }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(url).then(() => toast('🔗 Link copied!')).catch(() => toast('🔗 ' + url));
+    }
+  }
+});
+
+// 6. Queue panel
+document.getElementById('ytvQueueBtn')?.addEventListener('click', () => {
+  const panel = document.getElementById('ytvQueuePanel');
+  if (!panel) return;
+  const isHidden = panel.hidden;
+  panel.hidden = !isHidden;
+  if (!isHidden) return;
+  ytvUpdateQueuePanel();
+});
+document.getElementById('ytvQpClose')?.addEventListener('click', () => {
+  const panel = document.getElementById('ytvQueuePanel');
+  if (panel) panel.hidden = true;
+});
+
+function ytvUpdateQueuePanel() {
+  const panel  = document.getElementById('ytvQueuePanel');
+  const list   = document.getElementById('ytvQpList');
+  const count  = document.getElementById('ytvQpCount');
+  if (!panel || !list) return;
+  const q = ytState.queue;
+  if (count) count.textContent = q.length;
+  list.innerHTML = q.map((v, idx) => {
+    const thumb = v.thumb || `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`;
+    const isActive = idx === ytState.currentIndex;
+    return `<div class="ytv-qp-item${isActive ? ' ytv-qp-active' : ''}" data-qpidx="${idx}">
+      <span class="ytv-qp-num">${isActive ? '▶' : idx + 1}</span>
+      <img class="ytv-qp-thumb" src="${thumb}" alt="" loading="lazy"/>
+      <div class="ytv-qp-info">
+        <div class="ytv-qp-title">${esc(v.title || '')}</div>
+        <div class="ytv-qp-author">${esc(v.author || '')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('ytvQpList')?.addEventListener('click', e => {
+  const item = e.target.closest('.ytv-qp-item');
+  if (item) {
+    window.ytvPlayIndex(parseInt(item.dataset.qpidx, 10));
+    document.getElementById('ytvQueuePanel').hidden = true;
+  }
+});
+
+// 7. Autoplay countdown
+function ytvNextWithCountdown() {
+  const q = ytState.queue;
+  if (!q.length) return;
+  let next;
+  if (ytState.shuffle && q.length > 1) {
+    do { next = Math.floor(Math.random() * q.length); } while (next === ytState.currentIndex);
+  } else {
+    next = (ytState.currentIndex + 1) % q.length;
+  }
+  // If same index as current (single item), play immediately
+  if (next === ytState.currentIndex) { window.ytvPlayIndex(next); return; }
+
+  let secs = 5;
+  const bar  = document.getElementById('ytvCountdown');
+  const text = document.getElementById('ytvCountdownText');
+  if (!bar || !text) { window.ytvPlayIndex(next); return; }
+
+  ytvCancelCountdown();
+  bar.hidden = false;
+  text.textContent = `▶ Next video in ${secs}s`;
+
+  ytState.countdownTimer = setInterval(() => {
+    secs--;
+    if (secs <= 0) {
+      ytvCancelCountdown();
+      window.ytvPlayIndex(next);
+    } else {
+      text.textContent = `▶ Next video in ${secs}s`;
+    }
+  }, 1000);
+}
+function ytvCancelCountdown() {
+  if (ytState.countdownTimer) { clearInterval(ytState.countdownTimer); ytState.countdownTimer = null; }
+  const bar = document.getElementById('ytvCountdown');
+  if (bar) bar.hidden = true;
+}
+document.getElementById('ytvCountdownSkip')?.addEventListener('click', () => {
+  // Pull the next index from the countdown text and jump immediately
+  ytvCancelCountdown();
+  ytvNext();
+});
+document.getElementById('ytvCountdownCancel')?.addEventListener('click', ytvCancelCountdown);
+
+// 10. Smarter first-load — show resume bar when YouTube view opens
+(function ytvInitTweaks() {
+  ytvRenderHistoryRow();
+  ytvShowResumeBar();
+})();
 
 // ── YOUTUBE WATCH PLAYER ───────────────────────────────────────
 function parseYtId(input) {

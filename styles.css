@@ -2790,3 +2790,163 @@ option { background: #1C1C1E; color: #fff; }
   font-size: .58rem; font-weight: 800; padding: 2px 6px;
   margin-left: 5px; vertical-align: middle;
 }
+
+/* ── YouTube Tweaks ──────────────────────────────────────── */
+
+/* Search History */
+.ytv-history-row {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 4px 0 6px; margin-top: 2px;
+}
+.ytv-history-chip {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 99px;
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text-sub); font-size: .72rem; cursor: pointer;
+  transition: background .15s;
+}
+.ytv-history-chip:hover { background: var(--card-hover); color: var(--text); }
+.ytv-history-chip .ytv-hc-del {
+  font-size: .75rem; opacity: .5; margin-left: 2px;
+  padding: 0 2px; line-height: 1;
+}
+.ytv-history-chip .ytv-hc-del:hover { opacity: 1; color: var(--red); }
+
+/* Liked chip */
+.ytv-chip-liked { border-color: rgba(239,68,68,.35) !important; }
+.ytv-chip-liked.active { background: #ef4444 !important; border-color: #ef4444 !important; }
+
+/* Year filter */
+.ytv-year-row {
+  display: flex; align-items: center; gap: 5px;
+  overflow-x: auto; scrollbar-width: none;
+  padding: 6px 0 2px;
+}
+.ytv-year-row::-webkit-scrollbar { display: none; }
+.ytv-year-label {
+  font-size: .7rem; color: var(--text-dim);
+  white-space: nowrap; flex-shrink: 0;
+}
+.ytv-year-btn {
+  padding: 3px 10px; border-radius: 99px; font-size: .72rem;
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text-sub); cursor: pointer; white-space: nowrap;
+  transition: background .15s;
+}
+.ytv-year-btn:hover { background: var(--card-hover); color: var(--text); }
+.ytv-year-btn.active {
+  background: rgba(239,68,68,.18); border-color: #ef4444;
+  color: #ef4444; font-weight: 600;
+}
+
+/* Resume bar */
+.ytv-resume-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid #ef4444; border-radius: 10px;
+  padding: 8px 10px; margin-bottom: 12px;
+}
+.ytv-resume-thumb {
+  width: 54px; height: 30px; object-fit: cover;
+  border-radius: 5px; flex-shrink: 0;
+}
+.ytv-resume-info {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.ytv-resume-label { font-size: .65rem; color: var(--text-dim); }
+.ytv-resume-title {
+  font-size: .78rem; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ytv-resume-play {
+  padding: 5px 12px; border-radius: 8px; font-size: .75rem;
+  background: #ef4444; color: #fff; font-weight: 600;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.ytv-resume-play:hover { opacity: .85; }
+.ytv-resume-close {
+  font-size: .8rem; color: var(--text-dim); padding: 4px 6px;
+  flex-shrink: 0; transition: color .15s;
+}
+.ytv-resume-close:hover { color: var(--red); }
+
+/* Queue panel */
+.ytv-queue-panel {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; margin-bottom: 12px;
+}
+.ytv-qp-hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-size: .8rem; font-weight: 600; color: var(--text);
+}
+.ytv-qp-close {
+  color: var(--text-dim); font-size: .85rem; padding: 2px 6px;
+  transition: color .15s;
+}
+.ytv-qp-close:hover { color: var(--red); }
+.ytv-qp-list { max-height: 280px; overflow-y: auto; scrollbar-width: thin; }
+.ytv-qp-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 12px; cursor: pointer; transition: background .12s;
+  border-bottom: 1px solid var(--border);
+}
+.ytv-qp-item:last-child { border-bottom: none; }
+.ytv-qp-item:hover { background: var(--card-hover); }
+.ytv-qp-item.ytv-qp-active {
+  background: rgba(239,68,68,.12);
+  border-left: 3px solid #ef4444;
+}
+.ytv-qp-num {
+  font-size: .7rem; color: var(--text-dim);
+  width: 18px; text-align: center; flex-shrink: 0;
+}
+.ytv-qp-thumb {
+  width: 52px; height: 29px; object-fit: cover;
+  border-radius: 4px; flex-shrink: 0;
+}
+.ytv-qp-info { flex: 1; min-width: 0; }
+.ytv-qp-title {
+  font-size: .76rem; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--text);
+}
+.ytv-qp-author {
+  font-size: .68rem; color: var(--text-sub);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Autoplay countdown */
+.ytv-countdown {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3);
+  border-radius: 10px; padding: 8px 12px; margin-bottom: 10px;
+  font-size: .8rem;
+}
+#ytvCountdownText { flex: 1; color: var(--text); font-weight: 600; }
+#ytvCountdownSkip {
+  padding: 4px 12px; border-radius: 8px; font-size: .75rem;
+  background: #ef4444; color: #fff; font-weight: 600;
+  transition: opacity .15s;
+}
+#ytvCountdownSkip:hover { opacity: .85; }
+.ytv-countdown-cancel {
+  color: var(--text-dim); font-size: .85rem; padding: 2px 6px;
+  transition: color .15s;
+}
+.ytv-countdown-cancel:hover { color: var(--red); }
+
+/* Card action buttons (like / share) */
+.ytv-card-actions {
+  display: flex; gap: 4px; padding: 0 8px 8px;
+}
+.ytv-like-btn, .ytv-share-btn {
+  flex: 1; padding: 5px 0; border-radius: 7px; font-size: .72rem;
+  background: var(--card-hover); border: 1px solid var(--border);
+  color: var(--text-sub); transition: background .15s, color .15s;
+  cursor: pointer;
+}
+.ytv-like-btn:hover  { background: rgba(239,68,68,.18); color: #ef4444; border-color: rgba(239,68,68,.4); }
+.ytv-share-btn:hover { background: rgba(10,132,255,.18); color: var(--blue); border-color: rgba(10,132,255,.4); }
+.ytv-like-btn.liked  { background: rgba(239,68,68,.22); color: #ef4444; border-color: rgba(239,68,68,.5); }
