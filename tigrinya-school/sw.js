@@ -2,7 +2,7 @@
    FIDEL — Service Worker
 ============================================ */
 
-const CACHE_NAME  = 'fidel-v5';
+const CACHE_NAME  = 'fidel-v6';
 const OFFLINE_URL = './index.html';
 
 const PRECACHE = [
@@ -11,6 +11,9 @@ const PRECACHE = [
   './manifest.json',
   './icons/icon-512.png',
   './icons/eri-logo.png',
+  'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js',
 ];
 
 self.addEventListener('install', e => {

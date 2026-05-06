@@ -3726,15 +3726,18 @@ window.addEventListener('appinstalled', () => {
 });
 </script>
 
-<!-- Firebase SDK — loaded after main script so inline code stays unaffected -->
-<script src="./firebase-config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK — deferred so they never block page rendering -->
+<script src="./firebase-config.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" defer></script>
 <script>
 /* ═══════════════════════════════
    FIREBASE AUTH + SYNC
+   Runs after DOMContentLoaded so all defer scripts (Firebase SDK)
+   have already executed.
 ═══════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
 let syncUser = null, syncProfile = null, _syncDb = null;
 let authRole = 'student';
 
@@ -3952,6 +3955,7 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
 
   } catch(e) { /* Firebase unavailable */ }
 }
+}); // end DOMContentLoaded
 </script>
 </body>
 </html>
