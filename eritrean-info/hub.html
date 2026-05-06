@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -10,41 +10,34 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --green: #16a34a;
-      --green-d: #15803d;
-      --green-light: #dcfce7;
-      --blue: #2563eb;
-      --amber: #f59e0b;
-      --red: #dc2626;
-      --bg: #f1f5f9;
-      --card: #ffffff;
-      --text: #0f172a;
-      --text-sub: #64748b;
-      --text-dim: #94a3b8;
+      --green: #16a34a; --green-d: #15803d; --green-light: #dcfce7;
+      --red: #dc2626; --bg: #f1f5f9; --card: #ffffff;
+      --text: #0f172a; --text-sub: #64748b; --text-dim: #94a3b8;
       --border: #e2e8f0;
       --shadow: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
       --shadow-md: 0 4px 12px rgba(0,0,0,.08);
-      --radius: 14px;
-      --radius-sm: 9px;
-      --nav-h: 62px;
+      --radius: 14px; --radius-sm: 9px; --nav-h: 62px;
+    }
+    [data-theme="dark"] {
+      --green: #22c55e; --green-d: #16a34a; --green-light: #14532d;
+      --bg: #0f172a; --card: #1e293b;
+      --text: #f1f5f9; --text-sub: #94a3b8; --text-dim: #64748b;
+      --border: #334155;
+      --shadow: 0 1px 3px rgba(0,0,0,.3); --shadow-md: 0 4px 12px rgba(0,0,0,.4);
     }
     html, body { height: 100%; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+      -webkit-font-smoothing: antialiased; transition: background .2s, color .2s;
     }
     button { border: none; cursor: pointer; background: none; font-family: inherit; color: inherit; }
     a { color: inherit; text-decoration: none; }
     img { max-width: 100%; display: block; }
     input { font-family: inherit; }
 
-    /* ── LAYOUT ── */
     .page-wrap {
-      max-width: 680px;
-      margin: 0 auto;
+      max-width: 680px; margin: 0 auto;
       padding-bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
       min-height: 100%;
     }
@@ -52,19 +45,22 @@
     /* ── HEADER ── */
     .hub-header {
       background: linear-gradient(135deg, var(--green), var(--green-d));
-      color: white;
-      padding: 14px 18px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      color: white; padding: 14px 18px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
     }
     .hub-logo { display: flex; align-items: center; gap: 10px; }
     .hub-logo-icon { font-size: 1.6rem; }
     .hub-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -.3px; }
     .hub-subtitle { font-size: 0.65rem; opacity: .8; margin-top: 1px; }
+    .hub-hdr-right { display: flex; align-items: center; gap: 8px; }
+    .theme-btn {
+      font-size: 1.1rem; background: rgba(255,255,255,.2);
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .theme-btn:hover { background: rgba(255,255,255,.3); }
     .hub-back {
       font-size: 0.72rem; background: rgba(255,255,255,.2);
       padding: 5px 12px; border-radius: 20px; color: white; font-weight: 600;
@@ -85,16 +81,13 @@
       align-items: center; justify-content: center;
       gap: 3px; font-size: 0.62rem; font-weight: 700;
       color: var(--text-dim); transition: color 0.15s; padding-top: 6px;
-      letter-spacing: .2px;
     }
     .hnav-icon { font-size: 1.45rem; }
     .hnav-btn.active { color: var(--green); }
 
-    /* ── VIEWS ── */
+    /* ── VIEWS & TABS ── */
     .view { display: none; padding: 16px 14px 0; }
     .view.active { display: block; }
-
-    /* ── SUB-TABS ── */
     .tabs {
       display: flex; gap: 7px; margin-bottom: 16px;
       overflow-x: auto; scrollbar-width: none; padding: 2px 0 4px;
@@ -111,46 +104,42 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* ── SECTION HEAD ── */
     .s-head { margin-bottom: 14px; }
     .s-head h2 { font-size: 1.25rem; font-weight: 800; letter-spacing: -.4px; }
     .s-head p { font-size: 0.8rem; color: var(--text-sub); margin-top: 3px; }
 
-    /* ─────────────────────────────────────────
-       LEARN — ALPHABET
-    ───────────────────────────────────────── */
-    .vowel-row {
-      display: grid;
-      grid-template-columns: 62px repeat(7, 1fr);
-      gap: 3px; margin-bottom: 3px;
+    /* ── PROGRESS STRIP ── */
+    .progress-strip {
+      display: flex; background: var(--card); border-radius: var(--radius);
+      padding: 12px 0; margin-bottom: 16px;
+      box-shadow: var(--shadow); border: 1.5px solid var(--border);
     }
+    .ps-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .ps-icon { font-size: 1.2rem; }
+    .ps-val { font-size: 1.1rem; font-weight: 800; }
+    .ps-lbl { font-size: 0.6rem; color: var(--text-sub); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+    .ps-divider { width: 1px; background: var(--border); align-self: stretch; margin: 4px 0; }
+
+    /* ── ALPHABET ── */
+    .vowel-row { display: grid; grid-template-columns: 62px repeat(7, 1fr); gap: 3px; margin-bottom: 3px; }
     .vowel-hdr {
       text-align: center; font-size: 0.58rem; font-weight: 700;
-      color: var(--text-dim); letter-spacing: .4px; text-transform: uppercase;
-      padding: 3px 0;
+      color: var(--text-dim); letter-spacing: .4px; text-transform: uppercase; padding: 3px 0;
     }
-    .row-label {
-      font-size: 0.65rem; color: var(--text-sub); font-weight: 600;
-      display: flex; align-items: center; padding-left: 2px;
-    }
+    .row-label { font-size: 0.65rem; color: var(--text-sub); font-weight: 600; display: flex; align-items: center; padding-left: 2px; }
     .fidel {
       aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-      font-size: 1.05rem; border-radius: 7px;
-      background: var(--card); box-shadow: var(--shadow);
-      cursor: pointer; transition: all 0.14s;
-      border: 1.5px solid transparent;
+      font-size: 1.05rem; border-radius: 7px; background: var(--card); box-shadow: var(--shadow);
+      cursor: pointer; transition: all 0.14s; border: 1.5px solid transparent;
     }
     .fidel:hover { background: var(--green-light); border-color: #86efac; }
     .fidel.sel { background: var(--green); color: white; border-color: var(--green-d); }
-
     .fidel-detail {
       background: var(--card); border-radius: var(--radius);
       padding: 16px 18px; margin: 12px 0 16px;
-      box-shadow: var(--shadow-md);
-      display: flex; align-items: center; gap: 16px;
+      box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 16px;
     }
     .fidel-big { font-size: 3.2rem; line-height: 1; flex-shrink: 0; }
-    .fidel-info { flex: 1; }
     .fidel-info h3 { font-size: 1.1rem; font-weight: 800; }
     .fidel-info .fi-roman { font-size: 0.82rem; color: var(--text-sub); margin-top: 2px; }
     .fidel-info .fi-sound { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
@@ -158,45 +147,35 @@
       background: var(--green); color: white; border-radius: 50%;
       width: 42px; height: 42px; font-size: 1.2rem;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; box-shadow: var(--shadow-md);
-      transition: background 0.15s;
+      flex-shrink: 0; box-shadow: var(--shadow-md); transition: background 0.15s;
     }
     .fidel-speak:hover { background: var(--green-d); }
 
-    /* ─────────────────────────────────────────
-       LEARN — VOCABULARY
-    ───────────────────────────────────────── */
-    .vocab-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
-    }
+    /* ── VOCABULARY ── */
+    .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .vocab-card {
       background: var(--card); border-radius: var(--radius-sm);
       padding: 14px; box-shadow: var(--shadow); cursor: pointer;
       transition: all 0.18s; border: 1.5px solid transparent;
     }
     .vocab-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
-    .vocab-card.flipped { border-color: var(--green); background: #f0fdf4; }
+    .vocab-card.flipped { border-color: var(--green); background: var(--green-light); }
     .vc-tig { font-size: 1.25rem; font-weight: 700; margin-bottom: 3px; }
     .vc-rom { font-size: 0.7rem; color: var(--text-sub); margin-bottom: 6px; font-style: italic; }
     .vc-eng { font-size: 0.85rem; font-weight: 600; color: var(--green); }
     .vc-eng.hidden { color: transparent; background: var(--border); border-radius: 4px; }
     .vc-hint { font-size: 0.6rem; color: var(--text-dim); margin-top: 6px; }
 
-    /* ─────────────────────────────────────────
-       LEARN — FLASHCARDS
-    ───────────────────────────────────────── */
-    .fc-wrap { perspective: 1000px; margin-bottom: 16px; }
+    /* ── FLASHCARDS ── */
+    .fc-wrap { margin-bottom: 16px; }
     .fc-card {
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: var(--shadow-md); min-height: 200px;
-      display: flex; flex-direction: column;
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-md);
+      min-height: 200px; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       padding: 28px; cursor: pointer; text-align: center;
-      transition: box-shadow 0.15s;
-      border: 2px solid var(--border);
-      position: relative;
+      transition: box-shadow 0.15s; border: 2px solid var(--border); position: relative;
     }
-    .fc-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.1); }
+    .fc-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.12); }
     .fc-card.revealed { border-color: var(--green); }
     .fc-badge {
       position: absolute; top: 12px; right: 12px;
@@ -208,205 +187,214 @@
     .fc-eng { font-size: 1.1rem; font-weight: 700; color: var(--green); margin-top: 10px; }
     .fc-tap { font-size: 0.7rem; color: var(--text-dim); margin-top: 12px; }
     .fc-controls { display: flex; gap: 10px; margin-bottom: 16px; }
-    .fc-btn {
-      flex: 1; padding: 12px; border-radius: var(--radius-sm);
-      font-size: 0.82rem; font-weight: 700; transition: all 0.15s;
-    }
+    .fc-btn { flex: 1; padding: 12px; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 700; transition: all 0.15s; }
     .fc-btn-skip { background: var(--bg); color: var(--text-sub); border: 1.5px solid var(--border); }
     .fc-btn-know { background: var(--green); color: white; }
-    .fc-btn-skip:hover { background: #e2e8f0; }
+    .fc-btn-skip:hover { background: var(--border); }
     .fc-btn-know:hover { background: var(--green-d); }
     .fc-progress-wrap { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; margin-bottom: 8px; }
     .fc-progress-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.3s; }
     .fc-progress-label { font-size: 0.7rem; color: var(--text-sub); text-align: center; margin-bottom: 16px; }
     .fc-done {
-      text-align: center; padding: 40px 20px;
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: var(--shadow-md); margin-bottom: 16px;
+      text-align: center; padding: 40px 20px; background: var(--card);
+      border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 16px;
     }
     .fc-done .done-icon { font-size: 2.5rem; margin-bottom: 10px; }
     .fc-done h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
     .fc-done p { font-size: 0.82rem; color: var(--text-sub); margin-bottom: 16px; }
-    .fc-restart {
-      background: var(--green); color: white; padding: 10px 24px;
-      border-radius: 20px; font-size: 0.82rem; font-weight: 700;
-    }
+    .fc-restart { background: var(--green); color: white; padding: 10px 24px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; }
 
-    /* ─────────────────────────────────────────
-       COMMUNITY — NEWS
-    ───────────────────────────────────────── */
-    .news-card {
-      background: var(--card); border-radius: var(--radius);
-      overflow: hidden; box-shadow: var(--shadow); margin-bottom: 12px;
+    /* ── QUIZ ── */
+    .quiz-hero {
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-md);
+      padding: 32px 24px; text-align: center; margin-bottom: 16px;
     }
+    .qh-icon { font-size: 3rem; margin-bottom: 12px; }
+    .quiz-hero h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; }
+    .quiz-hero p { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 20px; line-height: 1.5; }
+    .qh-start-btn {
+      background: var(--green); color: white; padding: 12px 32px;
+      border-radius: 24px; font-size: 0.9rem; font-weight: 700;
+      box-shadow: var(--shadow-md); transition: background 0.15s;
+    }
+    .qh-start-btn:hover { background: var(--green-d); }
+    .quiz-progress-wrap { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; margin-bottom: 10px; }
+    .quiz-progress-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.35s; }
+    .quiz-counter { font-size: 0.72rem; color: var(--text-sub); font-weight: 600; text-align: center; margin-bottom: 16px; }
+    .quiz-card {
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-md);
+      padding: 24px 20px; text-align: center; margin-bottom: 16px; border: 2px solid var(--border);
+    }
+    .quiz-word { font-size: 2.4rem; font-weight: 800; margin-bottom: 6px; }
+    .quiz-rom { font-size: 0.82rem; color: var(--text-sub); font-style: italic; margin-bottom: 10px; }
+    .quiz-prompt { font-size: 0.78rem; color: var(--text-dim); }
+    .quiz-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .quiz-choice {
+      padding: 14px 10px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 600;
+      background: var(--card); color: var(--text); text-align: center;
+      cursor: pointer; transition: all 0.15s; line-height: 1.3;
+    }
+    .quiz-choice:hover:not(.correct):not(.wrong):not(.disabled) { border-color: var(--green); color: var(--green); }
+    .quiz-choice.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; pointer-events: none; }
+    .quiz-choice.wrong { background: #fee2e2; border-color: #dc2626; color: #991b1b; pointer-events: none; }
+    .quiz-choice.disabled { pointer-events: none; opacity: .55; }
+    [data-theme="dark"] .quiz-choice.correct { background: #14532d; border-color: #22c55e; color: #86efac; }
+    [data-theme="dark"] .quiz-choice.wrong { background: #450a0a; border-color: #dc2626; color: #fca5a5; }
+    .quiz-feedback { text-align: center; font-size: 0.88rem; font-weight: 700; min-height: 22px; margin-bottom: 8px; }
+    .quiz-feedback.ok { color: var(--green); }
+    .quiz-feedback.err { color: var(--red); }
+    .quiz-done {
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-md);
+      padding: 32px 20px; text-align: center; margin-bottom: 16px;
+    }
+    .qd-stars { font-size: 2rem; margin-bottom: 10px; }
+    .qd-score { font-size: 1.7rem; font-weight: 800; margin-bottom: 4px; }
+    .qd-score-sub { font-size: 0.82rem; color: var(--text-sub); margin-bottom: 16px; }
+    .qd-xp {
+      display: inline-block; background: var(--green-light); color: var(--green);
+      padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; margin-bottom: 22px;
+    }
+    .qd-again { background: var(--green); color: white; padding: 11px 28px; border-radius: 22px; font-size: 0.88rem; font-weight: 700; transition: background 0.15s; }
+    .qd-again:hover { background: var(--green-d); }
+
+    /* ── LESSONS ── */
+    .lesson-intro {
+      background: var(--card); border-radius: var(--radius); padding: 14px 16px;
+      margin-bottom: 14px; box-shadow: var(--shadow); border: 1.5px solid var(--border);
+      font-size: 0.78rem; color: var(--text-sub); line-height: 1.55;
+    }
+    .lesson-card {
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+      margin-bottom: 10px; overflow: hidden; transition: box-shadow 0.15s;
+      border: 1.5px solid var(--border);
+    }
+    .lesson-card:not(.locked):hover { box-shadow: var(--shadow-md); }
+    .lesson-card.locked { opacity: .5; }
+    .lesson-hdr { display: flex; align-items: center; gap: 13px; padding: 14px 16px; cursor: pointer; }
+    .lesson-card.locked .lesson-hdr { cursor: default; }
+    .lesson-emoji { font-size: 1.6rem; flex-shrink: 0; }
+    .lesson-meta { flex: 1; min-width: 0; }
+    .lesson-title { font-size: 0.9rem; font-weight: 700; }
+    .lesson-desc { font-size: 0.72rem; color: var(--text-sub); margin-top: 2px; }
+    .lesson-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .lesson-xp { font-size: 0.65rem; font-weight: 700; color: var(--green); background: var(--green-light); padding: 3px 9px; border-radius: 10px; }
+    .lesson-status { font-size: 1rem; }
+    .lesson-body { display: none; border-top: 1px solid var(--border); padding: 14px 16px 16px; }
+    .lesson-body.open { display: block; }
+    .lesson-body-intro { font-size: 0.8rem; color: var(--text-sub); line-height: 1.55; margin-bottom: 14px; }
+    .lesson-words { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .lw-item { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; }
+    .lw-tig { font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; }
+    .lw-eng { font-size: 0.74rem; color: var(--text-sub); }
+    .lesson-start-quiz {
+      width: 100%; padding: 11px; border-radius: var(--radius-sm);
+      background: var(--green); color: white; font-size: 0.84rem; font-weight: 700;
+      transition: background 0.15s;
+    }
+    .lesson-start-quiz:hover { background: var(--green-d); }
+    .lesson-done-bar {
+      background: var(--green-light); border-radius: var(--radius-sm);
+      padding: 10px 14px; font-size: 0.82rem; color: var(--green); font-weight: 600;
+    }
+    .lq-q { font-size: 0.78rem; font-weight: 600; color: var(--text-sub); text-align: center; margin-bottom: 12px; }
+    .lq-word { font-size: 1.6rem; font-weight: 800; text-align: center; margin-bottom: 4px; }
+    .lq-rom { font-size: 0.75rem; color: var(--text-sub); text-align: center; font-style: italic; margin-bottom: 14px; }
+    .lq-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .lq-choice {
+      padding: 11px 8px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 0.8rem; font-weight: 600; background: var(--card); text-align: center; cursor: pointer; transition: all 0.15s;
+    }
+    .lq-choice:hover:not(.correct):not(.wrong) { border-color: var(--green); }
+    .lq-choice.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; pointer-events: none; }
+    .lq-choice.wrong { background: #fee2e2; border-color: #dc2626; color: #991b1b; pointer-events: none; }
+    [data-theme="dark"] .lq-choice.correct { background: #14532d; border-color: #22c55e; color: #86efac; }
+    [data-theme="dark"] .lq-choice.wrong { background: #450a0a; border-color: #dc2626; color: #fca5a5; }
+    .lq-result { text-align: center; padding: 10px 0 4px; }
+    .lq-result p { font-size: 0.82rem; color: var(--text-sub); margin: 8px 0 14px; }
+
+    /* ── NEWS ── */
+    .news-card { background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 12px; }
     .news-img { width: 100%; height: 170px; object-fit: cover; background: var(--border); }
     .news-img-ph {
       width: 100%; height: 130px;
-      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
       display: flex; align-items: center; justify-content: center; font-size: 2.8rem;
     }
+    [data-theme="dark"] .news-img-ph { background: linear-gradient(135deg, #14532d, #166534); }
     .news-body { padding: 13px 14px 14px; }
-    .news-src {
-      font-size: 0.62rem; font-weight: 800; color: var(--green);
-      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px;
-      display: flex; align-items: center; gap: 5px;
-    }
+    .news-src { font-size: 0.62rem; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
     .news-src-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
     .news-title { font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin-bottom: 5px; }
-    .news-desc {
-      font-size: 0.76rem; color: var(--text-sub); line-height: 1.55;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
+    .news-desc { font-size: 0.76rem; color: var(--text-sub); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .news-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
     .news-date { font-size: 0.63rem; color: var(--text-dim); }
-    .news-read {
-      font-size: 0.7rem; font-weight: 700; color: var(--green);
-      background: var(--green-light); padding: 4px 11px; border-radius: 12px;
-    }
+    .news-read { font-size: 0.7rem; font-weight: 700; color: var(--green); background: var(--green-light); padding: 4px 11px; border-radius: 12px; }
     .news-loading { text-align: center; padding: 50px 20px; color: var(--text-dim); }
-    .news-spinner {
-      width: 30px; height: 30px; border: 3px solid var(--border);
-      border-top-color: var(--green); border-radius: 50%;
-      animation: spin .7s linear infinite; margin: 0 auto 12px;
-    }
+    .news-spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .news-error {
-      background: var(--card); border-radius: var(--radius);
-      padding: 24px; text-align: center; box-shadow: var(--shadow);
-    }
+    .news-error { background: var(--card); border-radius: var(--radius); padding: 24px; text-align: center; box-shadow: var(--shadow); }
     .news-error .icon { font-size: 2rem; margin-bottom: 8px; }
     .news-error p { font-size: 0.82rem; color: var(--text-sub); }
 
     /* ── EVENTS ── */
-    .event-card {
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: var(--shadow); overflow: hidden;
-      margin-bottom: 10px; display: flex;
-    }
-    .ev-date {
-      background: var(--green); color: white; width: 60px; flex-shrink: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; padding: 10px 6px;
-    }
+    .event-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 10px; display: flex; }
+    .ev-date { background: var(--green); color: white; width: 60px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 6px; }
     .ev-month { font-size: 0.57rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; opacity: .85; }
     .ev-day { font-size: 1.65rem; font-weight: 800; line-height: 1.1; }
     .ev-body { padding: 12px 14px; flex: 1; min-width: 0; }
     .ev-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; }
     .ev-loc { font-size: 0.71rem; color: var(--text-sub); }
-    .ev-type {
-      display: inline-block; margin-top: 6px;
-      font-size: 0.6rem; font-weight: 700;
-      background: var(--green-light); color: var(--green);
-      padding: 2px 8px; border-radius: 10px;
-    }
+    .ev-type { display: inline-block; margin-top: 6px; font-size: 0.6rem; font-weight: 700; background: var(--green-light); color: var(--green); padding: 2px 8px; border-radius: 10px; }
 
     /* ── DIRECTORY ── */
-    .biz-card {
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: var(--shadow); padding: 13px 14px;
-      margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start;
-    }
-    .biz-icon {
-      width: 46px; height: 46px; border-radius: 11px;
-      background: var(--green-light); display: flex;
-      align-items: center; justify-content: center;
-      font-size: 1.45rem; flex-shrink: 0;
-    }
+    .biz-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 13px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+    .biz-icon { width: 46px; height: 46px; border-radius: 11px; background: var(--green-light); display: flex; align-items: center; justify-content: center; font-size: 1.45rem; flex-shrink: 0; }
     .biz-info { flex: 1; min-width: 0; }
     .biz-name { font-size: 0.88rem; font-weight: 700; }
-    .biz-cat {
-      font-size: 0.62rem; font-weight: 700; color: var(--green);
-      text-transform: uppercase; letter-spacing: .4px; margin-top: 1px;
-    }
+    .biz-cat { font-size: 0.62rem; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: .4px; margin-top: 1px; }
     .biz-loc { font-size: 0.71rem; color: var(--text-sub); margin-top: 3px; }
     .biz-desc { font-size: 0.74rem; color: var(--text-sub); margin-top: 4px; line-height: 1.45; }
 
-    /* ─────────────────────────────────────────
-       MONEY
-    ───────────────────────────────────────── */
-    .money-hero {
-      background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
-      color: white; border-radius: var(--radius);
-      padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow-md);
-    }
+    /* ── MONEY ── */
+    .money-hero { background: linear-gradient(135deg, var(--green), var(--green-d)); color: white; border-radius: var(--radius); padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow-md); }
     .money-hero h3 { font-size: 1rem; font-weight: 800; margin-bottom: 3px; }
     .money-hero p { font-size: 0.78rem; opacity: .85; }
-    .rate-row {
-      display: flex; gap: 10px; margin-top: 14px;
-    }
-    .rate-box {
-      flex: 1; background: rgba(255,255,255,.18);
-      border-radius: 10px; padding: 12px 14px;
-    }
+    .rate-row { display: flex; gap: 10px; margin-top: 14px; }
+    .rate-box { flex: 1; background: rgba(255,255,255,.18); border-radius: 10px; padding: 12px 14px; }
     .rate-lbl { font-size: 0.62rem; opacity: .8; margin-bottom: 4px; }
     .rate-val { font-size: 1.3rem; font-weight: 800; line-height: 1; }
     .rate-note { font-size: 0.58rem; opacity: .7; margin-top: 3px; }
-
-    /* Calculator */
-    .calc-card {
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px;
-    }
+    .calc-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px; }
     .calc-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 14px; }
     .calc-row { display: flex; gap: 10px; margin-bottom: 10px; }
     .calc-field { flex: 1; }
     .calc-label { font-size: 0.7rem; font-weight: 600; color: var(--text-sub); margin-bottom: 5px; }
-    .calc-input {
-      width: 100%; padding: 10px 13px;
-      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 1rem; color: var(--text); background: var(--bg);
-      transition: border-color 0.15s;
-    }
+    .calc-input { width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 1rem; color: var(--text); background: var(--bg); transition: border-color 0.15s; }
     .calc-input:focus { outline: none; border-color: var(--green); }
-    .calc-result {
-      background: var(--green-light); border-radius: var(--radius-sm);
-      padding: 13px 15px; display: flex;
-      align-items: center; justify-content: space-between;
-    }
+    .calc-result { background: var(--green-light); border-radius: var(--radius-sm); padding: 13px 15px; display: flex; align-items: center; justify-content: space-between; }
     .cr-label { font-size: 0.75rem; color: var(--green); font-weight: 600; }
     .cr-value { font-size: 1.25rem; font-weight: 800; color: var(--green); }
-
-    /* Service table */
-    .svc-table {
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px;
-    }
-    .svc-head {
-      display: grid; grid-template-columns: 1fr 72px 68px 58px;
-      padding: 10px 14px;
-      background: var(--bg); border-bottom: 1px solid var(--border);
-      font-size: 0.6rem; font-weight: 700; color: var(--text-dim);
-      text-transform: uppercase; letter-spacing: .4px;
-    }
-    .svc-row {
-      display: grid; grid-template-columns: 1fr 72px 68px 58px;
-      padding: 13px 14px; border-bottom: 1px solid var(--border);
-      align-items: center; transition: background 0.13s;
-      text-decoration: none; color: var(--text);
-    }
+    .svc-table { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px; }
+    .svc-head { display: grid; grid-template-columns: 1fr 72px 68px 58px; padding: 10px 14px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 0.6rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .4px; }
+    .svc-row { display: grid; grid-template-columns: 1fr 72px 68px 58px; padding: 13px 14px; border-bottom: 1px solid var(--border); align-items: center; transition: background 0.13s; text-decoration: none; color: var(--text); }
     .svc-row:last-child { border-bottom: none; }
     .svc-row:hover { background: var(--bg); }
     .svc-name-wrap { display: flex; align-items: center; gap: 10px; }
-    .svc-logo {
-      width: 34px; height: 34px; border-radius: 8px; background: var(--bg);
-      font-size: 1.3rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
+    .svc-logo { width: 34px; height: 34px; border-radius: 8px; background: var(--bg); font-size: 1.3rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .svc-name { font-size: 0.83rem; font-weight: 700; }
     .svc-region { font-size: 0.62rem; color: var(--text-sub); margin-top: 1px; }
     .svc-rate { font-size: 0.82rem; font-weight: 700; color: var(--green); }
     .svc-fee { font-size: 0.78rem; color: var(--text-sub); }
-    .svc-badge {
-      font-size: 0.6rem; font-weight: 700; padding: 3px 7px; border-radius: 10px;
-    }
+    .svc-badge { font-size: 0.6rem; font-weight: 700; padding: 3px 7px; border-radius: 10px; }
     .badge-yes { background: #dcfce7; color: #15803d; }
     .badge-partial { background: #fef9c3; color: #854d0e; }
     .badge-no { background: #fee2e2; color: #991b1b; }
-
-    .money-note {
-      background: #fefce8; border: 1px solid #fde68a;
-      border-radius: var(--radius-sm); padding: 12px 14px;
-      font-size: 0.74rem; color: #92400e; line-height: 1.55; margin-bottom: 14px;
-    }
+    [data-theme="dark"] .badge-yes { background: #14532d; color: #86efac; }
+    [data-theme="dark"] .badge-partial { background: #78350f; color: #fde68a; }
+    [data-theme="dark"] .badge-no { background: #450a0a; color: #fca5a5; }
+    .money-note { background: #fefce8; border: 1px solid #fde68a; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 0.74rem; color: #92400e; line-height: 1.55; margin-bottom: 14px; }
+    [data-theme="dark"] .money-note { background: #451a03; border-color: #78350f; color: #fde68a; }
     .money-note strong { display: block; margin-bottom: 3px; font-size: 0.78rem; }
 
     /* ── TOAST ── */
@@ -418,18 +406,80 @@
       pointer-events: none; transition: opacity .2s, transform .2s;
       white-space: nowrap; z-index: 999;
     }
+    [data-theme="dark"] .hub-toast { background: #f1f5f9; color: #0f172a; }
     .hub-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── RESPONSIVE ── */
     @media (min-width: 520px) {
       .vocab-grid { grid-template-columns: repeat(3, 1fr); }
+      .lesson-words { grid-template-columns: repeat(3, 1fr); }
       .vowel-row { grid-template-columns: 80px repeat(7, 1fr); }
     }
+
+    /* ── TWEAK 1: FC CATEGORY CHIPS ── */
+    .fc-chips { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:2px 0 10px; }
+    .fc-chips::-webkit-scrollbar { display:none; }
+    .fc-chip { flex-shrink:0; padding:5px 11px; border-radius:16px; font-size:0.7rem; font-weight:600; background:var(--card); color:var(--text-sub); border:1.5px solid var(--border); transition:all 0.15s; white-space:nowrap; }
+    .fc-chip.active { background:var(--green); color:white; border-color:var(--green); }
+
+    /* ── TWEAK 2: QUIZ TIMER ── */
+    .quiz-timer-wrap { height:5px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:14px; }
+    .quiz-timer-fill { height:100%; width:100%; border-radius:3px; background:linear-gradient(90deg,#dc2626,#f59e0b); }
+
+    /* ── TWEAK 3: LESSON PROGRESS BAR ── */
+    .lessons-prog { margin-bottom:14px; }
+    .lessons-prog-bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:5px; }
+    .lessons-prog-fill { height:100%; background:var(--green); border-radius:3px; transition:width .4s; }
+    .lessons-prog-label { font-size:0.7rem; color:var(--text-sub); font-weight:600; text-align:right; }
+
+    /* ── TWEAK 4: CONFETTI ── */
+    .confetti-piece { position:fixed; top:-12px; pointer-events:none; border-radius:2px; z-index:9999; animation:confettiFall 1.6s ease-in forwards; }
+    @keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(105vh) rotate(720deg);opacity:0} }
+
+    /* ── TWEAK 5: SOUND BUTTON ── */
+    .learn-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:14px; }
+    .sound-btn { font-size:1.1rem; background:var(--card); border:1.5px solid var(--border); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow); transition:all 0.15s; flex-shrink:0; }
+    .sound-btn.muted { opacity:.45; }
+
+    /* ── TWEAK 6: VOCAB STAR BADGES ── */
+    .vcat-stars { font-size:0.5rem; color:#f59e0b; margin-top:2px; letter-spacing:1px; line-height:1; }
+
+    /* ── TWEAK 7: QUIZ SHARE BUTTON ── */
+    .quiz-share-btn { margin-top:10px; padding:8px 18px; border-radius:20px; font-size:0.78rem; font-weight:600; border:1.5px solid var(--border); background:var(--card); color:var(--text-sub); transition:all 0.15s; }
+    .quiz-share-btn:hover { border-color:var(--green); color:var(--green); }
+
+    /* ── TWEAK 8: ALPHABET SEARCH ── */
+    .alph-search { width:100%; padding:9px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:0.84rem; background:var(--card); color:var(--text); margin-bottom:12px; transition:border-color 0.15s; }
+    .alph-search:focus { outline:none; border-color:var(--green); }
+    .vowel-row.dim { opacity:.18; transition:opacity 0.2s; }
+
+    /* ── TWEAK 9: COMMUNITY NAV BADGE ── */
+    .hnav-icon-wrap { position:relative; font-size:1.45rem; line-height:1; }
+    .nav-badge { position:absolute; top:-1px; right:-5px; width:9px; height:9px; border-radius:50%; background:#dc2626; border:2px solid var(--card); display:none; }
+    .nav-badge.show { display:block; }
+
+    /* ── TWEAK 10: RESET BUTTON ── */
+    .ps-reset-btn { font-size:0.85rem; color:var(--text-dim); padding:0 12px; align-self:center; transition:color 0.15s; }
+    .ps-reset-btn:hover { color:var(--red); }
+
+    /* ── SYNC BAR ── */
+    .sync-bar {
+      background: var(--card); border-bottom: 1px solid var(--border);
+      padding: 6px 14px; display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.7rem; color: var(--text-sub);
+    }
+    .sync-bar-left { display: flex; align-items: center; gap: 7px; }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; display: none; }
+    .sync-dot.active { display: inline-block; }
+    .sync-bar-btn {
+      font-size: 0.68rem; font-weight: 700; color: var(--green);
+      padding: 3px 10px; border: 1.5px solid currentColor; border-radius: 20px;
+      transition: background 0.15s; flex-shrink: 0;
+    }
+    .sync-bar-btn:hover { background: var(--green-light); }
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="page-wrap">
   <header class="hub-header">
     <div class="hub-logo">
@@ -439,40 +489,72 @@
         <div class="hub-subtitle">Learn · Community · Money</div>
       </div>
     </div>
-    <a href="/" class="hub-back">← Main App</a>
+    <div class="hub-hdr-right">
+      <button class="theme-btn" id="themeBtn" title="Toggle night mode">🌙</button>
+      <a href="/" class="hub-back">← Main App</a>
+    </div>
   </header>
 
-  <!-- ══════════════════════════════════
-       VIEW 1 — LEARN TIGRINYA
-  ══════════════════════════════════ -->
+  <div class="sync-bar" id="syncBar">
+    <div class="sync-bar-left">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncMsg">☁ Sign in to save your progress</span>
+    </div>
+    <a href="./account" class="sync-bar-btn" id="syncBarBtn">Sign In →</a>
+  </div>
+
+  <!-- ══ VIEW 1 — LEARN ══ -->
   <div class="view active" id="view-learn">
-    <div class="s-head">
-      <h2>🎓 Learn Tigrinya</h2>
-      <p>Master the Ge'ez alphabet, vocabulary, and flashcards</p>
+
+    <div class="progress-strip">
+      <div class="ps-item">
+        <div class="ps-icon">🏆</div>
+        <div class="ps-val" id="psXP">0</div>
+        <div class="ps-lbl">XP</div>
+      </div>
+      <div class="ps-divider"></div>
+      <div class="ps-item">
+        <div class="ps-icon">🔥</div>
+        <div class="ps-val" id="psStreak">0</div>
+        <div class="ps-lbl">Day streak</div>
+      </div>
+      <div class="ps-divider"></div>
+      <div class="ps-item">
+        <div class="ps-icon">⭐</div>
+        <div class="ps-val" id="psStars">0</div>
+        <div class="ps-lbl">Stars</div>
+      </div>
+      <button class="ps-reset-btn" id="psResetBtn" title="Reset progress">⚙</button>
+    </div>
+
+    <div class="learn-head">
+      <div>
+        <h2 style="font-size:1.25rem;font-weight:800;letter-spacing:-.4px">🎓 Learn Tigrinya</h2>
+        <p style="font-size:0.8rem;color:var(--text-sub);margin-top:3px">Alphabet, vocabulary, flashcards, quiz &amp; lessons</p>
+      </div>
+      <button class="sound-btn" id="soundBtn" title="Toggle pronunciation">🔊</button>
     </div>
 
     <div class="tabs" id="learnTabs">
       <button class="tab-btn active" data-tab="alphabet">Alphabet</button>
       <button class="tab-btn" data-tab="vocab">Vocabulary</button>
       <button class="tab-btn" data-tab="flashcards">Flashcards</button>
+      <button class="tab-btn" data-tab="quiz">📝 Quiz</button>
+      <button class="tab-btn" data-tab="lessons">📖 Lessons</button>
     </div>
 
     <!-- ALPHABET -->
     <div class="tab-panel active" id="tab-alphabet">
+      <input type="text" class="alph-search" id="alphSearch" placeholder="Filter by consonant sound (e.g. sh, t, n)…">
       <div class="vowel-row">
         <div class="vowel-hdr"></div>
-        <div class="vowel-hdr">ä</div>
-        <div class="vowel-hdr">u</div>
-        <div class="vowel-hdr">i</div>
-        <div class="vowel-hdr">a</div>
-        <div class="vowel-hdr">e</div>
-        <div class="vowel-hdr">ə</div>
-        <div class="vowel-hdr">o</div>
+        <div class="vowel-hdr">ä</div><div class="vowel-hdr">u</div><div class="vowel-hdr">i</div>
+        <div class="vowel-hdr">a</div><div class="vowel-hdr">e</div><div class="vowel-hdr">ə</div><div class="vowel-hdr">o</div>
       </div>
       <div id="alphabetGrid"></div>
       <div class="fidel-detail" id="fidelDetail" style="display:none">
         <div class="fidel-big" id="fidelBig"></div>
-        <div class="fidel-info">
+        <div class="fidel-info" style="flex:1">
           <h3 id="fidelName"></h3>
           <div class="fi-roman" id="fidelRoman"></div>
           <div class="fi-sound" id="fidelSound"></div>
@@ -484,21 +566,16 @@
 
     <!-- VOCABULARY -->
     <div class="tab-panel" id="tab-vocab">
-      <div class="tabs" id="vocabTabs">
-        <button class="tab-btn active" data-vtab="greetings">👋 Greetings</button>
-        <button class="tab-btn" data-vtab="numbers">🔢 Numbers</button>
-        <button class="tab-btn" data-vtab="family">👨‍👩‍👧 Family</button>
-        <button class="tab-btn" data-vtab="food">🍽 Food</button>
-        <button class="tab-btn" data-vtab="phrases">💬 Phrases</button>
-      </div>
+      <div class="tabs" id="vocabTabs"></div>
       <p style="font-size:.7rem;color:var(--text-dim);margin-bottom:12px">Tap a card to reveal the English meaning</p>
       <div class="vocab-grid" id="vocabGrid"></div>
     </div>
 
     <!-- FLASHCARDS -->
     <div class="tab-panel" id="tab-flashcards">
+      <div class="fc-chips" id="fcChips"></div>
       <div class="fc-progress-wrap"><div class="fc-progress-fill" id="fcProgressFill" style="width:0%"></div></div>
-      <div class="fc-progress-label" id="fcProgressLabel">Card 1 of 40</div>
+      <div class="fc-progress-label" id="fcProgressLabel">Loading…</div>
       <div class="fc-wrap">
         <div class="fc-card" id="fcCard">
           <div class="fc-badge" id="fcBadge">Tap to reveal</div>
@@ -519,71 +596,87 @@
         <button class="fc-restart" id="fcRestart">Shuffle & Restart</button>
       </div>
     </div>
-  </div>
 
-  <!-- ══════════════════════════════════
-       VIEW 2 — COMMUNITY
-  ══════════════════════════════════ -->
+    <!-- QUIZ -->
+    <div class="tab-panel" id="tab-quiz">
+      <div id="quizStart">
+        <div class="quiz-hero">
+          <div class="qh-icon">📝</div>
+          <h3>Vocabulary Quiz</h3>
+          <p>10 questions · Multiple choice · Earn XP and stars based on your score</p>
+          <button class="qh-start-btn" id="quizStartBtn">Start Quiz →</button>
+        </div>
+      </div>
+      <div id="quizRound" style="display:none">
+        <div class="quiz-progress-wrap"><div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div></div>
+        <div class="quiz-counter" id="quizCounter">Question 1 of 10</div>
+        <div class="quiz-card">
+          <div class="quiz-word" id="quizWord"></div>
+          <div class="quiz-rom" id="quizRom"></div>
+          <div class="quiz-prompt">What does this mean in English?</div>
+        </div>
+        <div class="quiz-timer-wrap"><div class="quiz-timer-fill" id="quizTimerFill"></div></div>
+        <div class="quiz-choices" id="quizChoices"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+      </div>
+      <div id="quizDone" style="display:none">
+        <div class="quiz-done">
+          <div class="qd-stars" id="qdStars"></div>
+          <div class="qd-score" id="qdScore"></div>
+          <div class="qd-score-sub" id="qdScoreSub"></div>
+          <div class="qd-xp" id="qdXp"></div><br>
+          <button class="qd-again" id="quizAgain">Play Again →</button><br>
+          <button class="quiz-share-btn" id="quizShareBtn">📋 Copy result</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LESSONS -->
+    <div class="tab-panel" id="tab-lessons">
+      <div class="lesson-intro">Complete lessons in order to unlock new content. Each lesson covers a Tigrinya theme and ends with a short quiz to earn XP. 🎓</div>
+      <div class="lessons-prog">
+        <div class="lessons-prog-bar"><div class="lessons-prog-fill" id="lessonsProgFill" style="width:0%"></div></div>
+        <div class="lessons-prog-label" id="lessonsProgLabel">0 of 6 complete</div>
+      </div>
+      <div id="lessonsGrid"></div>
+    </div>
+
+  </div><!-- /view-learn -->
+
+  <!-- ══ VIEW 2 — COMMUNITY ══ -->
   <div class="view" id="view-community">
     <div class="s-head">
       <h2>🌍 Community</h2>
-      <p>Eritrean news, events & business directory</p>
+      <p>Eritrean news, events &amp; business directory</p>
     </div>
-
     <div class="tabs" id="communityTabs">
       <button class="tab-btn active" data-ctab="news">📰 News</button>
       <button class="tab-btn" data-ctab="events">📅 Events</button>
       <button class="tab-btn" data-ctab="directory">🏪 Directory</button>
     </div>
-
-    <!-- NEWS -->
     <div class="tab-panel active" id="tab-news">
       <div id="newsGrid">
-        <div class="news-loading">
-          <div class="news-spinner"></div>
-          <div>Loading latest news…</div>
-        </div>
+        <div class="news-loading"><div class="news-spinner"></div><div>Loading latest news…</div></div>
       </div>
     </div>
-
-    <!-- EVENTS -->
-    <div class="tab-panel" id="tab-events">
-      <div id="eventsGrid"></div>
-    </div>
-
-    <!-- DIRECTORY -->
-    <div class="tab-panel" id="tab-directory">
-      <div id="directoryGrid"></div>
-    </div>
+    <div class="tab-panel" id="tab-events"><div id="eventsGrid"></div></div>
+    <div class="tab-panel" id="tab-directory"><div id="directoryGrid"></div></div>
   </div>
 
-  <!-- ══════════════════════════════════
-       VIEW 3 — MONEY / REMITTANCE
-  ══════════════════════════════════ -->
+  <!-- ══ VIEW 3 — MONEY ══ -->
   <div class="view" id="view-money">
     <div class="s-head">
       <h2>💸 Send Money</h2>
       <p>Compare remittance services to Eritrea</p>
     </div>
-
     <div class="money-hero">
       <h3>Eritrean Nakfa (ERN) Rate Guide</h3>
       <p>Compare services before sending — rates and fees vary widely</p>
       <div class="rate-row">
-        <div class="rate-box">
-          <div class="rate-lbl">Official rate</div>
-          <div class="rate-val">15.08 ERN</div>
-          <div class="rate-note">per 1 USD</div>
-        </div>
-        <div class="rate-box">
-          <div class="rate-lbl">ERN is pegged</div>
-          <div class="rate-val">Fixed</div>
-          <div class="rate-note">Not freely traded</div>
-        </div>
+        <div class="rate-box"><div class="rate-lbl">Official rate</div><div class="rate-val">15.08 ERN</div><div class="rate-note">per 1 USD</div></div>
+        <div class="rate-box"><div class="rate-lbl">ERN is pegged</div><div class="rate-val">Fixed</div><div class="rate-note">Not freely traded</div></div>
       </div>
     </div>
-
-    <!-- Calculator -->
     <div class="calc-card">
       <div class="calc-title">💰 Quick Calculator</div>
       <div class="calc-row">
@@ -604,75 +697,35 @@
         <div style="font-size:.68rem;color:var(--green);text-align:right">at 15.08<br>ERN / USD</div>
       </div>
     </div>
-
     <div class="money-note">
       <strong>⚠ About these rates</strong>
-      Direct service to Eritrea is restricted by international banking regulations.
-      Rates shown are approximate — always verify on the provider's website before sending.
-      Some services route via Ethiopia or use partner networks.
+      Direct service to Eritrea is restricted by international banking regulations. Rates shown are approximate — always verify on the provider's website before sending.
     </div>
-
-    <!-- Service comparison -->
     <div class="svc-table">
-      <div class="svc-head">
-        <div>Service</div>
-        <div>Est. rate</div>
-        <div>Typical fee</div>
-        <div>Eritrea</div>
-      </div>
+      <div class="svc-head"><div>Service</div><div>Est. rate</div><div>Typical fee</div><div>Eritrea</div></div>
       <a class="svc-row" href="https://www.dahabshiil.com" target="_blank" rel="noopener">
-        <div class="svc-name-wrap">
-          <div class="svc-logo">🌍</div>
-          <div><div class="svc-name">Dahabshiil</div><div class="svc-region">East Africa specialist</div></div>
-        </div>
-        <div class="svc-rate">~15 ERN</div>
-        <div class="svc-fee">$5–8</div>
-        <div><span class="svc-badge badge-yes">✓ Yes</span></div>
+        <div class="svc-name-wrap"><div class="svc-logo">🌍</div><div><div class="svc-name">Dahabshiil</div><div class="svc-region">East Africa specialist</div></div></div>
+        <div class="svc-rate">~15 ERN</div><div class="svc-fee">$5–8</div><div><span class="svc-badge badge-yes">✓ Yes</span></div>
       </a>
       <a class="svc-row" href="https://www.westernunion.com" target="_blank" rel="noopener">
-        <div class="svc-name-wrap">
-          <div class="svc-logo">💛</div>
-          <div><div class="svc-name">Western Union</div><div class="svc-region">Global network</div></div>
-        </div>
-        <div class="svc-rate">~14.5 ERN</div>
-        <div class="svc-fee">$5–15</div>
-        <div><span class="svc-badge badge-partial">~ Limited</span></div>
+        <div class="svc-name-wrap"><div class="svc-logo">💛</div><div><div class="svc-name">Western Union</div><div class="svc-region">Global network</div></div></div>
+        <div class="svc-rate">~14.5 ERN</div><div class="svc-fee">$5–15</div><div><span class="svc-badge badge-partial">~ Limited</span></div>
       </a>
       <a class="svc-row" href="https://www.moneygram.com" target="_blank" rel="noopener">
-        <div class="svc-name-wrap">
-          <div class="svc-logo">🔵</div>
-          <div><div class="svc-name">MoneyGram</div><div class="svc-region">Global network</div></div>
-        </div>
-        <div class="svc-rate">~14.8 ERN</div>
-        <div class="svc-fee">$5–10</div>
-        <div><span class="svc-badge badge-partial">~ Limited</span></div>
+        <div class="svc-name-wrap"><div class="svc-logo">🔵</div><div><div class="svc-name">MoneyGram</div><div class="svc-region">Global network</div></div></div>
+        <div class="svc-rate">~14.8 ERN</div><div class="svc-fee">$5–10</div><div><span class="svc-badge badge-partial">~ Limited</span></div>
       </a>
       <a class="svc-row" href="https://www.remitly.com" target="_blank" rel="noopener">
-        <div class="svc-name-wrap">
-          <div class="svc-logo">🟢</div>
-          <div><div class="svc-name">Remitly</div><div class="svc-region">Digital first</div></div>
-        </div>
-        <div class="svc-rate">~15 ERN</div>
-        <div class="svc-fee">$3–5</div>
-        <div><span class="svc-badge badge-partial">~ Limited</span></div>
+        <div class="svc-name-wrap"><div class="svc-logo">🟢</div><div><div class="svc-name">Remitly</div><div class="svc-region">Digital first</div></div></div>
+        <div class="svc-rate">~15 ERN</div><div class="svc-fee">$3–5</div><div><span class="svc-badge badge-partial">~ Limited</span></div>
       </a>
       <a class="svc-row" href="https://wise.com" target="_blank" rel="noopener">
-        <div class="svc-name-wrap">
-          <div class="svc-logo">🔷</div>
-          <div><div class="svc-name">Wise</div><div class="svc-region">Mid-market rate</div></div>
-        </div>
-        <div class="svc-rate">Market</div>
-        <div class="svc-fee">0.5–1%</div>
-        <div><span class="svc-badge badge-no">✗ No</span></div>
+        <div class="svc-name-wrap"><div class="svc-logo">🔷</div><div><div class="svc-name">Wise</div><div class="svc-region">Mid-market rate</div></div></div>
+        <div class="svc-rate">Market</div><div class="svc-fee">0.5–1%</div><div><span class="svc-badge badge-no">✗ No</span></div>
       </a>
       <a class="svc-row" href="https://www.worldremit.com" target="_blank" rel="noopener">
-        <div class="svc-name-wrap">
-          <div class="svc-logo">🟣</div>
-          <div><div class="svc-name">WorldRemit</div><div class="svc-region">Africa focus</div></div>
-        </div>
-        <div class="svc-rate">~14.9 ERN</div>
-        <div class="svc-fee">$2–8</div>
-        <div><span class="svc-badge badge-partial">~ Limited</span></div>
+        <div class="svc-name-wrap"><div class="svc-logo">🟣</div><div><div class="svc-name">WorldRemit</div><div class="svc-region">Africa focus</div></div></div>
+        <div class="svc-rate">~14.9 ERN</div><div class="svc-fee">$2–8</div><div><span class="svc-badge badge-partial">~ Limited</span></div>
       </a>
     </div>
     <p style="font-size:.68rem;color:var(--text-dim);text-align:center;margin-bottom:20px">Tap any row to visit the provider's website · Rates updated manually</p>
@@ -680,17 +733,10 @@
 
 </div><!-- /page-wrap -->
 
-<!-- BOTTOM NAV -->
 <nav class="hub-nav">
-  <button class="hnav-btn active" data-view="learn">
-    <div class="hnav-icon">🎓</div>Learn
-  </button>
-  <button class="hnav-btn" data-view="community">
-    <div class="hnav-icon">🌍</div>Community
-  </button>
-  <button class="hnav-btn" data-view="money">
-    <div class="hnav-icon">💸</div>Send Money
-  </button>
+  <button class="hnav-btn active" data-view="learn"><div class="hnav-icon">🎓</div>Learn</button>
+  <button class="hnav-btn" data-view="community"><div class="hnav-icon-wrap">🌍<span class="nav-badge show" id="communityBadge"></span></div>Community</button>
+  <button class="hnav-btn" data-view="money"><div class="hnav-icon">💸</div>Send Money</button>
 </nav>
 
 <div class="hub-toast" id="hubToast"></div>
@@ -698,9 +744,9 @@
 <script>
 'use strict';
 
-/* ═══════════════════════════════════════════════════════
-   DATA
-═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════
+   DATA — ALPHABET
+═══════════════════════════════ */
 const ALPHABET = [
   { base:'ሀ', roman:'H',  forms:['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'], sounds:['hä','hu','hi','ha','he','h','ho'] },
   { base:'ለ', roman:'L',  forms:['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'], sounds:['lä','lu','li','la','le','l','lo'] },
@@ -728,79 +774,225 @@ const ALPHABET = [
   { base:'ፐ', roman:'P',  forms:['ፐ','ፑ','ፒ','ፓ','ፔ','ፕ','ፖ'], sounds:['pä','pu','pi','pa','pe','p','po'] },
 ];
 
+/* ═══════════════════════════════
+   DATA — VOCABULARY (11 categories)
+═══════════════════════════════ */
 const VOCAB = {
   greetings: [
-    { tig:'ሰላም',          rom:'Selam',           eng:'Hello / Peace' },
-    { tig:'ከመይ ኢኻ?',     rom:'Kemey ikha?',     eng:'How are you? (to male)' },
-    { tig:'ከመይ ኢኺ?',     rom:'Kemey ikhi?',     eng:'How are you? (to female)' },
-    { tig:'ጽቡቕ',          rom:"Ts'buq",          eng:'Fine / Good' },
-    { tig:'የቐንየለይ',      rom:'Yeqenyeley',      eng:'Thank you' },
-    { tig:'ይቅርታ',        rom:'Yiqirta',         eng:'Sorry / Excuse me' },
-    { tig:'እወ',            rom:'Iwe',             eng:'Yes' },
-    { tig:'ኣይፋሉ',        rom:'Ayfalu',          eng:'No' },
-    { tig:'ሰናይ ምሸት',    rom:'Senay mishet',    eng:'Good evening' },
-    { tig:'ሰናይ ምዓልቲ',  rom:"Senay m'alti",    eng:'Good day' },
-    { tig:'ሰናይ ሕደር',    rom:"Senay h'der",     eng:'Good night' },
-    { tig:'ሰናይ ምርኻብ',  rom:'Senay mirkab',    eng:'Nice to meet you' },
+    { tig:'ሰላም',         rom:'Selam',          eng:'Hello / Peace' },
+    { tig:'ከመይ ኢኻ?',    rom:'Kemey ikha?',    eng:'How are you? (to male)' },
+    { tig:'ከመይ ኢኺ?',    rom:'Kemey ikhi?',    eng:'How are you? (to female)' },
+    { tig:'ጽቡቕ',         rom:"Ts'buq",         eng:'Fine / Good' },
+    { tig:'የቐንየለይ',     rom:'Yeqenyeley',     eng:'Thank you' },
+    { tig:'ይቅርታ',       rom:'Yiqirta',        eng:'Sorry / Excuse me' },
+    { tig:'እወ',           rom:'Iwe',            eng:'Yes' },
+    { tig:'ኣይፋሉ',       rom:'Ayfalu',         eng:'No' },
+    { tig:'ሰናይ ምሸት',   rom:'Senay mishet',   eng:'Good evening' },
+    { tig:'ሰናይ ምዓልቲ', rom:"Senay m'alti",   eng:'Good day' },
+    { tig:'ሰናይ ሕደር',   rom:"Senay h'der",    eng:'Good night' },
+    { tig:'ሰናይ ምርኻብ', rom:'Senay mirkab',   eng:'Nice to meet you' },
   ],
   numbers: [
-    { tig:'ሓደ',    rom:'Hade',        eng:'One (1)' },
-    { tig:'ክልተ',   rom:'Kilte',       eng:'Two (2)' },
-    { tig:'ሰለስተ', rom:'Seleste',     eng:'Three (3)' },
-    { tig:'ኣርባዕተ',rom:"Arba'te",     eng:'Four (4)' },
-    { tig:'ሓሙሽተ', rom:'Hamushte',    eng:'Five (5)' },
-    { tig:'ሽዱሽተ', rom:'Shidushte',   eng:'Six (6)' },
-    { tig:'ሸውዓተ', rom:"Shew'ate",    eng:'Seven (7)' },
-    { tig:'ሸሞንተ', rom:'Shemonte',    eng:'Eight (8)' },
-    { tig:'ትሸዓተ', rom:"Tish'ate",    eng:'Nine (9)' },
-    { tig:'ዓሰርተ', rom:'Aserte',      eng:'Ten (10)' },
-    { tig:'ዒሽርተ', rom:'Eshirte',     eng:'Twenty (20)' },
-    { tig:'ሚእቲ',  rom:"Mi'ti",       eng:'One Hundred (100)' },
+    { tig:'ሓደ',   rom:'Hade',      eng:'One (1)' },
+    { tig:'ክልተ',  rom:'Kilte',     eng:'Two (2)' },
+    { tig:'ሰለስተ',rom:'Seleste',   eng:'Three (3)' },
+    { tig:'ኣርባዕተ',rom:"Arba'te",  eng:'Four (4)' },
+    { tig:'ሓሙሽተ',rom:'Hamushte',  eng:'Five (5)' },
+    { tig:'ሽዱሽተ',rom:'Shidushte', eng:'Six (6)' },
+    { tig:'ሸውዓተ',rom:"Shew'ate",  eng:'Seven (7)' },
+    { tig:'ሸሞንተ',rom:'Shemonte',  eng:'Eight (8)' },
+    { tig:'ትሸዓተ',rom:"Tish'ate",  eng:'Nine (9)' },
+    { tig:'ዓሰርተ',rom:'Aserte',    eng:'Ten (10)' },
+    { tig:'ዒሽርተ',rom:'Eshirte',   eng:'Twenty (20)' },
+    { tig:'ሚእቲ', rom:"Mi'ti",     eng:'One Hundred (100)' },
   ],
   family: [
-    { tig:'ኣቦ',   rom:'Abo',         eng:'Father' },
-    { tig:'ኣደ',   rom:'Ade',         eng:'Mother' },
-    { tig:'ወዲ',   rom:'Wedi',        eng:'Son / Boy' },
-    { tig:'ጓል',   rom:'Gual',        eng:'Daughter / Girl' },
-    { tig:'ሓው',   rom:'Haw',         eng:'Brother' },
-    { tig:'ሓፍቲ', rom:'Hafti',        eng:'Sister' },
-    { tig:'ሰብኣይ',rom:"Seba'i",       eng:'Husband' },
-    { tig:'ሰበይቲ',rom:'Sebeyti',      eng:'Wife' },
-    { tig:'ወለዲ', rom:'Weledi',       eng:'Parents' },
-    { tig:'ሕጻን', rom:"H'tsan",       eng:'Baby / Child' },
-    { tig:'ኣቦሓጎ',rom:'Abohago',      eng:'Grandfather' },
-    { tig:'ኣዲኣ', rom:'Adia',         eng:'Grandmother' },
+    { tig:'ኣቦ',  rom:'Abo',     eng:'Father' },
+    { tig:'ኣደ',  rom:'Ade',     eng:'Mother' },
+    { tig:'ወዲ',  rom:'Wedi',    eng:'Son / Boy' },
+    { tig:'ጓል',  rom:'Gual',    eng:'Daughter / Girl' },
+    { tig:'ሓው',  rom:'Haw',     eng:'Brother' },
+    { tig:'ሓፍቲ',rom:'Hafti',   eng:'Sister' },
+    { tig:'ሰብኣይ',rom:"Seba'i", eng:'Husband' },
+    { tig:'ሰበይቲ',rom:'Sebeyti',eng:'Wife' },
+    { tig:'ወለዲ',rom:'Weledi',  eng:'Parents' },
+    { tig:'ሕጻን',rom:"H'tsan",  eng:'Baby / Child' },
+    { tig:'ኣቦሓጎ',rom:'Abohago',eng:'Grandfather' },
+    { tig:'ኣዲኣ',rom:'Adia',    eng:'Grandmother' },
   ],
   food: [
-    { tig:'እንጀራ', rom:'Injera',      eng:'Flatbread (staple)' },
-    { tig:'ጥብሲ',  rom:'Tibsi',       eng:'Grilled meat' },
-    { tig:'ሽሮ',   rom:'Shiro',       eng:'Chickpea stew' },
-    { tig:'ሻሂ',   rom:'Shahi',       eng:'Tea' },
-    { tig:'ቡን',   rom:'Bun',         eng:'Coffee' },
-    { tig:'ማይ',   rom:'Mai',         eng:'Water' },
-    { tig:'ዳቦ',   rom:'Dabo',        eng:'Bread' },
-    { tig:'ስጋ',   rom:'Siga',        eng:'Meat' },
-    { tig:'ዓሳ',   rom:'Asa',         eng:'Fish' },
-    { tig:'ፍረ',   rom:'Fire',        eng:'Fruit' },
-    { tig:'ሽንጥሮ',rom:'Shintro',      eng:'Lentils' },
-    { tig:'ቅቤ',   rom:"Q'be",        eng:'Butter / Ghee' },
+    { tig:'እንጀራ',rom:'Injera',  eng:'Flatbread (staple)' },
+    { tig:'ጥብሲ', rom:'Tibsi',   eng:'Grilled meat' },
+    { tig:'ሽሮ',  rom:'Shiro',   eng:'Chickpea stew' },
+    { tig:'ሻሂ',  rom:'Shahi',   eng:'Tea' },
+    { tig:'ቡን',  rom:'Bun',     eng:'Coffee' },
+    { tig:'ማይ',  rom:'Mai',     eng:'Water' },
+    { tig:'ዳቦ',  rom:'Dabo',    eng:'Bread' },
+    { tig:'ስጋ',  rom:'Siga',    eng:'Meat' },
+    { tig:'ዓሳ',  rom:'Asa',     eng:'Fish' },
+    { tig:'ፍረ',  rom:'Fire',    eng:'Fruit' },
+    { tig:'ሽንጥሮ',rom:'Shintro', eng:'Lentils' },
+    { tig:'ቅቤ',  rom:"Q'be",    eng:'Butter / Ghee' },
   ],
   phrases: [
-    { tig:'ስምካ መን ኢዩ?', rom:'Simka men iyu?',    eng:"What's your name?" },
-    { tig:'ስመይ … ኢዩ',   rom:'Simey … iyu',       eng:'My name is …' },
-    { tig:'ካበይ ኢኻ?',    rom:'Kabey ikha?',        eng:'Where are you from?' },
-    { tig:'ክንደይ ዋጋ?',  rom:'Kindey waga?',       eng:'How much does it cost?' },
-    { tig:'ኣበይ ኣሎ?',   rom:"Abey alo?",           eng:'Where is it?' },
-    { tig:'ሓግዘኒ',       rom:'Hagizeni',           eng:'Help me / Please help' },
-    { tig:'ኣይፈልጥን',    rom:"Ayfeltin",            eng:"I don't know" },
-    { tig:'ርደኣኒ',       rom:"Ride'ani",            eng:'I understand' },
-    { tig:'ናፊቐካ',       rom:"Nafi'qeka",           eng:'I miss you' },
-    { tig:'ፍቖዶ',        rom:"F'qodo",              eng:'I love you' },
-    { tig:'ሕጂ ይምለስ',  rom:'H\'ji yimles',        eng:'Coming back soon' },
-    { tig:'ሰናይ ጉዕዞ',  rom:"Senay gu'ezo",        eng:'Safe travels' },
+    { tig:'ስምካ መን ኢዩ?',rom:'Simka men iyu?',  eng:"What's your name?" },
+    { tig:'ስመይ … ኢዩ',  rom:'Simey … iyu',     eng:'My name is …' },
+    { tig:'ካበይ ኢኻ?',   rom:'Kabey ikha?',     eng:'Where are you from?' },
+    { tig:'ክንደይ ዋጋ?', rom:'Kindey waga?',    eng:'How much does it cost?' },
+    { tig:'ኣበይ ኣሎ?',  rom:'Abey alo?',       eng:'Where is it?' },
+    { tig:'ሓግዘኒ',      rom:'Hagizeni',        eng:'Help me please' },
+    { tig:'ኣይፈልጥን',   rom:'Ayfeltin',        eng:"I don't know" },
+    { tig:'ርደኣኒ',      rom:"Ride'ani",        eng:'I understand' },
+    { tig:'ናፊቐካ',      rom:"Nafi'qeka",       eng:'I miss you' },
+    { tig:'ፍቖዶ',       rom:"F'qodo",          eng:'I love you' },
+    { tig:'ሕጂ ይምለስ', rom:"H'ji yimles",     eng:'Coming back soon' },
+    { tig:'ሰናይ ጉዕዞ', rom:"Senay gu'ezo",    eng:'Safe travels' },
+  ],
+  colors: [
+    { tig:'ቀይሕ',  rom:'Qeyih',   eng:'Red' },
+    { tig:'ሰማያዊ',rom:'Semayawi',eng:'Blue' },
+    { tig:'ቀጠልያ',rom:'Qetelya', eng:'Green' },
+    { tig:'ብጫ',   rom:'Bicha',   eng:'Yellow' },
+    { tig:'ጸሊም', rom:'Tselim',  eng:'Black' },
+    { tig:'ጻዕዳ', rom:"Tsa'da",  eng:'White' },
+    { tig:'ቡናዊ', rom:'Bunawi',  eng:'Brown' },
+    { tig:'ሃምራዊ',rom:'Hamrawi', eng:'Purple / Pink' },
+    { tig:'ቱቡቁ', rom:'Tubuqu',  eng:'Orange' },
+    { tig:'ሩምዲ', rom:'Rumdi',   eng:'Gray' },
+    { tig:'ብሩህ', rom:'Biruh',   eng:'Bright / Light' },
+    { tig:'ጸሊምን ጻዕዳን',rom:"Tselim na tsa'da", eng:'Black and white' },
+  ],
+  days: [
+    { tig:'ሰኑይ', rom:'Senuy',  eng:'Monday' },
+    { tig:'ሰሉስ', rom:'Selus',  eng:'Tuesday' },
+    { tig:'ረቡዕ', rom:"Rebu'",  eng:'Wednesday' },
+    { tig:'ሓሙስ', rom:'Hamus',  eng:'Thursday' },
+    { tig:'ዓርቢ', rom:'Arbi',   eng:'Friday' },
+    { tig:'ቀዳም', rom:'Qedam',  eng:'Saturday' },
+    { tig:'ሰንበት',rom:'Senbet', eng:'Sunday' },
+    { tig:'ሎሚ',  rom:'Lomi',   eng:'Today' },
+    { tig:'ትማሊ',rom:'Temali', eng:'Yesterday' },
+    { tig:'ጽባሕ', rom:"Ts'bah", eng:'Tomorrow' },
+    { tig:'ሰሙን', rom:'Semun',  eng:'Week' },
+    { tig:'ዕለት', rom:'Elet',   eng:'Date / Day' },
+  ],
+  months: [
+    { tig:'መስከረም',rom:'Meskerem', eng:'September (Ge\'ez month 1)' },
+    { tig:'ጥቅምቲ', rom:'Tiqmti',   eng:'October' },
+    { tig:'ሕዳር',  rom:"H'dar",    eng:'November' },
+    { tig:'ታሕሳስ', rom:'Tahsas',   eng:'December' },
+    { tig:'ጥሪ',   rom:'Tri',      eng:'January' },
+    { tig:'ለካቲት', rom:'Lekatit',  eng:'February' },
+    { tig:'መጋቢት', rom:'Megabit',  eng:'March' },
+    { tig:'ሚያዝያ', rom:'Miyazya',  eng:'April' },
+    { tig:'ግንቦት', rom:'Ginbot',   eng:'May' },
+    { tig:'ሰነ',   rom:'Sene',     eng:'June' },
+    { tig:'ሓምለ',  rom:'Hamle',    eng:'July' },
+    { tig:'ነሓሰ',  rom:'Nehase',   eng:'August' },
+  ],
+  body: [
+    { tig:'ርእሲ',  rom:"Ri'si",   eng:'Head' },
+    { tig:'ዓይኒ',  rom:"'Ayni",   eng:'Eye' },
+    { tig:'እዝኒ',  rom:'Izni',    eng:'Ear' },
+    { tig:'ኣፍ',   rom:'Af',      eng:'Mouth' },
+    { tig:'ኣፍንጫ',rom:'Afnicha', eng:'Nose' },
+    { tig:'ኢድ',   rom:'Id',      eng:'Hand / Arm' },
+    { tig:'እግሪ',  rom:'Igri',    eng:'Foot / Leg' },
+    { tig:'ልቢ',   rom:'Libi',    eng:'Heart' },
+    { tig:'ሆድ',   rom:'Hod',     eng:'Stomach' },
+    { tig:'ዝባን',  rom:'Ziban',   eng:'Back' },
+    { tig:'ጸጉሪ', rom:'Tseguri', eng:'Hair' },
+    { tig:'ኣስናን',rom:'Asnan',   eng:'Teeth' },
+  ],
+  verbs: [
+    { tig:'ምብላዕ', rom:"M'bla'",  eng:'To eat' },
+    { tig:'ምስታይ', rom:"M'stay",  eng:'To drink' },
+    { tig:'ምኻድ',  rom:"M'khad",  eng:'To go' },
+    { tig:'ምምጻእ', rom:"M'mts'a'",eng:'To come' },
+    { tig:'ምዝራብ', rom:"M'zerab", eng:'To speak' },
+    { tig:'ምርኣይ', rom:"M'r'ay",  eng:'To see / watch' },
+    { tig:'ምስማዕ', rom:"M'sma'",  eng:'To hear / listen' },
+    { tig:'ምውሳድ', rom:"M'wsad",  eng:'To take' },
+    { tig:'ምሃብ',  rom:"M'hab",   eng:'To give' },
+    { tig:'ምድቃስ', rom:"M'dqas",  eng:'To sleep' },
+    { tig:'ምስራሕ', rom:"M'srah",  eng:'To work' },
+    { tig:'ምፍቓር', rom:"M'fqar",  eng:'To love' },
+  ],
+  places: [
+    { tig:'ቤት',       rom:'Bet',         eng:'House / Home' },
+    { tig:'ቤት ትምህርቲ',rom:'Bet timhrti', eng:'School' },
+    { tig:'ሆስፒታል',  rom:'Hospital',    eng:'Hospital' },
+    { tig:'ዕዳጋ',     rom:"'Edaga",      eng:'Market / Shop' },
+    { tig:'ቤተ ክርስቲያን',rom:'Bete kirstiyan',eng:'Church' },
+    { tig:'ሰፈር',     rom:'Sefer',       eng:'Neighborhood' },
+    { tig:'ቤት ምግቢ', rom:'Bet migbi',   eng:'Restaurant' },
+    { tig:'ኣየር ጣብያ',rom:"Ayer tabya",  eng:'Airport' },
+    { tig:'ባሕሪ',     rom:'Bahri',       eng:'Sea / Beach' },
+    { tig:'ከተማ',     rom:'Ketema',      eng:'City / Town' },
+    { tig:'ዓዲ',      rom:"'Adi",        eng:'Village / Country' },
+    { tig:'ሰሜናዊ',   rom:'Semenawi',    eng:'Northern (direction)' },
   ],
 };
 
+const VOCAB_CATS = [
+  { key:'greetings', label:'👋 Greetings' },
+  { key:'numbers',   label:'🔢 Numbers' },
+  { key:'family',    label:'👨‍👩‍👧 Family' },
+  { key:'food',      label:'🍽 Food' },
+  { key:'phrases',   label:'💬 Phrases' },
+  { key:'colors',    label:'🎨 Colors' },
+  { key:'days',      label:'📅 Days' },
+  { key:'months',    label:'🗓 Months' },
+  { key:'body',      label:'🫀 Body' },
+  { key:'verbs',     label:'🏃 Verbs' },
+  { key:'places',    label:'📍 Places' },
+];
+
+/* ═══════════════════════════════
+   DATA — LESSONS
+═══════════════════════════════ */
+const LESSONS = [
+  {
+    id:'greetings', emoji:'👋', title:'First Greetings', xp:25,
+    desc:'Learn how to say hello and basic pleasantries',
+    intro:'In Eritrea, greetings are very important. People greet each other with warmth and respect. "Selam" means both hello and peace. Let\'s learn how to greet like a local!',
+    category:'greetings',
+  },
+  {
+    id:'numbers', emoji:'🔢', title:'Numbers & Counting', xp:25,
+    desc:'Count from 1 to 100 in Tigrinya',
+    intro:'Numbers are essential in everyday life — for shopping, telling time, and more. Tigrinya numbers have a musical quality. Once you learn 1–10 the rest follow naturally!',
+    category:'numbers',
+  },
+  {
+    id:'family', emoji:'👨‍👩‍👧', title:'Family Members', xp:30,
+    desc:'Name your family members in Tigrinya',
+    intro:'Family is at the heart of Eritrean culture. Extended family ties are very strong, and knowing how to refer to family members is essential in everyday conversation.',
+    category:'family',
+  },
+  {
+    id:'food', emoji:'🍽', title:'Food & Drinks', xp:30,
+    desc:'Order food and describe Eritrean cuisine',
+    intro:'Eritrean food is rich and delicious! Injera (flatbread) is the staple eaten with stews. Coffee ceremony is a beloved tradition. Learn words for common foods and drinks!',
+    category:'food',
+  },
+  {
+    id:'places', emoji:'🗺', title:'Getting Around', xp:35,
+    desc:'Navigate places and ask for directions',
+    intro:'Whether visiting Asmara or exploring markets — knowing the names of common places helps you get around. Let\'s learn the vocabulary for locations and navigation!',
+    category:'places',
+  },
+  {
+    id:'body', emoji:'🫀', title:'The Human Body', xp:35,
+    desc:'Learn body parts for health conversations',
+    intro:'Knowing body parts is important for health, sports, and everyday descriptions. Whether at a clinic or just describing how you feel, these words are very useful.',
+    category:'body',
+  },
+];
+
+/* ═══════════════════════════════
+   DATA — EVENTS & DIRECTORY
+═══════════════════════════════ */
 const EVENTS = [
   { month:'MAY', day:24, title:'Eritrean Independence Day', loc:'Worldwide', type:'National Holiday' },
   { month:'MAY', day:24, title:'Independence Celebration — London', loc:'London, UK', type:'Festival' },
@@ -810,53 +1002,162 @@ const EVENTS = [
   { month:'AUG', day:10, title:'Eritrean Festival Bologna', loc:'Bologna, Italy', type:'Festival' },
   { month:'AUG', day:24, title:'Diaspora Community Games', loc:'Washington DC, USA', type:'Sports' },
   { month:'SEP', day:1,  title:'Eritrean New Year (Qiddus Yohannes)', loc:'Worldwide', type:'Holiday' },
-  { month:'SEP', day:1,  title:'New Year Celebration — Toronto', loc:'Toronto, Canada', type:'Festival' },
   { month:'OCT', day:15, title:'Eritrean Music & Art Showcase', loc:'Melbourne, Australia', type:'Arts' },
   { month:'NOV', day:10, title:'Tigrinya Language Day', loc:'Online & Community Halls', type:'Cultural' },
   { month:'DEC', day:25, title:'Christmas Celebrations (Western)', loc:'Diaspora Communities', type:'Religious' },
 ];
 
 const DIRECTORY = [
-  { icon:'🍽', name:'Asmara Restaurant',         cat:'Restaurant',  loc:'Washington DC, USA',    desc:'Traditional Eritrean cuisine, injera and tibs since 1985' },
-  { icon:'🍽', name:'Hidmo',                      cat:'Restaurant',  loc:'London, UK',            desc:'Authentic Eritrean food and traditional coffee ceremony' },
-  { icon:'🍽', name:'Blue Nile Restaurant',       cat:'Restaurant',  loc:'Minneapolis, USA',      desc:'Habesha cuisine, vegetarian-friendly options' },
-  { icon:'🏪', name:'Eri Market',                 cat:'Grocery',     loc:'Los Angeles, USA',      desc:'Eritrean & Ethiopian groceries, spices and injera flour' },
-  { icon:'🏪', name:'Habesha Supermarket',        cat:'Grocery',     loc:'Toronto, Canada',       desc:'East African groceries, teff, berbere and household goods' },
-  { icon:'💇', name:'Habesha Hair & Beauty',      cat:'Beauty',      loc:'Frankfurt, Germany',    desc:'Specialist in African hair care, braiding and styling' },
-  { icon:'⚖', name:'Eritrean Legal Aid Network', cat:'Legal',       loc:'Berlin, Germany',       desc:'Asylum, immigration and family reunification legal support' },
-  { icon:'🏥', name:'Habesha Medical Clinic',     cat:'Healthcare',  loc:'Stockholm, Sweden',     desc:'Healthcare provider with Tigrinya-speaking medical staff' },
-  { icon:'🎵', name:'Eri Music Production',       cat:'Music',       loc:'Frankfurt, Germany',    desc:'Recording studio for Eritrean and Habesha artists' },
-  { icon:'✈', name:'Eri Travel & Tours',          cat:'Travel',      loc:'New York, USA',         desc:'Flights, visa assistance and tours to Eritrea & Ethiopia' },
-  { icon:'🏫', name:'Tigrinya Language School',   cat:'Education',   loc:'Online',                desc:'Weekend Tigrinya classes for diaspora children and adults' },
-  { icon:'📦', name:'Eri Shipping & Cargo',       cat:'Shipping',    loc:'Rotterdam, Netherlands',desc:'Cargo services to Eritrea, door-to-door delivery available' },
+  { icon:'🍽', name:'Asmara Restaurant',         cat:'Restaurant', loc:'Washington DC, USA',     desc:'Traditional Eritrean cuisine, injera and tibs since 1985' },
+  { icon:'🍽', name:'Hidmo',                      cat:'Restaurant', loc:'London, UK',             desc:'Authentic Eritrean food and traditional coffee ceremony' },
+  { icon:'🍽', name:'Blue Nile Restaurant',       cat:'Restaurant', loc:'Minneapolis, USA',       desc:'Habesha cuisine, vegetarian-friendly options' },
+  { icon:'🏪', name:'Eri Market',                 cat:'Grocery',   loc:'Los Angeles, USA',       desc:'Eritrean & Ethiopian groceries, spices and injera flour' },
+  { icon:'🏪', name:'Habesha Supermarket',        cat:'Grocery',   loc:'Toronto, Canada',        desc:'East African groceries, teff, berbere and household goods' },
+  { icon:'💇', name:'Habesha Hair & Beauty',      cat:'Beauty',    loc:'Frankfurt, Germany',     desc:'Specialist in African hair care, braiding and styling' },
+  { icon:'⚖',  name:'Eritrean Legal Aid Network', cat:'Legal',     loc:'Berlin, Germany',        desc:'Asylum, immigration and family reunification legal support' },
+  { icon:'🏥', name:'Habesha Medical Clinic',     cat:'Healthcare',loc:'Stockholm, Sweden',      desc:'Healthcare with Tigrinya-speaking medical staff' },
+  { icon:'🎵', name:'Eri Music Production',       cat:'Music',     loc:'Frankfurt, Germany',     desc:'Recording studio for Eritrean and Habesha artists' },
+  { icon:'✈',  name:'Eri Travel & Tours',          cat:'Travel',    loc:'New York, USA',          desc:'Flights, visa assistance and tours to Eritrea & Ethiopia' },
+  { icon:'🏫', name:'Tigrinya Language School',   cat:'Education', loc:'Online',                 desc:'Weekend Tigrinya classes for diaspora children and adults' },
+  { icon:'📦', name:'Eri Shipping & Cargo',       cat:'Shipping',  loc:'Rotterdam, Netherlands', desc:'Cargo services to Eritrea, door-to-door delivery available' },
 ];
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════
+   UTILITY
+═══════════════════════════════ */
+function shuffleArr(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ═══════════════════════════════
+   PROGRESS — XP / STREAK / STARS
+═══════════════════════════════ */
+let prog = JSON.parse(localStorage.getItem('hub-progress') || '{"xp":0,"streak":0,"stars":0,"lastActive":""}');
+
+function saveProg() { localStorage.setItem('hub-progress', JSON.stringify(prog)); if (typeof syncProgress === 'function') syncProgress(); }
+
+function updateStreak() {
+  const today = new Date().toDateString();
+  if (prog.lastActive === today) return;
+  const yesterday = new Date(Date.now() - 864e5).toDateString();
+  prog.streak = (prog.lastActive === yesterday) ? prog.streak + 1 : 1;
+  prog.lastActive = today;
+  saveProg();
+}
+
+function awardXP(amount) {
+  prog.xp += amount;
+  saveProg();
+  updateProgressStrip();
+  hubToast('+' + amount + ' XP earned! 🏆');
+}
+
+function awardStars(count) {
+  prog.stars += count;
+  saveProg();
+  updateProgressStrip();
+}
+
+function updateProgressStrip() {
+  document.getElementById('psXP').textContent = prog.xp;
+  document.getElementById('psStreak').textContent = prog.streak;
+  document.getElementById('psStars').textContent = prog.stars;
+}
+updateProgressStrip();
+
+/* TWEAK 10: RESET PROGRESS */
+document.getElementById('psResetBtn').addEventListener('click', () => {
+  if (!confirm('Reset all learning progress? This will clear XP, streaks, stars and lesson history.')) return;
+  localStorage.removeItem('hub-progress');
+  localStorage.removeItem('hub-lessons');
+  localStorage.removeItem('hub-cat-stars');
+  prog = { xp:0, streak:0, stars:0, lastActive:'' };
+  saveProg();
+  updateProgressStrip();
+  hubToast('Progress reset ✓');
+  if (document.getElementById('tab-lessons').classList.contains('active')) renderLessons();
+});
+
+/* TWEAK 5: SOUND TOGGLE */
+let soundOn = localStorage.getItem('hub-sound') !== 'off';
+function applySoundState() {
+  const btn = document.getElementById('soundBtn');
+  if (!btn) return;
+  btn.textContent = soundOn ? '🔊' : '🔇';
+  btn.classList.toggle('muted', !soundOn);
+}
+document.getElementById('soundBtn').addEventListener('click', () => {
+  soundOn = !soundOn;
+  localStorage.setItem('hub-sound', soundOn ? 'on' : 'off');
+  applySoundState();
+  hubToast(soundOn ? 'Sound on 🔊' : 'Sound off 🔇');
+});
+applySoundState();
+
+/* TWEAK 6: VOCAB CATEGORY STARS */
+function getCatStars() { return JSON.parse(localStorage.getItem('hub-cat-stars') || '{}'); }
+function setCatStars(cat, stars) {
+  const s = getCatStars(); s[cat] = Math.max(s[cat] || 0, stars);
+  localStorage.setItem('hub-cat-stars', JSON.stringify(s));
+  updateVocabTabStars();
+}
+function updateVocabTabStars() {
+  const stars = getCatStars();
+  document.querySelectorAll('#vocabTabs .tab-btn').forEach(btn => {
+    const cat = btn.dataset.vcat;
+    if (!cat) return;
+    const n = stars[cat] || 0;
+    let el = btn.querySelector('.vcat-stars');
+    if (n > 0) {
+      if (!el) { el = document.createElement('div'); el.className = 'vcat-stars'; btn.appendChild(el); }
+      el.textContent = '★'.repeat(n);
+    }
+  });
+}
+
+/* TWEAK 4: CONFETTI */
+function showConfetti() {
+  const colors = ['#16a34a','#22c55e','#f59e0b','#3b82f6','#ec4899','#a855f7','#ef4444'];
+  for (let i = 0; i < 50; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = 'left:' + (Math.random()*100) + '%;background:' + colors[i % colors.length] + ';animation-delay:' + (Math.random()*0.6) + 's;width:' + (5+Math.random()*7) + 'px;height:' + (5+Math.random()*7) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2200);
+  }
+}
+
+/* ═══════════════════════════════
+   DARK MODE
+═══════════════════════════════ */
+let darkMode = localStorage.getItem('hub-theme') === 'dark';
+function applyTheme() {
+  document.documentElement.dataset.theme = darkMode ? 'dark' : 'light';
+  document.getElementById('themeBtn').textContent = darkMode ? '☀️' : '🌙';
+  localStorage.setItem('hub-theme', darkMode ? 'dark' : 'light');
+}
+document.getElementById('themeBtn').addEventListener('click', () => { darkMode = !darkMode; applyTheme(); });
+applyTheme();
+
+/* ═══════════════════════════════
    NAVIGATION
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════ */
+let newsLoaded = false;
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.hnav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + id)?.classList.add('active');
-  document.querySelector(`.hnav-btn[data-view="${id}"]`)?.classList.add('active');
-  if (id === 'community' && !newsLoaded) loadNews();
+  document.querySelector('.hnav-btn[data-view="' + id + '"]')?.classList.add('active');
+  if (id === 'community') {
+    document.getElementById('communityBadge')?.classList.remove('show');
+    if (!newsLoaded) loadNews();
+  }
 }
-document.querySelectorAll('.hnav-btn').forEach(btn => {
-  btn.addEventListener('click', () => showView(btn.dataset.view));
-});
-
-function showTab(groupId, tabId, panelPrefix) {
-  document.querySelectorAll(`#${groupId} .tab-btn`).forEach(b => b.classList.remove('active'));
-  document.querySelector(`#${groupId} [data-${panelPrefix}="${tabId}"]`)?.classList.add('active');
-  // hide all sibling panels (look for tab panels in the same view)
-  const view = document.querySelector(`#${groupId}`).closest('.view, #view-learn, #view-community');
-  view?.querySelectorAll('.tab-panel').forEach(p => {
-    if (p.id === 'tab-' + tabId) p.classList.add('active');
-    else if ([...document.querySelectorAll(`#${groupId} .tab-btn`)].some(b => 'tab-' + b.dataset[panelPrefix] === p.id)) {
-      p.classList.remove('active');
-    }
-  });
-}
+document.querySelectorAll('.hnav-btn').forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.view)));
 
 // Learn tabs
 document.querySelectorAll('#learnTabs .tab-btn').forEach(btn => {
@@ -867,6 +1168,7 @@ document.querySelectorAll('#learnTabs .tab-btn').forEach(btn => {
       p.classList.toggle('active', p.id === 'tab-' + btn.dataset.tab);
     });
     if (btn.dataset.tab === 'flashcards' && !fcInited) initFlashcards();
+    if (btn.dataset.tab === 'lessons') renderLessons();
   });
 });
 
@@ -881,28 +1183,16 @@ document.querySelectorAll('#communityTabs .tab-btn').forEach(btn => {
   });
 });
 
-// Vocab sub-tabs
-document.querySelectorAll('#vocabTabs .tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#vocabTabs .tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderVocab(btn.dataset.vtab);
-  });
-});
-
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════
    ALPHABET
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════ */
 (function buildAlphabet() {
   const grid = document.getElementById('alphabetGrid');
-  grid.innerHTML = ALPHABET.map((row, ri) => `
-    <div class="vowel-row">
-      <div class="row-label">${row.roman}</div>
-      ${row.forms.map((f, fi) => `
-        <div class="fidel" data-ri="${ri}" data-fi="${fi}">${f}</div>
-      `).join('')}
-    </div>
-  `).join('');
+  grid.innerHTML = ALPHABET.map((row, ri) =>
+    '<div class="vowel-row"><div class="row-label">' + row.roman + '</div>' +
+    row.forms.map((f, fi) => '<div class="fidel" data-ri="' + ri + '" data-fi="' + fi + '">' + f + '</div>').join('') +
+    '</div>'
+  ).join('');
 
   let selRi = -1, selFi = -1;
   grid.addEventListener('click', e => {
@@ -913,104 +1203,132 @@ document.querySelectorAll('#vocabTabs .tab-btn').forEach(btn => {
     el.classList.add('sel');
     selRi = ri; selFi = fi;
     const row = ALPHABET[ri];
-    const detail = document.getElementById('fidelDetail');
     document.getElementById('fidelBig').textContent   = row.forms[fi];
-    document.getElementById('fidelName').textContent  = `${row.forms[fi]} (${row.roman} row)`;
-    document.getElementById('fidelRoman').textContent = `Romanized: "${row.sounds[fi]}"`;
-    document.getElementById('fidelSound').textContent = `Order ${fi + 1} of 7 · Vowel sound: "${['ä','u','i','a','e','ə','o'][fi]}"`;
+    document.getElementById('fidelName').textContent  = row.forms[fi] + ' (' + row.roman + ' row)';
+    document.getElementById('fidelRoman').textContent = 'Romanized: "' + row.sounds[fi] + '"';
+    document.getElementById('fidelSound').textContent = 'Order ' + (fi + 1) + ' of 7 · Vowel: "' + ['ä','u','i','a','e','ə','o'][fi] + '"';
+    const detail = document.getElementById('fidelDetail');
     detail.style.display = 'flex';
-    detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    detail.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  });
+  document.getElementById('fidelSpeakBtn').addEventListener('click', () => {
+    if (selRi >= 0) speak(ALPHABET[selRi].sounds[selFi]);
   });
 
-  document.getElementById('fidelSpeakBtn').addEventListener('click', () => {
-    if (selRi < 0) return;
-    const sound = ALPHABET[selRi].sounds[selFi];
-    speak(sound);
+  /* TWEAK 8: ALPHABET SEARCH */
+  document.getElementById('alphSearch').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#alphabetGrid .vowel-row').forEach((row, i) => {
+      row.classList.toggle('dim', q !== '' && !ALPHABET[i].roman.toLowerCase().startsWith(q));
+    });
   });
 })();
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════
    VOCABULARY
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════ */
+(function buildVocabTabs() {
+  const el = document.getElementById('vocabTabs');
+  VOCAB_CATS.forEach((cat, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.dataset.vcat = cat.key;
+    btn.textContent = cat.label;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#vocabTabs .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderVocab(cat.key);
+    });
+    el.appendChild(btn);
+  });
+  renderVocab('greetings');
+  updateVocabTabStars();
+})();
+
 function renderVocab(cat) {
   const items = VOCAB[cat] || [];
   const grid = document.getElementById('vocabGrid');
-  grid.innerHTML = items.map((v, i) => `
-    <div class="vocab-card" data-idx="${i}">
-      <div class="vc-tig">${v.tig}</div>
-      <div class="vc-rom">${v.rom}</div>
-      <div class="vc-eng hidden">${v.eng}</div>
-      <div class="vc-hint">Tap to reveal</div>
-    </div>
-  `).join('');
+  grid.innerHTML = items.map((v, i) =>
+    '<div class="vocab-card" data-idx="' + i + '">' +
+    '<div class="vc-tig">' + v.tig + '</div>' +
+    '<div class="vc-rom">' + v.rom + '</div>' +
+    '<div class="vc-eng hidden">' + v.eng + '</div>' +
+    '<div class="vc-hint">Tap to reveal</div></div>'
+  ).join('');
   grid.querySelectorAll('.vocab-card').forEach(card => {
     card.addEventListener('click', () => {
-      card.classList.toggle('flipped');
+      const flipped = card.classList.toggle('flipped');
       const eng = card.querySelector('.vc-eng');
-      const hint = card.querySelector('.vc-hint');
-      const flipped = card.classList.contains('flipped');
       eng.classList.toggle('hidden', !flipped);
-      hint.textContent = flipped ? 'Tap to hide' : 'Tap to reveal';
+      card.querySelector('.vc-hint').textContent = flipped ? 'Tap to hide' : 'Tap to reveal';
       if (flipped) speak(card.querySelector('.vc-tig').textContent);
     });
   });
 }
-renderVocab('greetings');
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════
    FLASHCARDS
-═══════════════════════════════════════════════════════ */
-let fcInited = false, fcDeck = [], fcIdx = 0, fcKnown = 0, fcRevealed = false;
+═══════════════════════════════ */
+let fcInited = false, fcDeck = [], fcIdx = 0, fcKnown = 0, fcRevealed = false, fcCat = 'all';
 
 function initFlashcards() {
+  if (fcInited) return;
   fcInited = true;
-  // Build deck from all vocab
-  fcDeck = Object.values(VOCAB).flat();
-  shuffleDeck();
-  renderFC();
+  /* TWEAK 1: build category chips */
+  const chipsEl = document.getElementById('fcChips');
+  const allCount = Object.values(VOCAB).flat().length;
+  const cats = [{ key:'all', label:'All (' + allCount + ')' },
+    ...VOCAB_CATS.map(c => ({ key:c.key, label:c.label + ' (' + (VOCAB[c.key]?.length||0) + ')' }))];
+  chipsEl.innerHTML = cats.map((c,i) =>
+    '<button class="fc-chip' + (i===0?' active':'') + '" data-cat="' + c.key + '">' + c.label + '</button>'
+  ).join('');
+  chipsEl.querySelectorAll('.fc-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      chipsEl.querySelectorAll('.fc-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      fcCat = btn.dataset.cat;
+      buildAndResetFC();
+    });
+  });
+  buildAndResetFC();
 }
 
-function shuffleDeck() {
-  for (let i = fcDeck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [fcDeck[i], fcDeck[j]] = [fcDeck[j], fcDeck[i]];
-  }
+function buildAndResetFC() {
+  fcDeck = fcCat === 'all'
+    ? shuffleArr(Object.values(VOCAB).flat())
+    : shuffleArr([...(VOCAB[fcCat]||[])]);
   fcIdx = 0; fcKnown = 0; fcRevealed = false;
+  document.getElementById('fcDone').style.display = 'none';
+  document.getElementById('fcCard').style.display = 'flex';
+  document.getElementById('fcControls').style.display = 'none';
+  renderFC();
 }
 
 function renderFC() {
   const done = document.getElementById('fcDone');
   const card = document.getElementById('fcCard');
   const ctrls = document.getElementById('fcControls');
-
   if (fcIdx >= fcDeck.length) {
-    card.style.display = 'none';
-    ctrls.style.display = 'none';
-    done.style.display = 'block';
+    card.style.display = 'none'; ctrls.style.display = 'none'; done.style.display = 'block';
     document.getElementById('fcProgressFill').style.width = '100%';
     document.getElementById('fcProgressLabel').textContent = 'Complete!';
     document.getElementById('fcDoneMsg').textContent =
-      `You knew ${fcKnown} out of ${fcDeck.length} words. ${fcKnown >= fcDeck.length * 0.8 ? '🎉 Excellent!' : 'Keep practising!'}`;
+      'You knew ' + fcKnown + ' out of ' + fcDeck.length + ' words. ' +
+      (fcKnown >= fcDeck.length * 0.8 ? '🎉 Excellent!' : 'Keep practising!');
     return;
   }
-
-  done.style.display = 'none';
-  card.style.display = 'flex';
-  ctrls.style.display = 'none';
-
+  done.style.display = 'none'; card.style.display = 'flex'; ctrls.style.display = 'none';
   const v = fcDeck[fcIdx];
   fcRevealed = false;
-  document.getElementById('fcTig').textContent  = v.tig;
-  document.getElementById('fcRom').textContent  = v.rom;
-  document.getElementById('fcEng').textContent  = v.eng;
+  document.getElementById('fcTig').textContent = v.tig;
+  document.getElementById('fcRom').textContent = v.rom;
+  document.getElementById('fcEng').textContent = v.eng;
   document.getElementById('fcEng').style.display = 'none';
   document.getElementById('fcTap').style.display = 'block';
   document.getElementById('fcBadge').textContent = 'Tap to reveal';
   card.classList.remove('revealed');
-
-  const pct = (fcIdx / fcDeck.length) * 100;
-  document.getElementById('fcProgressFill').style.width = pct + '%';
-  document.getElementById('fcProgressLabel').textContent = `Card ${fcIdx + 1} of ${fcDeck.length} · ${fcKnown} known`;
+  document.getElementById('fcProgressFill').style.width = (fcIdx / fcDeck.length * 100) + '%';
+  document.getElementById('fcProgressLabel').textContent = 'Card ' + (fcIdx + 1) + ' of ' + fcDeck.length + ' · ' + fcKnown + ' known';
 }
 
 document.getElementById('fcCard').addEventListener('click', () => {
@@ -1023,148 +1341,431 @@ document.getElementById('fcCard').addEventListener('click', () => {
   document.getElementById('fcControls').style.display = 'flex';
   speak(fcDeck[fcIdx].tig);
 });
-
 document.getElementById('fcSkip').addEventListener('click', () => { fcIdx++; renderFC(); });
 document.getElementById('fcKnow').addEventListener('click', () => { fcKnown++; fcIdx++; renderFC(); });
-document.getElementById('fcRestart').addEventListener('click', () => {
-  shuffleDeck();
-  document.getElementById('fcDone').style.display = 'none';
-  document.getElementById('fcCard').style.display = 'flex';
-  renderFC();
+document.getElementById('fcRestart').addEventListener('click', buildAndResetFC);
+
+/* ═══════════════════════════════
+   QUIZ
+═══════════════════════════════ */
+const QUIZ_LEN = 10;
+let quizDeck = [], quizIdx = 0, quizScore = 0, quizAnswered = false, lastQuizStars = 0;
+let quizTimerTO = null;
+
+/* TWEAK 2: QUIZ TIMER */
+function startQuizTimer() {
+  clearQuizTimer();
+  const fill = document.getElementById('quizTimerFill');
+  if (!fill) return;
+  fill.style.transition = 'none'; fill.style.width = '100%';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    fill.style.transition = 'width 15s linear'; fill.style.width = '0%';
+  }));
+  quizTimerTO = setTimeout(() => {
+    if (quizAnswered) return;
+    quizAnswered = true;
+    document.querySelectorAll('.quiz-choice').forEach(b => {
+      if (b.dataset.correct === 'true') b.classList.add('correct'); else b.classList.add('disabled');
+    });
+    const fb = document.getElementById('quizFeedback');
+    fb.textContent = '⏱ Time\'s up! · ' + quizDeck[quizIdx].eng;
+    fb.className = 'quiz-feedback err';
+    setTimeout(() => { quizIdx++; renderQuizQ(); }, 1500);
+  }, 15000);
+}
+function clearQuizTimer() {
+  if (quizTimerTO) { clearTimeout(quizTimerTO); quizTimerTO = null; }
+  const fill = document.getElementById('quizTimerFill');
+  if (fill) { fill.style.transition = 'none'; fill.style.width = '100%'; }
+}
+
+function startQuiz() {
+  const all = shuffleArr(Object.values(VOCAB).flat());
+  quizDeck = all.slice(0, QUIZ_LEN);
+  quizIdx = 0; quizScore = 0; quizAnswered = false;
+  document.getElementById('quizStart').style.display = 'none';
+  document.getElementById('quizRound').style.display = 'block';
+  document.getElementById('quizDone').style.display = 'none';
+  renderQuizQ();
+}
+
+function renderQuizQ() {
+  if (quizIdx >= quizDeck.length) { showQuizResult(); return; }
+  quizAnswered = false;
+  const q = quizDeck[quizIdx];
+  const all = Object.values(VOCAB).flat();
+  const wrongs = shuffleArr(all.filter(w => w.eng !== q.eng)).slice(0, 3);
+  const choices = shuffleArr([{ eng: q.eng, correct: true }, ...wrongs.map(w => ({ eng: w.eng, correct: false }))]);
+
+  document.getElementById('quizWord').textContent = q.tig;
+  document.getElementById('quizRom').textContent = q.rom;
+  document.getElementById('quizProgressFill').style.width = (quizIdx / QUIZ_LEN * 100) + '%';
+  document.getElementById('quizCounter').textContent = 'Question ' + (quizIdx + 1) + ' of ' + QUIZ_LEN + ' · ' + quizScore + ' correct';
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('quizFeedback').className = 'quiz-feedback';
+
+  const el = document.getElementById('quizChoices');
+  el.innerHTML = choices.map(c =>
+    '<button class="quiz-choice" data-correct="' + c.correct + '">' + c.eng + '</button>'
+  ).join('');
+  el.querySelectorAll('.quiz-choice').forEach(btn => btn.addEventListener('click', () => handleQuizAnswer(btn)));
+  startQuizTimer();
+}
+
+function handleQuizAnswer(btn) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  clearQuizTimer();
+  const ok = btn.dataset.correct === 'true';
+  document.querySelectorAll('.quiz-choice').forEach(b => {
+    if (b.dataset.correct === 'true') b.classList.add('correct');
+    else if (b === btn) b.classList.add('wrong');
+    else b.classList.add('disabled');
+  });
+  const fb = document.getElementById('quizFeedback');
+  if (ok) { quizScore++; fb.textContent = '✓ Correct!'; fb.className = 'quiz-feedback ok'; speak(quizDeck[quizIdx].tig); }
+  else { fb.textContent = '✗ The answer was: ' + quizDeck[quizIdx].eng; fb.className = 'quiz-feedback err'; }
+  setTimeout(() => { quizIdx++; renderQuizQ(); }, 1400);
+}
+
+function showQuizResult() {
+  clearQuizTimer();
+  document.getElementById('quizRound').style.display = 'none';
+  document.getElementById('quizDone').style.display = 'block';
+  const pct = quizScore / QUIZ_LEN;
+  lastQuizStars = pct >= 0.8 ? 3 : pct >= 0.6 ? 2 : pct >= 0.4 ? 1 : 0;
+  const xp = quizScore * 5;
+  document.getElementById('qdStars').textContent = '⭐'.repeat(lastQuizStars) + '☆'.repeat(3 - lastQuizStars);
+  document.getElementById('qdScore').textContent = quizScore + ' / ' + QUIZ_LEN;
+  document.getElementById('qdScoreSub').textContent = pct >= 0.8 ? 'Excellent work! 🎉' : pct >= 0.6 ? 'Good job! Keep it up.' : 'Keep practising — you\'ll get there!';
+  document.getElementById('qdXp').textContent = '+' + xp + ' XP earned';
+  updateStreak();
+  awardXP(xp);
+  if (lastQuizStars > 0) awardStars(lastQuizStars);
+}
+
+document.getElementById('quizStartBtn').addEventListener('click', startQuiz);
+document.getElementById('quizAgain').addEventListener('click', () => {
+  document.getElementById('quizStart').style.display = 'block';
+  document.getElementById('quizDone').style.display = 'none';
+});
+/* TWEAK 7: SHARE SCORE */
+document.getElementById('quizShareBtn').addEventListener('click', () => {
+  const text = '📝 Eritrean Hub Quiz: ' + quizScore + '/' + QUIZ_LEN + ' ' + '⭐'.repeat(lastQuizStars) + ' +' + (quizScore * 5) + ' XP — eritreaninfo.com/hub';
+  navigator.clipboard?.writeText(text).then(() => hubToast('Copied to clipboard!')).catch(() => hubToast('Could not copy'));
 });
 
-/* ═══════════════════════════════════════════════════════
-   NEWS — RSS via rss2json
-═══════════════════════════════════════════════════════ */
-let newsLoaded = false;
+/* ═══════════════════════════════
+   LESSONS
+═══════════════════════════════ */
+function getLessonsDone() { return JSON.parse(localStorage.getItem('hub-lessons') || '[]'); }
+function markLessonDone(id) {
+  const done = getLessonsDone();
+  if (!done.includes(id)) { done.push(id); localStorage.setItem('hub-lessons', JSON.stringify(done)); if (typeof syncProgress === 'function') syncProgress(); }
+}
+
+function renderLessons() {
+  const done = getLessonsDone();
+  /* TWEAK 3: lesson progress bar */
+  const doneCount = done.filter(id => LESSONS.some(l => l.id === id)).length;
+  const fillEl = document.getElementById('lessonsProgFill');
+  const lblEl = document.getElementById('lessonsProgLabel');
+  if (fillEl) fillEl.style.width = (doneCount / LESSONS.length * 100) + '%';
+  if (lblEl) lblEl.textContent = doneCount + ' of ' + LESSONS.length + ' complete';
+  const grid = document.getElementById('lessonsGrid');
+  grid.innerHTML = LESSONS.map((lesson, idx) => {
+    const unlocked = idx === 0 || done.includes(LESSONS[idx - 1].id);
+    const isDone = done.includes(lesson.id);
+    const words = (VOCAB[lesson.category] || []).slice(0, 8);
+    const wordsHtml = words.map(w =>
+      '<div class="lw-item"><div class="lw-tig">' + w.tig + '</div><div class="lw-eng">' + w.eng + '</div></div>'
+    ).join('');
+    const actionHtml = isDone
+      ? '<div class="lesson-done-bar">✅ Lesson complete! Well done.</div>'
+      : '<button class="lesson-start-quiz" data-lid="' + lesson.id + '">Take the mini quiz →</button>';
+    return (
+      '<div class="lesson-card' + (unlocked ? '' : ' locked') + '" data-lid="' + lesson.id + '">' +
+        '<div class="lesson-hdr">' +
+          '<div class="lesson-emoji">' + lesson.emoji + '</div>' +
+          '<div class="lesson-meta">' +
+            '<div class="lesson-title">' + lesson.title + '</div>' +
+            '<div class="lesson-desc">' + lesson.desc + '</div>' +
+          '</div>' +
+          '<div class="lesson-right">' +
+            '<div class="lesson-xp">+' + lesson.xp + ' XP</div>' +
+            '<div class="lesson-status">' + (isDone ? '✅' : unlocked ? '▶' : '🔒') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="lesson-body" id="lb-' + lesson.id + '">' +
+          '<p class="lesson-body-intro">' + lesson.intro + '</p>' +
+          '<div class="lesson-words">' + wordsHtml + '</div>' +
+          actionHtml +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+
+  grid.querySelectorAll('.lesson-hdr').forEach(hdr => {
+    const card = hdr.closest('.lesson-card');
+    if (card.classList.contains('locked')) return;
+    hdr.addEventListener('click', () => {
+      document.getElementById('lb-' + card.dataset.lid)?.classList.toggle('open');
+    });
+  });
+
+  grid.querySelectorAll('.lesson-start-quiz').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const lesson = LESSONS.find(l => l.id === btn.dataset.lid);
+      if (lesson) startLessonQuiz(lesson);
+    });
+  });
+}
+
+/* Lesson mini-quiz state */
+let lqState = {};
+
+function startLessonQuiz(lesson) {
+  const words = (VOCAB[lesson.category] || []).slice(0, 8);
+  lqState = { lid: lesson.id, xp: lesson.xp, deck: shuffleArr([...words]).slice(0, 3), idx: 0, score: 0, answered: false };
+  renderLQ();
+}
+
+function renderLQ() {
+  const { lid, deck, idx } = lqState;
+  const body = document.getElementById('lb-' + lid);
+  if (!body) return;
+
+  if (idx >= deck.length) {
+    const passed = lqState.score >= Math.ceil(deck.length / 2);
+    body.innerHTML =
+      '<div class="lq-result">' +
+        '<div style="font-size:2rem;margin-bottom:8px">' + (passed ? '🎉' : '📚') + '</div>' +
+        '<div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">' + (passed ? 'Lesson Complete!' : 'Nice try!') + '</div>' +
+        '<p>' + lqState.score + ' of ' + deck.length + ' correct. ' + (passed ? '+' + lqState.xp + ' XP!' : 'Review the words and try again.') + '</p>' +
+        (passed
+          ? '<button class="qh-start-btn" style="margin-top:10px" id="lqFinish-' + lid + '">Continue →</button>'
+          : '<button class="qh-start-btn" style="margin-top:10px;background:#64748b" id="lqRetry-' + lid + '">Try Again</button>') +
+      '</div>';
+    if (passed) {
+      document.getElementById('lqFinish-' + lid)?.addEventListener('click', () => {
+        markLessonDone(lid);
+        updateStreak();
+        awardXP(lqState.xp);
+        /* TWEAK 4 + 6: confetti & category stars */
+        showConfetti();
+        const lesson = LESSONS.find(l => l.id === lid);
+        if (lesson) { const s = lqState.score >= lqState.deck.length ? 3 : lqState.score >= Math.ceil(lqState.deck.length*0.7) ? 2 : 1; setCatStars(lesson.category, s); }
+        renderLessons();
+        // auto-open next lesson
+        const curIdx = LESSONS.findIndex(l => l.id === lid);
+        if (curIdx + 1 < LESSONS.length) {
+          setTimeout(() => {
+            const nextId = LESSONS[curIdx + 1].id;
+            document.getElementById('lb-' + nextId)?.classList.add('open');
+            document.querySelector('[data-lid="' + nextId + '"]')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+          }, 300);
+        }
+      });
+    } else {
+      document.getElementById('lqRetry-' + lid)?.addEventListener('click', () => {
+        const lesson = LESSONS.find(l => l.id === lid);
+        if (lesson) startLessonQuiz(lesson);
+      });
+    }
+    return;
+  }
+
+  const q = deck[idx];
+  const all = Object.values(VOCAB).flat();
+  const wrongs = shuffleArr(all.filter(w => w.eng !== q.eng)).slice(0, 3);
+  const choices = shuffleArr([{ eng: q.eng, correct: true }, ...wrongs.map(w => ({ eng: w.eng, correct: false }))]);
+
+  body.innerHTML =
+    '<div class="lq-q">Question ' + (idx + 1) + ' of ' + deck.length + '</div>' +
+    '<div class="lq-word">' + q.tig + '</div>' +
+    '<div class="lq-rom">' + q.rom + '</div>' +
+    '<div class="lq-choices">' +
+      choices.map(c => '<button class="lq-choice" data-correct="' + c.correct + '">' + c.eng + '</button>').join('') +
+    '</div>' +
+    '<div id="lq-fb-' + lid + '" style="text-align:center;font-size:.82rem;font-weight:700;min-height:20px"></div>';
+
+  body.querySelectorAll('.lq-choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (lqState.answered) return;
+      lqState.answered = true;
+      const ok = btn.dataset.correct === 'true';
+      body.querySelectorAll('.lq-choice').forEach(b => {
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+      const fb = document.getElementById('lq-fb-' + lid);
+      if (fb) { fb.textContent = ok ? '✓ Correct!' : '✗ ' + q.eng; fb.style.color = ok ? 'var(--green)' : 'var(--red)'; }
+      if (ok) lqState.score++;
+      setTimeout(() => { lqState.idx++; lqState.answered = false; renderLQ(); }, 1200);
+    });
+  });
+}
+
+/* ═══════════════════════════════
+   NEWS
+═══════════════════════════════ */
 const NEWS_SOURCES = [
-  { label:'Shabait',    emoji:'🇪🇷', url:'https://shabait.com/feed/'           },
-  { label:'TesfaNews',  emoji:'📡', url:'https://www.tesfanews.net/feed/'      },
+  { label:'Shabait',   emoji:'🇪🇷', url:'https://shabait.com/feed/' },
+  { label:'TesfaNews', emoji:'📡', url:'https://www.tesfanews.net/feed/' },
 ];
 
 async function loadNews() {
   newsLoaded = true;
   const grid = document.getElementById('newsGrid');
   const articles = [];
-
   await Promise.allSettled(NEWS_SOURCES.map(async src => {
     try {
-      const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}&count=6`;
-      const res = await fetch(api);
+      const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(src.url) + '&count=6');
       const data = await res.json();
-      if (data.status === 'ok' && data.items?.length) {
-        data.items.forEach(item => articles.push({ ...item, _src: src }));
-      }
+      if (data.status === 'ok' && data.items?.length) data.items.forEach(item => articles.push({ ...item, _src: src }));
     } catch {}
   }));
-
   if (!articles.length) {
-    grid.innerHTML = `
-      <div class="news-error">
-        <div class="icon">📡</div>
-        <p>Could not load news. Check your connection or try again.</p>
-      </div>`;
+    grid.innerHTML = '<div class="news-error"><div class="icon">📡</div><p>Could not load news. Check your connection or try again.</p></div>';
     return;
   }
-
   articles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-
   grid.innerHTML = articles.map(a => {
     const date = new Date(a.pubDate).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     const img = a.thumbnail || a.enclosure?.link || '';
     const desc = (a.description || '').replace(/<[^>]+>/g, '').trim().slice(0, 180);
-    return `
-    <div class="news-card">
-      ${img
-        ? `<img class="news-img" src="${img}" alt="" loading="lazy" onerror="this.parentNode.querySelector('.news-img-ph')?.style.setProperty('display','flex'); this.remove()">`
-        : ''}
-      <div class="news-img-ph" style="display:${img ? 'none' : 'flex'}">${a._src.emoji}</div>
-      <div class="news-body">
-        <div class="news-src"><div class="news-src-dot"></div>${a._src.label}</div>
-        <div class="news-title">${a.title || ''}</div>
-        ${desc ? `<div class="news-desc">${desc}</div>` : ''}
-        <div class="news-meta">
-          <div class="news-date">${date}</div>
-          <a class="news-read" href="${a.link || '#'}" target="_blank" rel="noopener">Read →</a>
-        </div>
-      </div>
-    </div>`;
+    return (
+      '<div class="news-card">' +
+        (img ? '<img class="news-img" src="' + img + '" alt="" loading="lazy" onerror="this.nextElementSibling.style.display=\'flex\';this.remove()">' : '') +
+        '<div class="news-img-ph" style="display:' + (img ? 'none' : 'flex') + '">' + a._src.emoji + '</div>' +
+        '<div class="news-body">' +
+          '<div class="news-src"><div class="news-src-dot"></div>' + a._src.label + '</div>' +
+          '<div class="news-title">' + (a.title || '') + '</div>' +
+          (desc ? '<div class="news-desc">' + desc + '</div>' : '') +
+          '<div class="news-meta">' +
+            '<div class="news-date">' + date + '</div>' +
+            '<a class="news-read" href="' + (a.link || '#') + '" target="_blank" rel="noopener">Read →</a>' +
+          '</div>' +
+        '</div></div>'
+    );
   }).join('');
 }
 
-/* ═══════════════════════════════════════════════════════
-   EVENTS
-═══════════════════════════════════════════════════════ */
-(function buildEvents() {
-  document.getElementById('eventsGrid').innerHTML = EVENTS.map(ev => `
-    <div class="event-card">
-      <div class="ev-date">
-        <div class="ev-month">${ev.month}</div>
-        <div class="ev-day">${ev.day}</div>
-      </div>
-      <div class="ev-body">
-        <div class="ev-title">${ev.title}</div>
-        <div class="ev-loc">📍 ${ev.loc}</div>
-        <div class="ev-type">${ev.type}</div>
-      </div>
-    </div>
-  `).join('');
-})();
+/* ═══════════════════════════════
+   EVENTS & DIRECTORY
+═══════════════════════════════ */
+document.getElementById('eventsGrid').innerHTML = EVENTS.map(ev =>
+  '<div class="event-card">' +
+    '<div class="ev-date"><div class="ev-month">' + ev.month + '</div><div class="ev-day">' + ev.day + '</div></div>' +
+    '<div class="ev-body"><div class="ev-title">' + ev.title + '</div><div class="ev-loc">📍 ' + ev.loc + '</div><div class="ev-type">' + ev.type + '</div></div>' +
+  '</div>'
+).join('');
 
-/* ═══════════════════════════════════════════════════════
-   BUSINESS DIRECTORY
-═══════════════════════════════════════════════════════ */
-(function buildDirectory() {
-  document.getElementById('directoryGrid').innerHTML = DIRECTORY.map(b => `
-    <div class="biz-card">
-      <div class="biz-icon">${b.icon}</div>
-      <div class="biz-info">
-        <div class="biz-name">${b.name}</div>
-        <div class="biz-cat">${b.cat}</div>
-        <div class="biz-loc">📍 ${b.loc}</div>
-        <div class="biz-desc">${b.desc}</div>
-      </div>
-    </div>
-  `).join('');
-})();
+document.getElementById('directoryGrid').innerHTML = DIRECTORY.map(b =>
+  '<div class="biz-card">' +
+    '<div class="biz-icon">' + b.icon + '</div>' +
+    '<div class="biz-info">' +
+      '<div class="biz-name">' + b.name + '</div>' +
+      '<div class="biz-cat">' + b.cat + '</div>' +
+      '<div class="biz-loc">📍 ' + b.loc + '</div>' +
+      '<div class="biz-desc">' + b.desc + '</div>' +
+    '</div></div>'
+).join('');
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════
    MONEY CALCULATOR
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════ */
 const RATE = 15.08;
 function calcRemit() {
   const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
   const fee = parseFloat(document.getElementById('calcFee').value) || 0;
-  const result = Math.max(0, (usd - fee) * RATE);
   document.getElementById('calcResult').textContent =
-    result.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' ERN';
+    Math.max(0, (usd - fee) * RATE).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' ERN';
 }
 document.getElementById('calcUsd').addEventListener('input', calcRemit);
 document.getElementById('calcFee').addEventListener('input', calcRemit);
 calcRemit();
 
-/* ═══════════════════════════════════════════════════════
-   SPEECH SYNTHESIS (pronunciation helper)
-═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════
+   SPEECH
+═══════════════════════════════ */
 function speak(text) {
-  if (!('speechSynthesis' in window)) return;
+  if (!soundOn || !('speechSynthesis' in window)) return;
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'ti-ET'; // Tigrinya — may fall back to system default
-  utt.rate = 0.85;
+  utt.lang = 'ti-ET'; utt.rate = 0.85;
   speechSynthesis.cancel();
   speechSynthesis.speak(utt);
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════
    TOAST
-═══════════════════════════════════════════════════════ */
+═══════════════════════════════ */
 function hubToast(msg) {
   const el = document.getElementById('hubToast');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 </script>
 
+<!-- Firebase SDK — loaded after main script so inline code stays unaffected -->
+<script src="./firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+/* ═══════════════════════════════
+   FIREBASE SYNC
+═══════════════════════════════ */
+let syncUser = null, syncProfile = null, _syncDb = null;
+
+function syncProgress() {
+  if (!syncUser || !syncProfile || syncProfile.role !== 'student' || !_syncDb) return;
+  const sid = syncProfile.studentId;
+  if (!sid) return;
+  _syncDb.collection('progress').doc(sid).set({
+    xp: prog.xp,
+    streak: prog.streak,
+    stars: prog.stars,
+    lessonsCompleted: getLessonsDone(),
+    lastActive: new Date().toDateString(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true }).catch(() => {});
+}
+
+function updateSyncBar() {
+  const msg = document.getElementById('syncMsg');
+  const btn = document.getElementById('syncBarBtn');
+  const dot = document.getElementById('syncDot');
+  if (!msg) return;
+  if (!syncUser) {
+    dot && dot.classList.remove('active');
+    msg.textContent = '☁ Sign in to save your progress';
+    if (btn) btn.textContent = 'Sign In →';
+  } else {
+    dot && dot.classList.add('active');
+    const name = ((syncProfile && syncProfile.name) || syncUser.email || '').split(' ')[0];
+    msg.textContent = '☁ Synced · ' + name;
+    if (btn) btn.textContent = 'Account ↗';
+  }
+}
+
+if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    _syncDb = firebase.firestore();
+    firebase.auth().onAuthStateChanged(async function(user) {
+      syncUser = user;
+      if (!user) { syncProfile = null; updateSyncBar(); return; }
+      try {
+        const snap = await _syncDb.collection('users').doc(user.uid).get();
+        syncProfile = snap.data() || null;
+      } catch(e) { syncProfile = null; }
+      updateSyncBar();
+      if (syncProfile && syncProfile.role === 'student') syncProgress();
+    });
+  } catch(e) { /* Firebase unavailable */ }
+}
+</script>
 </body>
 </html>

@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Account — Eritrean Hub</title>
+  <link rel="icon" href="./icons/icon-192.png">
+  <meta name="theme-color" content="#16a34a">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #16a34a; --green-d: #15803d; --green-light: #dcfce7;
+      --red: #dc2626; --amber: #f59e0b;
+      --bg: #f1f5f9; --card: #ffffff;
+      --text: #0f172a; --text-sub: #64748b; --text-dim: #94a3b8;
+      --border: #e2e8f0;
+      --shadow: 0 1px 3px rgba(0,0,0,.07); --shadow-md: 0 4px 12px rgba(0,0,0,.09);
+      --radius: 14px; --radius-sm: 9px;
+    }
+    html, body { min-height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { border: none; cursor: pointer; background: none; font-family: inherit; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    input { font-family: inherit; }
+
+    /* ── HEADER ── */
+    .hub-header {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: white; padding: 14px 18px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .hub-logo { display: flex; align-items: center; gap: 10px; }
+    .hub-logo-icon { font-size: 1.6rem; }
+    .hub-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -.3px; }
+    .hub-subtitle { font-size: 0.65rem; opacity: .8; margin-top: 1px; }
+    .hub-back {
+      font-size: 0.72rem; background: rgba(255,255,255,.2);
+      padding: 5px 12px; border-radius: 20px; color: white; font-weight: 600;
+    }
+
+    /* ── LAYOUT ── */
+    .page-wrap { max-width: 480px; margin: 0 auto; padding: 24px 16px 50px; }
+
+    /* ── LOADING ── */
+    .state-loading { text-align: center; padding: 80px 20px; }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--green); border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── AUTH CARD ── */
+    .auth-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow-md); overflow: hidden;
+    }
+    .auth-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .auth-tab {
+      flex: 1; padding: 15px; font-size: 0.88rem; font-weight: 700;
+      color: var(--text-dim); transition: all 0.15s;
+      border-bottom: 2px solid transparent;
+    }
+    .auth-tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+    .auth-body { padding: 22px 20px; }
+
+    /* ── ROLE PICKER ── */
+    .role-picker { display: flex; gap: 10px; margin-bottom: 18px; }
+    .role-btn {
+      flex: 1; padding: 13px 8px; border-radius: var(--radius-sm);
+      border: 2px solid var(--border); font-size: 0.82rem; font-weight: 700;
+      background: var(--card); color: var(--text-sub); transition: all 0.15s;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+    }
+    .role-icon { font-size: 1.5rem; }
+    .role-btn.active { border-color: var(--green); background: var(--green-light); color: var(--green); }
+
+    /* ── FORM FIELDS ── */
+    .field { margin-bottom: 13px; }
+    .field label { font-size: 0.72rem; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 5px; }
+    .field input {
+      width: 100%; padding: 11px 13px;
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 0.9rem; color: var(--text); background: var(--bg); transition: border-color 0.15s;
+    }
+    .field input:focus { outline: none; border-color: var(--green); }
+
+    .auth-submit {
+      width: 100%; padding: 13px; border-radius: var(--radius-sm);
+      background: var(--green); color: white; font-size: 0.9rem; font-weight: 700;
+      transition: background 0.15s; margin-top: 4px;
+    }
+    .auth-submit:hover { background: var(--green-d); }
+    .auth-submit:disabled { opacity: .6; cursor: not-allowed; }
+
+    .auth-err { font-size: 0.76rem; color: var(--red); margin-top: 10px; min-height: 18px; line-height: 1.4; }
+    .auth-link { text-align: center; font-size: 0.75rem; color: var(--text-dim); margin-top: 14px; }
+    .auth-link span { color: var(--green); font-weight: 600; cursor: pointer; }
+
+    /* ── WELCOME CARD ── */
+    .welcome-card {
+      background: linear-gradient(135deg, var(--green), var(--green-d));
+      color: white; border-radius: var(--radius); padding: 20px 18px;
+      margin-bottom: 14px; box-shadow: var(--shadow-md);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .welcome-avatar {
+      width: 54px; height: 54px; border-radius: 50%;
+      background: rgba(255,255,255,.22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; flex-shrink: 0;
+    }
+    .welcome-name { font-size: 1.1rem; font-weight: 800; }
+    .welcome-email { font-size: 0.7rem; opacity: .8; margin-top: 2px; }
+    .welcome-role {
+      display: inline-block; background: rgba(255,255,255,.2);
+      font-size: 0.62rem; font-weight: 700; padding: 2px 9px; border-radius: 10px;
+      margin-top: 5px; letter-spacing: .3px; text-transform: uppercase;
+    }
+
+    /* ── STUDENT ID CARD ── */
+    .sid-card {
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-md);
+      padding: 24px 20px; margin-bottom: 14px; text-align: center;
+      border: 2px dashed var(--green);
+    }
+    .sid-label {
+      font-size: 0.6rem; font-weight: 800; color: var(--green);
+      text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 10px;
+    }
+    .sid-value {
+      font-size: 2.6rem; font-weight: 800; letter-spacing: 3px;
+      color: var(--text); font-family: 'Courier New', monospace; margin-bottom: 10px;
+    }
+    .sid-hint { font-size: 0.74rem; color: var(--text-sub); line-height: 1.55; margin-bottom: 14px; }
+    .sid-copy {
+      background: var(--green-light); color: var(--green);
+      padding: 8px 20px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+      transition: background 0.15s;
+    }
+    .sid-copy:hover { background: #bbf7d0; }
+
+    /* ── STATS ROW ── */
+    .stats-row { display: flex; gap: 10px; margin-bottom: 16px; }
+    .stat-box {
+      flex: 1; background: var(--card); border-radius: var(--radius-sm);
+      box-shadow: var(--shadow); padding: 12px 8px; text-align: center;
+    }
+    .stat-icon { font-size: 1.1rem; margin-bottom: 3px; }
+    .stat-val { font-size: 1.1rem; font-weight: 800; }
+    .stat-lbl { font-size: 0.58rem; color: var(--text-sub); font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+
+    /* ── LESSONS PROGRESS ── */
+    .lessons-prog-card {
+      background: var(--card); border-radius: var(--radius-sm);
+      box-shadow: var(--shadow); padding: 12px 14px; margin-bottom: 16px;
+    }
+    .lessons-prog-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .lessons-prog-hdr span:first-child { font-size: 0.78rem; font-weight: 700; }
+    .lessons-prog-hdr span:last-child { font-size: 0.72rem; color: var(--green); font-weight: 600; }
+    .lp-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .lp-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width .4s; }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      display: block; width: 100%; padding: 13px; border-radius: var(--radius-sm);
+      background: var(--green); color: white; font-size: 0.9rem; font-weight: 700;
+      text-align: center; transition: background 0.15s; margin-bottom: 10px;
+    }
+    .btn-primary:hover { background: var(--green-d); }
+    .btn-ghost {
+      display: block; width: 100%; padding: 11px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border); color: var(--text-sub);
+      font-size: 0.84rem; font-weight: 600; text-align: center; transition: all 0.15s;
+    }
+    .btn-ghost:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── ADD CHILD CARD ── */
+    .section-card {
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 18px; margin-bottom: 14px;
+    }
+    .section-card h3 { font-size: 0.92rem; font-weight: 800; margin-bottom: 4px; }
+    .section-card p { font-size: 0.76rem; color: var(--text-sub); margin-bottom: 12px; line-height: 1.5; }
+    .add-row { display: flex; gap: 8px; }
+    .add-row input {
+      flex: 1; padding: 10px 12px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 0.9rem; font-family: monospace;
+      color: var(--text); background: var(--bg); text-transform: uppercase;
+    }
+    .add-row input:focus { outline: none; border-color: var(--green); }
+    .add-row button {
+      padding: 10px 16px; background: var(--green); color: white;
+      border-radius: var(--radius-sm); font-size: 0.84rem; font-weight: 700;
+      transition: background 0.15s; white-space: nowrap;
+    }
+    .add-row button:hover { background: var(--green-d); }
+    .add-row button:disabled { opacity: .6; cursor: not-allowed; }
+    .add-err { font-size: 0.74rem; color: var(--red); margin-top: 8px; min-height: 17px; }
+
+    /* ── CHILDREN SECTION ── */
+    .section-title {
+      font-size: 0.68rem; font-weight: 800; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px;
+    }
+    .child-card {
+      background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 15px 16px; margin-bottom: 10px;
+      border-left: 4px solid var(--green);
+    }
+    .child-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .child-name { font-size: 0.95rem; font-weight: 700; }
+    .child-id { font-size: 0.64rem; color: var(--text-dim); font-family: monospace; margin-top: 2px; }
+    .child-remove {
+      font-size: 0.7rem; color: var(--text-dim); padding: 3px 8px;
+      border-radius: 6px; border: 1px solid var(--border);
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .child-remove:hover { color: var(--red); border-color: var(--red); background: #fee2e2; }
+    .child-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 11px; }
+    .cstat { background: var(--bg); border-radius: var(--radius-sm); padding: 8px 4px; text-align: center; }
+    .cstat-icon { font-size: 0.85rem; }
+    .cstat-val { font-size: 0.9rem; font-weight: 800; }
+    .cstat-lbl { font-size: 0.52rem; color: var(--text-sub); font-weight: 700; text-transform: uppercase; letter-spacing: .2px; }
+    .child-progress { }
+    .cp-row { display: flex; justify-content: space-between; font-size: 0.67rem; color: var(--text-sub); margin-bottom: 4px; }
+    .cp-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .cp-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width .4s; }
+    .child-last { font-size: 0.64rem; color: var(--text-dim); margin-top: 7px; }
+
+    .no-children {
+      text-align: center; padding: 32px 20px; background: var(--card);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .nc-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .nc-text { font-size: 0.8rem; color: var(--text-sub); line-height: 1.55; }
+
+    /* ── TOAST ── */
+    .hub-toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: #0f172a; color: white; padding: 9px 18px;
+      border-radius: 20px; font-size: 0.8rem; opacity: 0;
+      pointer-events: none; transition: opacity .2s, transform .2s;
+      white-space: nowrap; z-index: 999;
+    }
+    .hub-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<header class="hub-header">
+  <div class="hub-logo">
+    <div class="hub-logo-icon">🇪🇷</div>
+    <div>
+      <div class="hub-title">Eritrean Hub</div>
+      <div class="hub-subtitle">Student Accounts</div>
+    </div>
+  </div>
+  <a href="/hub" class="hub-back">← Hub</a>
+</header>
+
+<div class="page-wrap">
+
+  <!-- ══ LOADING ══ -->
+  <div id="stateLoading" class="state-loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ══ LOGGED OUT ══ -->
+  <div id="stateOut" style="display:none">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin">Log In</button>
+        <button class="auth-tab" id="tabSignup">Sign Up</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div class="auth-body" id="formLogin">
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••" autocomplete="current-password">
+        </div>
+        <button class="auth-submit" id="loginBtn">Log In</button>
+        <p class="auth-err" id="loginErr"></p>
+        <p class="auth-link"><span id="forgotLink">Forgot password?</span></p>
+      </div>
+
+      <!-- SIGNUP FORM -->
+      <div class="auth-body" id="formSignup" style="display:none">
+        <div class="role-picker">
+          <button class="role-btn active" data-role="student">
+            <div class="role-icon">🎓</div>I'm a Student
+          </button>
+          <button class="role-btn" data-role="parent">
+            <div class="role-icon">👨‍👩‍👧</div>I'm a Parent
+          </button>
+        </div>
+        <div class="field">
+          <label for="signupName">Full Name</label>
+          <input type="text" id="signupName" placeholder="Your name" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="signupEmail">Email</label>
+          <input type="email" id="signupEmail" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="signupPassword">Password (min 6 characters)</label>
+          <input type="password" id="signupPassword" placeholder="••••••" autocomplete="new-password">
+        </div>
+        <button class="auth-submit" id="signupBtn">Create Account →</button>
+        <p class="auth-err" id="signupErr"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOGGED IN ══ -->
+  <div id="stateIn" style="display:none">
+
+    <!-- STUDENT VIEW -->
+    <div id="studentUI" style="display:none">
+      <div class="welcome-card">
+        <div class="welcome-avatar">🎓</div>
+        <div>
+          <div class="welcome-name" id="stuName">Student</div>
+          <div class="welcome-email" id="stuEmail"></div>
+          <div class="welcome-role">Student</div>
+        </div>
+      </div>
+
+      <div class="sid-card">
+        <div class="sid-label">Your Student ID</div>
+        <div class="sid-value" id="stuId">ERI-000000</div>
+        <div class="sid-hint">Share this code with your parent or teacher so they can follow your learning progress.</div>
+        <button class="sid-copy" id="sidCopyBtn">📋 Copy ID</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-icon">🏆</div>
+          <div class="stat-val" id="stuXP">—</div>
+          <div class="stat-lbl">XP</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-val" id="stuStreak">—</div>
+          <div class="stat-lbl">Streak</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-val" id="stuStars">—</div>
+          <div class="stat-lbl">Stars</div>
+        </div>
+      </div>
+
+      <div class="lessons-prog-card" id="stuLessonsCard" style="display:none">
+        <div class="lessons-prog-hdr">
+          <span>📖 Lessons</span>
+          <span id="stuLessonsLabel">0 of 6</span>
+        </div>
+        <div class="lp-bar"><div class="lp-fill" id="stuLessonsFill" style="width:0%"></div></div>
+      </div>
+
+      <a href="/hub" class="btn-primary">Continue Learning →</a>
+      <button class="btn-ghost" id="stuSignOut">Sign Out</button>
+    </div>
+
+    <!-- PARENT VIEW -->
+    <div id="parentUI" style="display:none">
+      <div class="welcome-card">
+        <div class="welcome-avatar">👨‍👩‍👧</div>
+        <div>
+          <div class="welcome-name" id="parName">Parent</div>
+          <div class="welcome-email" id="parEmail"></div>
+          <div class="welcome-role">Parent</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3>Link a Student</h3>
+        <p>Ask your child to log in and share their Student ID with you. Enter it below to view their progress.</p>
+        <div class="add-row">
+          <input type="text" id="addSidInput" placeholder="ERI-XXXXXX" maxlength="10">
+          <button id="addSidBtn">Link →</button>
+        </div>
+        <p class="add-err" id="addErr"></p>
+      </div>
+
+      <p class="section-title" id="childrenTitle" style="display:none">Linked Students</p>
+      <div id="childrenList"></div>
+
+      <button class="btn-ghost" id="parSignOut" style="margin-top:6px">Sign Out</button>
+    </div>
+
+  </div><!-- /stateIn -->
+
+</div><!-- /page-wrap -->
+
+<div class="hub-toast" id="hubToast"></div>
+
+<script src="./firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+'use strict';
+if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+/* ── HELPERS ────────────────────────────── */
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+function toast(msg) {
+  const el = document.getElementById('hubToast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function genStudentId() {
+  return 'ERI-' + String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function friendlyError(code) {
+  const m = {
+    'auth/user-not-found':        'No account found with this email.',
+    'auth/wrong-password':        'Incorrect password.',
+    'auth/invalid-credential':    'Invalid email or password.',
+    'auth/email-already-in-use':  'An account with this email already exists.',
+    'auth/invalid-email':         'Invalid email address.',
+    'auth/weak-password':         'Password must be at least 6 characters.',
+    'auth/too-many-requests':     'Too many attempts. Please try again later.',
+    'auth/network-request-failed':'Network error. Check your connection.',
+  };
+  return m[code] || 'Something went wrong. Please try again.';
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── AUTH STATE ─────────────────────────── */
+auth.onAuthStateChanged(async user => {
+  hide('stateLoading');
+  if (!user) { show('stateOut'); return; }
+  try {
+    const snap = await db.collection('users').doc(user.uid).get();
+    if (!snap.exists) { await auth.signOut(); show('stateOut'); return; }
+    const profile = snap.data();
+    show('stateIn');
+    if (profile.role === 'student') await showStudentUI(user, profile);
+    else await showParentUI(user, profile);
+  } catch (e) {
+    console.error(e);
+    show('stateOut');
+  }
+});
+
+/* ── TABS ───────────────────────────────── */
+document.getElementById('tabLogin').addEventListener('click', () => {
+  document.getElementById('tabLogin').classList.add('active');
+  document.getElementById('tabSignup').classList.remove('active');
+  show('formLogin'); hide('formSignup');
+});
+document.getElementById('tabSignup').addEventListener('click', () => {
+  document.getElementById('tabSignup').classList.add('active');
+  document.getElementById('tabLogin').classList.remove('active');
+  hide('formLogin'); show('formSignup');
+});
+
+/* ── ROLE PICKER ───────────────────────── */
+let selectedRole = 'student';
+document.querySelectorAll('.role-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedRole = btn.dataset.role;
+  });
+});
+
+/* ── LOGIN ──────────────────────────────── */
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('loginErr');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Logging in…';
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+  } catch (e) {
+    errEl.textContent = friendlyError(e.code);
+    btn.disabled = false; btn.textContent = 'Log In';
+  }
+}
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+/* ── FORGOT PASSWORD ───────────────────── */
+document.getElementById('forgotLink').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const errEl = document.getElementById('loginErr');
+  if (!email) { errEl.textContent = 'Enter your email address first.'; return; }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    toast('Password reset email sent! Check your inbox.');
+  } catch (e) {
+    errEl.textContent = friendlyError(e.code);
+  }
+});
+
+/* ── SIGN UP ────────────────────────────── */
+document.getElementById('signupBtn').addEventListener('click', async () => {
+  const name     = document.getElementById('signupName').value.trim();
+  const email    = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const errEl    = document.getElementById('signupErr');
+  errEl.textContent = '';
+  if (!name || !email || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
+  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    const uid  = cred.user.uid;
+    const studentId = selectedRole === 'student' ? genStudentId() : null;
+    const profile = {
+      role: selectedRole, name, email,
+      studentId: studentId || null,
+      linkedStudentIds: [],
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    await db.collection('users').doc(uid).set(profile);
+    if (selectedRole === 'student' && studentId) {
+      await db.collection('progress').doc(studentId).set({
+        uid, name, studentId, email,
+        xp: 0, streak: 0, stars: 0,
+        lessonsCompleted: [], quizBest: 0, catStars: {},
+        lastActive: new Date().toDateString(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    // auth state listener handles UI switch
+  } catch (e) {
+    errEl.textContent = friendlyError(e.code);
+    btn.disabled = false; btn.textContent = 'Create Account →';
+  }
+});
+
+/* ── STUDENT UI ─────────────────────────── */
+async function showStudentUI(user, profile) {
+  hide('parentUI'); show('studentUI');
+  document.getElementById('stuName').textContent  = profile.name || 'Student';
+  document.getElementById('stuEmail').textContent = user.email || '';
+  document.getElementById('stuId').textContent    = profile.studentId || '—';
+
+  if (profile.studentId) {
+    try {
+      const snap = await db.collection('progress').doc(profile.studentId).get();
+      if (snap.exists) {
+        const p = snap.data();
+        document.getElementById('stuXP').textContent     = p.xp ?? 0;
+        document.getElementById('stuStreak').textContent = p.streak ?? 0;
+        document.getElementById('stuStars').textContent  = p.stars ?? 0;
+        const done  = (p.lessonsCompleted || []).length;
+        const total = 6;
+        document.getElementById('stuLessonsLabel').textContent = done + ' of ' + total;
+        document.getElementById('stuLessonsFill').style.width  = Math.round(done/total*100) + '%';
+        show('stuLessonsCard');
+      }
+    } catch {}
+  }
+}
+
+document.getElementById('sidCopyBtn').addEventListener('click', () => {
+  const id = document.getElementById('stuId').textContent;
+  if (id === '—') return;
+  navigator.clipboard?.writeText(id)
+    .then(() => toast('Student ID copied! 📋'))
+    .catch(() => toast('Could not copy — please copy manually'));
+});
+
+document.getElementById('stuSignOut').addEventListener('click', () => auth.signOut());
+
+/* ── PARENT UI ──────────────────────────── */
+let parentUid = null;
+let parentLinked = [];
+
+async function showParentUI(user, profile) {
+  hide('studentUI'); show('parentUI');
+  parentUid    = user.uid;
+  parentLinked = profile.linkedStudentIds || [];
+  document.getElementById('parName').textContent  = profile.name || 'Parent';
+  document.getElementById('parEmail').textContent = user.email || '';
+  await renderChildren(parentLinked);
+}
+
+async function renderChildren(ids) {
+  const list  = document.getElementById('childrenList');
+  const title = document.getElementById('childrenTitle');
+  if (!ids.length) {
+    title.style.display = 'none';
+    list.innerHTML = '<div class="no-children"><div class="nc-icon">👨‍👩‍👧</div><p class="nc-text">No students linked yet.<br>Enter a Student ID above to get started.</p></div>';
+    return;
+  }
+  title.style.display = 'block';
+  list.innerHTML = '<div class="state-loading" style="padding:30px 0"><div class="spinner"></div></div>';
+
+  const results = await Promise.all(ids.map(async sid => {
+    try {
+      const snap = await db.collection('progress').doc(sid).get();
+      return snap.exists ? { sid, ...snap.data() } : null;
+    } catch { return null; }
+  }));
+
+  const valid = results.filter(Boolean);
+  if (!valid.length) {
+    list.innerHTML = '<div class="no-children"><div class="nc-icon">⚠</div><p class="nc-text">Could not load student data. Check connection.</p></div>';
+    return;
+  }
+
+  list.innerHTML = valid.map(c => {
+    const done  = (c.lessonsCompleted || []).length;
+    const total = 6;
+    const pct   = Math.round(done / total * 100);
+    const last  = c.lastActive ? c.lastActive : 'Never';
+    return (
+      '<div class="child-card">' +
+        '<div class="child-hdr">' +
+          '<div>' +
+            '<div class="child-name">' + esc(c.name || 'Student') + '</div>' +
+            '<div class="child-id">' + esc(c.sid) + '</div>' +
+          '</div>' +
+          '<button class="child-remove" data-sid="' + esc(c.sid) + '">✕ Remove</button>' +
+        '</div>' +
+        '<div class="child-stats">' +
+          '<div class="cstat"><div class="cstat-icon">🏆</div><div class="cstat-val">' + (c.xp||0) + '</div><div class="cstat-lbl">XP</div></div>' +
+          '<div class="cstat"><div class="cstat-icon">🔥</div><div class="cstat-val">' + (c.streak||0) + '</div><div class="cstat-lbl">Streak</div></div>' +
+          '<div class="cstat"><div class="cstat-icon">⭐</div><div class="cstat-val">' + (c.stars||0) + '</div><div class="cstat-lbl">Stars</div></div>' +
+          '<div class="cstat"><div class="cstat-icon">📝</div><div class="cstat-val">' + (c.quizBest||0) + '/10</div><div class="cstat-lbl">Best</div></div>' +
+        '</div>' +
+        '<div class="child-progress">' +
+          '<div class="cp-row"><span>Lessons complete</span><span>' + done + ' / ' + total + '</span></div>' +
+          '<div class="cp-bar"><div class="cp-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>' +
+        '<div class="child-last">Last active: ' + esc(last) + '</div>' +
+      '</div>'
+    );
+  }).join('');
+
+  list.querySelectorAll('.child-remove').forEach(btn => {
+    btn.addEventListener('click', () => removeChild(btn.dataset.sid));
+  });
+}
+
+async function removeChild(sid) {
+  if (!confirm('Remove student ' + sid + ' from your linked accounts?')) return;
+  parentLinked = parentLinked.filter(id => id !== sid);
+  await db.collection('users').doc(parentUid).update({ linkedStudentIds: parentLinked });
+  renderChildren(parentLinked);
+  toast('Student removed');
+}
+
+/* ── ADD STUDENT ────────────────────────── */
+document.getElementById('addSidInput').addEventListener('input', e => {
+  let v = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+  if (v.length > 0 && !v.startsWith('ERI-')) v = 'ERI-' + v.replace('ERI-','');
+  e.target.value = v;
+});
+
+document.getElementById('addSidBtn').addEventListener('click', async () => {
+  const raw = document.getElementById('addSidInput').value.trim().toUpperCase();
+  const sid = raw.startsWith('ERI-') ? raw : 'ERI-' + raw;
+  const errEl = document.getElementById('addErr');
+  errEl.textContent = '';
+  if (!sid.match(/^ERI-\d{6}$/)) { errEl.textContent = 'Enter a valid Student ID (format: ERI-XXXXXX).'; return; }
+  if (parentLinked.includes(sid)) { errEl.textContent = 'This student is already linked to your account.'; return; }
+  const btn = document.getElementById('addSidBtn');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  try {
+    const snap = await db.collection('progress').doc(sid).get();
+    if (!snap.exists) {
+      errEl.textContent = 'No student found with that ID. Please check the code and try again.';
+      btn.disabled = false; btn.textContent = 'Link →'; return;
+    }
+    parentLinked = [...parentLinked, sid];
+    await db.collection('users').doc(parentUid).update({ linkedStudentIds: parentLinked });
+    document.getElementById('addSidInput').value = '';
+    btn.disabled = false; btn.textContent = 'Link →';
+    toast('Student linked successfully! ✓');
+    renderChildren(parentLinked);
+  } catch (e) {
+    errEl.textContent = 'Error: ' + e.message;
+    btn.disabled = false; btn.textContent = 'Link →';
+  }
+});
+
+document.getElementById('parSignOut').addEventListener('click', () => auth.signOut());
+</script>
+</body>
+</html>
