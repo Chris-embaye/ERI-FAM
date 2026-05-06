@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Eritrean Hub — Learn · Community · Money</title>
+  <link rel="icon" href="./icons/icon-192.png">
+  <meta name="description" content="Learn Tigrinya, explore Eritrean news and events, compare money transfer services">
+  <meta name="theme-color" content="#16a34a">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #16a34a;
+      --green-d: #15803d;
+      --green-light: #dcfce7;
+      --blue: #2563eb;
+      --amber: #f59e0b;
+      --red: #dc2626;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --text-sub: #64748b;
+      --text-dim: #94a3b8;
+      --border: #e2e8f0;
+      --shadow: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+      --radius: 14px;
+      --radius-sm: 9px;
+      --nav-h: 62px;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { border: none; cursor: pointer; background: none; font-family: inherit; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    input { font-family: inherit; }
+
+    /* ── LAYOUT ── */
+    .page-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding-bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
+      min-height: 100%;
+    }
+
+    /* ── HEADER ── */
+    .hub-header {
+      background: linear-gradient(135deg, var(--green), var(--green-d));
+      color: white;
+      padding: 14px 18px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .hub-logo { display: flex; align-items: center; gap: 10px; }
+    .hub-logo-icon { font-size: 1.6rem; }
+    .hub-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -.3px; }
+    .hub-subtitle { font-size: 0.65rem; opacity: .8; margin-top: 1px; }
+    .hub-back {
+      font-size: 0.72rem; background: rgba(255,255,255,.2);
+      padding: 5px 12px; border-radius: 20px; color: white; font-weight: 600;
+      transition: background 0.15s;
+    }
+    .hub-back:hover { background: rgba(255,255,255,.3); }
+
+    /* ── BOTTOM NAV ── */
+    .hub-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex; height: var(--nav-h);
+      padding-bottom: env(safe-area-inset-bottom); z-index: 100;
+      box-shadow: 0 -2px 12px rgba(0,0,0,.06);
+    }
+    .hnav-btn {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 3px; font-size: 0.62rem; font-weight: 700;
+      color: var(--text-dim); transition: color 0.15s; padding-top: 6px;
+      letter-spacing: .2px;
+    }
+    .hnav-icon { font-size: 1.45rem; }
+    .hnav-btn.active { color: var(--green); }
+
+    /* ── VIEWS ── */
+    .view { display: none; padding: 16px 14px 0; }
+    .view.active { display: block; }
+
+    /* ── SUB-TABS ── */
+    .tabs {
+      display: flex; gap: 7px; margin-bottom: 16px;
+      overflow-x: auto; scrollbar-width: none; padding: 2px 0 4px;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0; padding: 7px 15px; border-radius: 20px;
+      font-size: 0.76rem; font-weight: 600;
+      background: var(--card); color: var(--text-sub);
+      border: 1.5px solid var(--border); transition: all 0.15s;
+      box-shadow: var(--shadow);
+    }
+    .tab-btn.active { background: var(--green); color: white; border-color: var(--green); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── SECTION HEAD ── */
+    .s-head { margin-bottom: 14px; }
+    .s-head h2 { font-size: 1.25rem; font-weight: 800; letter-spacing: -.4px; }
+    .s-head p { font-size: 0.8rem; color: var(--text-sub); margin-top: 3px; }
+
+    /* ─────────────────────────────────────────
+       LEARN — ALPHABET
+    ───────────────────────────────────────── */
+    .vowel-row {
+      display: grid;
+      grid-template-columns: 62px repeat(7, 1fr);
+      gap: 3px; margin-bottom: 3px;
+    }
+    .vowel-hdr {
+      text-align: center; font-size: 0.58rem; font-weight: 700;
+      color: var(--text-dim); letter-spacing: .4px; text-transform: uppercase;
+      padding: 3px 0;
+    }
+    .row-label {
+      font-size: 0.65rem; color: var(--text-sub); font-weight: 600;
+      display: flex; align-items: center; padding-left: 2px;
+    }
+    .fidel {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      font-size: 1.05rem; border-radius: 7px;
+      background: var(--card); box-shadow: var(--shadow);
+      cursor: pointer; transition: all 0.14s;
+      border: 1.5px solid transparent;
+    }
+    .fidel:hover { background: var(--green-light); border-color: #86efac; }
+    .fidel.sel { background: var(--green); color: white; border-color: var(--green-d); }
+
+    .fidel-detail {
+      background: var(--card); border-radius: var(--radius);
+      padding: 16px 18px; margin: 12px 0 16px;
+      box-shadow: var(--shadow-md);
+      display: flex; align-items: center; gap: 16px;
+    }
+    .fidel-big { font-size: 3.2rem; line-height: 1; flex-shrink: 0; }
+    .fidel-info { flex: 1; }
+    .fidel-info h3 { font-size: 1.1rem; font-weight: 800; }
+    .fidel-info .fi-roman { font-size: 0.82rem; color: var(--text-sub); margin-top: 2px; }
+    .fidel-info .fi-sound { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+    .fidel-speak {
+      background: var(--green); color: white; border-radius: 50%;
+      width: 42px; height: 42px; font-size: 1.2rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; box-shadow: var(--shadow-md);
+      transition: background 0.15s;
+    }
+    .fidel-speak:hover { background: var(--green-d); }
+
+    /* ─────────────────────────────────────────
+       LEARN — VOCABULARY
+    ───────────────────────────────────────── */
+    .vocab-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+    }
+    .vocab-card {
+      background: var(--card); border-radius: var(--radius-sm);
+      padding: 14px; box-shadow: var(--shadow); cursor: pointer;
+      transition: all 0.18s; border: 1.5px solid transparent;
+    }
+    .vocab-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .vocab-card.flipped { border-color: var(--green); background: #f0fdf4; }
+    .vc-tig { font-size: 1.25rem; font-weight: 700; margin-bottom: 3px; }
+    .vc-rom { font-size: 0.7rem; color: var(--text-sub); margin-bottom: 6px; font-style: italic; }
+    .vc-eng { font-size: 0.85rem; font-weight: 600; color: var(--green); }
+    .vc-eng.hidden { color: transparent; background: var(--border); border-radius: 4px; }
+    .vc-hint { font-size: 0.6rem; color: var(--text-dim); margin-top: 6px; }
+
+    /* ─────────────────────────────────────────
+       LEARN — FLASHCARDS
+    ───────────────────────────────────────── */
+    .fc-wrap { perspective: 1000px; margin-bottom: 16px; }
+    .fc-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow-md); min-height: 200px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 28px; cursor: pointer; text-align: center;
+      transition: box-shadow 0.15s;
+      border: 2px solid var(--border);
+      position: relative;
+    }
+    .fc-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.1); }
+    .fc-card.revealed { border-color: var(--green); }
+    .fc-badge {
+      position: absolute; top: 12px; right: 12px;
+      font-size: 0.62rem; font-weight: 700; padding: 3px 8px;
+      border-radius: 10px; background: var(--green-light); color: var(--green);
+    }
+    .fc-tig { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; }
+    .fc-rom { font-size: 0.85rem; color: var(--text-sub); font-style: italic; }
+    .fc-eng { font-size: 1.1rem; font-weight: 700; color: var(--green); margin-top: 10px; }
+    .fc-tap { font-size: 0.7rem; color: var(--text-dim); margin-top: 12px; }
+    .fc-controls { display: flex; gap: 10px; margin-bottom: 16px; }
+    .fc-btn {
+      flex: 1; padding: 12px; border-radius: var(--radius-sm);
+      font-size: 0.82rem; font-weight: 700; transition: all 0.15s;
+    }
+    .fc-btn-skip { background: var(--bg); color: var(--text-sub); border: 1.5px solid var(--border); }
+    .fc-btn-know { background: var(--green); color: white; }
+    .fc-btn-skip:hover { background: #e2e8f0; }
+    .fc-btn-know:hover { background: var(--green-d); }
+    .fc-progress-wrap { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; margin-bottom: 8px; }
+    .fc-progress-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.3s; }
+    .fc-progress-label { font-size: 0.7rem; color: var(--text-sub); text-align: center; margin-bottom: 16px; }
+    .fc-done {
+      text-align: center; padding: 40px 20px;
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow-md); margin-bottom: 16px;
+    }
+    .fc-done .done-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .fc-done h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+    .fc-done p { font-size: 0.82rem; color: var(--text-sub); margin-bottom: 16px; }
+    .fc-restart {
+      background: var(--green); color: white; padding: 10px 24px;
+      border-radius: 20px; font-size: 0.82rem; font-weight: 700;
+    }
+
+    /* ─────────────────────────────────────────
+       COMMUNITY — NEWS
+    ───────────────────────────────────────── */
+    .news-card {
+      background: var(--card); border-radius: var(--radius);
+      overflow: hidden; box-shadow: var(--shadow); margin-bottom: 12px;
+    }
+    .news-img { width: 100%; height: 170px; object-fit: cover; background: var(--border); }
+    .news-img-ph {
+      width: 100%; height: 130px;
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      display: flex; align-items: center; justify-content: center; font-size: 2.8rem;
+    }
+    .news-body { padding: 13px 14px 14px; }
+    .news-src {
+      font-size: 0.62rem; font-weight: 800; color: var(--green);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .news-src-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    .news-title { font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin-bottom: 5px; }
+    .news-desc {
+      font-size: 0.76rem; color: var(--text-sub); line-height: 1.55;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .news-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .news-date { font-size: 0.63rem; color: var(--text-dim); }
+    .news-read {
+      font-size: 0.7rem; font-weight: 700; color: var(--green);
+      background: var(--green-light); padding: 4px 11px; border-radius: 12px;
+    }
+    .news-loading { text-align: center; padding: 50px 20px; color: var(--text-dim); }
+    .news-spinner {
+      width: 30px; height: 30px; border: 3px solid var(--border);
+      border-top-color: var(--green); border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .news-error {
+      background: var(--card); border-radius: var(--radius);
+      padding: 24px; text-align: center; box-shadow: var(--shadow);
+    }
+    .news-error .icon { font-size: 2rem; margin-bottom: 8px; }
+    .news-error p { font-size: 0.82rem; color: var(--text-sub); }
+
+    /* ── EVENTS ── */
+    .event-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow: hidden;
+      margin-bottom: 10px; display: flex;
+    }
+    .ev-date {
+      background: var(--green); color: white; width: 60px; flex-shrink: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 10px 6px;
+    }
+    .ev-month { font-size: 0.57rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; opacity: .85; }
+    .ev-day { font-size: 1.65rem; font-weight: 800; line-height: 1.1; }
+    .ev-body { padding: 12px 14px; flex: 1; min-width: 0; }
+    .ev-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; }
+    .ev-loc { font-size: 0.71rem; color: var(--text-sub); }
+    .ev-type {
+      display: inline-block; margin-top: 6px;
+      font-size: 0.6rem; font-weight: 700;
+      background: var(--green-light); color: var(--green);
+      padding: 2px 8px; border-radius: 10px;
+    }
+
+    /* ── DIRECTORY ── */
+    .biz-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 13px 14px;
+      margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start;
+    }
+    .biz-icon {
+      width: 46px; height: 46px; border-radius: 11px;
+      background: var(--green-light); display: flex;
+      align-items: center; justify-content: center;
+      font-size: 1.45rem; flex-shrink: 0;
+    }
+    .biz-info { flex: 1; min-width: 0; }
+    .biz-name { font-size: 0.88rem; font-weight: 700; }
+    .biz-cat {
+      font-size: 0.62rem; font-weight: 700; color: var(--green);
+      text-transform: uppercase; letter-spacing: .4px; margin-top: 1px;
+    }
+    .biz-loc { font-size: 0.71rem; color: var(--text-sub); margin-top: 3px; }
+    .biz-desc { font-size: 0.74rem; color: var(--text-sub); margin-top: 4px; line-height: 1.45; }
+
+    /* ─────────────────────────────────────────
+       MONEY
+    ───────────────────────────────────────── */
+    .money-hero {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
+      color: white; border-radius: var(--radius);
+      padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow-md);
+    }
+    .money-hero h3 { font-size: 1rem; font-weight: 800; margin-bottom: 3px; }
+    .money-hero p { font-size: 0.78rem; opacity: .85; }
+    .rate-row {
+      display: flex; gap: 10px; margin-top: 14px;
+    }
+    .rate-box {
+      flex: 1; background: rgba(255,255,255,.18);
+      border-radius: 10px; padding: 12px 14px;
+    }
+    .rate-lbl { font-size: 0.62rem; opacity: .8; margin-bottom: 4px; }
+    .rate-val { font-size: 1.3rem; font-weight: 800; line-height: 1; }
+    .rate-note { font-size: 0.58rem; opacity: .7; margin-top: 3px; }
+
+    /* Calculator */
+    .calc-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px;
+    }
+    .calc-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 14px; }
+    .calc-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .calc-field { flex: 1; }
+    .calc-label { font-size: 0.7rem; font-weight: 600; color: var(--text-sub); margin-bottom: 5px; }
+    .calc-input {
+      width: 100%; padding: 10px 13px;
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 1rem; color: var(--text); background: var(--bg);
+      transition: border-color 0.15s;
+    }
+    .calc-input:focus { outline: none; border-color: var(--green); }
+    .calc-result {
+      background: var(--green-light); border-radius: var(--radius-sm);
+      padding: 13px 15px; display: flex;
+      align-items: center; justify-content: space-between;
+    }
+    .cr-label { font-size: 0.75rem; color: var(--green); font-weight: 600; }
+    .cr-value { font-size: 1.25rem; font-weight: 800; color: var(--green); }
+
+    /* Service table */
+    .svc-table {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px;
+    }
+    .svc-head {
+      display: grid; grid-template-columns: 1fr 72px 68px 58px;
+      padding: 10px 14px;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      font-size: 0.6rem; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: .4px;
+    }
+    .svc-row {
+      display: grid; grid-template-columns: 1fr 72px 68px 58px;
+      padding: 13px 14px; border-bottom: 1px solid var(--border);
+      align-items: center; transition: background 0.13s;
+      text-decoration: none; color: var(--text);
+    }
+    .svc-row:last-child { border-bottom: none; }
+    .svc-row:hover { background: var(--bg); }
+    .svc-name-wrap { display: flex; align-items: center; gap: 10px; }
+    .svc-logo {
+      width: 34px; height: 34px; border-radius: 8px; background: var(--bg);
+      font-size: 1.3rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .svc-name { font-size: 0.83rem; font-weight: 700; }
+    .svc-region { font-size: 0.62rem; color: var(--text-sub); margin-top: 1px; }
+    .svc-rate { font-size: 0.82rem; font-weight: 700; color: var(--green); }
+    .svc-fee { font-size: 0.78rem; color: var(--text-sub); }
+    .svc-badge {
+      font-size: 0.6rem; font-weight: 700; padding: 3px 7px; border-radius: 10px;
+    }
+    .badge-yes { background: #dcfce7; color: #15803d; }
+    .badge-partial { background: #fef9c3; color: #854d0e; }
+    .badge-no { background: #fee2e2; color: #991b1b; }
+
+    .money-note {
+      background: #fefce8; border: 1px solid #fde68a;
+      border-radius: var(--radius-sm); padding: 12px 14px;
+      font-size: 0.74rem; color: #92400e; line-height: 1.55; margin-bottom: 14px;
+    }
+    .money-note strong { display: block; margin-bottom: 3px; font-size: 0.78rem; }
+
+    /* ── TOAST ── */
+    .hub-toast {
+      position: fixed; bottom: calc(var(--nav-h) + 14px); left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: #0f172a; color: white; padding: 9px 18px;
+      border-radius: 20px; font-size: 0.8rem; opacity: 0;
+      pointer-events: none; transition: opacity .2s, transform .2s;
+      white-space: nowrap; z-index: 999;
+    }
+    .hub-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (min-width: 520px) {
+      .vocab-grid { grid-template-columns: repeat(3, 1fr); }
+      .vowel-row { grid-template-columns: 80px repeat(7, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="page-wrap">
+  <header class="hub-header">
+    <div class="hub-logo">
+      <div class="hub-logo-icon">🇪🇷</div>
+      <div>
+        <div class="hub-title">Eritrean Hub</div>
+        <div class="hub-subtitle">Learn · Community · Money</div>
+      </div>
+    </div>
+    <a href="/" class="hub-back">← Main App</a>
+  </header>
+
+  <!-- ══════════════════════════════════
+       VIEW 1 — LEARN TIGRINYA
+  ══════════════════════════════════ -->
+  <div class="view active" id="view-learn">
+    <div class="s-head">
+      <h2>🎓 Learn Tigrinya</h2>
+      <p>Master the Ge'ez alphabet, vocabulary, and flashcards</p>
+    </div>
+
+    <div class="tabs" id="learnTabs">
+      <button class="tab-btn active" data-tab="alphabet">Alphabet</button>
+      <button class="tab-btn" data-tab="vocab">Vocabulary</button>
+      <button class="tab-btn" data-tab="flashcards">Flashcards</button>
+    </div>
+
+    <!-- ALPHABET -->
+    <div class="tab-panel active" id="tab-alphabet">
+      <div class="vowel-row">
+        <div class="vowel-hdr"></div>
+        <div class="vowel-hdr">ä</div>
+        <div class="vowel-hdr">u</div>
+        <div class="vowel-hdr">i</div>
+        <div class="vowel-hdr">a</div>
+        <div class="vowel-hdr">e</div>
+        <div class="vowel-hdr">ə</div>
+        <div class="vowel-hdr">o</div>
+      </div>
+      <div id="alphabetGrid"></div>
+      <div class="fidel-detail" id="fidelDetail" style="display:none">
+        <div class="fidel-big" id="fidelBig"></div>
+        <div class="fidel-info">
+          <h3 id="fidelName"></h3>
+          <div class="fi-roman" id="fidelRoman"></div>
+          <div class="fi-sound" id="fidelSound"></div>
+        </div>
+        <button class="fidel-speak" id="fidelSpeakBtn" title="Hear pronunciation">🔊</button>
+      </div>
+      <p style="font-size:.68rem;color:var(--text-dim);text-align:center;margin-bottom:16px">Tap any character to see its name and pronunciation</p>
+    </div>
+
+    <!-- VOCABULARY -->
+    <div class="tab-panel" id="tab-vocab">
+      <div class="tabs" id="vocabTabs">
+        <button class="tab-btn active" data-vtab="greetings">👋 Greetings</button>
+        <button class="tab-btn" data-vtab="numbers">🔢 Numbers</button>
+        <button class="tab-btn" data-vtab="family">👨‍👩‍👧 Family</button>
+        <button class="tab-btn" data-vtab="food">🍽 Food</button>
+        <button class="tab-btn" data-vtab="phrases">💬 Phrases</button>
+      </div>
+      <p style="font-size:.7rem;color:var(--text-dim);margin-bottom:12px">Tap a card to reveal the English meaning</p>
+      <div class="vocab-grid" id="vocabGrid"></div>
+    </div>
+
+    <!-- FLASHCARDS -->
+    <div class="tab-panel" id="tab-flashcards">
+      <div class="fc-progress-wrap"><div class="fc-progress-fill" id="fcProgressFill" style="width:0%"></div></div>
+      <div class="fc-progress-label" id="fcProgressLabel">Card 1 of 40</div>
+      <div class="fc-wrap">
+        <div class="fc-card" id="fcCard">
+          <div class="fc-badge" id="fcBadge">Tap to reveal</div>
+          <div class="fc-tig" id="fcTig"></div>
+          <div class="fc-rom" id="fcRom"></div>
+          <div class="fc-eng" id="fcEng" style="display:none"></div>
+          <div class="fc-tap" id="fcTap">Tap card to see meaning</div>
+        </div>
+      </div>
+      <div class="fc-controls" id="fcControls" style="display:none">
+        <button class="fc-btn fc-btn-skip" id="fcSkip">✕ Skip</button>
+        <button class="fc-btn fc-btn-know" id="fcKnow">✓ Got it!</button>
+      </div>
+      <div class="fc-done" id="fcDone" style="display:none">
+        <div class="done-icon">🎉</div>
+        <h3>Round complete!</h3>
+        <p id="fcDoneMsg"></p>
+        <button class="fc-restart" id="fcRestart">Shuffle & Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       VIEW 2 — COMMUNITY
+  ══════════════════════════════════ -->
+  <div class="view" id="view-community">
+    <div class="s-head">
+      <h2>🌍 Community</h2>
+      <p>Eritrean news, events & business directory</p>
+    </div>
+
+    <div class="tabs" id="communityTabs">
+      <button class="tab-btn active" data-ctab="news">📰 News</button>
+      <button class="tab-btn" data-ctab="events">📅 Events</button>
+      <button class="tab-btn" data-ctab="directory">🏪 Directory</button>
+    </div>
+
+    <!-- NEWS -->
+    <div class="tab-panel active" id="tab-news">
+      <div id="newsGrid">
+        <div class="news-loading">
+          <div class="news-spinner"></div>
+          <div>Loading latest news…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="tab-panel" id="tab-events">
+      <div id="eventsGrid"></div>
+    </div>
+
+    <!-- DIRECTORY -->
+    <div class="tab-panel" id="tab-directory">
+      <div id="directoryGrid"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       VIEW 3 — MONEY / REMITTANCE
+  ══════════════════════════════════ -->
+  <div class="view" id="view-money">
+    <div class="s-head">
+      <h2>💸 Send Money</h2>
+      <p>Compare remittance services to Eritrea</p>
+    </div>
+
+    <div class="money-hero">
+      <h3>Eritrean Nakfa (ERN) Rate Guide</h3>
+      <p>Compare services before sending — rates and fees vary widely</p>
+      <div class="rate-row">
+        <div class="rate-box">
+          <div class="rate-lbl">Official rate</div>
+          <div class="rate-val">15.08 ERN</div>
+          <div class="rate-note">per 1 USD</div>
+        </div>
+        <div class="rate-box">
+          <div class="rate-lbl">ERN is pegged</div>
+          <div class="rate-val">Fixed</div>
+          <div class="rate-note">Not freely traded</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calculator -->
+    <div class="calc-card">
+      <div class="calc-title">💰 Quick Calculator</div>
+      <div class="calc-row">
+        <div class="calc-field">
+          <div class="calc-label">Amount (USD)</div>
+          <input type="number" class="calc-input" id="calcUsd" placeholder="100" min="0" value="100">
+        </div>
+        <div class="calc-field">
+          <div class="calc-label">Transfer fee (USD)</div>
+          <input type="number" class="calc-input" id="calcFee" placeholder="5" min="0" value="5">
+        </div>
+      </div>
+      <div class="calc-result">
+        <div>
+          <div class="cr-label">Recipient gets (approx.)</div>
+          <div class="cr-value" id="calcResult">1,432 ERN</div>
+        </div>
+        <div style="font-size:.68rem;color:var(--green);text-align:right">at 15.08<br>ERN / USD</div>
+      </div>
+    </div>
+
+    <div class="money-note">
+      <strong>⚠ About these rates</strong>
+      Direct service to Eritrea is restricted by international banking regulations.
+      Rates shown are approximate — always verify on the provider's website before sending.
+      Some services route via Ethiopia or use partner networks.
+    </div>
+
+    <!-- Service comparison -->
+    <div class="svc-table">
+      <div class="svc-head">
+        <div>Service</div>
+        <div>Est. rate</div>
+        <div>Typical fee</div>
+        <div>Eritrea</div>
+      </div>
+      <a class="svc-row" href="https://www.dahabshiil.com" target="_blank" rel="noopener">
+        <div class="svc-name-wrap">
+          <div class="svc-logo">🌍</div>
+          <div><div class="svc-name">Dahabshiil</div><div class="svc-region">East Africa specialist</div></div>
+        </div>
+        <div class="svc-rate">~15 ERN</div>
+        <div class="svc-fee">$5–8</div>
+        <div><span class="svc-badge badge-yes">✓ Yes</span></div>
+      </a>
+      <a class="svc-row" href="https://www.westernunion.com" target="_blank" rel="noopener">
+        <div class="svc-name-wrap">
+          <div class="svc-logo">💛</div>
+          <div><div class="svc-name">Western Union</div><div class="svc-region">Global network</div></div>
+        </div>
+        <div class="svc-rate">~14.5 ERN</div>
+        <div class="svc-fee">$5–15</div>
+        <div><span class="svc-badge badge-partial">~ Limited</span></div>
+      </a>
+      <a class="svc-row" href="https://www.moneygram.com" target="_blank" rel="noopener">
+        <div class="svc-name-wrap">
+          <div class="svc-logo">🔵</div>
+          <div><div class="svc-name">MoneyGram</div><div class="svc-region">Global network</div></div>
+        </div>
+        <div class="svc-rate">~14.8 ERN</div>
+        <div class="svc-fee">$5–10</div>
+        <div><span class="svc-badge badge-partial">~ Limited</span></div>
+      </a>
+      <a class="svc-row" href="https://www.remitly.com" target="_blank" rel="noopener">
+        <div class="svc-name-wrap">
+          <div class="svc-logo">🟢</div>
+          <div><div class="svc-name">Remitly</div><div class="svc-region">Digital first</div></div>
+        </div>
+        <div class="svc-rate">~15 ERN</div>
+        <div class="svc-fee">$3–5</div>
+        <div><span class="svc-badge badge-partial">~ Limited</span></div>
+      </a>
+      <a class="svc-row" href="https://wise.com" target="_blank" rel="noopener">
+        <div class="svc-name-wrap">
+          <div class="svc-logo">🔷</div>
+          <div><div class="svc-name">Wise</div><div class="svc-region">Mid-market rate</div></div>
+        </div>
+        <div class="svc-rate">Market</div>
+        <div class="svc-fee">0.5–1%</div>
+        <div><span class="svc-badge badge-no">✗ No</span></div>
+      </a>
+      <a class="svc-row" href="https://www.worldremit.com" target="_blank" rel="noopener">
+        <div class="svc-name-wrap">
+          <div class="svc-logo">🟣</div>
+          <div><div class="svc-name">WorldRemit</div><div class="svc-region">Africa focus</div></div>
+        </div>
+        <div class="svc-rate">~14.9 ERN</div>
+        <div class="svc-fee">$2–8</div>
+        <div><span class="svc-badge badge-partial">~ Limited</span></div>
+      </a>
+    </div>
+    <p style="font-size:.68rem;color:var(--text-dim);text-align:center;margin-bottom:20px">Tap any row to visit the provider's website · Rates updated manually</p>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- BOTTOM NAV -->
+<nav class="hub-nav">
+  <button class="hnav-btn active" data-view="learn">
+    <div class="hnav-icon">🎓</div>Learn
+  </button>
+  <button class="hnav-btn" data-view="community">
+    <div class="hnav-icon">🌍</div>Community
+  </button>
+  <button class="hnav-btn" data-view="money">
+    <div class="hnav-icon">💸</div>Send Money
+  </button>
+</nav>
+
+<div class="hub-toast" id="hubToast"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════════ */
+const ALPHABET = [
+  { base:'ሀ', roman:'H',  forms:['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'], sounds:['hä','hu','hi','ha','he','h','ho'] },
+  { base:'ለ', roman:'L',  forms:['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'], sounds:['lä','lu','li','la','le','l','lo'] },
+  { base:'ሐ', roman:'Ḥ',  forms:['ሐ','ሑ','ሒ','ሓ','ሔ','ሕ','ሖ'], sounds:['ḥä','ḥu','ḥi','ḥa','ḥe','ḥ','ḥo'] },
+  { base:'መ', roman:'M',  forms:['መ','ሙ','ሚ','ማ','ሜ','ም','ሞ'], sounds:['mä','mu','mi','ma','me','m','mo'] },
+  { base:'ረ', roman:'R',  forms:['ረ','ሩ','ሪ','ራ','ሬ','ር','ሮ'], sounds:['rä','ru','ri','ra','re','r','ro'] },
+  { base:'ሰ', roman:'S',  forms:['ሰ','ሱ','ሲ','ሳ','ሴ','ስ','ሶ'], sounds:['sä','su','si','sa','se','s','so'] },
+  { base:'ሸ', roman:'Sh', forms:['ሸ','ሹ','ሺ','ሻ','ሼ','ሽ','ሾ'], sounds:['shä','shu','shi','sha','she','sh','sho'] },
+  { base:'ቀ', roman:'Q',  forms:['ቀ','ቁ','ቂ','ቃ','ቄ','ቅ','ቆ'], sounds:['qä','qu','qi','qa','qe','q','qo'] },
+  { base:'በ', roman:'B',  forms:['በ','ቡ','ቢ','ባ','ቤ','ብ','ቦ'], sounds:['bä','bu','bi','ba','be','b','bo'] },
+  { base:'ተ', roman:'T',  forms:['ተ','ቱ','ቲ','ታ','ቴ','ት','ቶ'], sounds:['tä','tu','ti','ta','te','t','to'] },
+  { base:'ቸ', roman:'Ch', forms:['ቸ','ቹ','ቺ','ቻ','ቼ','ች','ቾ'], sounds:['chä','chu','chi','cha','che','ch','cho'] },
+  { base:'ነ', roman:'N',  forms:['ነ','ኑ','ኒ','ና','ኔ','ን','ኖ'], sounds:['nä','nu','ni','na','ne','n','no'] },
+  { base:'አ', roman:'ʾ',  forms:['አ','ኡ','ኢ','ኣ','ኤ','እ','ኦ'], sounds:['ä','u','i','a','e','ə','o'] },
+  { base:'ከ', roman:'K',  forms:['ከ','ኩ','ኪ','ካ','ኬ','ክ','ኮ'], sounds:['kä','ku','ki','ka','ke','k','ko'] },
+  { base:'ወ', roman:'W',  forms:['ወ','ዉ','ዊ','ዋ','ዌ','ው','ዎ'], sounds:['wä','wu','wi','wa','we','w','wo'] },
+  { base:'ዘ', roman:'Z',  forms:['ዘ','ዙ','ዚ','ዛ','ዜ','ዝ','ዞ'], sounds:['zä','zu','zi','za','ze','z','zo'] },
+  { base:'የ', roman:'Y',  forms:['የ','ዩ','ዪ','ያ','ዬ','ይ','ዮ'], sounds:['yä','yu','yi','ya','ye','y','yo'] },
+  { base:'ደ', roman:'D',  forms:['ደ','ዱ','ዲ','ዳ','ዴ','ድ','ዶ'], sounds:['dä','du','di','da','de','d','do'] },
+  { base:'ጀ', roman:'J',  forms:['ጀ','ጁ','ጂ','ጃ','ጄ','ጅ','ጆ'], sounds:['jä','ju','ji','ja','je','j','jo'] },
+  { base:'ገ', roman:'G',  forms:['ገ','ጉ','ጊ','ጋ','ጌ','ግ','ጎ'], sounds:['gä','gu','gi','ga','ge','g','go'] },
+  { base:'ጠ', roman:'Ṭ',  forms:['ጠ','ጡ','ጢ','ጣ','ጤ','ጥ','ጦ'], sounds:['ṭä','ṭu','ṭi','ṭa','ṭe','ṭ','ṭo'] },
+  { base:'ጨ', roman:'Čh', forms:['ጨ','ጩ','ጪ','ጫ','ጬ','ጭ','ጮ'], sounds:['čhä','čhu','čhi','čha','čhe','čh','čho'] },
+  { base:'ፈ', roman:'F',  forms:['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ'], sounds:['fä','fu','fi','fa','fe','f','fo'] },
+  { base:'ፐ', roman:'P',  forms:['ፐ','ፑ','ፒ','ፓ','ፔ','ፕ','ፖ'], sounds:['pä','pu','pi','pa','pe','p','po'] },
+];
+
+const VOCAB = {
+  greetings: [
+    { tig:'ሰላም',          rom:'Selam',           eng:'Hello / Peace' },
+    { tig:'ከመይ ኢኻ?',     rom:'Kemey ikha?',     eng:'How are you? (to male)' },
+    { tig:'ከመይ ኢኺ?',     rom:'Kemey ikhi?',     eng:'How are you? (to female)' },
+    { tig:'ጽቡቕ',          rom:"Ts'buq",          eng:'Fine / Good' },
+    { tig:'የቐንየለይ',      rom:'Yeqenyeley',      eng:'Thank you' },
+    { tig:'ይቅርታ',        rom:'Yiqirta',         eng:'Sorry / Excuse me' },
+    { tig:'እወ',            rom:'Iwe',             eng:'Yes' },
+    { tig:'ኣይፋሉ',        rom:'Ayfalu',          eng:'No' },
+    { tig:'ሰናይ ምሸት',    rom:'Senay mishet',    eng:'Good evening' },
+    { tig:'ሰናይ ምዓልቲ',  rom:"Senay m'alti",    eng:'Good day' },
+    { tig:'ሰናይ ሕደር',    rom:"Senay h'der",     eng:'Good night' },
+    { tig:'ሰናይ ምርኻብ',  rom:'Senay mirkab',    eng:'Nice to meet you' },
+  ],
+  numbers: [
+    { tig:'ሓደ',    rom:'Hade',        eng:'One (1)' },
+    { tig:'ክልተ',   rom:'Kilte',       eng:'Two (2)' },
+    { tig:'ሰለስተ', rom:'Seleste',     eng:'Three (3)' },
+    { tig:'ኣርባዕተ',rom:"Arba'te",     eng:'Four (4)' },
+    { tig:'ሓሙሽተ', rom:'Hamushte',    eng:'Five (5)' },
+    { tig:'ሽዱሽተ', rom:'Shidushte',   eng:'Six (6)' },
+    { tig:'ሸውዓተ', rom:"Shew'ate",    eng:'Seven (7)' },
+    { tig:'ሸሞንተ', rom:'Shemonte',    eng:'Eight (8)' },
+    { tig:'ትሸዓተ', rom:"Tish'ate",    eng:'Nine (9)' },
+    { tig:'ዓሰርተ', rom:'Aserte',      eng:'Ten (10)' },
+    { tig:'ዒሽርተ', rom:'Eshirte',     eng:'Twenty (20)' },
+    { tig:'ሚእቲ',  rom:"Mi'ti",       eng:'One Hundred (100)' },
+  ],
+  family: [
+    { tig:'ኣቦ',   rom:'Abo',         eng:'Father' },
+    { tig:'ኣደ',   rom:'Ade',         eng:'Mother' },
+    { tig:'ወዲ',   rom:'Wedi',        eng:'Son / Boy' },
+    { tig:'ጓል',   rom:'Gual',        eng:'Daughter / Girl' },
+    { tig:'ሓው',   rom:'Haw',         eng:'Brother' },
+    { tig:'ሓፍቲ', rom:'Hafti',        eng:'Sister' },
+    { tig:'ሰብኣይ',rom:"Seba'i",       eng:'Husband' },
+    { tig:'ሰበይቲ',rom:'Sebeyti',      eng:'Wife' },
+    { tig:'ወለዲ', rom:'Weledi',       eng:'Parents' },
+    { tig:'ሕጻን', rom:"H'tsan",       eng:'Baby / Child' },
+    { tig:'ኣቦሓጎ',rom:'Abohago',      eng:'Grandfather' },
+    { tig:'ኣዲኣ', rom:'Adia',         eng:'Grandmother' },
+  ],
+  food: [
+    { tig:'እንጀራ', rom:'Injera',      eng:'Flatbread (staple)' },
+    { tig:'ጥብሲ',  rom:'Tibsi',       eng:'Grilled meat' },
+    { tig:'ሽሮ',   rom:'Shiro',       eng:'Chickpea stew' },
+    { tig:'ሻሂ',   rom:'Shahi',       eng:'Tea' },
+    { tig:'ቡን',   rom:'Bun',         eng:'Coffee' },
+    { tig:'ማይ',   rom:'Mai',         eng:'Water' },
+    { tig:'ዳቦ',   rom:'Dabo',        eng:'Bread' },
+    { tig:'ስጋ',   rom:'Siga',        eng:'Meat' },
+    { tig:'ዓሳ',   rom:'Asa',         eng:'Fish' },
+    { tig:'ፍረ',   rom:'Fire',        eng:'Fruit' },
+    { tig:'ሽንጥሮ',rom:'Shintro',      eng:'Lentils' },
+    { tig:'ቅቤ',   rom:"Q'be",        eng:'Butter / Ghee' },
+  ],
+  phrases: [
+    { tig:'ስምካ መን ኢዩ?', rom:'Simka men iyu?',    eng:"What's your name?" },
+    { tig:'ስመይ … ኢዩ',   rom:'Simey … iyu',       eng:'My name is …' },
+    { tig:'ካበይ ኢኻ?',    rom:'Kabey ikha?',        eng:'Where are you from?' },
+    { tig:'ክንደይ ዋጋ?',  rom:'Kindey waga?',       eng:'How much does it cost?' },
+    { tig:'ኣበይ ኣሎ?',   rom:"Abey alo?",           eng:'Where is it?' },
+    { tig:'ሓግዘኒ',       rom:'Hagizeni',           eng:'Help me / Please help' },
+    { tig:'ኣይፈልጥን',    rom:"Ayfeltin",            eng:"I don't know" },
+    { tig:'ርደኣኒ',       rom:"Ride'ani",            eng:'I understand' },
+    { tig:'ናፊቐካ',       rom:"Nafi'qeka",           eng:'I miss you' },
+    { tig:'ፍቖዶ',        rom:"F'qodo",              eng:'I love you' },
+    { tig:'ሕጂ ይምለስ',  rom:'H\'ji yimles',        eng:'Coming back soon' },
+    { tig:'ሰናይ ጉዕዞ',  rom:"Senay gu'ezo",        eng:'Safe travels' },
+  ],
+};
+
+const EVENTS = [
+  { month:'MAY', day:24, title:'Eritrean Independence Day', loc:'Worldwide', type:'National Holiday' },
+  { month:'MAY', day:24, title:'Independence Celebration — London', loc:'London, UK', type:'Festival' },
+  { month:'JUN', day:20, title:'World Refugee Day', loc:'Global', type:'Awareness' },
+  { month:'JUL', day:1,  title:'Eri-Festival Frankfurt', loc:'Frankfurt, Germany', type:'Festival' },
+  { month:'JUL', day:15, title:'Eritrean Cultural Night — Stockholm', loc:'Stockholm, Sweden', type:'Cultural' },
+  { month:'AUG', day:10, title:'Eritrean Festival Bologna', loc:'Bologna, Italy', type:'Festival' },
+  { month:'AUG', day:24, title:'Diaspora Community Games', loc:'Washington DC, USA', type:'Sports' },
+  { month:'SEP', day:1,  title:'Eritrean New Year (Qiddus Yohannes)', loc:'Worldwide', type:'Holiday' },
+  { month:'SEP', day:1,  title:'New Year Celebration — Toronto', loc:'Toronto, Canada', type:'Festival' },
+  { month:'OCT', day:15, title:'Eritrean Music & Art Showcase', loc:'Melbourne, Australia', type:'Arts' },
+  { month:'NOV', day:10, title:'Tigrinya Language Day', loc:'Online & Community Halls', type:'Cultural' },
+  { month:'DEC', day:25, title:'Christmas Celebrations (Western)', loc:'Diaspora Communities', type:'Religious' },
+];
+
+const DIRECTORY = [
+  { icon:'🍽', name:'Asmara Restaurant',         cat:'Restaurant',  loc:'Washington DC, USA',    desc:'Traditional Eritrean cuisine, injera and tibs since 1985' },
+  { icon:'🍽', name:'Hidmo',                      cat:'Restaurant',  loc:'London, UK',            desc:'Authentic Eritrean food and traditional coffee ceremony' },
+  { icon:'🍽', name:'Blue Nile Restaurant',       cat:'Restaurant',  loc:'Minneapolis, USA',      desc:'Habesha cuisine, vegetarian-friendly options' },
+  { icon:'🏪', name:'Eri Market',                 cat:'Grocery',     loc:'Los Angeles, USA',      desc:'Eritrean & Ethiopian groceries, spices and injera flour' },
+  { icon:'🏪', name:'Habesha Supermarket',        cat:'Grocery',     loc:'Toronto, Canada',       desc:'East African groceries, teff, berbere and household goods' },
+  { icon:'💇', name:'Habesha Hair & Beauty',      cat:'Beauty',      loc:'Frankfurt, Germany',    desc:'Specialist in African hair care, braiding and styling' },
+  { icon:'⚖', name:'Eritrean Legal Aid Network', cat:'Legal',       loc:'Berlin, Germany',       desc:'Asylum, immigration and family reunification legal support' },
+  { icon:'🏥', name:'Habesha Medical Clinic',     cat:'Healthcare',  loc:'Stockholm, Sweden',     desc:'Healthcare provider with Tigrinya-speaking medical staff' },
+  { icon:'🎵', name:'Eri Music Production',       cat:'Music',       loc:'Frankfurt, Germany',    desc:'Recording studio for Eritrean and Habesha artists' },
+  { icon:'✈', name:'Eri Travel & Tours',          cat:'Travel',      loc:'New York, USA',         desc:'Flights, visa assistance and tours to Eritrea & Ethiopia' },
+  { icon:'🏫', name:'Tigrinya Language School',   cat:'Education',   loc:'Online',                desc:'Weekend Tigrinya classes for diaspora children and adults' },
+  { icon:'📦', name:'Eri Shipping & Cargo',       cat:'Shipping',    loc:'Rotterdam, Netherlands',desc:'Cargo services to Eritrea, door-to-door delivery available' },
+];
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════ */
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.hnav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + id)?.classList.add('active');
+  document.querySelector(`.hnav-btn[data-view="${id}"]`)?.classList.add('active');
+  if (id === 'community' && !newsLoaded) loadNews();
+}
+document.querySelectorAll('.hnav-btn').forEach(btn => {
+  btn.addEventListener('click', () => showView(btn.dataset.view));
+});
+
+function showTab(groupId, tabId, panelPrefix) {
+  document.querySelectorAll(`#${groupId} .tab-btn`).forEach(b => b.classList.remove('active'));
+  document.querySelector(`#${groupId} [data-${panelPrefix}="${tabId}"]`)?.classList.add('active');
+  // hide all sibling panels (look for tab panels in the same view)
+  const view = document.querySelector(`#${groupId}`).closest('.view, #view-learn, #view-community');
+  view?.querySelectorAll('.tab-panel').forEach(p => {
+    if (p.id === 'tab-' + tabId) p.classList.add('active');
+    else if ([...document.querySelectorAll(`#${groupId} .tab-btn`)].some(b => 'tab-' + b.dataset[panelPrefix] === p.id)) {
+      p.classList.remove('active');
+    }
+  });
+}
+
+// Learn tabs
+document.querySelectorAll('#learnTabs .tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#learnTabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#view-learn .tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'tab-' + btn.dataset.tab);
+    });
+    if (btn.dataset.tab === 'flashcards' && !fcInited) initFlashcards();
+  });
+});
+
+// Community tabs
+document.querySelectorAll('#communityTabs .tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#communityTabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#view-community .tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'tab-' + btn.dataset.ctab);
+    });
+  });
+});
+
+// Vocab sub-tabs
+document.querySelectorAll('#vocabTabs .tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#vocabTabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderVocab(btn.dataset.vtab);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════
+   ALPHABET
+═══════════════════════════════════════════════════════ */
+(function buildAlphabet() {
+  const grid = document.getElementById('alphabetGrid');
+  grid.innerHTML = ALPHABET.map((row, ri) => `
+    <div class="vowel-row">
+      <div class="row-label">${row.roman}</div>
+      ${row.forms.map((f, fi) => `
+        <div class="fidel" data-ri="${ri}" data-fi="${fi}">${f}</div>
+      `).join('')}
+    </div>
+  `).join('');
+
+  let selRi = -1, selFi = -1;
+  grid.addEventListener('click', e => {
+    const el = e.target.closest('.fidel');
+    if (!el) return;
+    const ri = +el.dataset.ri, fi = +el.dataset.fi;
+    document.querySelectorAll('.fidel').forEach(f => f.classList.remove('sel'));
+    el.classList.add('sel');
+    selRi = ri; selFi = fi;
+    const row = ALPHABET[ri];
+    const detail = document.getElementById('fidelDetail');
+    document.getElementById('fidelBig').textContent   = row.forms[fi];
+    document.getElementById('fidelName').textContent  = `${row.forms[fi]} (${row.roman} row)`;
+    document.getElementById('fidelRoman').textContent = `Romanized: "${row.sounds[fi]}"`;
+    document.getElementById('fidelSound').textContent = `Order ${fi + 1} of 7 · Vowel sound: "${['ä','u','i','a','e','ə','o'][fi]}"`;
+    detail.style.display = 'flex';
+    detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  document.getElementById('fidelSpeakBtn').addEventListener('click', () => {
+    if (selRi < 0) return;
+    const sound = ALPHABET[selRi].sounds[selFi];
+    speak(sound);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   VOCABULARY
+═══════════════════════════════════════════════════════ */
+function renderVocab(cat) {
+  const items = VOCAB[cat] || [];
+  const grid = document.getElementById('vocabGrid');
+  grid.innerHTML = items.map((v, i) => `
+    <div class="vocab-card" data-idx="${i}">
+      <div class="vc-tig">${v.tig}</div>
+      <div class="vc-rom">${v.rom}</div>
+      <div class="vc-eng hidden">${v.eng}</div>
+      <div class="vc-hint">Tap to reveal</div>
+    </div>
+  `).join('');
+  grid.querySelectorAll('.vocab-card').forEach(card => {
+    card.addEventListener('click', () => {
+      card.classList.toggle('flipped');
+      const eng = card.querySelector('.vc-eng');
+      const hint = card.querySelector('.vc-hint');
+      const flipped = card.classList.contains('flipped');
+      eng.classList.toggle('hidden', !flipped);
+      hint.textContent = flipped ? 'Tap to hide' : 'Tap to reveal';
+      if (flipped) speak(card.querySelector('.vc-tig').textContent);
+    });
+  });
+}
+renderVocab('greetings');
+
+/* ═══════════════════════════════════════════════════════
+   FLASHCARDS
+═══════════════════════════════════════════════════════ */
+let fcInited = false, fcDeck = [], fcIdx = 0, fcKnown = 0, fcRevealed = false;
+
+function initFlashcards() {
+  fcInited = true;
+  // Build deck from all vocab
+  fcDeck = Object.values(VOCAB).flat();
+  shuffleDeck();
+  renderFC();
+}
+
+function shuffleDeck() {
+  for (let i = fcDeck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fcDeck[i], fcDeck[j]] = [fcDeck[j], fcDeck[i]];
+  }
+  fcIdx = 0; fcKnown = 0; fcRevealed = false;
+}
+
+function renderFC() {
+  const done = document.getElementById('fcDone');
+  const card = document.getElementById('fcCard');
+  const ctrls = document.getElementById('fcControls');
+
+  if (fcIdx >= fcDeck.length) {
+    card.style.display = 'none';
+    ctrls.style.display = 'none';
+    done.style.display = 'block';
+    document.getElementById('fcProgressFill').style.width = '100%';
+    document.getElementById('fcProgressLabel').textContent = 'Complete!';
+    document.getElementById('fcDoneMsg').textContent =
+      `You knew ${fcKnown} out of ${fcDeck.length} words. ${fcKnown >= fcDeck.length * 0.8 ? '🎉 Excellent!' : 'Keep practising!'}`;
+    return;
+  }
+
+  done.style.display = 'none';
+  card.style.display = 'flex';
+  ctrls.style.display = 'none';
+
+  const v = fcDeck[fcIdx];
+  fcRevealed = false;
+  document.getElementById('fcTig').textContent  = v.tig;
+  document.getElementById('fcRom').textContent  = v.rom;
+  document.getElementById('fcEng').textContent  = v.eng;
+  document.getElementById('fcEng').style.display = 'none';
+  document.getElementById('fcTap').style.display = 'block';
+  document.getElementById('fcBadge').textContent = 'Tap to reveal';
+  card.classList.remove('revealed');
+
+  const pct = (fcIdx / fcDeck.length) * 100;
+  document.getElementById('fcProgressFill').style.width = pct + '%';
+  document.getElementById('fcProgressLabel').textContent = `Card ${fcIdx + 1} of ${fcDeck.length} · ${fcKnown} known`;
+}
+
+document.getElementById('fcCard').addEventListener('click', () => {
+  if (fcRevealed) return;
+  fcRevealed = true;
+  document.getElementById('fcEng').style.display = 'block';
+  document.getElementById('fcTap').style.display = 'none';
+  document.getElementById('fcBadge').textContent = 'Do you know this?';
+  document.getElementById('fcCard').classList.add('revealed');
+  document.getElementById('fcControls').style.display = 'flex';
+  speak(fcDeck[fcIdx].tig);
+});
+
+document.getElementById('fcSkip').addEventListener('click', () => { fcIdx++; renderFC(); });
+document.getElementById('fcKnow').addEventListener('click', () => { fcKnown++; fcIdx++; renderFC(); });
+document.getElementById('fcRestart').addEventListener('click', () => {
+  shuffleDeck();
+  document.getElementById('fcDone').style.display = 'none';
+  document.getElementById('fcCard').style.display = 'flex';
+  renderFC();
+});
+
+/* ═══════════════════════════════════════════════════════
+   NEWS — RSS via rss2json
+═══════════════════════════════════════════════════════ */
+let newsLoaded = false;
+const NEWS_SOURCES = [
+  { label:'Shabait',    emoji:'🇪🇷', url:'https://shabait.com/feed/'           },
+  { label:'TesfaNews',  emoji:'📡', url:'https://www.tesfanews.net/feed/'      },
+];
+
+async function loadNews() {
+  newsLoaded = true;
+  const grid = document.getElementById('newsGrid');
+  const articles = [];
+
+  await Promise.allSettled(NEWS_SOURCES.map(async src => {
+    try {
+      const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(src.url)}&count=6`;
+      const res = await fetch(api);
+      const data = await res.json();
+      if (data.status === 'ok' && data.items?.length) {
+        data.items.forEach(item => articles.push({ ...item, _src: src }));
+      }
+    } catch {}
+  }));
+
+  if (!articles.length) {
+    grid.innerHTML = `
+      <div class="news-error">
+        <div class="icon">📡</div>
+        <p>Could not load news. Check your connection or try again.</p>
+      </div>`;
+    return;
+  }
+
+  articles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+  grid.innerHTML = articles.map(a => {
+    const date = new Date(a.pubDate).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const img = a.thumbnail || a.enclosure?.link || '';
+    const desc = (a.description || '').replace(/<[^>]+>/g, '').trim().slice(0, 180);
+    return `
+    <div class="news-card">
+      ${img
+        ? `<img class="news-img" src="${img}" alt="" loading="lazy" onerror="this.parentNode.querySelector('.news-img-ph')?.style.setProperty('display','flex'); this.remove()">`
+        : ''}
+      <div class="news-img-ph" style="display:${img ? 'none' : 'flex'}">${a._src.emoji}</div>
+      <div class="news-body">
+        <div class="news-src"><div class="news-src-dot"></div>${a._src.label}</div>
+        <div class="news-title">${a.title || ''}</div>
+        ${desc ? `<div class="news-desc">${desc}</div>` : ''}
+        <div class="news-meta">
+          <div class="news-date">${date}</div>
+          <a class="news-read" href="${a.link || '#'}" target="_blank" rel="noopener">Read →</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   EVENTS
+═══════════════════════════════════════════════════════ */
+(function buildEvents() {
+  document.getElementById('eventsGrid').innerHTML = EVENTS.map(ev => `
+    <div class="event-card">
+      <div class="ev-date">
+        <div class="ev-month">${ev.month}</div>
+        <div class="ev-day">${ev.day}</div>
+      </div>
+      <div class="ev-body">
+        <div class="ev-title">${ev.title}</div>
+        <div class="ev-loc">📍 ${ev.loc}</div>
+        <div class="ev-type">${ev.type}</div>
+      </div>
+    </div>
+  `).join('');
+})();
+
+/* ═══════════════════════════════════════════════════════
+   BUSINESS DIRECTORY
+═══════════════════════════════════════════════════════ */
+(function buildDirectory() {
+  document.getElementById('directoryGrid').innerHTML = DIRECTORY.map(b => `
+    <div class="biz-card">
+      <div class="biz-icon">${b.icon}</div>
+      <div class="biz-info">
+        <div class="biz-name">${b.name}</div>
+        <div class="biz-cat">${b.cat}</div>
+        <div class="biz-loc">📍 ${b.loc}</div>
+        <div class="biz-desc">${b.desc}</div>
+      </div>
+    </div>
+  `).join('');
+})();
+
+/* ═══════════════════════════════════════════════════════
+   MONEY CALCULATOR
+═══════════════════════════════════════════════════════ */
+const RATE = 15.08;
+function calcRemit() {
+  const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
+  const fee = parseFloat(document.getElementById('calcFee').value) || 0;
+  const result = Math.max(0, (usd - fee) * RATE);
+  document.getElementById('calcResult').textContent =
+    result.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' ERN';
+}
+document.getElementById('calcUsd').addEventListener('input', calcRemit);
+document.getElementById('calcFee').addEventListener('input', calcRemit);
+calcRemit();
+
+/* ═══════════════════════════════════════════════════════
+   SPEECH SYNTHESIS (pronunciation helper)
+═══════════════════════════════════════════════════════ */
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'ti-ET'; // Tigrinya — may fall back to system default
+  utt.rate = 0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utt);
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+function hubToast(msg) {
+  const el = document.getElementById('hubToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+</script>
+
+</body>
+</html>
