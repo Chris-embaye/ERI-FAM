@@ -2,7 +2,7 @@
    FIDEL — Service Worker
 ============================================ */
 
-const CACHE_NAME  = 'fidel-v6';
+const CACHE_NAME  = 'fidel-v7';
 const OFFLINE_URL = './index.html';
 
 const PRECACHE = [

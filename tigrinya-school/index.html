@@ -3550,10 +3550,10 @@ function _updateMatch() {
    QUIZ
 ═══════════════════════════════ */
 let _quizWords = [], _quizIdx = 0, _quizScore = 0;
-const QUIZ_LEN = 10;
+const GQ_LEN = 10;
 
 function startQuiz() {
-  _quizWords = _shuffle(DICT).slice(0, QUIZ_LEN);
+  _quizWords = _shuffle(DICT).slice(0, GQ_LEN);
   _quizIdx = 0; _quizScore = 0;
   document.getElementById('quizPlay').style.display   = '';
   document.getElementById('quizResult').style.display = 'none';
@@ -3562,7 +3562,7 @@ function startQuiz() {
 
 function _renderQuizQ() {
   const w = _quizWords[_quizIdx];
-  document.getElementById('quizProgress').textContent = `Question ${_quizIdx+1} of ${QUIZ_LEN}`;
+  document.getElementById('quizProgress').textContent = `Question ${_quizIdx+1} of ${GQ_LEN}`;
   document.getElementById('quizWord').textContent = w.tig;
   document.getElementById('quizRom').textContent  = w.rom;
   const wrongs = _shuffle(DICT.filter(d => d.eng !== w.eng));
@@ -3577,7 +3577,7 @@ function _renderQuizQ() {
         btn.classList.add('wrong');
         document.querySelectorAll('.quiz-opt').forEach(b => { if (b.textContent === w.eng) b.classList.add('correct'); });
       }
-      setTimeout(() => { _quizIdx < QUIZ_LEN - 1 ? (++_quizIdx, _renderQuizQ()) : _showQuizResult(); }, 900);
+      setTimeout(() => { _quizIdx < GQ_LEN - 1 ? (++_quizIdx, _renderQuizQ()) : _showQuizResult(); }, 900);
     });
   });
 }
