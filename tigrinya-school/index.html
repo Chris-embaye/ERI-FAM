@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Tigrinya School — Learn · Translate · Community</title>
+  <title>Fidel — Learn · Translate · Community</title>
   <link rel="icon" href="./icons/icon-512.png">
   <link rel="apple-touch-icon" href="./icons/icon-512.png">
   <link rel="manifest" href="./manifest.json">
@@ -11,7 +11,7 @@
   <meta name="theme-color" content="#16a34a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Tigrinya School">
+  <meta name="apple-mobile-web-app-title" content="Fidel">
   <meta name="mobile-web-app-capable" content="yes">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8021114161012516" crossorigin="anonymous"></script>
   <style>
@@ -880,9 +880,33 @@
     /* ── AUTH GATE ── */
     .auth-gate {
       position: fixed; inset: 0; z-index: 500;
-      background: linear-gradient(155deg, var(--green) 0%, #0f4c25 100%);
       display: flex; align-items: center; justify-content: center; padding: 20px;
+      overflow: hidden;
+      background:
+        /* rolling hills layer 3 — dark green base */
+        radial-gradient(ellipse 120% 60% at 50% 130%, #1a5c1a 0%, transparent 60%),
+        /* rolling hills layer 2 — mid green */
+        radial-gradient(ellipse 110% 55% at 30% 120%, #2d8a2d 0%, transparent 55%),
+        radial-gradient(ellipse 90% 50% at 80% 115%, #2d8a2d 0%, transparent 50%),
+        /* rolling hills layer 1 — bright green foreground */
+        radial-gradient(ellipse 130% 48% at 50% 110%, #3daf3d 0%, transparent 50%),
+        /* sun glow */
+        radial-gradient(circle 160px at 78% 18%, #fff7a0 0%, #ffd700 25%, transparent 65%),
+        /* sky gradient */
+        linear-gradient(180deg, #b8e4f9 0%, #d6f0ff 45%, #c8ecb0 68%, #5cb85c 100%);
     }
+    .auth-gate::before {
+      content: '';
+      position: absolute; inset: 0; z-index: 0;
+      /* sun rays */
+      background: repeating-conic-gradient(
+        from 0deg at 78% 18%,
+        rgba(255,240,100,.18) 0deg 8deg,
+        transparent 8deg 18deg
+      );
+      pointer-events: none;
+    }
+    .auth-gate > * { position: relative; z-index: 1; }
     .auth-gate.hidden { display: none; }
     .auth-card {
       background: var(--card); border-radius: 22px;
@@ -934,8 +958,8 @@
 <!-- ══ AUTH GATE — shown until signed in ══ -->
 <div class="auth-gate" id="authGate">
   <div class="auth-card">
-    <div class="auth-logo">🇪🇷</div>
-    <div class="auth-title">Tigrinya School</div>
+    <div class="auth-logo"><img src="./icons/eri-logo.png" alt="Fidel" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto;display:block;box-shadow:0 2px 10px rgba(0,0,0,.15)"></div>
+    <div class="auth-title">Fidel</div>
     <p class="auth-sub" id="authSub">Create your account to start learning</p>
 
     <!-- Sign-Up Panel -->
@@ -978,7 +1002,7 @@
     <div class="hub-logo">
       <div class="hub-logo-icon">🇪🇷</div>
       <div>
-        <div class="hub-title">Tigrinya School</div>
+        <div class="hub-title">Fidel</div>
         <div class="hub-subtitle">Learn · Translate · Community</div>
       </div>
     </div>
@@ -1417,7 +1441,7 @@
 <div class="install-banner" id="installBanner">
   <div class="install-banner-icon">🇪🇷</div>
   <div class="install-banner-text">
-    <div class="install-banner-title">Install Tigrinya School</div>
+    <div class="install-banner-title">Install Fidel</div>
     <div class="install-banner-sub">Add to home screen for the full app experience</div>
   </div>
   <button class="install-banner-btn" id="installBtn">Install</button>
@@ -2195,7 +2219,7 @@ document.getElementById('quizAgain').addEventListener('click', () => {
 });
 /* TWEAK 7: SHARE SCORE */
 document.getElementById('quizShareBtn').addEventListener('click', () => {
-  const text = '📝 Tigrinya School Quiz: ' + quizScore + '/' + QUIZ_LEN + ' ' + '⭐'.repeat(lastQuizStars) + ' +' + (quizScore * 5) + ' XP — eritreaninfo.com/hub';
+  const text = '📝 Fidel Quiz: ' + quizScore + '/' + QUIZ_LEN + ' ' + '⭐'.repeat(lastQuizStars) + ' +' + (quizScore * 5) + ' XP — eri-tigrinya-school.web.app';
   navigator.clipboard?.writeText(text).then(() => hubToast('Copied to clipboard!')).catch(() => hubToast('Could not copy'));
 });
 
@@ -3833,6 +3857,8 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
           { email, role: authRole, studentId, createdAt: firebase.firestore.FieldValue.serverTimestamp() }
         );
         if (studentId) {
+          // Public lookup so sign-in by ERI-ID works before auth
+          await _syncDb.collection('studentLookup').doc(studentId).set({ email }).catch(() => {});
           await _syncDb.collection('progress').doc(studentId).set(
             { uid, studentId, email, xp:0, streak:0, stars:0, quizBest:0, lessonsCompleted:[], catStars:{}, lastActive:'', updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
             { merge: true }
@@ -3863,18 +3889,26 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
       try {
         // If it looks like a student ID, look up the email first
         if (/^ERI-\d{6}$/i.test(identifier)) {
+          if (!_syncDb) { errEl.textContent = 'App still loading — please wait a moment and try again.'; btn.disabled = false; btn.textContent = 'Sign In →'; return; }
           const sid = identifier.toUpperCase();
-          const snap = await _syncDb.collection('users').where('studentId', '==', sid).limit(1).get();
-          if (snap.empty) {
+          let doc;
+          try {
+            doc = await _syncDb.collection('studentLookup').doc(sid).get();
+          } catch(dbErr) {
+            errEl.textContent = 'Could not look up Student ID: ' + (dbErr.message || dbErr.code || 'check connection');
+            btn.disabled = false; btn.textContent = 'Sign In →';
+            return;
+          }
+          if (!doc.exists) {
             errEl.textContent = 'No account found for that Student ID.';
             btn.disabled = false; btn.textContent = 'Sign In →';
             return;
           }
-          identifier = snap.docs[0].data().email;
+          identifier = doc.data().email;
         }
         await firebase.auth().signInWithEmailAndPassword(identifier, pass);
       } catch(e) {
-        errEl.textContent = authErr(e.code);
+        errEl.textContent = authErr(e.code) + (e.code ? '' : ': ' + (e.message || e));
         btn.disabled = false; btn.textContent = 'Sign In →';
       }
     });
@@ -3885,9 +3919,9 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
       const errEl = document.getElementById('siErr');
       if (!email) { errEl.style.color = 'var(--red)'; errEl.textContent = 'Enter your email or Student ID above first.'; return; }
       if (/^ERI-\d{6}$/i.test(email)) {
-        const snap = await _syncDb.collection('users').where('studentId', '==', email.toUpperCase()).limit(1).get();
-        if (snap.empty) { errEl.style.color = 'var(--red)'; errEl.textContent = 'No account found for that Student ID.'; return; }
-        email = snap.docs[0].data().email;
+        const doc = await _syncDb.collection('studentLookup').doc(email.toUpperCase()).get().catch(() => null);
+        if (!doc || !doc.exists) { errEl.style.color = 'var(--red)'; errEl.textContent = 'No account found for that Student ID.'; return; }
+        email = doc.data().email;
       }
       try {
         await firebase.auth().sendPasswordResetEmail(email);
