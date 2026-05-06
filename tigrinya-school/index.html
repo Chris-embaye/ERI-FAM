@@ -137,6 +137,32 @@
     .ps-val { font-size: 1.1rem; font-weight: 800; }
     .ps-lbl { font-size: 0.6rem; color: var(--text-sub); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
     .ps-divider { width: 1px; background: var(--border); align-self: stretch; margin: 4px 0; }
+    .ps-ring circle { transition: stroke-dasharray .5s ease; }
+    .ps-ring-track { stroke: var(--border); }
+    .ps-ring-fill  { stroke: var(--green); }
+    .ps-ring-done  { stroke: #f59e0b; }
+
+    /* ── PROFILE EXTRAS ── */
+    .profile-level-badge {
+      font-size: 0.72rem; font-weight: 800; color: white;
+      background: var(--green); border-radius: 20px; padding: 3px 12px;
+      letter-spacing: .03em;
+    }
+    .profile-xp-wrap { width: 100%; margin-top: 6px; }
+    .profile-xp-bar-track {
+      height: 6px; background: var(--border); border-radius: 4px; overflow: hidden;
+    }
+    .profile-xp-bar-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width .4s ease; }
+    .profile-xp-label { font-size: 0.65rem; color: var(--text-sub); margin-top: 4px; text-align: center; }
+    .profile-week { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
+    .profile-week-day { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .profile-week-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--border); border: 2px solid var(--border);
+    }
+    .profile-week-dot.active { background: var(--green); border-color: var(--green-d); }
+    .profile-week-dot.today { box-shadow: 0 0 0 2px var(--green); }
+    .profile-week-lbl { font-size: 0.6rem; color: var(--text-sub); font-weight: 700; }
 
     /* ── ALPHABET ── */
     .vowel-row { display: grid; grid-template-columns: 62px repeat(7, 1fr); gap: 3px; margin-bottom: 3px; }
@@ -1081,19 +1107,31 @@
       <div class="ps-item">
         <div class="ps-icon">🏆</div>
         <div class="ps-val" id="psXP">0</div>
-        <div class="ps-lbl">XP</div>
+        <div class="ps-lbl" id="psLevel">Learner</div>
       </div>
       <div class="ps-divider"></div>
       <div class="ps-item">
         <div class="ps-icon">🔥</div>
         <div class="ps-val" id="psStreak">0</div>
-        <div class="ps-lbl">Day streak</div>
+        <div class="ps-lbl">Streak</div>
       </div>
       <div class="ps-divider"></div>
       <div class="ps-item">
         <div class="ps-icon">⭐</div>
         <div class="ps-val" id="psStars">0</div>
         <div class="ps-lbl">Stars</div>
+      </div>
+      <div class="ps-divider"></div>
+      <div class="ps-item">
+        <svg class="ps-ring" viewBox="0 0 36 36" width="34" height="34">
+          <circle class="ps-ring-track" cx="18" cy="18" r="14" fill="none" stroke-width="4"/>
+          <circle class="ps-ring-fill" cx="18" cy="18" r="14" fill="none" stroke-width="4"
+                  stroke-dasharray="0 87.96" stroke-linecap="round"
+                  transform="rotate(-90 18 18)" id="psRingFill"/>
+          <text x="18" y="22" text-anchor="middle" font-size="9" font-weight="800"
+                fill="currentColor" id="psRingNum">0</text>
+        </svg>
+        <div class="ps-lbl">Daily</div>
       </div>
       <button class="ps-reset-btn" id="psResetBtn" title="Reset progress">⚙</button>
     </div>
@@ -1538,8 +1576,15 @@
     <button class="profile-modal-close" id="profileModalClose">✕</button>
     <div class="profile-modal-header">
       <img src="./icons/fidel-logo.svg" alt="" style="width:56px;height:56px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.15)">
+      <div class="profile-level-badge" id="profileLevelBadge">Lv.1 Learner</div>
       <div class="profile-modal-name" id="profileName"></div>
       <div class="profile-modal-id" id="profileStudentId"></div>
+      <div class="profile-xp-wrap">
+        <div class="profile-xp-bar-track">
+          <div class="profile-xp-bar-fill" id="profileXpBar" style="width:0%"></div>
+        </div>
+        <div class="profile-xp-label" id="profileXpLabel"></div>
+      </div>
     </div>
     <div class="profile-stats-grid">
       <div class="profile-stat">
@@ -1569,6 +1614,7 @@
         <div class="profile-time-val" id="profileTimeTotal">0m</div>
       </div>
     </div>
+    <div class="profile-week" id="profileWeek"></div>
   </div>
 </div>
 
@@ -1900,6 +1946,33 @@ function shuffleArr(arr) {
 let prog = JSON.parse(localStorage.getItem('hub-progress') || '{"xp":0,"streak":0,"stars":0,"lastActive":"","quizBest":0}');
 if (prog.quizBest === undefined) prog.quizBest = 0;
 
+/* ── LEVEL SYSTEM ── */
+const LEVELS = [
+  { level:1, name:'Learner',  minXp:0    },
+  { level:2, name:'Student',  minXp:100  },
+  { level:3, name:'Scholar',  minXp:250  },
+  { level:4, name:'Speaker',  minXp:500  },
+  { level:5, name:'Fluent',   minXp:1000 },
+  { level:6, name:'Master',   minXp:2000 },
+];
+const DAILY_GOAL = 50;
+
+function getLevel(xp) {
+  let cur = LEVELS[0];
+  for (const l of LEVELS) { if (xp >= l.minXp) cur = l; else break; }
+  const ni = LEVELS.indexOf(cur) + 1;
+  const next = LEVELS[ni] || null;
+  const inLevel = xp - cur.minXp;
+  const toNext  = next ? next.minXp - cur.minXp : 1;
+  return { ...cur, next, pct: Math.min(1, inLevel / toNext), xpToNext: next ? next.minXp - xp : 0 };
+}
+
+function _xpDayKey(d) {
+  d = d || new Date();
+  return 'fidel-xp-' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function getDailyXp() { return parseInt(localStorage.getItem(_xpDayKey())||'0',10); }
+
 /* ── STUDY TIME TRACKING ── */
 (function() {
   let _start = Date.now(), _visible = true;
@@ -1952,10 +2025,18 @@ function updateStreak() {
 }
 
 function awardXP(amount) {
+  const prevLv = getLevel(prog.xp).level;
   prog.xp += amount;
   saveProg();
+  const dk = _xpDayKey();
+  localStorage.setItem(dk, (parseInt(localStorage.getItem(dk)||'0',10) + amount));
   updateProgressStrip();
-  hubToast('+' + amount + ' XP earned! 🏆');
+  const newLv = getLevel(prog.xp);
+  if (newLv.level > prevLv) {
+    hubToast('🎉 Level up! You\'re now ' + newLv.name + '! (Lv.' + newLv.level + ')');
+  } else {
+    hubToast('+' + amount + ' XP! 🏆');
+  }
 }
 
 function awardStars(count) {
@@ -1968,6 +2049,21 @@ function updateProgressStrip() {
   document.getElementById('psXP').textContent = prog.xp;
   document.getElementById('psStreak').textContent = prog.streak;
   document.getElementById('psStars').textContent = prog.stars;
+  // Level label
+  const lv = getLevel(prog.xp);
+  const lvEl = document.getElementById('psLevel');
+  if (lvEl) lvEl.textContent = 'Lv.' + lv.level + ' ' + lv.name;
+  // Daily goal ring  (r=14, circumference=87.96)
+  const dailyXp = getDailyXp();
+  const pct = Math.min(1, dailyXp / DAILY_GOAL);
+  const circ = 87.96;
+  const fill = document.getElementById('psRingFill');
+  const num  = document.getElementById('psRingNum');
+  if (fill) {
+    fill.setAttribute('stroke-dasharray', (pct * circ).toFixed(1) + ' ' + circ);
+    fill.className.baseVal = 'ps-ring-' + (pct >= 1 ? 'done' : 'fill');
+  }
+  if (num) num.textContent = dailyXp;
 }
 updateProgressStrip();
 
@@ -1977,6 +2073,13 @@ document.getElementById('psResetBtn').addEventListener('click', () => {
   localStorage.removeItem('hub-progress');
   localStorage.removeItem('hub-lessons');
   localStorage.removeItem('hub-cat-stars');
+  // Clear daily XP keys
+  const toRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && (k.startsWith('fidel-xp-') || k.startsWith('fidel-time-'))) toRemove.push(k);
+  }
+  toRemove.forEach(k => localStorage.removeItem(k));
   prog = { xp:0, streak:0, stars:0, lastActive:'' };
   saveProg();
   updateProgressStrip();
@@ -3955,19 +4058,52 @@ document.getElementById('profileModalBackdrop').addEventListener('click', () => 
 
 function openProfile() {
   const modal = document.getElementById('profileModal');
-  const nameEl = document.getElementById('profileName');
-  const idEl   = document.getElementById('profileStudentId');
+
+  // Name & ID
   const displayName = syncProfile?.name || (syncUser?.email || '').split('@')[0] || 'Student';
-  nameEl.textContent = displayName;
+  document.getElementById('profileName').textContent = displayName;
   const sid = syncProfile?.studentId;
+  const idEl = document.getElementById('profileStudentId');
   if (sid) { idEl.textContent = sid; idEl.style.display = 'block'; }
   else { idEl.style.removeProperty('display'); }
+
+  // Level badge + XP bar
+  const lv = getLevel(prog.xp);
+  document.getElementById('profileLevelBadge').textContent = 'Lv.' + lv.level + ' · ' + lv.name;
+  const xpBarEl = document.getElementById('profileXpBar');
+  const xpLblEl = document.getElementById('profileXpLabel');
+  if (xpBarEl) xpBarEl.style.width = (lv.pct * 100).toFixed(1) + '%';
+  if (xpLblEl) xpLblEl.textContent = lv.next ? (prog.xp - lv.minXp) + ' / ' + (lv.next.minXp - lv.minXp) + ' XP to ' + lv.next.name : 'Max level reached!';
+
+  // Stats
   document.getElementById('profileXp').textContent      = prog.xp;
   document.getElementById('profileStreak').textContent  = prog.streak;
   document.getElementById('profileStars').textContent   = prog.stars;
   document.getElementById('profileLessons').textContent = getLessonsDone().length;
+
+  // Study time
   document.getElementById('profileTimeToday').textContent = fmtStudyTime(window.getStudyTimeToday ? window.getStudyTimeToday() : 0);
   document.getElementById('profileTimeTotal').textContent = fmtStudyTime(window.getStudyTimeTotal ? window.getStudyTimeTotal() : 0);
+
+  // Weekly activity dots (last 7 days, starting from today)
+  const weekEl = document.getElementById('profileWeek');
+  if (weekEl) {
+    weekEl.innerHTML = '';
+    const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const timeKey = 'fidel-time-' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      const xpKey   = _xpDayKey(d);
+      const studied = parseInt(localStorage.getItem(timeKey)||'0',10) > 30 || parseInt(localStorage.getItem(xpKey)||'0',10) > 0;
+      const isToday = i === 0;
+      const div = document.createElement('div');
+      div.className = 'profile-week-day';
+      div.innerHTML = '<div class="profile-week-dot' + (studied ? ' active' : '') + (isToday ? ' today' : '') + '"></div>'
+                    + '<div class="profile-week-lbl">' + DAY_NAMES[d.getDay()] + '</div>';
+      weekEl.appendChild(div);
+    }
+  }
+
   modal.classList.remove('hidden');
 }
 
