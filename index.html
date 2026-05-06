@@ -359,32 +359,49 @@
   <!-- YOUTUBE VIEW -->
   <div class="view" id="view-youtube">
 
-    <!-- Search -->
-    <div class="ytv-search-section">
-      <div class="ytv-search-row">
-        <div class="ytv-search-inner">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="search" id="ytvSearch" placeholder="Search YouTube…" autocomplete="off" spellcheck="false"/>
-        </div>
-        <button class="ytv-search-btn" id="ytvSearchBtn">Search</button>
+    <!-- ── Top bar: brand + search ── -->
+    <div class="yt2-topbar">
+      <div class="yt2-brand">
+        <svg class="yt2-logo" viewBox="0 0 28 20" width="28" height="20">
+          <rect width="28" height="20" rx="4.5" fill="#FF0000"/>
+          <polygon points="11,5 21,10 11,15" fill="#fff"/>
+        </svg>
+        <span>YouTube</span>
       </div>
-      <!-- Search history (populated by JS) -->
-      <div class="ytv-history-row" id="ytvHistoryRow" hidden></div>
-      <!-- Genre chips -->
+      <div class="yt2-search-field">
+        <input type="search" id="ytvSearch" placeholder="Search" autocomplete="off" spellcheck="false"/>
+        <button class="yt2-search-clear" id="ytvSearchClear" aria-label="Clear" hidden>✕</button>
+      </div>
+      <button class="yt2-search-btn" id="ytvSearchBtn" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
+    </div>
+
+    <!-- Autocomplete suggestions (populated by JS) -->
+    <div class="yt2-suggestions" id="ytvSuggestions" hidden></div>
+
+    <!-- Search history (populated by JS) -->
+    <div class="ytv-history-row" id="ytvHistoryRow" hidden></div>
+
+    <!-- Category chips -->
+    <div class="yt2-chips-wrap">
       <div class="ytv-chips" id="ytvChips">
-        <button class="ytv-chip active" data-q="eritrean music 2025">🇪🇷 Eritrean</button>
-        <button class="ytv-chip" data-q="tigrinya music new">🎵 Tigrinya</button>
-        <button class="ytv-chip" data-q="tigre eritrean music">🎶 Tigre</button>
-        <button class="ytv-chip" data-q="eritrean wedding songs">💒 Wedding</button>
-        <button class="ytv-chip" data-q="eritrean live concert performance">🎙 Live</button>
-        <button class="ytv-chip" data-q="eritrean music 90s classic">⏮ 90s</button>
-        <button class="ytv-chip" data-q="eritrean comedy funny">😂 Comedy</button>
-        <button class="ytv-chip" data-q="eritrean gospel mezmur">✝ Gospel</button>
+        <button class="ytv-chip active" data-q="eritrean music 2025">All</button>
+        <button class="ytv-chip" data-q="tigrinya music new">Tigrinya</button>
+        <button class="ytv-chip" data-q="tigre eritrean music">Tigre</button>
+        <button class="ytv-chip" data-q="eritrean wedding songs">Wedding</button>
+        <button class="ytv-chip" data-q="eritrean live concert performance">Live</button>
+        <button class="ytv-chip" data-q="eritrean music 90s classic">90s Classic</button>
+        <button class="ytv-chip" data-q="eritrean comedy funny">Comedy</button>
+        <button class="ytv-chip" data-q="eritrean gospel mezmur">Gospel</button>
         <button class="ytv-chip ytv-chip-liked" id="ytvLikedChip">❤ Liked</button>
       </div>
-      <!-- Year filter -->
+    </div>
+
+    <!-- Year filter + Sort row -->
+    <div class="yt2-filter-row">
       <div class="ytv-year-row">
-        <span class="ytv-year-label">Year:</span>
+        <span class="ytv-year-label">Year</span>
         <button class="ytv-year-btn active" data-year="">All</button>
         <button class="ytv-year-btn" data-year="2025">2025</button>
         <button class="ytv-year-btn" data-year="2024">2024</button>
@@ -393,62 +410,131 @@
         <button class="ytv-year-btn" data-year="2021">2021</button>
         <button class="ytv-year-btn" data-year="2020">2020</button>
       </div>
+      <div class="yt2-sort-wrap">
+        <button class="yt2-sort-btn" id="ytvSortBtn">⇅ Sort</button>
+        <div class="yt2-sort-panel" id="ytvSortPanel" hidden>
+          <button class="yt2-sort-opt active" data-sort="default">Default</button>
+          <button class="yt2-sort-opt" data-sort="views">Most Viewed</button>
+          <button class="yt2-sort-opt" data-sort="shortest">Shortest</button>
+          <button class="yt2-sort-opt" data-sort="longest">Longest</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sleep timer bar (shown when timer is active) -->
+    <div class="yt2-sleep-bar" id="ytvSleepBar" hidden>
+      <span>😴</span>
+      <span class="yt2-sleep-text" id="ytvSleepText">Stops in 30:00</span>
+      <button class="yt2-sleep-cancel" id="ytvSleepCancel">✕ Cancel</button>
     </div>
 
     <!-- Resume last-played bar -->
     <div class="ytv-resume-bar" id="ytvResumeBar" hidden>
       <img class="ytv-resume-thumb" id="ytvResumeThumb" src="" alt=""/>
       <div class="ytv-resume-info">
-        <span class="ytv-resume-label">Resume watching</span>
+        <span class="ytv-resume-label">Continue watching</span>
         <span class="ytv-resume-title" id="ytvResumeTitle"></span>
       </div>
       <button class="ytv-resume-play" id="ytvResumePlay">▶ Play</button>
       <button class="ytv-resume-close" id="ytvResumeClose">✕</button>
     </div>
 
-    <!-- Inline player -->
-    <div class="ytv-player" id="ytvPlayer" hidden>
+    <!-- Recently Watched (shown before first search) -->
+    <div class="yt2-recents" id="ytvRecents" hidden>
+      <div class="yt2-section-hdr">
+        <span class="yt2-section-title">Recently Watched</span>
+        <button class="yt2-section-all" id="ytvRecentsAll">See all</button>
+      </div>
+      <div class="yt2-recents-list" id="ytvRecentsList"></div>
+    </div>
+
+    <!-- ══ Inline player (YouTube-style) ══ -->
+    <div class="yt2-player-wrap" id="ytvPlayer" hidden>
+
+      <!-- Theater-mode dimming overlay -->
+      <div class="yt2-theater-bg" id="ytvTheaterBg" hidden></div>
+
+      <!-- Video frame -->
       <div class="ytv-frame-wrap" id="ytvFrameWrap">
         <iframe id="ytvFrame" class="ytv-frame"
           allowfullscreen
           allow="autoplay; encrypted-media; picture-in-picture"
           referrerpolicy="no-referrer-when-downgrade"></iframe>
       </div>
-      <div class="ytv-bar">
-        <div class="ytv-bar-info">
-          <div class="ytv-bar-title" id="ytvBarTitle">—</div>
-          <div class="ytv-bar-author" id="ytvBarAuthor">—</div>
-          <div class="ytv-queue-counter" id="ytvQueueCounter"></div>
-        </div>
-        <div class="ytv-bar-controls">
-          <button class="ytv-ctrl-btn" id="ytvPrevBtn"    title="Previous video">&#9664;&#9664;</button>
-          <button class="ytv-ctrl-btn" id="ytvShuffleBtn" title="Shuffle">🔀</button>
-          <button class="ytv-ctrl-btn" id="ytvRepeatBtn"  title="Repeat video">&#8635;</button>
-          <button class="ytv-ctrl-btn" id="ytvNextBtn"    title="Next video">&#9654;&#9654;</button>
-        </div>
-        <div class="ytv-bar-btns">
-          <button class="ytv-bar-btn" id="ytvAudioBtn" title="Audio-only mode (keeps playing)">🎵 Audio</button>
-          <button class="ytv-bar-btn" id="ytvQueueBtn"  title="Show queue">☰ Queue</button>
-          <button class="ytv-bar-btn" id="ytvPipBtn"   title="Picture-in-Picture">⧉ PiP</button>
-          <button class="ytv-bar-btn ytv-stop-btn" id="ytvCloseBtn">✕</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- Queue panel -->
-    <div class="ytv-queue-panel" id="ytvQueuePanel" hidden>
-      <div class="ytv-qp-hdr">
-        <span>Up Next · <span id="ytvQpCount">0</span> videos</span>
-        <button class="ytv-qp-close" id="ytvQpClose">✕</button>
+      <!-- Video info (YouTube-style) -->
+      <div class="yt2-video-info">
+        <div class="yt2-video-title" id="ytvBarTitle">—</div>
+        <div class="yt2-channel-row">
+          <div class="yt2-avatar" id="ytvAvatar">E</div>
+          <div class="yt2-channel-info">
+            <div class="yt2-channel-name" id="ytvBarAuthor">—</div>
+            <div class="yt2-queue-ctr" id="ytvQueueCounter"></div>
+          </div>
+        </div>
+        <!-- Action pills (like YouTube's row below title) -->
+        <div class="yt2-action-pills">
+          <button class="yt2-pill" id="ytvLikeCurrentBtn">👍 Like</button>
+          <button class="yt2-pill" id="ytvShareCurBtn">↗ Share</button>
+          <button class="yt2-pill" id="ytvCopyLinkBtn">🔗 Copy link</button>
+          <button class="yt2-pill yt2-pill-yt" id="ytvOpenYTBtn">▶ Open in YouTube</button>
+        </div>
       </div>
-      <div class="ytv-qp-list" id="ytvQpList"></div>
+
+      <!-- Speed selector -->
+      <div class="yt2-speed-row">
+        <span class="yt2-speed-lbl">Speed</span>
+        <button class="yt2-spd" data-speed="0.5">0.5×</button>
+        <button class="yt2-spd" data-speed="0.75">0.75×</button>
+        <button class="yt2-spd active" data-speed="1">Normal</button>
+        <button class="yt2-spd" data-speed="1.25">1.25×</button>
+        <button class="yt2-spd" data-speed="1.5">1.5×</button>
+        <button class="yt2-spd" data-speed="2">2×</button>
+      </div>
+
+      <!-- Playback controls -->
+      <div class="yt2-ctrls">
+        <div class="yt2-ctrls-left">
+          <button class="yt2-ctrl-btn" id="ytvPrevBtn" title="Previous">⏮</button>
+          <button class="yt2-ctrl-btn" id="ytvShuffleBtn" title="Shuffle">🔀</button>
+          <button class="yt2-ctrl-btn" id="ytvRepeatBtn" title="Repeat">🔂</button>
+          <button class="yt2-ctrl-btn" id="ytvNextBtn" title="Next">⏭</button>
+        </div>
+        <div class="yt2-ctrls-right">
+          <button class="yt2-ctrl-btn" id="ytvAudioBtn">🎵 Audio</button>
+          <button class="yt2-ctrl-btn" id="ytvQueueBtn" title="Queue">☰</button>
+          <button class="yt2-ctrl-btn" id="ytvTheaterBtn" title="Theater mode">⬛</button>
+          <button class="yt2-ctrl-btn" id="ytvSleepBtn" title="Sleep timer">😴</button>
+          <button class="yt2-ctrl-btn" id="ytvPipBtn" title="Picture-in-Picture">⧉</button>
+          <button class="yt2-ctrl-btn yt2-close-btn" id="ytvCloseBtn">✕</button>
+        </div>
+      </div>
     </div>
 
     <!-- Autoplay countdown -->
     <div class="ytv-countdown" id="ytvCountdown" hidden>
       <span id="ytvCountdownText">▶ Next video in 5s</span>
-      <button id="ytvCountdownSkip">Skip Now</button>
+      <button id="ytvCountdownSkip">Play now</button>
       <button class="ytv-countdown-cancel" id="ytvCountdownCancel">✕</button>
+    </div>
+
+    <!-- Queue / Up Next panel -->
+    <div class="yt2-queue-panel" id="ytvQueuePanel" hidden>
+      <div class="yt2-qp-hdr">
+        <span class="yt2-qp-title">Up Next · <span id="ytvQpCount">0</span> videos</span>
+        <button class="yt2-qp-close" id="ytvQpClose">✕</button>
+      </div>
+      <div class="ytv-qp-list" id="ytvQpList"></div>
+    </div>
+
+    <!-- Sleep timer picker -->
+    <div class="yt2-sleep-picker" id="ytvSleepPicker" hidden>
+      <div class="yt2-sp-title">Sleep Timer</div>
+      <button class="yt2-sp-opt" data-mins="15">15 minutes</button>
+      <button class="yt2-sp-opt" data-mins="30">30 minutes</button>
+      <button class="yt2-sp-opt" data-mins="45">45 minutes</button>
+      <button class="yt2-sp-opt" data-mins="60">1 hour</button>
+      <button class="yt2-sp-opt" data-mins="90">1.5 hours</button>
     </div>
 
     <!-- Status + results -->
