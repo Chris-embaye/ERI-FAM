@@ -501,6 +501,27 @@
     .dialogue { border-left:3px solid var(--green); padding-left:12px; margin:6px 0; }
     .dialogue p { margin-bottom:5px; }
     .recipe-block { background:var(--card); border-radius:var(--radius-sm); padding:10px 13px; margin-bottom:8px; border:1px solid var(--border); font-size:0.82rem; line-height:1.6; }
+    /* ── TEXTBOOK STYLES ── */
+    .tb-unit { background:linear-gradient(135deg,var(--green),var(--green-d)); color:white; padding:11px 14px; border-radius:var(--radius-sm); margin-bottom:14px; }
+    .tb-unit-num { font-size:0.62rem; font-weight:700; opacity:.85; text-transform:uppercase; letter-spacing:.5px; }
+    .tb-unit-title { font-size:1.08rem; font-weight:800; margin-top:3px; }
+    .tb-reading { background:var(--card); border:2px solid var(--green-light); border-radius:var(--radius-sm); padding:14px; margin-bottom:12px; }
+    .tb-reading-label { font-size:0.58rem; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:.6px; margin-bottom:10px; }
+    .tb-reading .tig { font-size:0.98rem; font-weight:600; line-height:1.5; display:block; margin-bottom:1px; }
+    .tb-reading .eng { font-size:0.75rem; color:var(--text-sub); font-style:italic; display:block; margin-bottom:9px; }
+    .tb-exercise { background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; margin-bottom:12px; }
+    .tb-exercise-label { font-size:0.58rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; }
+    .tb-exercise ol { padding-left:18px; }
+    .tb-exercise li { font-size:0.83rem; line-height:1.65; margin-bottom:5px; }
+    .tb-cultural { background:var(--green-light); border-radius:var(--radius-sm); padding:11px 14px; margin-top:10px; }
+    .tb-cultural-label { font-size:0.58rem; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:.6px; margin-bottom:5px; }
+    .tb-cultural p { font-size:0.82rem; line-height:1.62; }
+    .tb-vocab-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
+    .tb-num-row { display:flex; align-items:center; gap:12px; background:var(--card); border-radius:8px; padding:9px 12px; border:1px solid var(--border); margin-bottom:6px; }
+    .tb-num-big { font-size:1.4rem; font-weight:800; color:var(--green); width:30px; flex-shrink:0; text-align:center; }
+    .tb-num-tig { font-size:0.95rem; font-weight:700; }
+    .tb-num-rom { font-size:0.68rem; color:var(--text-sub); }
+    .tb-song { background:var(--card); border-left:4px solid var(--green); padding:12px 14px; border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin-bottom:12px; font-size:0.84rem; line-height:1.8; }
 
     /* ── SYNC BAR ── */
     .sync-bar {
@@ -786,6 +807,7 @@
       <button class="tab-btn" data-lcat="history">History</button>
       <button class="tab-btn" data-lcat="culture">Culture</button>
       <button class="tab-btn" data-lcat="stories">Stories</button>
+      <button class="tab-btn" data-lcat="textbook">📒 Textbooks</button>
     </div>
     <div id="bookGrid"></div>
   </div>
@@ -1965,6 +1987,120 @@ const BOOKS = [
     chapters:[
       { title:"The Farmer's Wisdom", body:`<p>Old Tesfay had farmed the same terraced hillside for fifty years. Every morning before sunrise — long before his family was awake — he walked his fields, checking the soil, reading the sky, feeling the air with his palms.</p><p>His grandson Daniel, home from university in Asmara for the summer, followed him one morning. "Grandfather," Daniel asked, "with all the weather apps and forecasts — why do you still come out here yourself at 4am?"</p><p>Old Tesfay crouched and pressed a handful of dark soil in his palm. He held it out to Daniel.</p><p>"The phone tells you what happened yesterday," he said quietly. "The soil tells you what will happen tomorrow."</p><p>Daniel looked at the soil in his grandfather's hand. He was a computer science student. He thought of sensors and algorithms and satellite data.</p><p>Then he reached down and picked up his own handful of earth. It was cool and alive and smelled of rain that had not yet fallen.</p><p>He began to understand.</p>` },
       { title:"The Weaver's Song", body:`<p>In the village of Adi Teklezan, the women weavers began their work before full sunrise. The sound of their looms — a rhythmic clacking and sliding — mixed with birdsong and the distant bells of goats heading to pasture.</p><p>Almaz had been weaving for forty years. Her hands moved without thought, creating the intricate diamond patterns of the <em>habesha kemis</em> — the white ceremonial dress with brilliant colored borders at the hem.</p><p>"How do you remember all the patterns?" a young apprentice once asked her, watching in amazement.</p><p>Almaz did not look up from the loom. "I don't remember them," she said. "My hands do."</p><p>The girl watched the hands — moving faster than seemed possible, choosing threads by feel alone in the low morning light — and decided that some kinds of knowledge live deeper than memory. Deeper than thought.</p><p>She sat down at the neighboring loom and began to learn.</p>` },
+    ]
+  },
+  /* ── Textbooks ── */
+  {
+    id:18, emoji:'📒', title:'ትግርኛ — ክፍሊ ሓደ', author:'Eritrean Ministry of Education', cat:'textbook',
+    desc:'Grade 1 Tigrinya textbook — 8 units covering greetings, family, school, numbers, body, community, food and colors.',
+    chapters:[
+      {
+        title:'ምዕራፍ 1 — ሰናይ ምርኻብ · Unit 1: Greetings',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 1 · Unit 1</div><div class="tb-unit-title">ሰናይ ምርኻብ — Greetings</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ሰላም! ስምይ ሜሮን ኢዩ።</span><span class="eng">Hello! My name is Meron.</span>
+<span class="tig">ሰናይ ምዓልቲ። ከመይ ኢኻ?</span><span class="eng">Good morning. How are you?</span>
+<span class="tig">ጽቡቕ ኢየ። የቐንየለይ።</span><span class="eng">I am fine. Thank you.</span>
+<span class="tig">ሰናይ ምርኻብ ሚካኤል!</span><span class="eng">Nice to meet you, Mikael!</span>
+<span class="tig">ሰናይ ዕለት። ጽናሕ!</span><span class="eng">Have a good day. Goodbye!</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ሰላም</div><div class="tig-rom">Selam</div><div class="tig-eng">Hello / Peace</div></div><div class="tig-block"><div class="tig-script">ጽቡቕ</div><div class="tig-rom">Ts'buq</div><div class="tig-eng">Good / Fine</div></div><div class="tig-block"><div class="tig-script">የቐንየለይ</div><div class="tig-rom">Yeqenyeley</div><div class="tig-eng">Thank you</div></div><div class="tig-block"><div class="tig-script">ሰናይ ምርኻብ</div><div class="tig-rom">Senay mirkab</div><div class="tig-eng">Nice to meet you</div></div><div class="tig-block"><div class="tig-script">ይቅርታ</div><div class="tig-rom">Yiqirta</div><div class="tig-eng">Sorry / Excuse me</div></div><div class="tig-block"><div class="tig-script">ጽናሕ</div><div class="tig-rom">Ts'nah</div><div class="tig-eng">Goodbye / Stay well</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Greet a classmate and ask their name: <strong>ስምካ መን ኢዩ?</strong></li><li>Respond to <strong>ከመይ ኢኻ?</strong> — How are you?</li><li>Say goodbye: <strong>ሰናይ ዕለት!</strong> — Have a good day!</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>In Eritrea, greeting people properly shows respect. You always greet elders first. When meeting someone for the first time, shake hands and say <strong>ሰናይ ምርኻብ</strong>. In the morning say <strong>ሰናይ ምዓልቲ</strong>, in the evening <strong>ሰናይ ምሸት</strong>, and at night <strong>ሰናይ ሕደር</strong>.</p></div>`
+      },
+      {
+        title:'ምዕራፍ 2 — ቤተ ሰበይ · Unit 2: My Family',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 2 · Unit 2</div><div class="tb-unit-title">ቤተ ሰበይ — My Family</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ስምይ ሊያ ኢዩ። ቤተ ሰበይ ዓቢ ኢዩ።</span><span class="eng">My name is Liya. My family is big.</span>
+<span class="tig">ኣቦይ ዓብዱ ኢዩ። ኣደይ ፋጡማ ኢያ።</span><span class="eng">My father is Abdu. My mother is Fatuma.</span>
+<span class="tig">ሓወይ ዮናስ ኢዩ። ሓፍተይ ሳሎሜ ኢያ።</span><span class="eng">My brother is Yonas. My sister is Salome.</span>
+<span class="tig">ኣቦሓጎይን ኣዲኣይን ምስና ይነብሩ።</span><span class="eng">My grandfather and grandmother live with us.</span>
+<span class="tig">ንሕና ሓቢርና ኢና ንነብር።</span><span class="eng">We live together.</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ኣቦ</div><div class="tig-rom">Abo</div><div class="tig-eng">Father</div></div><div class="tig-block"><div class="tig-script">ኣደ</div><div class="tig-rom">Ade</div><div class="tig-eng">Mother</div></div><div class="tig-block"><div class="tig-script">ሓው</div><div class="tig-rom">Haw</div><div class="tig-eng">Brother</div></div><div class="tig-block"><div class="tig-script">ሓፍቲ</div><div class="tig-rom">Hafti</div><div class="tig-eng">Sister</div></div><div class="tig-block"><div class="tig-script">ኣቦሓጎ</div><div class="tig-rom">Abohago</div><div class="tig-eng">Grandfather</div></div><div class="tig-block"><div class="tig-script">ኣዲኣ</div><div class="tig-rom">Adia</div><div class="tig-eng">Grandmother</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Say who your father is: <strong>ኣቦይ _____ ኢዩ</strong></li><li>Say who your mother is: <strong>ኣደይ _____ ኢያ</strong></li><li>Count your family members in Tigrinya</li><li>Draw your family and write each person's name in Tigrinya</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>Family is the center of Eritrean life. Grandparents, aunts, uncles and cousins often live nearby or in the same home. Children show deep respect to all elders — addressing older people as <strong>ኣቦ</strong> or <strong>ኣደ</strong> even when not related. This shows honour and closeness.</p></div>`
+      },
+      {
+        title:'ምዕራፍ 3 — ቤት ትምህርቲ · Unit 3: At School',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 3 · Unit 3</div><div class="tb-unit-title">ቤት ትምህርቲ — At School</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ሎሚ ናይ ቤት ትምህርቲ ቀዳማይ መዓልቲ ኢዩ።</span><span class="eng">Today is the first day of school.</span>
+<span class="tig">ስምይ ናስሬት ኢዩ። ናይ ሓደ ክፍሊ ተምሃሪ ኢየ።</span><span class="eng">My name is Nasret. I am a Grade 1 student.</span>
+<span class="tig">መምህርና ወ/ሮ ሶፊያ ኢያ። ጽቡቕ መምህር ኢያ።</span><span class="eng">Our teacher is Mrs. Sofia. She is a good teacher.</span>
+<span class="tig">ኣብ ክፍልና ሰሊዳ፣ ጠረጴዛ፣ መምህርን ተምሃሮን ኣሎ።</span><span class="eng">In our class there is a board, tables, a teacher and students.</span>
+<span class="tig">ብሓሳብ ንምሃሩ!</span><span class="eng">Let us learn with enthusiasm!</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ቤት ትምህርቲ</div><div class="tig-rom">Bet timhrti</div><div class="tig-eng">School</div></div><div class="tig-block"><div class="tig-script">ክፍሊ</div><div class="tig-rom">K'fli</div><div class="tig-eng">Classroom / Grade</div></div><div class="tig-block"><div class="tig-script">ተምሃሪ</div><div class="tig-rom">Temhari</div><div class="tig-eng">Student</div></div><div class="tig-block"><div class="tig-script">መምህር</div><div class="tig-rom">Memhir</div><div class="tig-eng">Teacher</div></div><div class="tig-block"><div class="tig-script">መጽሓፍ</div><div class="tig-rom">Mets'haf</div><div class="tig-eng">Book</div></div><div class="tig-block"><div class="tig-script">እስኪሪቢቶ</div><div class="tig-rom">Iskiribitoh</div><div class="tig-eng">Pen / Pencil</div></div><div class="tig-block"><div class="tig-script">ሰሌዳ</div><div class="tig-rom">Seleda</div><div class="tig-eng">Blackboard</div></div><div class="tig-block"><div class="tig-script">ጠረጴዛ</div><div class="tig-rom">Terepeza</div><div class="tig-eng">Table / Desk</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Introduce yourself to your teacher: <strong>ሰላም፣ ስምይ _____ ኢዩ</strong></li><li>Say your grade: <strong>ናይ _____ ክፍሊ ተምሃሪ ኢየ</strong></li><li>Name 5 things in your classroom in Tigrinya</li><li>Ask a classmate: <strong>ናይ ምንታይ ክፍሊ ተምሃሪ ኢኻ?</strong> (What grade are you in?)</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>Education is deeply valued in Eritrea. Even during the 30-year liberation war, schools were set up in the mountains and caves so children could keep learning. The EPLF ran what became known as "Zero School" in the liberated zones — a symbol of how much Eritreans value learning even in the hardest times.</p></div>`
+      },
+      {
+        title:'ምዕራፍ 4 — ቁጽርታት · Unit 4: Numbers 1–10',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 4 · Unit 4</div><div class="tb-unit-title">ቁጽርታት — Numbers 1–10</div></div>
+<div class="tb-num-row"><div class="tb-num-big">1</div><div><div class="tb-num-tig">ሓደ</div><div class="tb-num-rom">Hade — One</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">2</div><div><div class="tb-num-tig">ክልተ</div><div class="tb-num-rom">Kilte — Two · <em>ክልተ ዓይኒ ኣሎካ</em> — You have two eyes</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">3</div><div><div class="tb-num-tig">ሰለስተ</div><div class="tb-num-rom">Seleste — Three · <em>ሰለስተ ኮኾብ</em> — Three stars</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">4</div><div><div class="tb-num-tig">ኣርባዕተ</div><div class="tb-num-rom">Arba'te — Four · <em>ኣርባዕተ ኣጻብዕ</em> — Four fingers</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">5</div><div><div class="tb-num-tig">ሓሙሽተ</div><div class="tb-num-rom">Hamushte — Five · <em>ሓሙሽተ ሸሓናት</em> — Five bags</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">6</div><div><div class="tb-num-tig">ሽዱሽተ</div><div class="tb-num-rom">Shidushte — Six</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">7</div><div><div class="tb-num-tig">ሸውዓተ</div><div class="tb-num-rom">Shew'ate — Seven</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">8</div><div><div class="tb-num-tig">ሸሞንተ</div><div class="tb-num-rom">Shemonte — Eight</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">9</div><div><div class="tb-num-tig">ትሸዓተ</div><div class="tb-num-rom">Tish'ate — Nine</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">10</div><div><div class="tb-num-tig">ዓሰርተ</div><div class="tb-num-rom">Aserte — Ten</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Count from 1 to 10 out loud in Tigrinya</li><li>Simple addition: <strong>ሓደ + ክልተ = ሰለስተ</strong> (1 + 2 = 3)</li><li>Count the students in your class — what number is it?</li><li>Ask a friend: <strong>ቁጽሩ ክንደይ ኢዩ?</strong> (What is the number?)</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>Numbers are essential at the market (ዕዳጋ)! Knowing how to count and say prices in Tigrinya helps you shop confidently. The currency in Eritrea is the <strong>ናቕፋ (Naqfa)</strong>. Practice saying prices: <strong>ሓሙሽተ ናቕፋ</strong> (5 Nakfa), <strong>ዓሰርተ ናቕፋ</strong> (10 Nakfa).</p></div>`
+      },
+      {
+        title:'ምዕራፍ 5 — ኣካላት ሰብ · Unit 5: Body Parts',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 5 · Unit 5</div><div class="tb-unit-title">ኣካላት ሰብ — Body Parts</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ዓይነይ ክልተ ኢዩ። ዓይነይ ጸሊም ኢዩ።</span><span class="eng">I have two eyes. My eyes are dark.</span>
+<span class="tig">ኢዳተይ ክልተ ኢዩ። ኣጻብዐይ ዓሰርተ ኢዩ።</span><span class="eng">I have two hands. I have ten fingers.</span>
+<span class="tig">እዝነይ ክልተ ኢዩ። ብእዝነይ ይስምዕ።</span><span class="eng">I have two ears. I hear with my ears.</span>
+<span class="tig">ርእሰይ ሓደ ኢዩ። ብርእሰይ ኣስተውዕሉ።</span><span class="eng">I have one head. I think with my head.</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ርእሲ</div><div class="tig-rom">Ri'si</div><div class="tig-eng">Head</div></div><div class="tig-block"><div class="tig-script">ዓይኒ</div><div class="tig-rom">'Ayni</div><div class="tig-eng">Eye</div></div><div class="tig-block"><div class="tig-script">እዝኒ</div><div class="tig-rom">Izni</div><div class="tig-eng">Ear</div></div><div class="tig-block"><div class="tig-script">ኣፍ</div><div class="tig-rom">Af</div><div class="tig-eng">Mouth</div></div><div class="tig-block"><div class="tig-script">ኣፍንጫ</div><div class="tig-rom">Afnicha</div><div class="tig-eng">Nose</div></div><div class="tig-block"><div class="tig-script">ኢድ</div><div class="tig-rom">Id</div><div class="tig-eng">Hand / Arm</div></div><div class="tig-block"><div class="tig-script">እግሪ</div><div class="tig-rom">Igri</div><div class="tig-eng">Foot / Leg</div></div><div class="tig-block"><div class="tig-script">ጸጉሪ</div><div class="tig-rom">Tseguri</div><div class="tig-eng">Hair</div></div></div>
+<div class="tb-song">🎵 <strong>Song — ምዝሙር</strong><br>ርእሲ · ሸከም · ብርኪን ኣእጋርን — Head · shoulders · knees and feet<br>ዓይኒ · እዝኒ · ኣፍን ኣፍንጫን — Eyes · ears · mouth and nose<br>(Touch each part as you sing!)</div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Touch each body part and name it in Tigrinya</li><li>Describe yourself: <strong>ጸጉረይ _____ ኢዩ</strong> · My hair is _____</li><li>Play "Simon Says" — <strong>ርእሲካ ሓዝ!</strong> (Touch your head!)</li><li>Say: <strong>ዓይነይ ክልተ ኢዩ</strong> for each body part using the correct number</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>Knowing body parts helps at the doctor or clinic. If you are sick, say <strong>ሓሚመ ኢየ</strong> (I am sick). If your head hurts: <strong>ርእሰይ ይቃናጠሉ</strong>. If your stomach hurts: <strong>ሆደይ ይቃናጠሉ</strong>. Always tell an adult if you feel unwell!</p></div>`
+      },
+      {
+        title:'ምዕራፍ 6 — ኣብ ዓዲ · Unit 6: In the Community',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 6 · Unit 6</div><div class="tb-unit-title">ኣብ ዓዲ — In the Community</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ዓደይ ዓቢ ኣይኮነትን፣ ግን ጽቡቕ ኢያ።</span><span class="eng">My village is not big, but it is beautiful.</span>
+<span class="tig">ኣብ ዓደይ ቤት ትምህርቲ፣ ዕዳጋን ቤተ ክርስቲያን ኣሎ።</span><span class="eng">In my village there is a school, market and church.</span>
+<span class="tig">ናይ ሰሙን ዕዳጋ ዓርቢ ኢዩ።</span><span class="eng">The weekly market day is Friday.</span>
+<span class="tig">ኩሎም ሰባት ናብ ዕዳጋ ይኸዱ።</span><span class="eng">Everyone goes to the market.</span>
+<span class="tig">ዕዳጋ ብዙሕ ሰብ ኣሎ። ዕዳጋ ሓጎስ ኢዩ።</span><span class="eng">The market has many people. The market is joyful.</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ዓዲ</div><div class="tig-rom">'Adi</div><div class="tig-eng">Village</div></div><div class="tig-block"><div class="tig-script">ቤት</div><div class="tig-rom">Bet</div><div class="tig-eng">House / Home</div></div><div class="tig-block"><div class="tig-script">ዕዳጋ</div><div class="tig-rom">'Edaga</div><div class="tig-eng">Market</div></div><div class="tig-block"><div class="tig-script">ቤተ ክርስቲያን</div><div class="tig-rom">Bete kirstiyan</div><div class="tig-eng">Church</div></div><div class="tig-block"><div class="tig-script">ሆስፒታል</div><div class="tig-rom">Hospital</div><div class="tig-eng">Hospital</div></div><div class="tig-block"><div class="tig-script">ቤት ምግቢ</div><div class="tig-rom">Bet migbi</div><div class="tig-eng">Restaurant</div></div><div class="tig-block"><div class="tig-script">ሰፈር</div><div class="tig-rom">Sefer</div><div class="tig-eng">Neighborhood</div></div><div class="tig-block"><div class="tig-script">ከተማ</div><div class="tig-rom">Ketema</div><div class="tig-eng">Town / City</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Name 3 places in your community in Tigrinya</li><li>Ask: <strong>ዕዳጋ ኣበይ ኣሎ?</strong> (Where is the market?)</li><li>Answer directions: <strong>ቀጥ ኢልካ ኺድ</strong> (Go straight) · <strong>የማን ቅረብ</strong> (Turn right)</li><li>Describe your neighborhood: what places are nearby?</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>Markets (ዕዳጋ) are the heart of every Eritrean community. People come not just to buy and sell, but to meet friends, share news, and reconnect. The weekly market day is as much a social event as a commercial one. Children help carry goods and learn to count money from a young age.</p></div>`
+      },
+      {
+        title:'ምዕራፍ 7 — ምግብን መስተን · Unit 7: Food & Drinks',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 7 · Unit 7</div><div class="tb-unit-title">ምግብን መስተን — Food &amp; Drinks</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ኣደይ ምሸት ምቁሕ ትሰርሕ ኢያ።</span><span class="eng">In the evening my mother cooks food.</span>
+<span class="tig">ምቁሕ እንጀራን ሽሮን ኢዩ።</span><span class="eng">The food is injera and shiro stew.</span>
+<span class="tig">ኩላህና ኢዳትና ኣጺብና ምስ ሓጸብና ንበልዕ።</span><span class="eng">We all wash our hands well before eating.</span>
+<span class="tig">ካብ ሓደ ምቁሕ ሓቢርና ንበልዕ።</span><span class="eng">We eat together from one shared plate.</span>
+<span class="tig">ምቁሕ ጣዕሚ ኢዩ! ሕጉሳት ኢና።</span><span class="eng">The food is delicious! We are happy.</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">እንጀራ</div><div class="tig-rom">Injera</div><div class="tig-eng">Flatbread (staple)</div></div><div class="tig-block"><div class="tig-script">ሽሮ</div><div class="tig-rom">Shiro</div><div class="tig-eng">Chickpea stew</div></div><div class="tig-block"><div class="tig-script">ቡን</div><div class="tig-rom">Bun</div><div class="tig-eng">Coffee</div></div><div class="tig-block"><div class="tig-script">ሻሂ</div><div class="tig-rom">Shahi</div><div class="tig-eng">Tea</div></div><div class="tig-block"><div class="tig-script">ማይ</div><div class="tig-rom">Mai</div><div class="tig-eng">Water</div></div><div class="tig-block"><div class="tig-script">ጥብሲ</div><div class="tig-rom">Tibsi</div><div class="tig-eng">Grilled meat</div></div><div class="tig-block"><div class="tig-script">ፍረ</div><div class="tig-rom">Fire</div><div class="tig-eng">Fruit</div></div><div class="tig-block"><div class="tig-script">ዳቦ</div><div class="tig-rom">Dabo</div><div class="tig-eng">Bread</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Name your 3 favourite foods in Tigrinya</li><li>Say: <strong>_____ ይጥዕምኒ</strong> (I like _____ / it tastes good to me)</li><li>Say please and thank you at mealtime: <strong>የቐንየለይ</strong></li><li>Ask: <strong>ምቁሕ ተቀሪቡ?</strong> (Is the food ready?)</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>Injera (እንጀራ) is eaten at almost every Eritrean meal. It is made from <strong>teff</strong> — a tiny nutritious grain grown in the Eritrean and Ethiopian highlands. The most important tradition: <strong>everyone eats from the same large injera</strong>. Sharing food from one plate teaches generosity, togetherness and respect — from the earliest age.</p></div>`
+      },
+      {
+        title:'ምዕራፍ 8 — ቀለማት · Unit 8: Colors',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 8 · Unit 8</div><div class="tb-unit-title">ቀለማት — Colors</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ኣብ ሰማይ ቀስተ ደበና ኣሎ!</span><span class="eng">There is a rainbow in the sky!</span>
+<span class="tig">ቀይሕ፣ ብጫ፣ ቀጠልያ፣ ሰማያዊ — ጽቡቕ ቀለማት!</span><span class="eng">Red, yellow, green, blue — beautiful colors!</span>
+<span class="tig">ባንዲራ ኤርትራ ቀይሕ፣ ቀጠልያን ሰማያዊን ኢዩ።</span><span class="eng">The Eritrean flag is red, green and blue.</span>
+<span class="tig">ኣብ ማእከሉ ናይ ወርቂ ቅርንጫፍ ዘይቲ ኣሎ።</span><span class="eng">In the center there is a golden olive branch.</span>
+<span class="tig">ባንዲራና ጽቡቕ ኢዩ! ኤርትራ ትሃብትም!</span><span class="eng">Our flag is beautiful! Eritrea prospers!</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ቀይሕ</div><div class="tig-rom">Qeyih</div><div class="tig-eng">Red</div></div><div class="tig-block"><div class="tig-script">ሰማያዊ</div><div class="tig-rom">Semayawi</div><div class="tig-eng">Blue</div></div><div class="tig-block"><div class="tig-script">ቀጠልያ</div><div class="tig-rom">Qetelya</div><div class="tig-eng">Green</div></div><div class="tig-block"><div class="tig-script">ብጫ</div><div class="tig-rom">Bicha</div><div class="tig-eng">Yellow</div></div><div class="tig-block"><div class="tig-script">ጸሊም</div><div class="tig-rom">Tselim</div><div class="tig-eng">Black</div></div><div class="tig-block"><div class="tig-script">ጻዕዳ</div><div class="tig-rom">Tsa'da</div><div class="tig-eng">White</div></div><div class="tig-block"><div class="tig-script">ቡናዊ</div><div class="tig-rom">Bunawi</div><div class="tig-eng">Brown</div></div><div class="tig-block"><div class="tig-script">ብሩህ</div><div class="tig-rom">Biruh</div><div class="tig-eng">Bright / Light</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Color the Eritrean flag and label each color in Tigrinya</li><li>Look around — name 5 objects and their colors: <strong>_____ _____ ኢዩ</strong></li><li>Describe your clothing: <strong>ሸሚዘይ _____ ኢዩ</strong> (My shirt is _____)</li><li>Draw a rainbow and write the Tigrinya color names</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>The Eritrean flag colors carry deep meaning: 🟢 <strong>Green</strong> = fertile land and agriculture · 🔵 <strong>Blue</strong> = the Red Sea coast · ❤️ <strong>Red</strong> = the blood of those who sacrificed for freedom. The gold olive wreath stands for peace. The flag was officially adopted on <strong>May 24, 1993</strong> — Independence Day. Every Eritrean child should know and be proud of what it means.</p></div>`
+      },
     ]
   },
 ];
