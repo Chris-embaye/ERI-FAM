@@ -462,6 +462,21 @@
     .ps-reset-btn { font-size:0.85rem; color:var(--text-dim); padding:0 12px; align-self:center; transition:color 0.15s; }
     .ps-reset-btn:hover { color:var(--red); }
 
+    /* ── LIBRARY ── */
+    .lib-search { width:100%; padding:9px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:0.84rem; background:var(--card); color:var(--text); margin-bottom:12px; transition:border-color 0.15s; }
+    .lib-search:focus { outline:none; border-color:var(--green); }
+    .book-card { background:var(--card); border-radius:var(--radius); padding:14px; border:1.5px solid var(--border); box-shadow:var(--shadow); display:flex; gap:13px; margin-bottom:10px; }
+    .book-cover { width:64px; height:82px; border-radius:9px; background:linear-gradient(135deg,var(--green),var(--green-d)); display:flex; align-items:center; justify-content:center; font-size:1.9rem; flex-shrink:0; }
+    .book-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+    .book-title { font-size:0.85rem; font-weight:800; line-height:1.25; }
+    .book-author { font-size:0.67rem; color:var(--text-sub); }
+    .book-desc { font-size:0.7rem; color:var(--text-sub); line-height:1.45; flex:1; }
+    .book-footer { display:flex; align-items:center; justify-content:space-between; margin-top:6px; gap:6px; }
+    .book-cat { font-size:0.58rem; font-weight:700; padding:2px 7px; border-radius:8px; background:var(--green-light); color:var(--green); text-transform:uppercase; letter-spacing:.3px; flex-shrink:0; }
+    .book-read-btn { font-size:0.68rem; font-weight:700; color:white; padding:4px 12px; background:var(--green); border-radius:14px; transition:background 0.15s; text-decoration:none; }
+    .book-read-btn:hover { background:var(--green-d); }
+    .lib-empty { text-align:center; padding:40px 0; color:var(--text-dim); font-size:0.85rem; }
+
     /* ── SYNC BAR ── */
     .sync-bar {
       background: var(--card); border-bottom: 1px solid var(--border);
@@ -732,11 +747,30 @@
     <p style="font-size:.68rem;color:var(--text-dim);text-align:center;margin-bottom:20px">Tap any row to visit the provider's website · Rates updated manually</p>
   </div>
 
+  <!-- ══ VIEW 4 — LIBRARY ══ -->
+  <div class="view" id="view-library">
+    <div class="s-head">
+      <h2>📚 Library</h2>
+      <p>Books, stories &amp; learning resources</p>
+    </div>
+    <input type="text" class="lib-search" id="libSearch" placeholder="Search by title or author…">
+    <div class="tabs" id="libTabs">
+      <button class="tab-btn active" data-lcat="all">All</button>
+      <button class="tab-btn" data-lcat="language">Language</button>
+      <button class="tab-btn" data-lcat="children">Children</button>
+      <button class="tab-btn" data-lcat="history">History</button>
+      <button class="tab-btn" data-lcat="culture">Culture</button>
+      <button class="tab-btn" data-lcat="stories">Stories</button>
+    </div>
+    <div id="bookGrid"></div>
+  </div>
+
 </div><!-- /page-wrap -->
 
 <nav class="hub-nav">
   <button class="hnav-btn active" data-view="learn"><div class="hnav-icon">🎓</div>Learn</button>
   <button class="hnav-btn" data-view="community"><div class="hnav-icon-wrap">🌍<span class="nav-badge show" id="communityBadge"></span></div>Community</button>
+  <button class="hnav-btn" data-view="library"><div class="hnav-icon">📚</div>Library</button>
   <button class="hnav-btn" data-view="money" id="moneyNavBtn" style="display:none"><div class="hnav-icon">💸</div>Send Money</button>
 </nav>
 
@@ -1730,6 +1764,123 @@ function speak(text) {
   speechSynthesis.cancel();
   speechSynthesis.speak(utt);
 }
+
+/* ═══════════════════════════════
+   LIBRARY
+═══════════════════════════════ */
+const BOOKS = [
+  /* ── Language ── */
+  { id:1, emoji:'📘', title:'Tigrinya for Beginners', author:'Eritrean Language Institute', cat:'language',
+    desc:'A step-by-step guide to reading, writing and speaking Tigrinya — perfect for diaspora learners starting from scratch.',
+    url:'' },
+  { id:2, emoji:'✍', title:"Ge'ez Script Workbook", author:'Tekle Haile', cat:'language',
+    desc:'Practice every Fidel character with tracing exercises, phonics guides and pronunciation tips.',
+    url:'' },
+  { id:3, emoji:'💬', title:'Tigrinya Phrase Handbook', author:'Asmara Press', cat:'language',
+    desc:'500+ everyday phrases covering greetings, shopping, health, travel and family — with Tigrinya script and romanization.',
+    url:'' },
+  { id:4, emoji:'🗣', title:'Speak Tigrinya Today', author:'Meron Tesfaye', cat:'language',
+    desc:'Conversational Tigrinya course focused on real-life dialogue, common expressions and cultural context.',
+    url:'' },
+
+  /* ── Children ── */
+  { id:5, emoji:'🦁', title:'The Clever Hare', author:'Eritrean Folktales Series', cat:'children',
+    desc:'A beloved Eritrean fable about a clever hare who outsmarts a lion — teaching wisdom over strength.',
+    url:'' },
+  { id:6, emoji:'🎨', title:'Colors of Eritrea', author:'Selam Books', cat:'children',
+    desc:'A vibrant picture book that teaches colors in Tigrinya and English using landscapes, animals and food of Eritrea.',
+    url:'' },
+  { id:7, emoji:'🌆', title:'Asmara, My City', author:'Lula Abraham', cat:'children',
+    desc:'A young girl explores the beautiful art deco streets of Asmara — introducing children to Eritrea\'s capital.',
+    url:'' },
+  { id:8, emoji:'☕', title:'Mama\'s Coffee Ceremony', author:'Rahel Tekeste', cat:'children',
+    desc:'Follow a family through the traditional Eritrean coffee ceremony, celebrating togetherness and cultural pride.',
+    url:'' },
+
+  /* ── History ── */
+  { id:9, emoji:'🏛', title:'Eritrea: Road to Freedom', author:'Dr. Bereket Habte Selassie', cat:'history',
+    desc:'A comprehensive account of Eritrea\'s 30-year independence struggle — from federation to liberation in 1991.',
+    url:'' },
+  { id:10, emoji:'⚔', title:'Ancient Axum & the Horn', author:'Yonas Kidane', cat:'history',
+    desc:'Explores the ancient Axumite empire and its deep roots in what is now Eritrea, Ethiopia and beyond.',
+    url:'' },
+  { id:11, emoji:'🌍', title:'Eritrean Heroes & Heroines', author:'National Heritage Foundation', cat:'history',
+    desc:'Profiles of the men and women who shaped Eritrea — freedom fighters, scholars, artists and leaders.',
+    url:'' },
+
+  /* ── Culture ── */
+  { id:12, emoji:'🍽', title:'The Eritrean Kitchen', author:'Tigest Haile', cat:'culture',
+    desc:'Over 80 authentic recipes — injera, zigni, shiro, kitcha — with cultural stories behind each dish.',
+    url:'' },
+  { id:13, emoji:'🎵', title:'Music of the Horn', author:'Asmara Music Academy', cat:'culture',
+    desc:'A guide to traditional Eritrean music, instruments like the krar and wata, and the great artists of every era.',
+    url:'' },
+  { id:14, emoji:'👘', title:'Habesha Traditions', author:'Cultural Heritage Press', cat:'culture',
+    desc:'Weddings, holidays, coffee ceremonies, and seasonal festivals — a full portrait of Eritrean cultural life.',
+    url:'' },
+
+  /* ── Stories ── */
+  { id:15, emoji:'📖', title:'Tales from the Horn', author:'Various Authors', cat:'stories',
+    desc:'A collection of traditional Eritrean folk stories passed down through generations — wisdom, humor and magic.',
+    url:'' },
+  { id:16, emoji:'✈', title:'Diaspora Dreams', author:'Miriam Ghebrehiwet', cat:'stories',
+    desc:'Short stories following Eritrean families navigating identity, belonging and hope across continents.',
+    url:'' },
+  { id:17, emoji:'🌾', title:'Village Voices', author:'Eritrean Writers Collective', cat:'stories',
+    desc:'Stories of rural Eritrean life — farmers, shepherds and weavers sharing their wisdom with the next generation.',
+    url:'' },
+];
+
+let libCat = 'all', libQuery = '';
+
+function renderBooks() {
+  const grid = document.getElementById('bookGrid');
+  if (!grid) return;
+  const items = BOOKS.filter(b =>
+    (libCat === 'all' || b.cat === libCat) &&
+    (libQuery === '' || b.title.toLowerCase().includes(libQuery) || b.author.toLowerCase().includes(libQuery))
+  );
+  if (!items.length) { grid.innerHTML = '<div class="lib-empty">No books found 📚</div>'; return; }
+  grid.innerHTML = items.map(b =>
+    '<div class="book-card">' +
+      '<div class="book-cover">' + b.emoji + '</div>' +
+      '<div class="book-info">' +
+        '<div class="book-title">' + b.title + '</div>' +
+        '<div class="book-author">by ' + b.author + '</div>' +
+        '<div class="book-desc">' + b.desc + '</div>' +
+        '<div class="book-footer">' +
+          '<span class="book-cat">' + b.cat + '</span>' +
+          (b.url
+            ? '<a href="' + b.url + '" target="_blank" rel="noopener" class="book-read-btn">Read →</a>'
+            : '<button class="book-read-btn book-soon" data-bid="' + b.id + '">Preview →</button>') +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+  grid.querySelectorAll('.book-soon').forEach(btn =>
+    btn.addEventListener('click', () => hubToast('Coming soon! 📚'))
+  );
+}
+
+document.querySelectorAll('#libTabs .tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#libTabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    libCat = btn.dataset.lcat;
+    renderBooks();
+  });
+});
+
+document.getElementById('libSearch').addEventListener('input', e => {
+  libQuery = e.target.value.trim().toLowerCase();
+  renderBooks();
+});
+
+/* initial render when Library tab is first shown via nav */
+document.querySelector('.hnav-btn[data-view="library"]').addEventListener('click', () => {
+  if (!document.getElementById('bookGrid').innerHTML) renderBooks();
+});
+renderBooks();
 
 /* ═══════════════════════════════
    TOAST
