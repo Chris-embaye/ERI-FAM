@@ -2924,9 +2924,24 @@ function hubToast(msg) {
    PWA — SERVICE WORKER + INSTALL
 ═══════════════════════════════ */
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () =>
-    navigator.serviceWorker.register('./sw.js').catch(() => {})
-  );
+  // Don't auto-reload on the very first install (no previous controller)
+  const _hadController = !!navigator.serviceWorker.controller;
+  let _reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!_hadController || _reloading) return;
+    _reloading = true;
+    window.location.reload();
+  });
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // Check for updates whenever the tab becomes visible, and hourly
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update();
+      });
+      setInterval(() => reg.update(), 60 * 60 * 1000);
+    }).catch(() => {});
+  });
 }
 
 let _installPrompt = null;
