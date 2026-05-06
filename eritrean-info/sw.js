@@ -3,18 +3,21 @@
    Caches all app assets for offline use
    ============================================ */
 
-const CACHE_NAME    = 'eritrean-info-v63';
+const CACHE_NAME    = 'eritrean-info-v64';
 const OFFLINE_URL   = './index.html';
 
 const PRECACHE_ASSETS = [
   './index.html',
+  './hub.html',
   './styles.css',
   './script.js',
   './firebase-config.js',
   './features.js',
   './features.css',
   './manifest.json',
+  './hub-manifest.json',
   './icons/eri-logo.png',
+  './icons/icon-512.png',
   './leaflet.css',
   './leaflet.js',
 ];
@@ -67,11 +70,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // External images & fonts: network first, no offline fallback
+  // Firebase SDK from gstatic — cache after first load so auth works offline
+  if (event.request.url.includes('gstatic.com')) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(res => {
+          if (res && res.ok) {
+            caches.open(CACHE_NAME).then(c => c.put(event.request, res.clone()));
+          }
+          return res;
+        }).catch(() => new Response('', { status: 503 }));
+      })
+    );
+    return;
+  }
+
+  // External media — network only, no offline fallback
   if (event.request.url.includes('wikimedia.org') ||
       event.request.url.includes('picsum.photos') ||
-      event.request.url.includes('googleapis.com') ||
-      event.request.url.includes('gstatic.com')) {
+      event.request.url.includes('googleapis.com')) {
     event.respondWith(
       fetch(event.request).catch(() => new Response('', { status: 404 }))
     );

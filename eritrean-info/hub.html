@@ -4,9 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Eritrean Hub — Learn · Community · Money</title>
-  <link rel="icon" href="./icons/icon-192.png">
-  <meta name="description" content="Learn Tigrinya, explore Eritrean news and events, compare money transfer services">
+  <link rel="icon" href="./icons/icon-512.png">
+  <link rel="apple-touch-icon" href="./icons/icon-512.png">
+  <link rel="manifest" href="./hub-manifest.json">
+  <meta name="description" content="Learn Tigrinya, explore Eritrean community news and events, compare money transfer services">
   <meta name="theme-color" content="#16a34a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Eritrean Hub">
+  <meta name="mobile-web-app-capable" content="yes">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8021114161012516" crossorigin="anonymous"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,6 +47,11 @@
       max-width: 680px; margin: 0 auto;
       padding-bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
       min-height: 100%;
+    }
+
+    /* ── STANDALONE PWA: extend header under status bar ── */
+    @media all and (display-mode: standalone) {
+      .hub-header { padding-top: calc(14px + env(safe-area-inset-top)); }
     }
 
     /* ── HEADER ── */
@@ -548,6 +559,28 @@
     }
     .sync-bar-btn:hover { background: var(--green-light); }
 
+    /* ── INSTALL BANNER ── */
+    .install-banner {
+      position: fixed;
+      bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
+      left: 14px; right: 14px; z-index: 200;
+      background: var(--green); color: white; border-radius: 16px;
+      padding: 13px 15px; display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.28);
+      transform: translateY(140%); transition: transform .35s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+    }
+    .install-banner.show { transform: translateY(0); pointer-events: auto; }
+    .install-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .install-banner-text { flex: 1; }
+    .install-banner-title { font-size: 0.84rem; font-weight: 800; }
+    .install-banner-sub { font-size: 0.65rem; opacity: .82; margin-top: 1px; }
+    .install-banner-btn {
+      font-size: 0.76rem; font-weight: 800; background: white; color: var(--green);
+      padding: 7px 15px; border-radius: 20px; border: none; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+    .install-dismiss { font-size: 1.1rem; padding: 4px 2px; cursor: pointer; opacity: .7; flex-shrink: 0; }
+
     /* ── AUTH GATE ── */
     .auth-gate {
       position: fixed; inset: 0; z-index: 500;
@@ -917,6 +950,15 @@
   <div class="reader-body" id="readerBody"></div>
 </div>
 
+<div class="install-banner" id="installBanner">
+  <div class="install-banner-icon">🇪🇷</div>
+  <div class="install-banner-text">
+    <div class="install-banner-title">Install Eritrean Hub</div>
+    <div class="install-banner-sub">Add to home screen for the full app experience</div>
+  </div>
+  <button class="install-banner-btn" id="installBtn">Install</button>
+  <span class="install-dismiss" id="installDismiss">✕</span>
+</div>
 <div class="hub-toast" id="hubToast"></div>
 
 <script>
@@ -2443,6 +2485,37 @@ function hubToast(msg) {
   el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2500);
 }
+
+/* ═══════════════════════════════
+   PWA — SERVICE WORKER + INSTALL
+═══════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('./sw.js').catch(() => {})
+  );
+}
+
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click', () => {
+  if (!_installPrompt) return;
+  _installPrompt.prompt();
+  _installPrompt.userChoice.then(() => {
+    _installPrompt = null;
+    document.getElementById('installBanner').classList.remove('show');
+  });
+});
+document.getElementById('installDismiss').addEventListener('click', () => {
+  document.getElementById('installBanner').classList.remove('show');
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.remove('show');
+  _installPrompt = null;
+});
 </script>
 
 <!-- Firebase SDK — loaded after main script so inline code stays unaffected -->

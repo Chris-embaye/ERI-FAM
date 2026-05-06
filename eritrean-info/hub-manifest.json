@@ -1,0 +1,43 @@
+{
+  "name": "Eritrean Hub",
+  "short_name": "Eri Hub",
+  "description": "Learn Tigrinya, explore Eritrean community & compare money transfers",
+  "start_url": "./hub.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#16a34a",
+  "background_color": "#16a34a",
+  "lang": "en",
+  "categories": ["education", "lifestyle", "social"],
+  "icons": [
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/eri-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Learn Tigrinya",
+      "short_name": "Learn",
+      "description": "Start a Tigrinya lesson",
+      "url": "./hub.html",
+      "icons": [{ "src": "./icons/icon-512.png", "sizes": "512x512" }]
+    },
+    {
+      "name": "Library",
+      "short_name": "Library",
+      "description": "Read Eritrean books",
+      "url": "./hub.html",
+      "icons": [{ "src": "./icons/icon-512.png", "sizes": "512x512" }]
+    }
+  ]
+}
