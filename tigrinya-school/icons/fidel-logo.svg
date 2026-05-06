@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#16a34a"/>
+  <!-- Roof -->
+  <polygon points="256,58 452,244 60,244" fill="white"/>
+  <!-- Walls -->
+  <rect x="76" y="234" width="360" height="220" rx="10" fill="white"/>
+  <!-- Door with አ -->
+  <rect x="182" y="296" width="148" height="158" rx="10" fill="#16a34a"/>
+  <text x="256" y="416"
+        text-anchor="middle"
+        font-family="Noto Sans Ethiopic,Ebrima,serif"
+        font-size="100" font-weight="700" fill="white">አ</text>
+</svg>

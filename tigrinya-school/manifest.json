@@ -1,6 +1,6 @@
 {
-  "name": "Tigrinya School",
-  "short_name": "Tig School",
+  "name": "Fidel",
+  "short_name": "Fidel",
   "description": "Learn Tigrinya, translate, play word games and explore Eritrean community",
   "start_url": "./",
   "scope": "./",
@@ -18,9 +18,9 @@
       "purpose": "any"
     },
     {
-      "src": "./icons/eri-logo.png",
+      "src": "./icons/fidel-logo.svg",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],

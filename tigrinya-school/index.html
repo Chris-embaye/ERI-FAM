@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Fidel — Learn · Translate · Community</title>
-  <link rel="icon" href="./icons/icon-512.png">
+  <link rel="icon" href="./icons/fidel-logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icons/icon-512.png">
   <link rel="manifest" href="./manifest.json">
   <meta name="description" content="Learn Tigrinya, translate between Tigrinya and English, explore Eritrean community and news">
@@ -577,6 +577,46 @@
     .acct-id { font-size: 0.7rem; color: var(--text-sub); margin-bottom: 12px; }
     .acct-signout { width: 100%; padding: 8px; border-radius: var(--radius-sm); background: #fee2e2; color: #dc2626; font-size: 0.78rem; font-weight: 700; transition: background 0.15s; }
     .acct-signout:hover { background: #fecaca; }
+    .acct-profile-btn { width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--green-light); color: var(--green-d); font-size: 0.78rem; font-weight: 700; transition: background 0.15s; margin-bottom: 8px; }
+    .acct-profile-btn:hover { background: #bbf7d0; }
+
+    /* ── PROFILE MODAL ── */
+    .profile-modal {
+      position: fixed; inset: 0; z-index: 500;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .profile-modal.hidden { display: none; }
+    .profile-modal-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.45); backdrop-filter: blur(2px);
+    }
+    .profile-modal-card {
+      position: relative; width: 100%; max-width: 480px;
+      background: var(--card); border-radius: 22px 22px 0 0;
+      padding: 20px 20px calc(28px + env(safe-area-inset-bottom)); z-index: 1;
+      animation: profileSlideUp .25s ease;
+    }
+    @keyframes profileSlideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .profile-modal-close {
+      position: absolute; top: 14px; right: 14px;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--bg); color: var(--text-sub);
+      font-size: 0.85rem; display: flex; align-items: center; justify-content: center;
+    }
+    .profile-modal-header { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; text-align: center; }
+    .profile-modal-name { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .profile-modal-id { font-size: 0.75rem; color: var(--text-sub); background: var(--bg); border-radius: 20px; padding: 3px 12px; }
+    .profile-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+    .profile-stat { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 4px; text-align: center; }
+    .profile-stat-val { font-size: 1.3rem; font-weight: 800; color: var(--green); }
+    .profile-stat-lbl { font-size: 0.6rem; color: var(--text-sub); margin-top: 2px; text-transform: uppercase; letter-spacing: .04em; }
+    .profile-time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .profile-time-box { background: var(--bg); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
+    .profile-time-lbl { font-size: 0.65rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: .05em; }
+    .profile-time-val { font-size: 1.6rem; font-weight: 800; color: var(--text); margin-top: 4px; }
 
     /* ── TRANSLATOR ── */
     .trans-card {
@@ -966,7 +1006,7 @@
 <!-- ══ AUTH GATE — shown until signed in ══ -->
 <div class="auth-gate" id="authGate">
   <div class="auth-card">
-    <div class="auth-logo"><img src="./icons/eri-logo.png" alt="Fidel" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto;display:block;box-shadow:0 2px 10px rgba(0,0,0,.15)"></div>
+    <div class="auth-logo"><img src="./icons/fidel-logo.svg" alt="Fidel" style="width:72px;height:72px;border-radius:18px;margin:0 auto;display:block;box-shadow:0 3px 16px rgba(0,0,0,.22)"></div>
     <div class="auth-title">Fidel</div>
     <p class="auth-sub" id="authSub">Create your account to start learning</p>
 
@@ -1008,7 +1048,7 @@
 <div class="page-wrap">
   <header class="hub-header">
     <div class="hub-logo">
-      <div class="hub-logo-icon"><img src="./icons/eri-logo.png" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;vertical-align:middle"></div>
+      <div class="hub-logo-icon"><img src="./icons/fidel-logo.svg" alt="" style="width:36px;height:36px;border-radius:9px;vertical-align:middle"></div>
       <div>
         <div class="hub-title">Fidel</div>
         <div class="hub-subtitle">Learn · Translate · Community</div>
@@ -1029,6 +1069,7 @@
     <div class="acct-panel" id="acctPanel">
       <div class="acct-email" id="acctEmail"></div>
       <div class="acct-id" id="acctStudentId"></div>
+      <button class="acct-profile-btn" id="acctProfileBtn">View Profile</button>
       <button class="acct-signout" id="acctSignOut">Sign Out</button>
     </div>
   </div>
@@ -1452,7 +1493,7 @@
 </div>
 
 <div class="install-banner" id="installBanner">
-  <div class="install-banner-icon"><img src="./icons/eri-logo.png" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover"></div>
+  <div class="install-banner-icon"><img src="./icons/fidel-logo.svg" alt="" style="width:36px;height:36px;border-radius:9px"></div>
   <div class="install-banner-text">
     <div class="install-banner-title">Install Fidel</div>
     <div class="install-banner-sub">Add to home screen for the full app experience</div>
@@ -1487,6 +1528,47 @@
       <button class="ctrl-save" id="ctrlSaveBtn">Save Changes</button>
     </div>
     <div class="ctrl-msg" id="ctrlMsg"></div>
+  </div>
+</div>
+
+<!-- ══ PROFILE MODAL ══ -->
+<div class="profile-modal hidden" id="profileModal">
+  <div class="profile-modal-backdrop" id="profileModalBackdrop"></div>
+  <div class="profile-modal-card">
+    <button class="profile-modal-close" id="profileModalClose">✕</button>
+    <div class="profile-modal-header">
+      <img src="./icons/fidel-logo.svg" alt="" style="width:56px;height:56px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.15)">
+      <div class="profile-modal-name" id="profileName"></div>
+      <div class="profile-modal-id" id="profileStudentId" style="display:none"></div>
+    </div>
+    <div class="profile-stats-grid">
+      <div class="profile-stat">
+        <div class="profile-stat-val" id="profileXp">0</div>
+        <div class="profile-stat-lbl">XP</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val" id="profileStreak">0</div>
+        <div class="profile-stat-lbl">Streak</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val" id="profileStars">0</div>
+        <div class="profile-stat-lbl">Stars</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val" id="profileLessons">0</div>
+        <div class="profile-stat-lbl">Lessons</div>
+      </div>
+    </div>
+    <div class="profile-time-row">
+      <div class="profile-time-box">
+        <div class="profile-time-lbl">Today</div>
+        <div class="profile-time-val" id="profileTimeToday">0m</div>
+      </div>
+      <div class="profile-time-box">
+        <div class="profile-time-lbl">Total</div>
+        <div class="profile-time-val" id="profileTimeTotal">0m</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1817,6 +1899,46 @@ function shuffleArr(arr) {
 ═══════════════════════════════ */
 let prog = JSON.parse(localStorage.getItem('hub-progress') || '{"xp":0,"streak":0,"stars":0,"lastActive":"","quizBest":0}');
 if (prog.quizBest === undefined) prog.quizBest = 0;
+
+/* ── STUDY TIME TRACKING ── */
+(function() {
+  let _start = Date.now(), _visible = true;
+  function _todayKey() {
+    const d = new Date();
+    return 'fidel-time-' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function _flush() {
+    if (!_visible) return;
+    const delta = Math.floor((Date.now() - _start) / 1000);
+    _start = Date.now();
+    if (delta > 0 && delta < 7200) {
+      const k = _todayKey();
+      localStorage.setItem(k, (parseInt(localStorage.getItem(k)||'0',10) + delta));
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { _flush(); _visible = false; }
+    else { _visible = true; _start = Date.now(); }
+  });
+  window.addEventListener('beforeunload', _flush);
+  window.getStudyTimeToday = function() { _flush(); return parseInt(localStorage.getItem(_todayKey())||'0',10); };
+  window.getStudyTimeTotal = function() {
+    _flush();
+    let t = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('fidel-time-')) t += parseInt(localStorage.getItem(k)||'0',10);
+    }
+    return t;
+  };
+})();
+
+function fmtStudyTime(s) {
+  if (s < 60) return s + 's';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + 'm';
+  return Math.floor(m/60) + 'h ' + (m%60) + 'm';
+}
 
 function saveProg() { localStorage.setItem('hub-progress', JSON.stringify(prog)); if (typeof syncProgress === 'function') syncProgress(); }
 
@@ -3818,6 +3940,36 @@ document.addEventListener('click', e => {
     panel.classList.remove('open');
   }
 });
+
+/* ── Profile modal ── */
+document.getElementById('acctProfileBtn').addEventListener('click', () => {
+  document.getElementById('acctPanel').classList.remove('open');
+  openProfile();
+});
+document.getElementById('profileModalClose').addEventListener('click', () => {
+  document.getElementById('profileModal').classList.add('hidden');
+});
+document.getElementById('profileModalBackdrop').addEventListener('click', () => {
+  document.getElementById('profileModal').classList.add('hidden');
+});
+
+function openProfile() {
+  const modal = document.getElementById('profileModal');
+  const nameEl = document.getElementById('profileName');
+  const idEl   = document.getElementById('profileStudentId');
+  const displayName = syncProfile?.name || (syncUser?.email || '').split('@')[0] || 'Student';
+  nameEl.textContent = displayName;
+  const sid = syncProfile?.studentId;
+  if (sid) { idEl.textContent = sid; idEl.style.display = ''; }
+  else { idEl.style.display = 'none'; }
+  document.getElementById('profileXp').textContent      = prog.xp;
+  document.getElementById('profileStreak').textContent  = prog.streak;
+  document.getElementById('profileStars').textContent   = prog.stars;
+  document.getElementById('profileLessons').textContent = getLessonsDone().length;
+  document.getElementById('profileTimeToday').textContent = fmtStudyTime(window.getStudyTimeToday ? window.getStudyTimeToday() : 0);
+  document.getElementById('profileTimeTotal').textContent = fmtStudyTime(window.getStudyTimeTotal ? window.getStudyTimeTotal() : 0);
+  modal.classList.remove('hidden');
+}
 
 /* ── Auth gate helpers ── */
 function showAuthGate() { document.getElementById('authGate').classList.remove('hidden'); }
