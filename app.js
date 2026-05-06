@@ -2815,8 +2815,8 @@ function openSportsPlayer(id) {
       tvHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
       tvHls.on(Hls.Events.ERROR, (e, data) => {
         if (data.fatal) {
-          toast('⚠ Stream failed — tap the link above to open in browser');
-          if (station.ytUrl) window.open(station.ytUrl, '_blank', 'noopener,noreferrer');
+          hint.textContent = '⚠ Stream unavailable — use the link above';
+          toast('⚠ Stream could not load');
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -2831,8 +2831,7 @@ function openSportsPlayer(id) {
     iframe.src = station.embedUrl;
     hint.textContent = 'Streaming in-app';
   } else {
-    window.open(station.ytUrl, '_blank', 'noopener,noreferrer');
-    toast(`⚽ Opening ${station.name} in your browser…`);
+    toast(`⚽ ${station.name} — tap the link to open`);
     return;
   }
   document.getElementById('tvOverlay').style.display = 'flex';
