@@ -618,6 +618,7 @@
       <input class="auth-input" id="siPass" type="password" placeholder="Password" autocomplete="current-password">
       <div class="auth-err" id="siErr"></div>
       <button class="auth-submit" id="siBtn">Sign In →</button>
+      <p class="auth-switch" style="margin-bottom:8px">Forgot password? <span id="forgotPassLink">Reset it</span></p>
       <p class="auth-switch">New here? <span id="goSignUp">Create account</span></p>
     </div>
   </div>
@@ -2515,6 +2516,24 @@ document.getElementById('goSignUp').addEventListener('click', () => {
   document.getElementById('authSub').textContent = 'Create your account to start learning';
 });
 
+function genStudentId() {
+  return 'ERI-' + String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function authErr(code) {
+  const m = {
+    'auth/user-not-found':        'No account found with this email.',
+    'auth/wrong-password':        'Incorrect password.',
+    'auth/invalid-credential':    'Invalid email or password.',
+    'auth/email-already-in-use':  'An account with this email already exists.',
+    'auth/invalid-email':         'Invalid email address.',
+    'auth/weak-password':         'Password must be at least 6 characters.',
+    'auth/too-many-requests':     'Too many attempts. Please try again later.',
+    'auth/network-request-failed':'Network error. Check your connection.',
+  };
+  return m[code] || 'Something went wrong. Please try again.';
+}
+
 if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
   try {
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -2535,13 +2554,18 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
       try {
         const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
         const uid = cred.user.uid;
-        await _syncDb.collection('users').doc(uid).set({
-          name, email, role: authRole, studentId: uid,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        /* onAuthStateChanged will fire next and hide the gate */
+        const studentId = authRole === 'student' ? genStudentId() : null;
+        const profile = { name, email, role: authRole, studentId, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+        await _syncDb.collection('users').doc(uid).set(profile);
+        if (studentId) {
+          await _syncDb.collection('progress').doc(studentId).set(
+            { uid, name, studentId, email, xp:0, streak:0, stars:0, quizBest:0, lessonsCompleted:[], catStars:{}, lastActive:'', updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+            { merge: true }
+          ).catch(() => {});
+        }
+        /* onAuthStateChanged fires next and hides the gate */
       } catch(e) {
-        errEl.textContent = e.message || 'Sign up failed. Please try again.';
+        errEl.textContent = authErr(e.code);
         btn.disabled = false; btn.textContent = 'Create Account →';
       }
     });
@@ -2557,10 +2581,24 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
       btn.disabled = true; btn.textContent = 'Signing in…';
       try {
         await firebase.auth().signInWithEmailAndPassword(email, pass);
-        /* onAuthStateChanged fires next and hides the gate */
       } catch(e) {
-        errEl.textContent = e.message || 'Sign in failed. Check your email and password.';
+        errEl.textContent = authErr(e.code);
         btn.disabled = false; btn.textContent = 'Sign In →';
+      }
+    });
+
+    /* ── Forgot password ── */
+    document.getElementById('forgotPassLink').addEventListener('click', async () => {
+      const email = document.getElementById('siEmail').value.trim();
+      const errEl = document.getElementById('siErr');
+      if (!email) { errEl.style.color = 'var(--red)'; errEl.textContent = 'Enter your email above first.'; return; }
+      try {
+        await firebase.auth().sendPasswordResetEmail(email);
+        errEl.style.color = 'var(--green)';
+        errEl.textContent = 'Reset email sent! Check your inbox.';
+      } catch(e) {
+        errEl.style.color = 'var(--red)';
+        errEl.textContent = authErr(e.code);
       }
     });
 
