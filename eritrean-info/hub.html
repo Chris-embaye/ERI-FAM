@@ -656,6 +656,73 @@
     }
     .dict-empty { grid-column: 1/-1; text-align: center; padding: 48px 16px; color: var(--text-dim); font-size: 0.85rem; }
 
+    /* ── PARENTAL CONTROLS ── */
+    .ctrl-btn {
+      font-size: 1.05rem; background: rgba(255,255,255,.2);
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .ctrl-btn:hover { background: rgba(255,255,255,.3); }
+    .ctrl-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 450;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+      opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .ctrl-backdrop.open { opacity: 1; pointer-events: auto; }
+    .ctrl-modal {
+      background: var(--card); border-radius: var(--radius); padding: 22px 20px 18px;
+      width: min(380px, 100%); box-shadow: var(--shadow-md); position: relative;
+      transform: translateY(12px); transition: transform .2s;
+    }
+    .ctrl-backdrop.open .ctrl-modal { transform: translateY(0); }
+    .ctrl-close {
+      position: absolute; top: 14px; right: 16px;
+      font-size: 1rem; color: var(--text-dim); cursor: pointer; line-height: 1;
+    }
+    .ctrl-title { font-size: 1rem; font-weight: 800; margin-bottom: 3px; }
+    .ctrl-sub { font-size: 0.74rem; color: var(--text-sub); margin-bottom: 14px; }
+    .ctrl-id-row { display: flex; gap: 8px; margin-bottom: 4px; }
+    .ctrl-id-input {
+      flex: 1; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 9px 12px; font-size: 0.85rem;
+      color: var(--text); outline: none; font-family: monospace; text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .ctrl-id-input:focus { border-color: var(--green); }
+    .ctrl-load-btn {
+      background: var(--green); color: white; border-radius: var(--radius-sm);
+      padding: 9px 16px; font-size: 0.82rem; font-weight: 700; white-space: nowrap;
+    }
+    .ctrl-load-btn:disabled { opacity: .6; }
+    .ctrl-toggles { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+    .ctrl-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg); border-radius: var(--radius-sm); padding: 11px 14px;
+    }
+    .ctrl-row-label { font-size: 0.84rem; font-weight: 600; }
+    .ctrl-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .ctrl-switch input { opacity: 0; width: 0; height: 0; }
+    .ctrl-track {
+      position: absolute; cursor: pointer; inset: 0;
+      background: var(--border); border-radius: 24px; transition: .2s;
+    }
+    .ctrl-track::before {
+      content: ''; position: absolute;
+      width: 18px; height: 18px; left: 3px; bottom: 3px;
+      background: white; border-radius: 50%; transition: .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .ctrl-switch input:checked + .ctrl-track { background: var(--green); }
+    .ctrl-switch input:checked + .ctrl-track::before { transform: translateX(20px); }
+    .ctrl-save {
+      width: 100%; background: var(--green); color: white;
+      border-radius: var(--radius-sm); padding: 12px;
+      font-size: 0.9rem; font-weight: 800;
+    }
+    .ctrl-save:disabled { opacity: .5; cursor: default; }
+    .ctrl-msg { font-size: 0.74rem; text-align: center; margin-top: 9px; min-height: 16px; }
+
     /* ── INSTALL BANNER ── */
     .install-banner {
       position: fixed;
@@ -765,6 +832,7 @@
       </div>
     </div>
     <div class="hub-hdr-right">
+      <button class="ctrl-btn" id="ctrlBtn" style="display:none" title="Parental Controls">🎛️</button>
       <button class="theme-btn" id="themeBtn" title="Toggle night mode">🌙</button>
       <a href="/" class="hub-back">← Main App</a>
     </div>
@@ -1104,6 +1172,34 @@
   <span class="install-dismiss" id="installDismiss">✕</span>
 </div>
 <div class="hub-toast" id="hubToast"></div>
+
+<div class="ctrl-backdrop" id="ctrlBackdrop">
+  <div class="ctrl-modal">
+    <button class="ctrl-close" id="ctrlClose">✕</button>
+    <div class="ctrl-title">🎛️ Parental Controls</div>
+    <div class="ctrl-sub">Enter your student's ERI-ID to manage what they can access</div>
+    <div class="ctrl-id-row">
+      <input class="ctrl-id-input" id="ctrlIdInput" placeholder="ERI-000000" maxlength="10">
+      <button class="ctrl-load-btn" id="ctrlLoadBtn">Load</button>
+    </div>
+    <div id="ctrlToggles" class="ctrl-toggles" style="display:none">
+      <div class="ctrl-row">
+        <span class="ctrl-row-label">🔤 Translate</span>
+        <label class="ctrl-switch"><input type="checkbox" id="ctrlTranslate" checked><span class="ctrl-track"></span></label>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-row-label">📖 Dictionary</span>
+        <label class="ctrl-switch"><input type="checkbox" id="ctrlDictionary" checked><span class="ctrl-track"></span></label>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-row-label">🌍 Community</span>
+        <label class="ctrl-switch"><input type="checkbox" id="ctrlCommunity" checked><span class="ctrl-track"></span></label>
+      </div>
+      <button class="ctrl-save" id="ctrlSaveBtn">Save Changes</button>
+    </div>
+    <div class="ctrl-msg" id="ctrlMsg"></div>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -2913,6 +3009,76 @@ function renderDict() {
 })();
 
 /* ═══════════════════════════════
+   PARENTAL CONTROLS
+═══════════════════════════════ */
+function applyStudentControls(controls) {
+  const c = Object.assign({ translate: true, dictionary: true, community: true }, controls || {});
+  ['translate', 'dictionary', 'community'].forEach(view => {
+    const btn = document.querySelector(`.hnav-btn[data-view="${view}"]`);
+    if (btn) btn.style.display = c[view] ? '' : 'none';
+  });
+  // Redirect away from a now-hidden view
+  const activeBtn = document.querySelector('.hnav-btn.active');
+  if (activeBtn && activeBtn.style.display === 'none') showView('learn');
+}
+
+function subscribeStudentControls(studentId) {
+  if (!_syncDb || !studentId) return;
+  _syncDb.collection('controls').doc(studentId).onSnapshot(
+    snap => applyStudentControls(snap.exists ? snap.data() : {}),
+    () => {}
+  );
+}
+
+(function initCtrlModal() {
+  const backdrop = document.getElementById('ctrlBackdrop');
+  document.getElementById('ctrlBtn').addEventListener('click', () => backdrop.classList.add('open'));
+  document.getElementById('ctrlClose').addEventListener('click', () => backdrop.classList.remove('open'));
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.classList.remove('open'); });
+
+  const loadBtn  = document.getElementById('ctrlLoadBtn');
+  const saveBtn  = document.getElementById('ctrlSaveBtn');
+  const idInput  = document.getElementById('ctrlIdInput');
+  const toggles  = document.getElementById('ctrlToggles');
+  const msgEl    = document.getElementById('ctrlMsg');
+
+  loadBtn.addEventListener('click', async () => {
+    const sid = idInput.value.trim().toUpperCase();
+    if (!/^ERI-\d{6}$/.test(sid)) {
+      msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Enter a valid ERI-XXXXXX student ID'; return;
+    }
+    loadBtn.disabled = true; loadBtn.textContent = '…'; msgEl.textContent = '';
+    try {
+      const snap = await _syncDb.collection('controls').doc(sid).get();
+      const c = snap.exists ? snap.data() : {};
+      document.getElementById('ctrlTranslate').checked  = c.translate  !== false;
+      document.getElementById('ctrlDictionary').checked = c.dictionary !== false;
+      document.getElementById('ctrlCommunity').checked  = c.community  !== false;
+      toggles.style.display = '';
+      msgEl.style.color = 'var(--green)'; msgEl.textContent = '✓ Student loaded — adjust settings below';
+    } catch(e) {
+      msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Could not load — check the ID and try again';
+    } finally { loadBtn.disabled = false; loadBtn.textContent = 'Load'; }
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    const sid = idInput.value.trim().toUpperCase();
+    if (!sid || !_syncDb) return;
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; msgEl.textContent = '';
+    try {
+      await _syncDb.collection('controls').doc(sid).set({
+        translate:  document.getElementById('ctrlTranslate').checked,
+        dictionary: document.getElementById('ctrlDictionary').checked,
+        community:  document.getElementById('ctrlCommunity').checked,
+      });
+      msgEl.style.color = 'var(--green)'; msgEl.textContent = '✓ Saved! Changes apply to the student instantly';
+    } catch(e) {
+      msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Save failed — please try again';
+    } finally { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
+  });
+})();
+
+/* ═══════════════════════════════
    TOAST
 ═══════════════════════════════ */
 function hubToast(msg) {
@@ -3007,6 +3173,8 @@ function updateSyncBar() {
   const isParent = syncProfile && syncProfile.role === 'parent';
   if (moneyBtn) moneyBtn.style.display = isParent ? '' : 'none';
   if (!isParent && document.getElementById('view-money')?.classList.contains('active')) showView('learn');
+  const ctrlBtn = document.getElementById('ctrlBtn');
+  if (ctrlBtn) ctrlBtn.style.display = isParent ? '' : 'none';
   if (!syncUser) {
     dot && dot.classList.remove('active');
     msg.textContent = '☁ Sign in to save your progress';
@@ -3145,7 +3313,10 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
       } catch(e) { syncProfile = null; }
       hideAuthGate();
       updateSyncBar();
-      if (syncProfile && syncProfile.role === 'student') syncProgress();
+      if (syncProfile && syncProfile.role === 'student') {
+        syncProgress();
+        subscribeStudentControls(syncProfile.studentId);
+      }
     });
 
   } catch(e) { /* Firebase unavailable */ }
