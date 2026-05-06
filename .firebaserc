@@ -6,7 +6,8 @@
     "eri-fam": {
       "hosting": {
         "eritrean-info": ["eri-fam"],
-        "admin": ["eri-fam-admin"]
+        "admin": ["eri-fam-admin"],
+        "tigrinya-school": ["eri-tigrinya-school"]
       }
     },
     "trucklogapp-1b40e": {

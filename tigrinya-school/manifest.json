@@ -1,8 +1,8 @@
 {
   "name": "Tigrinya School",
   "short_name": "Tig School",
-  "description": "Learn Tigrinya, translate between Tigrinya and English, explore Eritrean community",
-  "start_url": "./hub.html",
+  "description": "Learn Tigrinya, translate, play word games and explore Eritrean community",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
@@ -28,22 +28,19 @@
     {
       "name": "Learn Tigrinya",
       "short_name": "Learn",
-      "description": "Start a Tigrinya lesson",
-      "url": "./hub.html",
+      "url": "./",
       "icons": [{ "src": "./icons/icon-512.png", "sizes": "512x512" }]
     },
     {
       "name": "Translate",
       "short_name": "Translate",
-      "description": "Translate Tigrinya ↔ English",
-      "url": "./hub.html",
+      "url": "./",
       "icons": [{ "src": "./icons/icon-512.png", "sizes": "512x512" }]
     },
     {
-      "name": "Library",
-      "short_name": "Library",
-      "description": "Read Eritrean books",
-      "url": "./hub.html",
+      "name": "Games",
+      "short_name": "Games",
+      "url": "./",
       "icons": [{ "src": "./icons/icon-512.png", "sizes": "512x512" }]
     }
   ]

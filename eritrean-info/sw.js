@@ -3,19 +3,17 @@
    Caches all app assets for offline use
    ============================================ */
 
-const CACHE_NAME    = 'eritrean-info-v74';
+const CACHE_NAME    = 'eritrean-info-v75';
 const OFFLINE_URL   = './index.html';
 
 const PRECACHE_ASSETS = [
   './index.html',
-  './hub.html',
   './styles.css',
   './script.js',
   './firebase-config.js',
   './features.js',
   './features.css',
   './manifest.json',
-  './hub-manifest.json',
   './icons/eri-logo.png',
   './icons/icon-512.png',
   './leaflet.css',

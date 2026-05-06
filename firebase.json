@@ -44,6 +44,12 @@
       "target": "admin",
       "public": "admin",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    },
+    {
+      "target": "tigrinya-school",
+      "public": "tigrinya-school",
+      "cleanUrls": true,
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
     }
   ]
 }
