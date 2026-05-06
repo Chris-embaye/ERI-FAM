@@ -15,8 +15,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap"></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8021114161012516" crossorigin="anonymous"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -566,6 +565,19 @@
     }
     .sync-bar-btn:hover { background: var(--green-light); }
 
+    /* ── ACCOUNT PANEL ── */
+    .acct-panel {
+      position: absolute; top: calc(100% + 6px); right: 14px; z-index: 200;
+      background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow-md); padding: 14px 16px; min-width: 220px;
+      display: none;
+    }
+    .acct-panel.open { display: block; }
+    .acct-email { font-size: 0.75rem; font-weight: 700; color: var(--text); margin-bottom: 2px; word-break: break-all; }
+    .acct-id { font-size: 0.7rem; color: var(--text-sub); margin-bottom: 12px; }
+    .acct-signout { width: 100%; padding: 8px; border-radius: var(--radius-sm); background: #fee2e2; color: #dc2626; font-size: 0.78rem; font-weight: 700; transition: background 0.15s; }
+    .acct-signout:hover { background: #fecaca; }
+
     /* ── TRANSLATOR ── */
     .trans-card {
       background: var(--card); border-radius: var(--radius); border: 1.5px solid var(--border);
@@ -1008,12 +1020,17 @@
     </div>
   </header>
 
-  <div class="sync-bar" id="syncBar">
+  <div class="sync-bar" id="syncBar" style="position:relative">
     <div class="sync-bar-left">
       <span class="sync-dot" id="syncDot"></span>
       <span id="syncMsg">☁ Sign in to save your progress</span>
     </div>
-    <a href="./account" class="sync-bar-btn" id="syncBarBtn">Sign In →</a>
+    <button class="sync-bar-btn" id="syncBarBtn">Sign In →</button>
+    <div class="acct-panel" id="acctPanel">
+      <div class="acct-email" id="acctEmail"></div>
+      <div class="acct-id" id="acctStudentId"></div>
+      <button class="acct-signout" id="acctSignOut">Sign Out</button>
+    </div>
   </div>
 
   <!-- ══ VIEW 1 — LEARN ══ -->
@@ -2248,12 +2265,12 @@ function renderLessons() {
       ? '<div class="lesson-done-bar">✅ Lesson complete! Well done.</div>'
       : '<button class="lesson-start-quiz" data-lid="' + lesson.id + '">Take the mini quiz →</button>';
     return (
-      '<div class="lesson-card' + (unlocked ? '' : ' locked') + '" data-lid="' + lesson.id + '">' +
+      '<div class="lesson-card' + (unlocked ? '' : ' locked') + '" data-lid="' + lesson.id + '"' + (unlocked ? '' : ' title="Complete \'' + LESSONS[idx-1].title + '\' first to unlock"') + '>' +
         '<div class="lesson-hdr">' +
           '<div class="lesson-emoji">' + lesson.emoji + '</div>' +
           '<div class="lesson-meta">' +
             '<div class="lesson-title">' + lesson.title + '</div>' +
-            '<div class="lesson-desc">' + lesson.desc + '</div>' +
+            '<div class="lesson-desc">' + (unlocked ? lesson.desc : '🔒 Complete the previous lesson to unlock') + '</div>' +
           '</div>' +
           '<div class="lesson-right">' +
             '<div class="lesson-xp">+' + lesson.xp + ' XP</div>' +
@@ -2391,7 +2408,8 @@ async function loadNews() {
     } catch {}
   }));
   if (!articles.length) {
-    grid.innerHTML = '<div class="news-error"><div class="icon">📡</div><p>Could not load news. Check your connection or try again.</p></div>';
+    grid.innerHTML = '<div class="news-error"><div class="icon">📡</div><p>Could not load news. Check your connection.</p><button onclick="newsLoaded=false;loadNews()" style="margin-top:10px;padding:7px 18px;background:var(--green);color:white;border-radius:20px;font-size:0.78rem;font-weight:700">Try Again</button></div>';
+    newsLoaded = false;
     return;
   }
   articles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
@@ -3319,6 +3337,7 @@ function subscribeStudentControls(studentId) {
     if (!/^ERI-\d{6}$/.test(sid)) {
       msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Enter a valid ERI-XXXXXX student ID'; return;
     }
+    if (!_syncDb) { msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Still connecting — try again in a moment'; return; }
     loadBtn.disabled = true; loadBtn.textContent = '…'; msgEl.textContent = '';
     try {
       const snap = await _syncDb.collection('controls').doc(sid).get();
@@ -3769,13 +3788,36 @@ function updateSyncBar() {
     dot && dot.classList.remove('active');
     msg.textContent = '☁ Sign in to save your progress';
     if (btn) btn.textContent = 'Sign In →';
+    document.getElementById('acctPanel')?.classList.remove('open');
   } else {
     dot && dot.classList.add('active');
     const name = ((syncProfile && syncProfile.name) || syncUser.email || '').split(' ')[0];
     msg.textContent = '☁ Synced · ' + name;
     if (btn) btn.textContent = 'Account ↗';
+    const emailEl = document.getElementById('acctEmail');
+    const idEl = document.getElementById('acctStudentId');
+    if (emailEl) emailEl.textContent = syncUser.email || '';
+    if (idEl) idEl.textContent = (syncProfile?.studentId) ? ('Student ID: ' + syncProfile.studentId) : (isParent ? 'Parent account' : '');
   }
 }
+
+/* ── Account panel ── */
+document.getElementById('syncBarBtn').addEventListener('click', () => {
+  if (!syncUser) { showAuthGate(); return; }
+  const panel = document.getElementById('acctPanel');
+  panel.classList.toggle('open');
+});
+document.getElementById('acctSignOut').addEventListener('click', () => {
+  document.getElementById('acctPanel').classList.remove('open');
+  firebase.auth().signOut().catch(() => {});
+});
+document.addEventListener('click', e => {
+  const panel = document.getElementById('acctPanel');
+  if (!panel.classList.contains('open')) return;
+  if (!panel.contains(e.target) && e.target !== document.getElementById('syncBarBtn')) {
+    panel.classList.remove('open');
+  }
+});
 
 /* ── Auth gate helpers ── */
 function showAuthGate() { document.getElementById('authGate').classList.remove('hidden'); }
