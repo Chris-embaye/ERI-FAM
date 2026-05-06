@@ -1158,9 +1158,128 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 .chart-plays { font-size: 0.59rem; color: var(--text-dim); margin-top: 1px; }
 
 /* ── RADIO ──────────────────────────────────────────────── */
+.rad-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+
+/* Search */
+.rad-search-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border-radius: 24px; padding: 8px 14px;
+  margin-bottom: 12px; border: 1px solid var(--border);
+}
+.rad-search-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-size: 0.9rem;
+}
+.rad-search-input::placeholder { color: var(--text-dim); }
+
+/* Genre chips */
+.rad-chips-wrap { overflow-x: auto; margin-bottom: 12px; scrollbar-width: none; }
+.rad-chips-wrap::-webkit-scrollbar { display: none; }
+.rad-chips { display: flex; gap: 7px; padding: 2px 0; }
+.rad-chip {
+  flex-shrink: 0; background: var(--card); border: 1px solid var(--border);
+  color: var(--text-sub); padding: 5px 12px; border-radius: 20px;
+  font-size: 0.75rem; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.rad-chip:hover { background: var(--card-hover); }
+.rad-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.rad-chip-fav.active { background: #e53; border-color: #e53; }
+
+/* Recently played */
+.rad-recents { margin-bottom: 12px; }
+.rad-section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.rad-section-title { font-size: 0.78rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: .5px; }
+.rad-recents-list { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.rad-recents-list::-webkit-scrollbar { display: none; }
+.rad-recent-item {
+  flex-shrink: 0; background: var(--card); border-radius: var(--radius-sm);
+  padding: 8px 12px; font-size: 0.77rem; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--border); transition: background 0.15s;
+}
+.rad-recent-item:hover { background: var(--card-hover); }
+.rad-recent-item span { font-size: 0.65rem; color: var(--text-dim); display: block; margin-top: 2px; }
+
+/* Sleep bar */
+.rad-sleep-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,200,0,0.12); border: 1px solid rgba(255,200,0,0.3);
+  border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 10px;
+  font-size: 0.8rem;
+}
+.rad-sleep-text { flex: 1; font-weight: 600; }
+.rad-sleep-cancel { font-size: 0.72rem; color: var(--text-sub); padding: 3px 8px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); cursor: pointer; }
+
+/* Now Playing bar */
+.radio-now-playing {
+  background: rgba(250,45,72,0.08); border: 1px solid rgba(250,45,72,0.22);
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* Mini EQ bars in now-playing */
+.rnp-eq { display: flex; align-items: flex-end; gap: 2px; height: 18px; flex-shrink: 0; }
+.rnp-eq-bar {
+  width: 3px; border-radius: 2px; background: var(--accent);
+  animation: eqBounce 0.6s ease-in-out infinite alternate;
+}
+.rnp-eq-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+.rnp-eq-bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+.rnp-eq-bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+.rnp-eq-bar:nth-child(4) { height: 16px; animation-delay: 0.05s; }
+.rnp-eq-bar:nth-child(5) { height: 6px; animation-delay: 0.15s; }
+@keyframes eqBounce {
+  0%   { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}
+.rnp-eq.paused .rnp-eq-bar { animation-play-state: paused; transform: scaleY(0.3); }
+
+.rnp-art { font-size: 2rem; flex-shrink: 0; display: flex; align-items: center; }
+.rnp-art .radio-logo-img { width: 58px; height: auto; border-radius: 8px; }
+.rnp-info { flex: 1; min-width: 0; }
+.rnp-name { font-size: 0.88rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rnp-status { display: flex; align-items: center; gap: 5px; font-size: 0.68rem; color: var(--text-sub); margin-top: 2px; }
+
+/* Volume slider */
+.rnp-vol {
+  -webkit-appearance: none; appearance: none;
+  width: 72px; height: 4px; border-radius: 2px;
+  background: var(--border); flex-shrink: 0; cursor: pointer;
+}
+.rnp-vol::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px;
+  border-radius: 50%; background: var(--accent); cursor: pointer;
+}
+.rnp-vol::-moz-range-thumb {
+  width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer;
+}
+
+/* Icon buttons in bar */
+.rnp-icon-btn {
+  background: var(--card); border: 1px solid var(--border); border-radius: 50%;
+  width: 30px; height: 30px; font-size: 0.8rem; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s;
+}
+.rnp-icon-btn:hover { background: var(--card-hover); }
+
+.rnp-stop { background: var(--accent); color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+
+/* Sleep picker */
+.rad-sleep-picker {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px; margin-bottom: 10px;
+}
+.rad-sp-title { font-size: 0.78rem; font-weight: 700; color: var(--text-sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .4px; }
+.rad-sp-opt {
+  display: block; width: 100%; text-align: left; padding: 9px 12px;
+  font-size: 0.85rem; border-radius: var(--radius-sm); cursor: pointer;
+  transition: background 0.14s; color: var(--text); background: none; border: none;
+}
+.rad-sp-opt:hover { background: var(--card-hover); }
+
+/* Radio grid & cards */
 .radio-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .radio-card {
-  background: var(--card); border-radius: var(--radius); padding: 16px;
+  background: var(--card); border-radius: var(--radius); padding: 14px;
   cursor: pointer; transition: all 0.18s; display: flex; flex-direction: column;
   gap: 6px; border: 1.5px solid transparent; position: relative; overflow: hidden;
 }
@@ -1172,25 +1291,67 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 }
 .radio-card-icon { font-size: 1.8rem; display: flex; align-items: center; justify-content: center; }
 .radio-card-icon .radio-logo-img { width: 90px; height: auto; border-radius: 10px; display: block; }
-.radio-card-name { font-size: 0.88rem; font-weight: 700; }
-.radio-card-desc { font-size: 0.71rem; color: var(--text-sub); }
+.radio-card-name { font-size: 0.86rem; font-weight: 700; }
+.radio-card-desc { font-size: 0.69rem; color: var(--text-sub); }
 .radio-card-lang {
-  font-size: 0.63rem; color: var(--text-dim); background: var(--surface);
+  font-size: 0.62rem; color: var(--text-dim); background: var(--surface);
   padding: 2px 8px; border-radius: 10px; width: fit-content;
 }
 .radio-live-badge { display: flex; align-items: center; gap: 4px; font-size: 0.63rem; font-weight: 700; color: var(--red); margin-top: 4px; }
 .radio-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: pulse 1s infinite; flex-shrink: 0; }
-.radio-now-playing {
-  background: rgba(250,45,72,0.08); border: 1px solid rgba(250,45,72,0.22);
-  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
-  display: flex; align-items: center; gap: 14px;
+
+/* Card action buttons row */
+.radio-card-actions { display: flex; gap: 6px; margin-top: 4px; }
+.radio-card-fav-btn, .radio-card-info-btn {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  font-size: 0.65rem; padding: 3px 8px; cursor: pointer; transition: background 0.14s; color: var(--text-sub);
 }
-.rnp-art { font-size: 2rem; flex-shrink: 0; display: flex; align-items: center; }
-.rnp-art .radio-logo-img { width: 58px; height: auto; border-radius: 8px; }
-.rnp-info { flex: 1; min-width: 0; }
-.rnp-name { font-size: 0.92rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rnp-status { display: flex; align-items: center; gap: 5px; font-size: 0.71rem; color: var(--text-sub); margin-top: 3px; }
-.rnp-stop { background: var(--accent); color: white; padding: 7px 16px; border-radius: 20px; font-size: 0.77rem; font-weight: 700; flex-shrink: 0; }
+.radio-card-fav-btn:hover, .radio-card-info-btn:hover { background: var(--card-hover); }
+.radio-card-fav-btn.faved { color: #e53; border-color: #e53; background: rgba(238,85,51,.1); }
+
+/* Card EQ animation when playing */
+.rad-card-eq { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
+.rad-card-eq-bar {
+  width: 3px; background: var(--accent); border-radius: 2px;
+  animation: eqBounce 0.6s ease-in-out infinite alternate;
+}
+.rad-card-eq-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+.rad-card-eq-bar:nth-child(2) { height: 12px; animation-delay: 0.12s; }
+.rad-card-eq-bar:nth-child(3) { height: 8px; animation-delay: 0.22s; }
+.rad-card-eq-bar:nth-child(4) { height: 10px; animation-delay: 0.06s; }
+
+/* Station info bottom sheet */
+.rad-info-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 998;
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+}
+.rad-info-sheet {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+  background: var(--bg-alt); border-radius: 18px 18px 0 0;
+  padding: 16px; max-height: 60vh; overflow-y: auto;
+  box-shadow: 0 -4px 32px rgba(0,0,0,.4);
+}
+.rad-info-handle {
+  width: 36px; height: 4px; background: var(--border); border-radius: 2px;
+  margin: 0 auto 14px;
+}
+.rad-info-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.rad-info-icon { font-size: 2rem; flex-shrink: 0; }
+.rad-info-text { flex: 1; min-width: 0; }
+.rad-info-name { font-size: 1rem; font-weight: 700; }
+.rad-info-desc { font-size: 0.75rem; color: var(--text-sub); margin-top: 2px; }
+.rad-info-close { background: var(--card); border: 1px solid var(--border); border-radius: 50%; width: 28px; height: 28px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rad-info-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.rad-info-tag { font-size: 0.68rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2px 9px; color: var(--text-sub); }
+.rad-info-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.rad-info-action {
+  flex: 1; min-width: 80px; padding: 9px 14px; border-radius: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s; color: var(--text);
+}
+.rad-info-action:hover { background: var(--card-hover); }
+.rad-info-fav-btn { color: var(--accent); border-color: var(--accent); }
+.rad-info-fav-btn.faved { background: rgba(238,85,51,.15); color: #e53; border-color: #e53; }
 
 /* ── VISUALIZER ─────────────────────────────────────────── */
 .viz-canvas {

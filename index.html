@@ -334,16 +334,79 @@
 
   <!-- RADIO VIEW -->
   <div class="view" id="view-radio">
-    <h2 class="section-title" style="margin-bottom:6px">📻 Live Radio</h2>
-    <p style="font-size:0.78rem;color:var(--text-sub);margin-bottom:16px">Stream Eritrean radio stations live</p>
+
+    <!-- Header -->
+    <div class="rad-header">
+      <div>
+        <h2 class="section-title" style="margin-bottom:2px">📻 Live Radio</h2>
+        <p style="font-size:.76rem;color:var(--text-sub)">Stream Eritrean stations live</p>
+      </div>
+    </div>
+
+    <!-- 2. Search bar -->
+    <div class="rad-search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" style="flex-shrink:0;color:var(--text-dim)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="radioSearch" class="rad-search-input" placeholder="Search stations…" autocomplete="off"/>
+    </div>
+
+    <!-- 9. Genre / language chips -->
+    <div class="rad-chips-wrap">
+      <div class="rad-chips" id="radioChips">
+        <button class="rad-chip active" data-genre="">All</button>
+        <button class="rad-chip" data-genre="music">🎵 Music</button>
+        <button class="rad-chip" data-genre="news">📰 News</button>
+        <button class="rad-chip" data-genre="gospel">✝ Gospel</button>
+        <button class="rad-chip" data-genre="tigre">🎶 Tigre</button>
+        <button class="rad-chip rad-chip-fav" id="radioFavChip">❤ Favorites</button>
+      </div>
+    </div>
+
+    <!-- 7. Recently played row -->
+    <div class="rad-recents" id="radioRecents" hidden>
+      <div class="rad-section-hdr">
+        <span class="rad-section-title">Recently Played</span>
+      </div>
+      <div class="rad-recents-list" id="radioRecentsList"></div>
+    </div>
+
+    <!-- 5. Sleep timer active bar -->
+    <div class="rad-sleep-bar" id="radioSleepBar" hidden>
+      <span>😴</span>
+      <span class="rad-sleep-text" id="radioSleepText">Stops in 30:00</span>
+      <button class="rad-sleep-cancel" id="radioSleepCancel">✕ Cancel</button>
+    </div>
+
+    <!-- Now Playing bar (upgraded) -->
     <div id="radioNowPlaying" class="radio-now-playing" style="display:none">
-      <div class="rnp-art" id="rnpArt"><img src="./icons/radio-logo.svg" alt="Radio" class="radio-logo-img"/></div>
+      <!-- 3. Card equalizer mini bars -->
+      <div class="rnp-eq" id="rnpEq">
+        <div class="rnp-eq-bar"></div><div class="rnp-eq-bar"></div>
+        <div class="rnp-eq-bar"></div><div class="rnp-eq-bar"></div>
+        <div class="rnp-eq-bar"></div>
+      </div>
       <div class="rnp-info">
         <div class="rnp-name" id="rnpName">Loading…</div>
-        <div class="rnp-status"><span class="radio-live-dot"></span> Live</div>
+        <div class="rnp-status"><span class="radio-live-dot"></span> <span id="rnpStatusText">Live</span></div>
       </div>
-      <button class="rnp-stop" id="rnpStop">■ Stop</button>
+      <!-- 8. Volume slider -->
+      <input type="range" class="rnp-vol" id="rnpVolume" min="0" max="1" step="0.02" value="1" title="Volume"/>
+      <!-- 6. Share -->
+      <button class="rnp-icon-btn" id="rnpShare" title="Share station">↗</button>
+      <!-- 5. Sleep timer -->
+      <button class="rnp-icon-btn" id="rnpSleep" title="Sleep timer">😴</button>
+      <button class="rnp-stop" id="rnpStop">■</button>
     </div>
+
+    <!-- 5. Sleep timer picker (positioned by JS) -->
+    <div class="rad-sleep-picker" id="radioSleepPicker" hidden>
+      <div class="rad-sp-title">Sleep Timer</div>
+      <button class="rad-sp-opt" data-mins="15">15 minutes</button>
+      <button class="rad-sp-opt" data-mins="30">30 minutes</button>
+      <button class="rad-sp-opt" data-mins="60">1 hour</button>
+      <button class="rad-sp-opt" data-mins="120">2 hours</button>
+    </div>
+
+    <!-- Station grid -->
     <div class="radio-grid" id="radioGrid"></div>
 
     <!-- ERi-TV Live TV section -->
@@ -353,7 +416,7 @@
     </div>
     <div class="tv-grid" id="tvGrid"></div>
 
-    <p style="font-size:0.7rem;color:var(--text-dim);margin-top:20px;text-align:center">Streams may require a stable connection · Tap card to watch live</p>
+    <p style="font-size:0.7rem;color:var(--text-dim);margin-top:20px;text-align:center">Streams may require a stable connection · Tap card to stream</p>
   </div>
 
   <!-- YOUTUBE VIEW -->
@@ -709,6 +772,26 @@
 </main>
 
 <!-- RADIO FULLSCREEN OVERLAY -->
+<!-- Station Info Sheet -->
+<div class="rad-info-backdrop" id="radInfoBackdrop" hidden></div>
+<div class="rad-info-sheet" id="radInfoSheet" hidden>
+  <div class="rad-info-handle"></div>
+  <div class="rad-info-header">
+    <div class="rad-info-icon" id="radInfoIcon">🎙</div>
+    <div class="rad-info-text">
+      <div class="rad-info-name" id="radInfoName">Station Name</div>
+      <div class="rad-info-desc" id="radInfoDesc">Description</div>
+    </div>
+    <button class="rad-info-close" id="radInfoClose">✕</button>
+  </div>
+  <div class="rad-info-tags" id="radInfoTags"></div>
+  <div class="rad-info-actions">
+    <button class="rad-info-action" id="radInfoPlay">▶ Play</button>
+    <button class="rad-info-action rad-info-fav-btn" id="radInfoFav">❤ Favorite</button>
+    <button class="rad-info-action" id="radInfoShareBtn">↗ Share</button>
+  </div>
+</div>
+
 <div class="radio-fullscreen" id="radioFullscreen" style="display:none">
   <div class="radio-fs-header">
     <div class="radio-fs-live">

@@ -2087,33 +2087,185 @@ function initSwipeGestures() {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   FEATURE 4 — Live Eritrean Radio
+   FEATURE 4 — Live Eritrean Radio  (10-tweak upgrade)
    ════════════════════════════════════════════════════════════════ */
 const RADIO_STATIONS = [
-  { id: 'etem', name: 'Eritrean Music', desc: 'Eritrean & Ethiopian Tigrigna Music', lang: 'Tigrinya', icon: '🎶', url: 'https://linuxfreelancer.com:8443/test.mp3' },
+  { id: 'etem',    name: 'Eritrean Music',     desc: 'Tigrigna hits & classics',        lang: 'Tigrinya', genre: 'music',   country: 'Eritrea', icon: '🎶', url: 'https://linuxfreelancer.com:8443/test.mp3' },
+  { id: 'dimtsi',  name: 'Dimtsi Hafash',      desc: 'Voice of the Masses – official',  lang: 'Tigrinya', genre: 'news',    country: 'Eritrea', icon: '📻', url: 'https://stream.zeno.fm/r5v3873qsxhvv' },
+  { id: 'ahln',    name: 'Radio Ahlen',         desc: 'Arabic & Tigre program',          lang: 'Arabic',   genre: 'music',   country: 'Eritrea', icon: '🌙', url: 'https://stream.zeno.fm/yn65pbmvp8zuv' },
+  { id: 'gospel1', name: 'Eritrean Gospel',    desc: 'Christian worship & mezmur',      lang: 'Tigrinya', genre: 'gospel',  country: 'Eritrea', icon: '✝',  url: 'https://stream.zeno.fm/t4d537qbp8zuv' },
+  { id: 'tigre1',  name: 'Tigre Radio',        desc: 'Tigre music & culture',           lang: 'Tigre',    genre: 'tigre',   country: 'Eritrea', icon: '🎶', url: 'https://stream.zeno.fm/q3h5fb1qp8zuv' },
+  { id: 'medrek',  name: 'Radio Medrek',       desc: 'Tigrinya news & commentary',      lang: 'Tigrinya', genre: 'news',    country: 'Eritrea', icon: '📰', url: 'https://stream.zeno.fm/x3g4tc7sp8zuv' },
 ];
 
 let radioAudio = null, currentStation = null;
+let radioReconnectTimer = null, radioReconnectCount = 0;
+let radioSleepTimer = null, radioSleepRemaining = 0, radioSleepTick = null;
+let radioFavorites = JSON.parse(localStorage.getItem('radioFavs') || '[]');
+let radioRecents   = JSON.parse(localStorage.getItem('radioRecents') || '[]');
+let radioActiveGenre = '';
+let radioShowFavs   = false;
 
+/* ── helpers ── */
+function saveRadioFavs()    { localStorage.setItem('radioFavs',    JSON.stringify(radioFavorites)); }
+function saveRadioRecents() { localStorage.setItem('radioRecents', JSON.stringify(radioRecents)); }
+
+function radioAddRecent(station) {
+  radioRecents = [station.id, ...radioRecents.filter(id => id !== station.id)].slice(0, 8);
+  saveRadioRecents();
+  renderRadioRecents();
+}
+
+function renderRadioRecents() {
+  const wrap = document.getElementById('radioRecents');
+  const list = document.getElementById('radioRecentsList');
+  const ids = radioRecents.filter(id => RADIO_STATIONS.find(s => s.id === id));
+  if (!ids.length) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  list.innerHTML = ids.map(id => {
+    const s = RADIO_STATIONS.find(s => s.id === id);
+    return `<div class="rad-recent-item" data-rid="${s.id}">${s.icon} ${esc(s.name)}<span>${esc(s.lang)}</span></div>`;
+  }).join('');
+  list.querySelectorAll('.rad-recent-item').forEach(el => {
+    el.addEventListener('click', () => playRadio(el.dataset.rid));
+  });
+}
+
+/* ── grid render ── */
 function renderRadioGrid() {
-  const grid = document.getElementById('radioGrid');
-  grid.innerHTML = RADIO_STATIONS.map(s => `
-    <div class="radio-card${currentStation?.id === s.id ? ' playing' : ''}" data-rid="${s.id}">
+  const query = (document.getElementById('radioSearch')?.value || '').toLowerCase();
+  const grid  = document.getElementById('radioGrid');
+
+  let list = RADIO_STATIONS;
+  if (radioShowFavs) list = list.filter(s => radioFavorites.includes(s.id));
+  if (radioActiveGenre) list = list.filter(s => s.genre === radioActiveGenre);
+  if (query) list = list.filter(s =>
+    s.name.toLowerCase().includes(query) ||
+    s.desc.toLowerCase().includes(query) ||
+    s.lang.toLowerCase().includes(query)
+  );
+
+  grid.innerHTML = list.map(s => {
+    const isFav     = radioFavorites.includes(s.id);
+    const isPlaying = currentStation?.id === s.id;
+    return `
+    <div class="radio-card${isPlaying ? ' playing' : ''}" data-rid="${s.id}">
       <div class="radio-card-icon"><img src="./icons/radio-logo.svg" alt="${esc(s.name)}" class="radio-logo-img"/></div>
       <div class="radio-card-name">${esc(s.name)}</div>
       <div class="radio-card-desc">${esc(s.desc)}</div>
       <div class="radio-card-lang">${esc(s.lang)}</div>
-      ${currentStation?.id === s.id
-        ? '<div class="radio-live-badge"><span class="radio-live-dot"></span> Live — tap to open</div>'
+      ${isPlaying
+        ? `<div class="radio-live-badge">
+             <div class="rad-card-eq">
+               <div class="rad-card-eq-bar"></div><div class="rad-card-eq-bar"></div>
+               <div class="rad-card-eq-bar"></div><div class="rad-card-eq-bar"></div>
+             </div>
+             <span class="radio-live-dot"></span> Live
+           </div>`
         : '<div class="radio-card-lang" style="color:var(--text-dim)">Tap to stream</div>'}
-    </div>`).join('');
+      <div class="radio-card-actions">
+        <button class="radio-card-fav-btn${isFav ? ' faved' : ''}" data-fav="${s.id}">${isFav ? '❤' : '♡'} Fav</button>
+        <button class="radio-card-info-btn" data-info="${s.id}">ℹ Info</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  /* event delegation */
   grid.querySelectorAll('.radio-card').forEach(card => {
-    card.addEventListener('click', () => playRadio(card.getAttribute('data-rid')));
+    card.addEventListener('click', e => {
+      if (e.target.closest('.radio-card-fav-btn') || e.target.closest('.radio-card-info-btn')) return;
+      playRadio(card.dataset.rid);
+    });
   });
-  // Highlight bottom-nav radio button when playing
+  grid.querySelectorAll('.radio-card-fav-btn').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); toggleRadioFav(btn.dataset.fav); });
+  });
+  grid.querySelectorAll('.radio-card-info-btn').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); openRadioInfo(btn.dataset.info); });
+  });
+
   document.querySelector('.nav-item[data-view="radio"]')?.classList.toggle('radio-active', !!currentStation);
 }
 
+/* ── favorites ── */
+function toggleRadioFav(id) {
+  if (radioFavorites.includes(id)) {
+    radioFavorites = radioFavorites.filter(f => f !== id);
+    toast('Removed from favorites');
+  } else {
+    radioFavorites.push(id);
+    toast('❤ Added to favorites');
+  }
+  saveRadioFavs();
+  renderRadioGrid();
+  const infoFavBtn = document.getElementById('radInfoFav');
+  if (infoFavBtn && document.getElementById('radInfoSheet')._currentId === id) {
+    infoFavBtn.classList.toggle('faved', radioFavorites.includes(id));
+    infoFavBtn.textContent = radioFavorites.includes(id) ? '❤ Favorited' : '❤ Favorite';
+  }
+}
+
+/* ── station info sheet ── */
+function openRadioInfo(id) {
+  const s = RADIO_STATIONS.find(s => s.id === id);
+  if (!s) return;
+  const sheet = document.getElementById('radInfoSheet');
+  sheet._currentId = id;
+  document.getElementById('radInfoIcon').textContent = s.icon;
+  document.getElementById('radInfoName').textContent = s.name;
+  document.getElementById('radInfoDesc').textContent = s.desc;
+  const tags = [s.lang, s.genre, s.country].filter(Boolean);
+  document.getElementById('radInfoTags').innerHTML = tags.map(t => `<span class="rad-info-tag">${esc(t)}</span>`).join('');
+  const favBtn = document.getElementById('radInfoFav');
+  const isFav = radioFavorites.includes(id);
+  favBtn.classList.toggle('faved', isFav);
+  favBtn.textContent = isFav ? '❤ Favorited' : '❤ Favorite';
+  document.getElementById('radInfoBackdrop').hidden = false;
+  sheet.hidden = false;
+}
+function closeRadioInfo() {
+  document.getElementById('radInfoSheet').hidden = true;
+  document.getElementById('radInfoBackdrop').hidden = true;
+}
+document.getElementById('radInfoClose').addEventListener('click', closeRadioInfo);
+document.getElementById('radInfoBackdrop').addEventListener('click', closeRadioInfo);
+document.getElementById('radInfoPlay').addEventListener('click', () => {
+  const id = document.getElementById('radInfoSheet')._currentId;
+  if (id) { playRadio(id); closeRadioInfo(); }
+});
+document.getElementById('radInfoFav').addEventListener('click', () => {
+  const id = document.getElementById('radInfoSheet')._currentId;
+  if (id) toggleRadioFav(id);
+});
+document.getElementById('radInfoShareBtn').addEventListener('click', () => {
+  const id = document.getElementById('radInfoSheet')._currentId;
+  const s = RADIO_STATIONS.find(s => s.id === id);
+  if (!s) return;
+  const text = `🎙 ${s.name} — ${s.desc}`;
+  if (navigator.share) navigator.share({ title: s.name, text }).catch(() => {});
+  else navigator.clipboard?.writeText(text).then(() => toast('Copied to clipboard'));
+});
+
+/* ── search filter ── */
+document.getElementById('radioSearch')?.addEventListener('input', () => renderRadioGrid());
+
+/* ── genre chips ── */
+document.getElementById('radioChips')?.addEventListener('click', e => {
+  const chip = e.target.closest('.rad-chip');
+  if (!chip) return;
+  document.querySelectorAll('#radioChips .rad-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  if (chip.id === 'radioFavChip') {
+    radioShowFavs = true;
+    radioActiveGenre = '';
+  } else {
+    radioShowFavs = false;
+    radioActiveGenre = chip.dataset.genre || '';
+  }
+  renderRadioGrid();
+});
+
+/* ── fullscreen ── */
 function openRadioFullscreen() {
   if (!currentStation) return;
   document.getElementById('radioFsName').textContent = currentStation.name;
@@ -2121,20 +2273,34 @@ function openRadioFullscreen() {
   document.getElementById('radioFullscreen').style.display = 'flex';
 }
 
+/* ── play ── */
 function playRadio(id) {
   const station = RADIO_STATIONS.find(s => s.id === id);
   if (!station) return;
-  // If same station already playing, just reopen fullscreen
   if (currentStation?.id === id) { openRadioFullscreen(); return; }
-  stopRadio();
+  stopRadio(true);
   if (S.playing) { audio.pause(); S.playing = false; updatePlayIcons(); }
   radioAudio = new Audio(station.url);
-  radioAudio.volume = S.volume;
+  radioAudio.volume = parseFloat(document.getElementById('rnpVolume')?.value ?? 1);
   radioAudio.play().catch(() => toast('⚠ Could not connect to this stream'));
   currentStation = station;
+  radioReconnectCount = 0;
+  radioAddRecent(station);
+
+  /* update now-playing bar */
+  document.getElementById('rnpName').textContent = station.name;
+  document.getElementById('rnpStatusText').textContent = 'Live';
+  document.getElementById('radioNowPlaying').style.display = 'flex';
+  document.getElementById('rnpEq').classList.remove('paused');
+
   renderRadioGrid();
   openRadioFullscreen();
   updateHeaderRadioBtn();
+
+  /* 4. Auto-reconnect on stream error */
+  radioAudio.addEventListener('error', radioHandleStreamError);
+  radioAudio.addEventListener('stalled', radioHandleStreamError);
+
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({ title: station.name, artist: station.desc, album: 'Live Radio', artwork: [] });
     navigator.mediaSession.setActionHandler('pause', stopRadio);
@@ -2142,27 +2308,104 @@ function playRadio(id) {
   }
 }
 
-function stopRadio() {
-  if (radioAudio) { radioAudio.pause(); radioAudio.src = ''; radioAudio = null; }
+/* ── auto-reconnect ── */
+function radioHandleStreamError() {
+  if (!currentStation || radioReconnectCount >= 5) return;
+  radioReconnectCount++;
+  document.getElementById('rnpStatusText').textContent = `Reconnecting… (${radioReconnectCount}/5)`;
+  clearTimeout(radioReconnectTimer);
+  radioReconnectTimer = setTimeout(() => {
+    if (!currentStation) return;
+    const url = currentStation.url;
+    radioAudio.src = url;
+    radioAudio.load();
+    radioAudio.play().then(() => {
+      document.getElementById('rnpStatusText').textContent = 'Live';
+      radioReconnectCount = 0;
+    }).catch(() => {});
+  }, 5000);
+}
+
+/* ── stop ── */
+function stopRadio(keepSleep = false) {
+  clearTimeout(radioReconnectTimer);
+  if (!keepSleep) cancelRadioSleep();
+  if (radioAudio) {
+    radioAudio.removeEventListener('error', radioHandleStreamError);
+    radioAudio.removeEventListener('stalled', radioHandleStreamError);
+    radioAudio.pause(); radioAudio.src = ''; radioAudio = null;
+  }
   currentStation = null;
   document.getElementById('radioNowPlaying').style.display = 'none';
   document.getElementById('radioFullscreen').style.display = 'none';
+  document.getElementById('rnpEq').classList.add('paused');
   renderRadioGrid();
   updateHeaderRadioBtn();
 }
 
+/* ── volume slider ── */
+document.getElementById('rnpVolume')?.addEventListener('input', e => {
+  if (radioAudio) radioAudio.volume = parseFloat(e.target.value);
+});
+
+/* ── share ── */
+document.getElementById('rnpShare')?.addEventListener('click', () => {
+  if (!currentStation) return;
+  const text = `🎙 ${currentStation.name} — ${currentStation.desc}`;
+  if (navigator.share) navigator.share({ title: currentStation.name, text }).catch(() => {});
+  else navigator.clipboard?.writeText(text).then(() => toast('Copied to clipboard'));
+});
+
+/* ── sleep timer ── */
+function startRadioSleep(mins) {
+  cancelRadioSleep();
+  radioSleepRemaining = mins * 60;
+  document.getElementById('radioSleepBar').hidden = false;
+  document.getElementById('radioSleepPicker').hidden = true;
+  updateRadioSleepText();
+  radioSleepTick = setInterval(() => {
+    radioSleepRemaining--;
+    updateRadioSleepText();
+    if (radioSleepRemaining <= 0) { cancelRadioSleep(); stopRadio(); }
+  }, 1000);
+}
+function updateRadioSleepText() {
+  const m = Math.floor(radioSleepRemaining / 60);
+  const s = radioSleepRemaining % 60;
+  document.getElementById('radioSleepText').textContent = `Stops in ${m}:${String(s).padStart(2,'0')}`;
+}
+function cancelRadioSleep() {
+  clearInterval(radioSleepTick); radioSleepTick = null; radioSleepRemaining = 0;
+  document.getElementById('radioSleepBar').hidden = true;
+  document.getElementById('radioSleepPicker').hidden = true;
+}
+
+document.getElementById('rnpSleep')?.addEventListener('click', () => {
+  const picker = document.getElementById('radioSleepPicker');
+  picker.hidden = !picker.hidden;
+});
+document.getElementById('radioSleepPicker')?.addEventListener('click', e => {
+  const opt = e.target.closest('.rad-sp-opt');
+  if (opt) startRadioSleep(parseInt(opt.dataset.mins));
+});
+document.getElementById('radioSleepCancel')?.addEventListener('click', cancelRadioSleep);
+
+/* ── header / fullscreen ── */
 function updateHeaderRadioBtn() {
   document.getElementById('radioHeaderBtn')?.classList.toggle('playing', !!currentStation);
 }
 
-document.getElementById('rnpStop').addEventListener('click', stopRadio);
-document.getElementById('radioFsStop').addEventListener('click', stopRadio);
+document.getElementById('rnpStop').addEventListener('click', () => stopRadio());
+document.getElementById('radioFsStop').addEventListener('click', () => stopRadio());
 document.getElementById('radioFsClose').addEventListener('click', () => {
   document.getElementById('radioFullscreen').style.display = 'none';
 });
 document.getElementById('radioHeaderBtn').addEventListener('click', () => {
   if (currentStation) { openRadioFullscreen(); } else { switchView('radio'); }
 });
+
+/* initialise recents on load */
+renderRadioRecents();
 
 /* ════════════════════════════════════════════════════════════════
    FEATURE 5 — Artist Page (click artist name)
