@@ -812,7 +812,7 @@
 
     <!-- Sign-In Panel -->
     <div id="authSigninPanel" style="display:none">
-      <input class="auth-input" id="siEmail" type="email" placeholder="Email address" autocomplete="email">
+      <input class="auth-input" id="siEmail" type="text" placeholder="Email or Student ID (ERI-XXXXXX)" autocomplete="username">
       <input class="auth-input" id="siPass" type="password" placeholder="Password" autocomplete="current-password">
       <div class="auth-err" id="siErr"></div>
       <button class="auth-submit" id="siBtn">Sign In →</button>
@@ -3268,15 +3268,26 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
 
     /* ── Sign In ── */
     document.getElementById('siBtn').addEventListener('click', async () => {
-      const email = document.getElementById('siEmail').value.trim();
+      let identifier = document.getElementById('siEmail').value.trim();
       const pass  = document.getElementById('siPass').value;
       const errEl = document.getElementById('siErr');
       errEl.textContent = '';
-      if (!email || !pass) { errEl.textContent = 'Please fill in all fields.'; return; }
+      if (!identifier || !pass) { errEl.textContent = 'Please fill in all fields.'; return; }
       const btn = document.getElementById('siBtn');
       btn.disabled = true; btn.textContent = 'Signing in…';
       try {
-        await firebase.auth().signInWithEmailAndPassword(email, pass);
+        // If it looks like a student ID, look up the email first
+        if (/^ERI-\d{6}$/i.test(identifier)) {
+          const sid = identifier.toUpperCase();
+          const snap = await _syncDb.collection('users').where('studentId', '==', sid).limit(1).get();
+          if (snap.empty) {
+            errEl.textContent = 'No account found for that Student ID.';
+            btn.disabled = false; btn.textContent = 'Sign In →';
+            return;
+          }
+          identifier = snap.docs[0].data().email;
+        }
+        await firebase.auth().signInWithEmailAndPassword(identifier, pass);
       } catch(e) {
         errEl.textContent = authErr(e.code);
         btn.disabled = false; btn.textContent = 'Sign In →';
@@ -3285,9 +3296,14 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
 
     /* ── Forgot password ── */
     document.getElementById('forgotPassLink').addEventListener('click', async () => {
-      const email = document.getElementById('siEmail').value.trim();
+      let email = document.getElementById('siEmail').value.trim();
       const errEl = document.getElementById('siErr');
-      if (!email) { errEl.style.color = 'var(--red)'; errEl.textContent = 'Enter your email above first.'; return; }
+      if (!email) { errEl.style.color = 'var(--red)'; errEl.textContent = 'Enter your email or Student ID above first.'; return; }
+      if (/^ERI-\d{6}$/i.test(email)) {
+        const snap = await _syncDb.collection('users').where('studentId', '==', email.toUpperCase()).limit(1).get();
+        if (snap.empty) { errEl.style.color = 'var(--red)'; errEl.textContent = 'No account found for that Student ID.'; return; }
+        email = snap.docs[0].data().email;
+      }
       try {
         await firebase.auth().sendPasswordResetEmail(email);
         errEl.style.color = 'var(--green)';
