@@ -15,7 +15,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap"></noscript>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8021114161012516" crossorigin="anonymous"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -900,17 +901,6 @@
         radial-gradient(circle 160px at 78% 18%, #fff7a0 0%, #ffd700 25%, transparent 65%),
         /* sky gradient */
         linear-gradient(180deg, #b8e4f9 0%, #d6f0ff 45%, #c8ecb0 68%, #5cb85c 100%);
-    }
-    .auth-gate::before {
-      content: '';
-      position: absolute; inset: 0; z-index: 0;
-      /* sun rays */
-      background: repeating-conic-gradient(
-        from 0deg at 78% 18%,
-        rgba(255,240,100,.18) 0deg 8deg,
-        transparent 8deg 18deg
-      );
-      pointer-events: none;
     }
     .auth-gate > * { position: relative; z-index: 1; }
     .auth-gate.hidden { display: none; }
