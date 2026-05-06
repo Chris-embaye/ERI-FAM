@@ -636,7 +636,7 @@
       <div class="lesson-intro">Complete lessons in order to unlock new content. Each lesson covers a Tigrinya theme and ends with a short quiz to earn XP. 🎓</div>
       <div class="lessons-prog">
         <div class="lessons-prog-bar"><div class="lessons-prog-fill" id="lessonsProgFill" style="width:0%"></div></div>
-        <div class="lessons-prog-label" id="lessonsProgLabel">0 of 6 complete</div>
+        <div class="lessons-prog-label" id="lessonsProgLabel">0 of 11 complete</div>
       </div>
       <div id="lessonsGrid"></div>
     </div>
@@ -988,6 +988,36 @@ const LESSONS = [
     intro:'Knowing body parts is important for health, sports, and everyday descriptions. Whether at a clinic or just describing how you feel, these words are very useful.',
     category:'body',
   },
+  {
+    id:'phrases', emoji:'💬', title:'Everyday Phrases', xp:35,
+    desc:'Master useful sentences for daily life',
+    intro:'Beyond single words, these short phrases will help you have real conversations — asking for directions, prices, and expressing yourself naturally in Tigrinya.',
+    category:'phrases',
+  },
+  {
+    id:'colors', emoji:'🎨', title:'Colors & Descriptions', xp:40,
+    desc:'Describe the world around you in Tigrinya',
+    intro:'Colors are used everywhere — describing clothing, nature, food, and more. Once you know colors you can make your conversations much more vivid and descriptive!',
+    category:'colors',
+  },
+  {
+    id:'days', emoji:'📅', title:'Days & Time', xp:40,
+    desc:'Talk about days of the week and time',
+    intro:'Scheduling, planning, and talking about events all require knowing the days. Tigrinya day names have roots in ancient languages — they\'re fascinating and rhythmic to learn!',
+    category:'days',
+  },
+  {
+    id:'months', emoji:'🗓', title:'Months of the Year', xp:40,
+    desc:'Learn the Eritrean calendar and month names',
+    intro:'Eritrea follows the Ge\'ez calendar with unique month names. Meskerem (September) marks the New Year! Knowing months helps you talk about holidays, seasons, and plans.',
+    category:'months',
+  },
+  {
+    id:'verbs', emoji:'🏃', title:'Action Verbs', xp:45,
+    desc:'Build sentences with essential Tigrinya verbs',
+    intro:'Verbs are the engine of every sentence. With these core action words you can express what you do, want, feel, and intend — a huge leap toward real conversation.',
+    category:'verbs',
+  },
 ];
 
 /* ═══════════════════════════════
@@ -1036,7 +1066,8 @@ function shuffleArr(arr) {
 /* ═══════════════════════════════
    PROGRESS — XP / STREAK / STARS
 ═══════════════════════════════ */
-let prog = JSON.parse(localStorage.getItem('hub-progress') || '{"xp":0,"streak":0,"stars":0,"lastActive":""}');
+let prog = JSON.parse(localStorage.getItem('hub-progress') || '{"xp":0,"streak":0,"stars":0,"lastActive":"","quizBest":0}');
+if (prog.quizBest === undefined) prog.quizBest = 0;
 
 function saveProg() { localStorage.setItem('hub-progress', JSON.stringify(prog)); if (typeof syncProgress === 'function') syncProgress(); }
 
@@ -1439,6 +1470,7 @@ function showQuizResult() {
   document.getElementById('qdScore').textContent = quizScore + ' / ' + QUIZ_LEN;
   document.getElementById('qdScoreSub').textContent = pct >= 0.8 ? 'Excellent work! 🎉' : pct >= 0.6 ? 'Good job! Keep it up.' : 'Keep practising — you\'ll get there!';
   document.getElementById('qdXp').textContent = '+' + xp + ' XP earned';
+  if (quizScore > prog.quizBest) { prog.quizBest = quizScore; }
   updateStreak();
   awardXP(xp);
   if (lastQuizStars > 0) awardStars(lastQuizStars);
@@ -1727,6 +1759,8 @@ function syncProgress() {
     xp: prog.xp,
     streak: prog.streak,
     stars: prog.stars,
+    quizBest: prog.quizBest || 0,
+    catStars: getCatStars(),
     lessonsCompleted: getLessonsDone(),
     lastActive: new Date().toDateString(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()

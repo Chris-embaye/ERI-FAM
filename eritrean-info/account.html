@@ -366,7 +366,7 @@
       <div class="lessons-prog-card" id="stuLessonsCard" style="display:none">
         <div class="lessons-prog-hdr">
           <span>📖 Lessons</span>
-          <span id="stuLessonsLabel">0 of 6</span>
+          <span id="stuLessonsLabel">0 of 11</span>
         </div>
         <div class="lp-bar"><div class="lp-fill" id="stuLessonsFill" style="width:0%"></div></div>
       </div>
@@ -575,7 +575,7 @@ async function showStudentUI(user, profile) {
         document.getElementById('stuStreak').textContent = p.streak ?? 0;
         document.getElementById('stuStars').textContent  = p.stars ?? 0;
         const done  = (p.lessonsCompleted || []).length;
-        const total = 6;
+        const total = 11;
         document.getElementById('stuLessonsLabel').textContent = done + ' of ' + total;
         document.getElementById('stuLessonsFill').style.width  = Math.round(done/total*100) + '%';
         show('stuLessonsCard');
@@ -633,7 +633,7 @@ async function renderChildren(ids) {
 
   list.innerHTML = valid.map(c => {
     const done  = (c.lessonsCompleted || []).length;
-    const total = 6;
+    const total = 11;
     const pct   = Math.round(done / total * 100);
     const last  = c.lastActive ? c.lastActive : 'Never';
     return (
