@@ -395,6 +395,8 @@
         <button class="ytv-chip" data-q="eritrean comedy funny">Comedy</button>
         <button class="ytv-chip" data-q="eritrean gospel mezmur">Gospel</button>
         <button class="ytv-chip ytv-chip-liked" id="ytvLikedChip">❤ Liked</button>
+        <button class="ytv-chip ytv-chip-wl" id="ytvWatchLaterChip">🕐 Watch Later</button>
+        <button class="ytv-chip ytv-chip-pl" id="ytvPlaylistsChip">📋 Playlists</button>
       </div>
     </div>
 
@@ -475,9 +477,20 @@
         <!-- Action pills (like YouTube's row below title) -->
         <div class="yt2-action-pills">
           <button class="yt2-pill" id="ytvLikeCurrentBtn">👍 Like</button>
+          <button class="yt2-pill" id="ytvWatchLaterCurrentBtn">🕐 Save</button>
           <button class="yt2-pill" id="ytvShareCurBtn">↗ Share</button>
-          <button class="yt2-pill" id="ytvCopyLinkBtn">🔗 Copy link</button>
-          <button class="yt2-pill yt2-pill-yt" id="ytvOpenYTBtn">▶ Open in YouTube</button>
+          <button class="yt2-pill" id="ytvCopyLinkBtn">🔗 Copy</button>
+          <button class="yt2-pill yt2-pill-yt" id="ytvOpenYTBtn">▶ YouTube</button>
+        </div>
+        <!-- Playback timer bar -->
+        <div class="yt2-timer-bar" id="ytvTimerBar" hidden>
+          <div class="yt2-timer-fill" id="ytvTimerFill"></div>
+          <span class="yt2-timer-text" id="ytvTimerText">0:00</span>
+        </div>
+        <!-- Channel filter badge (shown when filtering by channel) -->
+        <div class="yt2-ch-filter-bar" id="ytvChFilterBar" hidden>
+          <span class="yt2-ch-filter-label">Channel: <strong id="ytvChFilterName"></strong></span>
+          <button class="yt2-ch-filter-clear" id="ytvChFilterClear">✕ Clear</button>
         </div>
       </div>
 
@@ -506,6 +519,7 @@
           <button class="yt2-ctrl-btn" id="ytvTheaterBtn" title="Theater mode">⬛</button>
           <button class="yt2-ctrl-btn" id="ytvSleepBtn" title="Sleep timer">😴</button>
           <button class="yt2-ctrl-btn" id="ytvPipBtn" title="Picture-in-Picture">⧉</button>
+          <button class="yt2-ctrl-btn" id="ytvKbHelpBtn" title="Keyboard shortcuts">⌨</button>
           <button class="yt2-ctrl-btn yt2-close-btn" id="ytvCloseBtn">✕</button>
         </div>
       </div>
@@ -535,6 +549,91 @@
       <button class="yt2-sp-opt" data-mins="45">45 minutes</button>
       <button class="yt2-sp-opt" data-mins="60">1 hour</button>
       <button class="yt2-sp-opt" data-mins="90">1.5 hours</button>
+    </div>
+
+    <!-- Trending section (shown on first load before any search) -->
+    <div class="yt2-trending" id="ytvTrending" hidden>
+      <div class="yt2-section-hdr">
+        <span class="yt2-section-title">🔥 Trending Eritrean</span>
+        <button class="yt2-section-all" id="ytvTrendingRefresh">Refresh</button>
+      </div>
+      <div class="yt2-trending-list" id="ytvTrendingList"></div>
+    </div>
+
+    <!-- Keyboard shortcuts help -->
+    <div class="yt2-kb-help" id="ytvKbHelp" hidden>
+      <div class="yt2-kb-hdr">
+        <span>⌨ Keyboard Shortcuts</span>
+        <button class="yt2-kb-close" id="ytvKbClose">✕</button>
+      </div>
+      <div class="yt2-kb-grid">
+        <span>Space</span><span>Pause / Resume</span>
+        <span>N</span><span>Next video</span>
+        <span>P</span><span>Previous video</span>
+        <span>S</span><span>Toggle shuffle</span>
+        <span>L</span><span>Like current video</span>
+        <span>W</span><span>Save to Watch Later</span>
+        <span>F</span><span>Fullscreen</span>
+        <span>?</span><span>Show / hide this help</span>
+      </div>
+    </div>
+
+    <!-- Share modal (bottom sheet) -->
+    <div class="yt2-share-backdrop" id="ytvShareBackdrop" hidden></div>
+    <div class="yt2-share-sheet" id="ytvShareSheet" hidden>
+      <div class="yt2-share-hdr">
+        <span class="yt2-share-title" id="ytvShareTitle">Share</span>
+        <button class="yt2-share-close" id="ytvShareClose">✕</button>
+      </div>
+      <div class="yt2-share-thumb-row">
+        <img class="yt2-share-thumb" id="ytvShareThumb" src="" alt=""/>
+        <span class="yt2-share-vid-title" id="ytvShareVidTitle"></span>
+      </div>
+      <div class="yt2-share-opts">
+        <button class="yt2-share-opt" id="ytvShareCopy">
+          <span class="yt2-share-opt-icon">🔗</span>
+          <span>Copy link</span>
+        </button>
+        <button class="yt2-share-opt" id="ytvShareWA">
+          <span class="yt2-share-opt-icon" style="background:#25D366">💬</span>
+          <span>WhatsApp</span>
+        </button>
+        <button class="yt2-share-opt" id="ytvShareTG">
+          <span class="yt2-share-opt-icon" style="background:#229ED9">✈</span>
+          <span>Telegram</span>
+        </button>
+        <button class="yt2-share-opt" id="ytvShareTW">
+          <span class="yt2-share-opt-icon" style="background:#000">𝕏</span>
+          <span>X / Twitter</span>
+        </button>
+        <button class="yt2-share-opt" id="ytvShareNative" hidden>
+          <span class="yt2-share-opt-icon">↗</span>
+          <span>More…</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Playlist panel -->
+    <div class="yt2-pl-backdrop" id="ytvPlBackdrop" hidden></div>
+    <div class="yt2-pl-panel" id="ytvPlPanel" hidden>
+      <div class="yt2-pl-hdr">
+        <span class="yt2-pl-hdr-title">Save to playlist</span>
+        <button class="yt2-pl-close" id="ytvPlClose">✕</button>
+      </div>
+      <div class="yt2-pl-list" id="ytvPlList"></div>
+      <div class="yt2-pl-new-row">
+        <input class="yt2-pl-new-input" id="ytvPlNewInput" placeholder="New playlist name…" maxlength="40"/>
+        <button class="yt2-pl-new-btn" id="ytvPlNewBtn">Create</button>
+      </div>
+    </div>
+
+    <!-- Playlist manager (view playlists and play all) -->
+    <div class="yt2-plm-panel" id="ytvPlmPanel" hidden>
+      <div class="yt2-pl-hdr">
+        <span class="yt2-pl-hdr-title">📋 My Playlists</span>
+        <button class="yt2-pl-close" id="ytvPlmClose">✕</button>
+      </div>
+      <div class="yt2-plm-list" id="ytvPlmList"></div>
     </div>
 
     <!-- Status + results -->

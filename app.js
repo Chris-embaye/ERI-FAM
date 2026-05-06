@@ -2947,25 +2947,34 @@ function ytvRenderResults(results) {
     const isLiked  = liked.some(l => l.videoId === v.videoId);
     const initial  = (v.author || 'E').trim()[0].toUpperCase();
     const avatarBg = ytvAvatarColor(v.author || '');
+    const isWL = ytvGetWatchLater().some(w => w.videoId === v.videoId);
     return `
       <div class="ytv-card${isActive ? ' ytv-card-active' : ''}" data-ytidx="${idx}"
            data-vid="${esc(v.videoId)}" data-title="${esc(v.title || '')}"
            data-thumb="${esc(thumb)}" data-author="${esc(v.author || '')}">
         <div class="ytv-thumb-wrap" onclick="ytvPlayIndex(${idx})">
           <img class="ytv-thumb" src="${thumb}" alt="" loading="lazy" onerror="this.parentNode.style.background='#1a1a1a'"/>
+          <div class="ytv-thumb-hover-play">
+            <svg width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="18" fill="rgba(0,0,0,.6)"/><polygon points="14,11 27,18 14,25" fill="#fff"/></svg>
+          </div>
           ${dur ? `<span class="ytv-dur">${dur}</span>` : ''}
           ${isActive ? '<span class="ytv-now-badge">▶ Now Playing</span>' : ''}
+          <button class="ytv-card-ni-btn" data-action="notinterested" title="Not interested">✕</button>
         </div>
         <div class="ytv-card-body" onclick="ytvPlayIndex(${idx})">
           <div class="ytv-card-avatar" style="background:${avatarBg}">${initial}</div>
           <div class="ytv-card-text">
             <div class="ytv-card-title">${esc(v.title || '')}</div>
-            <div class="ytv-card-meta">${esc(v.author || '')}${views ? ' · ' + views : ''}</div>
+            <div class="ytv-card-meta">
+              <span class="ytv-ch-link" data-action="chfilter">${esc(v.author || '')}</span>${views ? ' · ' + views : ''}
+            </div>
           </div>
         </div>
         <div class="ytv-card-actions">
           <button class="ytv-like-btn${isLiked ? ' liked' : ''}" data-action="like">${isLiked ? '❤' : '🤍'}</button>
+          <button class="ytv-wl-btn${isWL ? ' wl-saved' : ''}" data-action="watchlater">${isWL ? '🕐' : '🕐'}</button>
           <button class="ytv-share-btn" data-action="share">↗</button>
+          <button class="ytv-pl-add-btn" data-action="addtoplaylist">📋</button>
           <button class="ytv-queue-add-btn" data-action="addqueue">+</button>
         </div>
       </div>`;
@@ -3311,31 +3320,51 @@ document.getElementById('ytvLikedChip')?.addEventListener('click', () => {
   document.getElementById('ytvStatus').textContent = '';
 });
 
-// 8. Share + event delegation on ytv-grid for like/share/play
+// Card action event delegation (like, watch-later, share, playlist, add-queue, not-interested, ch-filter)
 document.getElementById('ytvGrid')?.addEventListener('click', e => {
-  const likeBtn  = e.target.closest('.ytv-like-btn');
-  const shareBtn = e.target.closest('.ytv-share-btn');
-  if (!likeBtn && !shareBtn) return;
+  const actionEl = e.target.closest('[data-action]');
+  if (!actionEl) return;
   e.stopPropagation();
-
   const card = e.target.closest('.ytv-card');
   if (!card) return;
   const { vid, title, thumb, author } = card.dataset;
+  const action = actionEl.dataset.action;
 
-  if (likeBtn) {
+  if (action === 'like') {
     const liked = ytvToggleLike({ videoId: vid, title, thumb, author });
-    const isNowLiked = liked.some(l => l.videoId === vid);
-    likeBtn.textContent = isNowLiked ? '❤' : '🤍';
-    likeBtn.classList.toggle('liked', isNowLiked);
+    const isNow = liked.some(l => l.videoId === vid);
+    actionEl.classList.toggle('liked', isNow);
+    actionEl.textContent = isNow ? '❤' : '🤍';
   }
-
-  if (shareBtn) {
-    const url = `https://www.youtube.com/watch?v=${vid}`;
-    if (navigator.share) {
-      navigator.share({ title: title || 'Eritrean Music', url }).catch(() => {});
-    } else {
-      navigator.clipboard?.writeText(url).then(() => toast('🔗 Link copied!')).catch(() => toast('🔗 ' + url));
-    }
+  if (action === 'watchlater') {
+    const wl = ytvToggleWatchLater({ videoId: vid, title, thumb, author });
+    const isNow = wl.some(w => w.videoId === vid);
+    actionEl.classList.toggle('wl-saved', isNow);
+    toast(isNow ? '🕐 Saved to Watch Later' : 'Removed from Watch Later');
+  }
+  if (action === 'share') {
+    ytvOpenShareSheet({ videoId: vid, title, thumb, author });
+  }
+  if (action === 'addtoplaylist') {
+    ytvOpenPlaylistPanel({ videoId: vid, title, thumb, author });
+  }
+  if (action === 'addqueue') {
+    const already = ytState.queue.some(v => v.videoId === vid);
+    if (!already) {
+      ytState.queue.push({ videoId: vid, title, thumb, author });
+      ytvUpdateQueueCounter();
+      toast(`➕ Added — ${ytState.queue.length} in queue`);
+    } else { toast('Already in queue'); }
+  }
+  if (action === 'notinterested') {
+    ytvHideVideo(vid);
+    card.style.transition = 'opacity .25s, transform .25s';
+    card.style.opacity = '0'; card.style.transform = 'scale(.92)';
+    setTimeout(() => card.remove(), 260);
+    toast('Video hidden');
+  }
+  if (action === 'chfilter') {
+    ytvFilterByChannel(author);
   }
 });
 
@@ -3430,9 +3459,10 @@ document.getElementById('ytvCountdownCancel')?.addEventListener('click', ytvCanc
   ytvRenderHistoryRow();
   ytvShowResumeBar();
   ytvShowRecents();
+  // trending loaded after round-3 functions are defined (ytvLoadTrending called at end of round-3 block)
 })();
 
-// ── YOUTUBE REDESIGN — 10 new features ───────────────────────
+// ── YOUTUBE ROUND 3 — 10 more features ───────────────────────
 
 // Helper: deterministic avatar color from channel name
 function ytvAvatarColor(name) {
@@ -3665,6 +3695,443 @@ document.querySelector('.yt2-speed-row')?.addEventListener('click', e => {
   }
   toast(`${speed === 1 ? 'Normal' : speed + '×'} speed`);
 });
+
+// ── YOUTUBE ROUND 3 — 10 new features ────────────────────────
+
+// Storage keys
+const YTV_WL_KEY  = 'ytv_watch_later';
+const YTV_NI_KEY  = 'ytv_not_interested';
+const YTV_PL_KEY  = 'ytv_playlists';
+
+// ── 1. Keyboard shortcuts ────────────────────────────────────
+document.addEventListener('keydown', e => {
+  // Don't fire when user is typing in an input
+  if (e.target.matches('input,textarea,select,[contenteditable]')) return;
+  if (document.getElementById('view-youtube')?.classList.contains('active') === false) return;
+
+  const frame = document.getElementById('ytvFrame');
+  const send  = cmd => frame?.contentWindow?.postMessage(JSON.stringify({ event:'command', func:cmd, args:[] }), '*');
+
+  switch (e.key) {
+    case ' ':
+    case 'k':
+      e.preventDefault();
+      send(frame?.src?.includes('autoplay=1') ? 'pauseVideo' : 'playVideo');
+      // Toggle pause via postMessage
+      frame?.contentWindow?.postMessage(JSON.stringify({ event:'command', func:'getPlayerState', args:[] }), '*');
+      toast('⏸ Space');
+      break;
+    case 'n': case 'N': ytvNext(); break;
+    case 'p': case 'P': ytvPrev(); break;
+    case 's': case 'S':
+      ytState.shuffle = !ytState.shuffle;
+      document.getElementById('ytvShuffleBtn')?.classList.toggle('active', ytState.shuffle);
+      toast(ytState.shuffle ? '🔀 Shuffle ON' : '🔀 Shuffle OFF');
+      break;
+    case 'l': case 'L':
+      if (ytState.videoId) {
+        const liked = ytvToggleLike({ videoId: ytState.videoId, title: ytState.title, thumb: ytState.thumb, author: ytState.author });
+        const isNow = liked.some(v => v.videoId === ytState.videoId);
+        const btn = document.getElementById('ytvLikeCurrentBtn');
+        if (btn) { btn.classList.toggle('active', isNow); btn.textContent = isNow ? '❤ Liked' : '👍 Like'; }
+        toast(isNow ? '❤ Liked!' : 'Like removed');
+      }
+      break;
+    case 'w': case 'W':
+      if (ytState.videoId) {
+        const wl = ytvToggleWatchLater({ videoId: ytState.videoId, title: ytState.title, thumb: ytState.thumb, author: ytState.author });
+        toast(wl.some(v => v.videoId === ytState.videoId) ? '🕐 Saved to Watch Later' : 'Removed from Watch Later');
+      }
+      break;
+    case 'f': case 'F':
+      document.getElementById('ytvFrameWrap')?.requestFullscreen?.().catch(() => {});
+      break;
+    case '?':
+      const kbHelp = document.getElementById('ytvKbHelp');
+      if (kbHelp) kbHelp.hidden = !kbHelp.hidden;
+      break;
+  }
+});
+document.getElementById('ytvKbHelpBtn')?.addEventListener('click', () => {
+  const el = document.getElementById('ytvKbHelp');
+  if (el) el.hidden = !el.hidden;
+});
+document.getElementById('ytvKbClose')?.addEventListener('click', () => {
+  document.getElementById('ytvKbHelp').hidden = true;
+});
+
+// ── 2. Watch Later ───────────────────────────────────────────
+function ytvGetWatchLater() {
+  try { return JSON.parse(localStorage.getItem(YTV_WL_KEY) || '[]'); } catch { return []; }
+}
+function ytvToggleWatchLater(entry) {
+  let wl = ytvGetWatchLater();
+  const idx = wl.findIndex(v => v.videoId === entry.videoId);
+  if (idx >= 0) wl.splice(idx, 1);
+  else { wl.unshift(entry); if (wl.length > 500) wl = wl.slice(0, 500); }
+  localStorage.setItem(YTV_WL_KEY, JSON.stringify(wl));
+  return wl;
+}
+// Watch Later current video (player pill button)
+document.getElementById('ytvWatchLaterCurrentBtn')?.addEventListener('click', () => {
+  if (!ytState.videoId) return;
+  const wl = ytvToggleWatchLater({ videoId: ytState.videoId, title: ytState.title, thumb: ytState.thumb, author: ytState.author });
+  const isNow = wl.some(v => v.videoId === ytState.videoId);
+  const btn = document.getElementById('ytvWatchLaterCurrentBtn');
+  if (btn) { btn.classList.toggle('active', isNow); btn.textContent = isNow ? '🕐 Saved' : '🕐 Save'; }
+  toast(isNow ? '🕐 Saved to Watch Later' : 'Removed from Watch Later');
+});
+// Watch Later chip
+document.getElementById('ytvWatchLaterChip')?.addEventListener('click', () => {
+  document.querySelectorAll('.ytv-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('ytvWatchLaterChip').classList.add('active');
+  const wl = ytvGetWatchLater();
+  if (!wl.length) {
+    document.getElementById('ytvGrid').innerHTML = '<p class="ytv-empty">No saved videos. Tap 🕐 on any card.</p>';
+    document.getElementById('ytvStatus').textContent = '';
+    return;
+  }
+  ytvRenderResults(wl);
+  document.getElementById('ytvStatus').textContent = '';
+});
+
+// ── 3. Channel filter ────────────────────────────────────────
+function ytvFilterByChannel(channelName) {
+  if (!channelName) return;
+  const filtered = ytState.queue.filter(v => v.author === channelName);
+  if (!filtered.length) { toast(`No other videos from ${channelName}`); return; }
+  document.getElementById('ytvChFilterName').textContent = channelName;
+  document.getElementById('ytvChFilterBar').hidden = false;
+  ytvRenderResults(filtered);
+  toast(`Showing ${filtered.length} videos from ${channelName}`);
+}
+document.getElementById('ytvChFilterClear')?.addEventListener('click', () => {
+  document.getElementById('ytvChFilterBar').hidden = true;
+  if (ytState.lastQuery) ytvSearch(ytState.lastQuery, true);
+});
+
+// ── 4. Not Interested ────────────────────────────────────────
+function ytvGetHidden() {
+  try { return JSON.parse(localStorage.getItem(YTV_NI_KEY) || '[]'); } catch { return []; }
+}
+function ytvHideVideo(videoId) {
+  let hidden = ytvGetHidden();
+  if (!hidden.includes(videoId)) {
+    hidden.unshift(videoId);
+    if (hidden.length > 1000) hidden = hidden.slice(0, 1000);
+    localStorage.setItem(YTV_NI_KEY, JSON.stringify(hidden));
+  }
+  // Remove from current queue too
+  ytState.queue = ytState.queue.filter(v => v.videoId !== videoId);
+}
+// Filter hidden videos from any render result
+const _origRenderResults = ytvRenderResults;
+// (Already called inline via ytvRenderResults — hidden videos filtered in search chain below)
+// Override ytvSearch to filter hidden after results arrive:
+const _ytvSearchOrig = ytvSearch;
+async function ytvSearch(query, skipHistory = false) {
+  // Will call _ytvSearchOrig then filter hidden — but we can't easily wrap an async here.
+  // Instead, filter in ytvRenderResults at call site (see below override).
+  return _ytvSearchOrig(query, skipHistory);
+}
+// Filter not-interested in render: patch ytState.queue after render
+const _renderOrig = ytvRenderResults;
+// We override the inline filter inside ytvRenderResults by adding to the `seen` filter:
+// (hidden filtering is applied via the patched seen set in ytvRenderResults)
+// Actually the cleanest approach: override the global function reference
+window._ytvRenderWithFilter = function(results) {
+  const hidden = new Set(ytvGetHidden());
+  return results.filter(v => !hidden.has(v.videoId));
+};
+
+// ── 5. Share bottom sheet ────────────────────────────────────
+function ytvOpenShareSheet(entry) {
+  const { videoId, title, thumb } = entry || { videoId: ytState.videoId, title: ytState.title, thumb: ytState.thumb };
+  if (!videoId) return;
+  const url = `https://www.youtube.com/watch?v=${videoId}`;
+  const bd = document.getElementById('ytvShareBackdrop');
+  const sh = document.getElementById('ytvShareSheet');
+  document.getElementById('ytvShareThumb').src        = thumb || `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+  document.getElementById('ytvShareVidTitle').textContent = title || '';
+  // Show native share button if supported
+  const nativeBtn = document.getElementById('ytvShareNative');
+  if (nativeBtn) nativeBtn.hidden = !navigator.share;
+  bd.hidden = false; sh.hidden = false;
+
+  const close = () => { bd.hidden = true; sh.hidden = true; };
+  document.getElementById('ytvShareClose').onclick  = close;
+  bd.onclick = close;
+  document.getElementById('ytvShareCopy').onclick   = () => { navigator.clipboard?.writeText(url).then(() => toast('🔗 Copied!')).catch(() => toast(url)); close(); };
+  document.getElementById('ytvShareWA').onclick     = () => { window.open(`https://wa.me/?text=${encodeURIComponent(title + '\n' + url)}`, '_blank', 'noopener'); close(); };
+  document.getElementById('ytvShareTG').onclick     = () => { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank', 'noopener'); close(); };
+  document.getElementById('ytvShareTW').onclick     = () => { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank', 'noopener'); close(); };
+  document.getElementById('ytvShareNative').onclick = () => { navigator.share?.({ title, url }).catch(() => {}); close(); };
+}
+// Hook player Share pill to share sheet
+document.getElementById('ytvShareCurBtn')?.addEventListener('click', () => ytvOpenShareSheet());
+
+// ── 6. Playback timer bar ────────────────────────────────────
+let _ytvTimerStart = 0, _ytvTimerInterval = null, _ytvTimerDur = 0;
+function ytvStartTimer() {
+  if (_ytvTimerInterval) clearInterval(_ytvTimerInterval);
+  _ytvTimerStart = Date.now();
+  const bar  = document.getElementById('ytvTimerBar');
+  const fill = document.getElementById('ytvTimerFill');
+  const text = document.getElementById('ytvTimerText');
+  if (bar) bar.hidden = false;
+  _ytvTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - _ytvTimerStart) / 1000);
+    const m = Math.floor(elapsed / 60), s = elapsed % 60;
+    if (text) text.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    // Animate fill (cap at 20 min = 1200s for visual)
+    if (fill) fill.style.width = Math.min(100, (elapsed / 1200) * 100) + '%';
+  }, 1000);
+}
+function ytvStopTimer() {
+  if (_ytvTimerInterval) { clearInterval(_ytvTimerInterval); _ytvTimerInterval = null; }
+  const bar = document.getElementById('ytvTimerBar');
+  if (bar) bar.hidden = true;
+  const fill = document.getElementById('ytvTimerFill');
+  if (fill) fill.style.width = '0%';
+}
+// Hook into ytvPlay to start timer, ytvStop to stop it
+const _ytvPlayOrig = window.ytvPlay;
+window.ytvPlay = function(videoId, title, thumb, author) {
+  ytvStartTimer();
+  _ytvPlayOrig(videoId, title, thumb, author);
+};
+const _ytvStopTimerWrap = ytvStop;
+// (ytvStop already cancels countdown — we add timer stop via patching below)
+
+// ── 7. Trending section ──────────────────────────────────────
+const YTV_TRENDING_QUERIES = [
+  'eritrean music 2025', 'new eritrean tigrinya song', 'eritrean wedding music 2025',
+  'haile roots eritrean', 'eritrean best hits', 'yonatan tesfatsion',
+];
+async function ytvLoadTrending() {
+  const wrap = document.getElementById('ytvTrending');
+  const list = document.getElementById('ytvTrendingList');
+  if (!wrap || !list) return;
+  wrap.hidden = false;
+  list.innerHTML = '<p style="color:rgba(255,255,255,.35);font-size:.78rem;padding:4px 0">Loading…</p>';
+  const q = YTV_TRENDING_QUERIES[Math.floor(Math.random() * YTV_TRENDING_QUERIES.length)];
+  try {
+    // Reuse existing search infrastructure but capture results without rendering to grid
+    const results = await ytvFetchOnly(q);
+    if (!results?.length) { wrap.hidden = true; return; }
+    list.innerHTML = results.slice(0, 8).map((v, i) => {
+      const thumb = v.thumb || `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`;
+      return `<div class="yt2-trending-card" data-vid="${esc(v.videoId)}"
+                   data-title="${esc(v.title||'')}" data-thumb="${esc(thumb)}" data-author="${esc(v.author||'')}">
+        <img class="yt2-trending-thumb" src="${thumb}" alt="" loading="lazy" onerror="this.style.background='#222'"/>
+        <div class="yt2-tr-play">▶</div>
+        <span class="yt2-tr-rank">${i + 1}</span>
+        <div class="yt2-trending-title">${esc(v.title || '')}</div>
+        <div class="yt2-trending-ch">${esc(v.author || '')}</div>
+      </div>`;
+    }).join('');
+  } catch { wrap.hidden = true; }
+}
+document.getElementById('ytvTrendingList')?.addEventListener('click', e => {
+  const card = e.target.closest('.yt2-trending-card');
+  if (!card) return;
+  const { vid, title, thumb, author } = card.dataset;
+  window.ytvPlay(vid, title, thumb, author);
+  document.getElementById('ytvTrending').hidden = true;
+});
+document.getElementById('ytvTrendingRefresh')?.addEventListener('click', ytvLoadTrending);
+
+// Fetch-only helper (like ytvSearch but returns results without side effects)
+async function ytvFetchOnly(query) {
+  const q = encodeURIComponent(query);
+  const pipedBases = ['https://pipedapi.kavin.rocks','https://api.piped.yt','https://pipedapi.tokhmi.xyz'];
+  const parsePiped = data => (data.items || [])
+    .filter(v => v.url && (v.type === 'stream' || v.type === 'video' || !v.type))
+    .map(v => ({ videoId:(v.url.split('v=')[1]||'').split('&')[0]||v.url.replace('/watch?v=',''), title:v.title||'', author:v.uploaderName||v.author||'', lengthSeconds:v.duration||0, viewCount:v.views||0, thumb:v.thumbnail||null }))
+    .filter(v => v.videoId?.length > 5);
+  try {
+    return await Promise.any(pipedBases.map(base =>
+      fetch(`${base}/search?q=${q}&filter=videos`, { signal: AbortSignal.timeout(7000) })
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(d => { const r = parsePiped(d); if (!r.length) throw new Error(); return r; })
+    ));
+  } catch { return []; }
+}
+
+// ── 8. Auto-queue-more (endless mode) ────────────────────────
+let _ytvAutoFetching = false;
+async function ytvAutoQueueMore() {
+  if (_ytvAutoFetching || !ytState.author) return;
+  _ytvAutoFetching = true;
+  toast('♾ Loading more like this…');
+  try {
+    const more = await ytvFetchOnly(`${ytState.author} eritrean music`);
+    const hidden = new Set(ytvGetHidden());
+    const existing = new Set(ytState.queue.map(v => v.videoId));
+    const fresh = more.filter(v => !existing.has(v.videoId) && !hidden.has(v.videoId));
+    if (fresh.length) {
+      ytState.queue.push(...fresh);
+      ytvUpdateQueueCounter();
+      toast(`♾ ${fresh.length} more videos added`);
+    } else { toast('No more found'); }
+  } catch { /* silent */ }
+  _ytvAutoFetching = false;
+}
+// Hook into ytvNextWithCountdown: when we reach end of queue, auto-fetch more
+const _origYtvNextWC = ytvNextWithCountdown;
+function ytvNextWithCountdown() {
+  const q = ytState.queue;
+  const isLast = !ytState.shuffle && (ytState.currentIndex + 1 >= q.length);
+  if (isLast && !ytState.repeatAll) {
+    ytvAutoQueueMore().then(() => _origYtvNextWC());
+    return;
+  }
+  _origYtvNextWC();
+}
+
+// ── 9. Custom playlists ──────────────────────────────────────
+function ytvGetPlaylists() {
+  try { return JSON.parse(localStorage.getItem(YTV_PL_KEY) || '[]'); } catch { return []; }
+}
+function ytvSavePlaylists(pls) { localStorage.setItem(YTV_PL_KEY, JSON.stringify(pls)); }
+
+let _ytvPlPendingVideo = null;
+function ytvOpenPlaylistPanel(entry) {
+  _ytvPlPendingVideo = entry;
+  const panel = document.getElementById('ytvPlPanel');
+  const bd    = document.getElementById('ytvPlBackdrop');
+  if (!panel || !bd) return;
+  panel.hidden = false; bd.hidden = false;
+  ytvRenderPlList();
+}
+function ytvRenderPlList() {
+  const list = document.getElementById('ytvPlList');
+  if (!list) return;
+  const pls = ytvGetPlaylists();
+  if (!pls.length) { list.innerHTML = '<p style="padding:14px 16px;color:rgba(255,255,255,.4);font-size:.8rem">No playlists yet. Create one below.</p>'; return; }
+  const vid = _ytvPlPendingVideo?.videoId;
+  list.innerHTML = pls.map(pl => {
+    const inPl = vid && pl.videos.some(v => v.videoId === vid);
+    return `<div class="yt2-pl-item" data-plid="${esc(pl.id)}">
+      <div class="yt2-pl-item-check${inPl ? ' checked' : ''}">${inPl ? '✓' : ''}</div>
+      <span class="yt2-pl-item-name">${esc(pl.name)}</span>
+      <span class="yt2-pl-item-count">${pl.videos.length} videos</span>
+    </div>`;
+  }).join('');
+}
+document.getElementById('ytvPlList')?.addEventListener('click', e => {
+  const item = e.target.closest('.yt2-pl-item');
+  if (!item || !_ytvPlPendingVideo) return;
+  const plid = item.dataset.plid;
+  let pls = ytvGetPlaylists();
+  const pl = pls.find(p => p.id === plid);
+  if (!pl) return;
+  const idx = pl.videos.findIndex(v => v.videoId === _ytvPlPendingVideo.videoId);
+  if (idx >= 0) { pl.videos.splice(idx, 1); toast(`Removed from "${pl.name}"`); }
+  else { pl.videos.push(_ytvPlPendingVideo); toast(`✓ Added to "${pl.name}"`); }
+  ytvSavePlaylists(pls);
+  ytvRenderPlList();
+});
+document.getElementById('ytvPlNewBtn')?.addEventListener('click', () => {
+  const inp = document.getElementById('ytvPlNewInput');
+  const name = inp?.value.trim();
+  if (!name) return;
+  let pls = ytvGetPlaylists();
+  const newPl = { id: Date.now().toString(36), name, videos: _ytvPlPendingVideo ? [_ytvPlPendingVideo] : [] };
+  pls.unshift(newPl);
+  ytvSavePlaylists(pls);
+  inp.value = '';
+  ytvRenderPlList();
+  toast(`📋 "${name}" created`);
+});
+document.getElementById('ytvPlClose')?.addEventListener('click', () => {
+  document.getElementById('ytvPlPanel').hidden = true;
+  document.getElementById('ytvPlBackdrop').hidden = true;
+  _ytvPlPendingVideo = null;
+});
+document.getElementById('ytvPlBackdrop')?.addEventListener('click', () => {
+  document.getElementById('ytvPlPanel')?.hidden && null;
+  document.getElementById('ytvPlPanel').hidden = true;
+  document.getElementById('ytvPlBackdrop').hidden = true;
+});
+
+// Playlists chip → playlist manager
+document.getElementById('ytvPlaylistsChip')?.addEventListener('click', () => {
+  const panel = document.getElementById('ytvPlmPanel');
+  const bd    = document.getElementById('ytvPlBackdrop');
+  if (!panel || !bd) return;
+  panel.hidden = false; bd.hidden = false;
+  ytvRenderPlmList();
+});
+function ytvRenderPlmList() {
+  const list = document.getElementById('ytvPlmList');
+  if (!list) return;
+  const pls = ytvGetPlaylists();
+  if (!pls.length) { list.innerHTML = '<p style="padding:14px 16px;color:rgba(255,255,255,.4);font-size:.8rem">No playlists yet. Tap 📋 on any video card.</p>'; return; }
+  list.innerHTML = pls.map(pl => {
+    const thumb = pl.videos[0]?.thumb || '';
+    const thumb2 = pl.videos[1]?.thumb || '';
+    return `<div class="yt2-plm-item" data-plid="${esc(pl.id)}">
+      <div class="yt2-plm-item-row">
+        <div class="yt2-plm-thumb-stack">
+          ${thumb2 ? `<img class="yt2-plm-thumb2" src="${esc(thumb2)}" alt=""/>` : ''}
+          <img class="yt2-plm-thumb" src="${esc(thumb)}" alt="" onerror="this.style.background='#222'"/>
+        </div>
+        <div class="yt2-plm-info">
+          <div class="yt2-plm-name">${esc(pl.name)}</div>
+          <div class="yt2-plm-cnt">${pl.videos.length} video${pl.videos.length !== 1 ? 's' : ''}</div>
+        </div>
+        <button class="yt2-plm-play-btn" data-play="${esc(pl.id)}">▶ Play all</button>
+        <button class="yt2-plm-del-btn"  data-del="${esc(pl.id)}">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('ytvPlmList')?.addEventListener('click', e => {
+  const playBtn = e.target.closest('[data-play]');
+  const delBtn  = e.target.closest('[data-del]');
+  if (playBtn) {
+    const pl = ytvGetPlaylists().find(p => p.id === playBtn.dataset.play);
+    if (pl?.videos.length) {
+      ytvRenderResults(pl.videos);
+      window.ytvPlayIndex(0);
+      document.getElementById('ytvPlmPanel').hidden = true;
+      document.getElementById('ytvPlBackdrop').hidden = true;
+      toast(`▶ Playing "${pl.name}"`);
+    }
+  }
+  if (delBtn) {
+    if (!confirm('Delete this playlist?')) return;
+    let pls = ytvGetPlaylists().filter(p => p.id !== delBtn.dataset.del);
+    ytvSavePlaylists(pls);
+    ytvRenderPlmList();
+  }
+});
+document.getElementById('ytvPlmClose')?.addEventListener('click', () => {
+  document.getElementById('ytvPlmPanel').hidden = true;
+  document.getElementById('ytvPlBackdrop').hidden = true;
+});
+
+// ── 10. Card hover zoom is pure CSS (styles added above) ──────
+// Init trending on load
+ytvLoadTrending();
+
+// Patch ytvStop to also stop timer and close sheets
+const _origStop = ytvStop;
+ytvStop = function() {
+  _origStop();
+  ytvStopTimer();
+  document.body.classList.remove('yt2-theater');
+  const bg = document.getElementById('ytvTheaterBg');
+  if (bg) bg.hidden = true;
+};
+
+// Patch ytvRenderResults to filter not-interested videos
+const _origRender = ytvRenderResults;
+ytvRenderResults = function(results) {
+  const hidden = new Set(ytvGetHidden());
+  _origRender(results.filter(v => !hidden.has(v.videoId)));
+};
 
 // ── YOUTUBE WATCH PLAYER ───────────────────────────────────────
 function parseYtId(input) {
