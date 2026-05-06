@@ -1988,6 +1988,27 @@ body.theme-glass .upload-zone { background: rgba(255,255,255,0.04); backdrop-fil
 .yt2-theater-bg[hidden] { display: none !important; }
 body.yt2-theater .yt2-player-wrap { position: relative; z-index: 99; }
 
+/* ── Offline overlay ── */
+.yt2-offline-overlay {
+  position: absolute; inset: 0; z-index: 10;
+  background: rgba(0,0,0,.9);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; text-align: center; padding: 20px;
+}
+.yt2-offline-overlay[hidden] { display: none !important; }
+.yt2-offline-icon { font-size: 2.2rem; animation: offlinePulse 2s ease-in-out infinite; }
+@keyframes offlinePulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.yt2-offline-msg { font-size: 1rem; font-weight: 700; color: #fff; }
+.yt2-offline-sub { font-size: .78rem; color: rgba(255,255,255,.5); max-width: 200px; line-height: 1.4; }
+.yt2-offline-retry {
+  margin-top: 6px; padding: 8px 22px; border-radius: 99px;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
+  color: #fff; font-size: .82rem; font-weight: 600; cursor: pointer;
+  transition: background .15s;
+}
+.yt2-offline-retry:hover { background: rgba(255,255,255,.22); }
+
 /* Video info section */
 .yt2-video-info { padding: 10px 12px 4px; }
 .yt2-video-title {

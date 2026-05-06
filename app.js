@@ -4133,6 +4133,65 @@ ytvRenderResults = function(results) {
   _origRender(results.filter(v => !hidden.has(v.videoId)));
 };
 
+// ── Offline / reconnect handling while video is playing ────────
+function ytvShowOffline() {
+  const overlay = document.getElementById('ytvOfflineOverlay');
+  if (overlay) overlay.hidden = false;
+  const bar = document.getElementById('ytvTimerBar');
+  if (bar) bar.hidden = true;
+}
+function ytvHideOffline() {
+  const overlay = document.getElementById('ytvOfflineOverlay');
+  if (overlay) overlay.hidden = true;
+}
+function ytvResumeAfterReconnect() {
+  if (!ytState.videoId) return;
+  ytvHideOffline();
+  if (ytState.audioMode) {
+    // Re-extract audio stream for the current video
+    ytvEnterAudioMode();
+  } else {
+    // Reload the iframe — YouTube embed auto-plays on src set
+    const frame = document.getElementById('ytvFrame');
+    if (frame) {
+      frame.src = `https://www.youtube-nocookie.com/embed/${ytState.videoId}?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&origin=${location.origin}`;
+    }
+  }
+  ytvStartTimer();
+  toast('🟢 Back online — resuming video');
+}
+
+window.addEventListener('offline', () => {
+  if (!ytState.videoId) return;
+  ytvShowOffline();
+  // Pause native audio if in audio mode so it doesn't error-loop
+  if (ytState.audioMode) { try { audio.pause(); } catch {} }
+});
+
+window.addEventListener('online', () => {
+  if (!ytState.videoId) return;
+  ytvResumeAfterReconnect();
+});
+
+// Also catch the <audio> stall/error that happens when the stream URL drops mid-play
+audio.addEventListener('error', () => {
+  if (ytState.audioMode && ytState.videoId) ytvShowOffline();
+});
+audio.addEventListener('stalled', () => {
+  if (ytState.audioMode && ytState.videoId) {
+    // Give it 4 seconds before showing the overlay (minor stalls are normal)
+    setTimeout(() => {
+      if (ytState.audioMode && ytState.videoId && audio.paused) ytvShowOffline();
+    }, 4000);
+  }
+});
+
+// Retry button
+document.getElementById('ytvOfflineRetry')?.addEventListener('click', () => {
+  if (!navigator.onLine) { toast('Still offline — waiting for connection'); return; }
+  ytvResumeAfterReconnect();
+});
+
 // ── YOUTUBE WATCH PLAYER ───────────────────────────────────────
 function parseYtId(input) {
   input = input.trim();

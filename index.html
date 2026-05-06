@@ -462,6 +462,13 @@
           allowfullscreen
           allow="autoplay; encrypted-media; picture-in-picture"
           referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <!-- Offline overlay (shown when connection drops during playback) -->
+        <div class="yt2-offline-overlay" id="ytvOfflineOverlay" hidden>
+          <div class="yt2-offline-icon">📡</div>
+          <div class="yt2-offline-msg">No connection</div>
+          <div class="yt2-offline-sub">Your video will resume when you're back online</div>
+          <button class="yt2-offline-retry" id="ytvOfflineRetry">↺ Try again</button>
+        </div>
       </div>
 
       <!-- Video info (YouTube-style) -->
