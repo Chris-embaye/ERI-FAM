@@ -723,6 +723,45 @@
     .ctrl-save:disabled { opacity: .5; cursor: default; }
     .ctrl-msg { font-size: 0.74rem; text-align: center; margin-top: 9px; min-height: 16px; }
 
+    /* ── WORD SEARCH PUZZLE ── */
+    .puzzle-top { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px 8px; }
+    .puzzle-status { font-size: 0.82rem; font-weight: 700; color: var(--green); }
+    .puzzle-reset-btn {
+      font-size: 0.72rem; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 20px; padding: 5px 13px; font-weight: 600; color: var(--text-sub);
+    }
+    .puzzle-grid-wrap { padding: 0 10px 10px; }
+    .puzzle-grid {
+      display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px;
+      max-width: 370px; margin: 0 auto;
+    }
+    .pz-cell {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; cursor: pointer; user-select: none;
+      font-family: 'Noto Serif Ethiopic', serif; font-size: 0.88rem; font-weight: 600;
+      background: var(--card); border: 1.5px solid var(--border); color: var(--text);
+      transition: background .1s, color .1s; -webkit-tap-highlight-color: transparent;
+    }
+    .pz-cell.first   { background: var(--green-light); border-color: var(--green); color: var(--green); }
+    .pz-cell.found   { background: var(--green); border-color: var(--green); color: white; }
+    .pz-cell.wrong   { background: var(--red); border-color: var(--red); color: white; }
+    .puzzle-words-section { padding: 4px 16px 12px; }
+    .puzzle-words-title {
+      font-size: 0.7rem; font-weight: 800; color: var(--text-sub);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px;
+    }
+    .puzzle-word-list { display: flex; flex-direction: column; gap: 6px; }
+    .pz-word { display: flex; align-items: center; gap: 10px; }
+    .pz-word-tig { font-family: 'Noto Serif Ethiopic', serif; font-size: 1rem; color: var(--green); min-width: 56px; }
+    .pz-word-eng { font-size: 0.8rem; color: var(--text-sub); }
+    .pz-word.found .pz-word-tig,
+    .pz-word.found .pz-word-eng { text-decoration: line-through; color: var(--text-dim); }
+    .puzzle-win {
+      text-align: center; padding: 18px 16px 8px;
+      font-size: 1.1rem; font-weight: 800; color: var(--green); display: none;
+    }
+    .puzzle-win.show { display: block; }
+
     /* ── INSTALL BANNER ── */
     .install-banner {
       position: fixed;
@@ -1137,12 +1176,33 @@
     <div class="dict-grid" id="dictGrid"></div>
   </div>
 
+  <!-- ══ VIEW — PUZZLE ══ -->
+  <div class="view" id="view-puzzle">
+    <div class="s-head">
+      <h2>🧩 Word Search</h2>
+      <p>Find the hidden Tigrinya words</p>
+    </div>
+    <div class="puzzle-top">
+      <div class="puzzle-status" id="puzzleStatus">0 / 9 found</div>
+      <button class="puzzle-reset-btn" id="puzzleResetBtn">🔄 New Game</button>
+    </div>
+    <div class="puzzle-grid-wrap">
+      <div class="puzzle-grid" id="puzzleGrid"></div>
+    </div>
+    <div class="puzzle-words-section">
+      <div class="puzzle-words-title">Find these words ↓</div>
+      <div class="puzzle-word-list" id="puzzleWordList"></div>
+    </div>
+    <div class="puzzle-win" id="puzzleWin">🎉 ጽቡቕ! All words found!</div>
+  </div>
+
 </div><!-- /page-wrap -->
 
 <nav class="hub-nav">
   <button class="hnav-btn active" data-view="learn"><div class="hnav-icon">🎓</div>Learn</button>
   <button class="hnav-btn" data-view="translate"><div class="hnav-icon">🔤</div>Translate</button>
   <button class="hnav-btn" data-view="dictionary"><div class="hnav-icon">📖</div>Dictionary</button>
+  <button class="hnav-btn" data-view="puzzle"><div class="hnav-icon">🧩</div>Puzzle</button>
   <button class="hnav-btn" data-view="community"><div class="hnav-icon-wrap">🌍<span class="nav-badge show" id="communityBadge"></span></div>Community</button>
   <button class="hnav-btn" data-view="library"><div class="hnav-icon">📚</div>Library</button>
   <button class="hnav-btn" data-view="money" id="moneyNavBtn" style="display:none"><div class="hnav-icon">💸</div>Money</button>
@@ -3077,6 +3137,122 @@ function subscribeStudentControls(studentId) {
     } finally { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
   });
 })();
+
+/* ═══════════════════════════════
+   WORD SEARCH PUZZLE
+═══════════════════════════════ */
+const PZ_GRID = [
+  ['ሰ','ላ','ም','ከ','ነ','ጠ','ሓ','ብ','ር'],
+  ['ደ','ፈ','ሽ','ቅ','ኣ','ቦ','ው','ለ','ዘ'],
+  ['ር','ጀ','ከ','ብ','ፈ','ም','ቦ','ወ','ዲ'],
+  ['ሠ','ቀ','ሽ','ዘ','ተ','ኣ','ር','ፈ','ሐ'],
+  ['ቡ','ን','ጀ','ገ','ደ','ደ','ን','ለ','ቀ'],
+  ['ሐ','ሠ','ቀ','ነ','ከ','ብ','ላ','ም','ዘ'],
+  ['ብ','ዘ','ሽ','ር','ከ','ሽ','ጀ','ሐ','ማ'],
+  ['ን','ር','ቤ','ት','ሠ','ቀ','ካ','ነ','ይ'],
+  ['ደ','ፈ','ሐ','ን','ብ','ሠ','ዘ','ቀ','ር'],
+];
+
+const PZ_WORDS = [
+  { word:['ሰ','ላ','ም'], clue:'Hello / Peace',        r:0, c:0, dir:'H' },
+  { word:['ሓ','ው','ቦ'], clue:'Uncle (father\'s side)',r:0, c:6, dir:'V' },
+  { word:['ኣ','ቦ'],     clue:'Father',                r:1, c:4, dir:'H' },
+  { word:['ወ','ዲ'],     clue:'Boy / Son',              r:2, c:7, dir:'H' },
+  { word:['ኣ','ደ'],     clue:'Mother',                r:3, c:5, dir:'V' },
+  { word:['ቡ','ን'],     clue:'Coffee',                r:4, c:0, dir:'H' },
+  { word:['ላ','ም'],     clue:'Cow',                   r:5, c:6, dir:'H' },
+  { word:['ቤ','ት'],     clue:'House',                 r:7, c:2, dir:'H' },
+  { word:['ማ','ይ'],     clue:'Water',                 r:6, c:8, dir:'V' },
+];
+
+let _pzFirst = null;
+const _pzFound = new Set();
+
+function _pzCellsBetween(a, b) {
+  if (a.r === b.r) {
+    const cells = [], step = b.c >= a.c ? 1 : -1;
+    for (let c = a.c; step > 0 ? c <= b.c : c >= b.c; c += step) cells.push({r:a.r, c});
+    return cells;
+  }
+  if (a.c === b.c) {
+    const cells = [], step = b.r >= a.r ? 1 : -1;
+    for (let r = a.r; step > 0 ? r <= b.r : r >= b.r; r += step) cells.push({r, c:a.c});
+    return cells;
+  }
+  return null;
+}
+
+function _pzFoundCells() {
+  const s = new Set();
+  _pzFound.forEach(i => {
+    const w = PZ_WORDS[i];
+    for (let k = 0; k < w.word.length; k++)
+      s.add(`${w.dir==='V' ? w.r+k : w.r},${w.dir==='H' ? w.c+k : w.c}`);
+  });
+  return s;
+}
+
+function renderPuzzle(wrongSet) {
+  const found = _pzFoundCells();
+  const grid = document.getElementById('puzzleGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let r = 0; r < 9; r++) {
+    for (let c = 0; c < 9; c++) {
+      const el = document.createElement('div');
+      el.className = 'pz-cell';
+      el.textContent = PZ_GRID[r][c];
+      const key = `${r},${c}`;
+      if (found.has(key))                               el.classList.add('found');
+      else if (wrongSet && wrongSet.has(key))           el.classList.add('wrong');
+      else if (_pzFirst && _pzFirst.r===r && _pzFirst.c===c) el.classList.add('first');
+      el.addEventListener('click', () => _pzTap(r, c));
+      grid.appendChild(el);
+    }
+  }
+  document.getElementById('puzzleWordList').innerHTML = PZ_WORDS.map((w, i) =>
+    `<div class="pz-word${_pzFound.has(i) ? ' found' : ''}">
+      <span class="pz-word-tig">${w.word.join('')}</span>
+      <span class="pz-word-eng">${w.clue}</span>
+    </div>`).join('');
+  document.getElementById('puzzleStatus').textContent = `${_pzFound.size} / ${PZ_WORDS.length} found`;
+}
+
+function _pzTap(r, c) {
+  if (_pzFoundCells().has(`${r},${c}`)) return;
+  if (!_pzFirst) { _pzFirst = {r,c}; renderPuzzle(); return; }
+  if (_pzFirst.r === r && _pzFirst.c === c) { _pzFirst = null; renderPuzzle(); return; }
+
+  const line = _pzCellsBetween(_pzFirst, {r,c});
+  _pzFirst = null;
+  if (!line) { _pzFirst = {r,c}; renderPuzzle(); return; }
+
+  const chars = line.map(({r,c}) => PZ_GRID[r][c]).join('');
+  const idx = PZ_WORDS.findIndex((w, i) => {
+    if (_pzFound.has(i)) return false;
+    const fwd = w.word.join(''), rev = w.word.slice().reverse().join('');
+    return fwd === chars || rev === chars;
+  });
+
+  if (idx !== -1) {
+    _pzFound.add(idx);
+    renderPuzzle();
+    if (_pzFound.size === PZ_WORDS.length)
+      setTimeout(() => document.getElementById('puzzleWin').classList.add('show'), 300);
+  } else {
+    const ws = new Set(line.map(({r,c}) => `${r},${c}`));
+    renderPuzzle(ws);
+    setTimeout(() => renderPuzzle(), 500);
+  }
+}
+
+document.getElementById('puzzleResetBtn').addEventListener('click', () => {
+  _pzFirst = null; _pzFound.clear();
+  document.getElementById('puzzleWin').classList.remove('show');
+  renderPuzzle();
+});
+
+renderPuzzle();
 
 /* ═══════════════════════════════
    TOAST
