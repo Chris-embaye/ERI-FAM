@@ -659,12 +659,13 @@
     /* ── INSTALL BANNER ── */
     .install-banner {
       position: fixed;
-      bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
-      left: 14px; right: 14px; z-index: 200;
+      top: calc(14px + env(safe-area-inset-top));
+      right: 14px; left: auto; z-index: 200;
+      max-width: 320px;
       background: var(--green); color: white; border-radius: 16px;
       padding: 13px 15px; display: flex; align-items: center; justify-content: space-between;
       gap: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.28);
-      transform: translateY(140%); transition: transform .35s cubic-bezier(.4,0,.2,1);
+      transform: translateY(calc(-100% - 20px)); transition: transform .35s cubic-bezier(.4,0,.2,1);
       pointer-events: none;
     }
     .install-banner.show { transform: translateY(0); pointer-events: auto; }
