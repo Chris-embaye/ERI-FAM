@@ -522,6 +522,15 @@
     .tb-num-tig { font-size:0.95rem; font-weight:700; }
     .tb-num-rom { font-size:0.68rem; color:var(--text-sub); }
     .tb-song { background:var(--card); border-left:4px solid var(--green); padding:12px 14px; border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin-bottom:12px; font-size:0.84rem; line-height:1.8; }
+    .tb-done-btn { width:100%; margin-top:14px; padding:11px; border-radius:var(--radius-sm); font-size:0.83rem; font-weight:700; background:var(--green); color:white; cursor:pointer; transition:background .15s; }
+    .tb-done-btn:hover:not(.done) { background:var(--green-d); }
+    .tb-done-btn.done { background:#64748b; cursor:default; }
+    .tb-done-hint { font-size:0.68rem; color:var(--text-dim); text-align:center; margin-top:5px; }
+    .book-card.book-locked { opacity:.55; }
+    .book-cover-wrap { position:relative; flex-shrink:0; }
+    .book-lock-over { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1.5rem; background:rgba(0,0,0,.18); border-radius:9px; }
+    .btn-locked { background:#94a3b8 !important; cursor:default !important; }
+    .tb-grade-prog { font-size:0.62rem; color:var(--text-sub); margin-top:3px; }
 
     /* ── SYNC BAR ── */
     .sync-bar {
@@ -2103,9 +2112,161 @@ const BOOKS = [
       },
     ]
   },
+  {
+    id:19, emoji:'📗', title:'ትግርኛ — ክፍሊ ክልተ', author:'Eritrean Ministry of Education', cat:'textbook',
+    desc:'Grade 2 Tigrinya textbook — 8 units covering daily activities, time, days, months, numbers 10–100, home, city, and health.',
+    chapters:[
+      {
+        title:'ምዕራፍ 1 — ናይ መዓልቲ ተግባራት · Unit 1: Daily Activities',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 1 · Unit 1</div><div class="tb-unit-title">ናይ መዓልቲ ተግባራት — Daily Activities</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ናስሬት ኣብ ንጉሆ ይትንስእ።</span><span class="eng">Nasret wakes up in the morning.</span>
+<span class="tig">ፊቱ ይሓጽብ፣ ዝብልዖ ይበልዕ።</span><span class="eng">He washes his face and eats breakfast.</span>
+<span class="tig">ናብ ቤት ትምህርቲ ይኸይድ፣ ምስ ኣዕሩኽቱ ይምሃር።</span><span class="eng">He goes to school and studies with his friends.</span>
+<span class="tig">ድሕሪ ቤት ትምህርቲ ይጻወት፣ ድሕሪ ዕዮ ቤት ይድቅስ።</span><span class="eng">After school he plays, and after homework he sleeps.</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ይትንስእ</div><div class="tig-rom">yitnis'i</div><div class="tig-eng">wakes up</div></div><div class="tig-block"><div class="tig-script">ይበልዕ</div><div class="tig-rom">yible'</div><div class="tig-eng">eats</div></div><div class="tig-block"><div class="tig-script">ይሰቲ</div><div class="tig-rom">yiseti</div><div class="tig-eng">drinks</div></div><div class="tig-block"><div class="tig-script">ይምሃር</div><div class="tig-rom">yimhar</div><div class="tig-eng">studies / learns</div></div><div class="tig-block"><div class="tig-script">ይጻወት</div><div class="tig-rom">yits'awet</div><div class="tig-eng">plays</div></div><div class="tig-block"><div class="tig-script">ይኸይድ</div><div class="tig-rom">yikheyid</div><div class="tig-eng">goes</div></div><div class="tig-block"><div class="tig-script">ይመጽእ</div><div class="tig-rom">yimets'i</div><div class="tig-eng">comes</div></div><div class="tig-block"><div class="tig-script">ይድቅስ</div><div class="tig-rom">yidq'is</div><div class="tig-eng">sleeps</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Say what you do in the morning: <strong>ኣብ ንጉሆ ________________ ።</strong></li><li>Use the verb <strong>ይበልዕ</strong> — change it to "I eat": <strong>ይበልዕ → እበልዕ</strong></li><li>Describe your daily routine using 4 verbs from the vocabulary</li><li>Ask a friend: <strong>ድሕሪ ቤት ትምህርቲ እንታይ ትገብር?</strong> (What do you do after school?)</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>In Eritrea, children start the day early. Before school, many help with chores — fetching water, feeding animals, or sweeping the yard. Helping the family is considered a <strong>duty and an honour</strong>. Children who help at home are praised as <strong>ጒቦ ደቂ</strong> (good children). School starts at 7:30 AM in most towns, so waking up early is important!</p></div>`
+      },
+      {
+        title:'ምዕራፍ 2 — ሰዓት · Unit 2: Telling Time',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 2 · Unit 2</div><div class="tb-unit-title">ሰዓት — Telling Time</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ሰዓት ክንደይ ኢዩ?</span><span class="eng">What time is it?</span>
+<span class="tig">ሰዓት ሸውዓተ ኢዩ። ናብ ቤት ትምህርቲ ክኸይድ ግዜ ኢዩ።</span><span class="eng">It is 7 o'clock. It is time to go to school.</span>
+<span class="tig">ሰዓት ዓሰርተ ክልተ ኢዩ — ቀትሪ ኢዩ። ምቑሕ ቀትሪ ግዜ ኢዩ።</span><span class="eng">It is 12 o'clock — it is noon. It is time for lunch.</span>
+<span class="tig">ሰዓት ሾሞንተ ምሸት ኢዩ። ናይ ምሸት ምቑሕ ግዜ ኢዩ።</span><span class="eng">It is 8 o'clock in the evening. It is time for dinner.</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ሰዓት</div><div class="tig-rom">Se'at</div><div class="tig-eng">Time / Hour</div></div><div class="tig-block"><div class="tig-script">ንጉሆ</div><div class="tig-rom">Nguho</div><div class="tig-eng">Morning</div></div><div class="tig-block"><div class="tig-script">ቀትሪ</div><div class="tig-rom">Qetri</div><div class="tig-eng">Midday / Noon</div></div><div class="tig-block"><div class="tig-script">ድሕሪ ቀትሪ</div><div class="tig-rom">Dhri qetri</div><div class="tig-eng">Afternoon</div></div><div class="tig-block"><div class="tig-script">ምሸት</div><div class="tig-rom">Mishet</div><div class="tig-eng">Evening</div></div><div class="tig-block"><div class="tig-script">ለይቲ</div><div class="tig-rom">Leyti</div><div class="tig-eng">Night</div></div><div class="tig-block"><div class="tig-script">ናፍቆ</div><div class="tig-rom">Nafqo</div><div class="tig-eng">Minute</div></div><div class="tig-block"><div class="tig-script">ፍርቂ ሰዓት</div><div class="tig-rom">Firqi se'at</div><div class="tig-eng">Half an hour</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">🕐</div><div><div class="tb-num-tig">ሰዓት ሓደ</div><div class="tb-num-rom">Se'at hade — 1 o'clock</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">🕕</div><div><div class="tb-num-tig">ሰዓት ሓሙሽተ ቀትሪ</div><div class="tb-num-rom">Se'at hamushte qetri — 5 PM</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">🕗</div><div><div class="tb-num-tig">ሰዓት ሸውዓተ ንጉሆ</div><div class="tb-num-rom">Se'at shew'ate nguho — 7 AM</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>What time do you wake up? Say it: <strong>ሰዓት _____ ይትንስእ ኢየ።</strong></li><li>Draw a clock showing school start time and write the Tigrinya sentence</li><li>Ask a classmate: <strong>ሰዓት ክንደይ ቤት ትምህርቲ ትኸይድ?</strong></li><li>Make a daily schedule using time words: ንጉሆ / ቀትሪ / ምሸት</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>The Eritrean day is often described by the position of the sun, not just clock hours. <strong>ሰዓት ሓደ ንጉሆ</strong> (1 AM) is deep night; but many Eritreans say <strong>ሰዓት ሓደ</strong> meaning 7 AM — because the Ge'ez clock starts at sunrise (6 AM = hour zero). This traditional system is still widely used. Ask an elder what time it is and compare the answer to a wristwatch!</p></div>`
+      },
+      {
+        title:'ምዕራፍ 3 — ናይ ሰሙን መዓልቲ · Unit 3: Days of the Week',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 3 · Unit 3</div><div class="tb-unit-title">ናይ ሰሙን መዓልቲ — Days of the Week</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ሰሙን ሸውዓተ መዓልቲ ኣሎ።</span><span class="eng">The week has seven days.</span>
+<span class="tig">ሎሚ ሰኑይ ኢዩ። ቤት ትምህርቲ ኣሎ።</span><span class="eng">Today is Monday. There is school.</span>
+<span class="tig">ቀዳም ን ሰንበት ዕረፍቲ ኢዩ።</span><span class="eng">Saturday and Sunday are rest days.</span>
+<span class="tig">ዓርቢ ዕዳጋ ኣሎ። ምስ ኣደይ ናብ ዕዳጋ ኣኸይድ።</span><span class="eng">On Friday there is a market. I go to the market with my mother.</span></div>
+<div class="tb-num-row"><div class="tb-num-big">1</div><div><div class="tb-num-tig">ሰኑይ</div><div class="tb-num-rom">Senuy — Monday</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">2</div><div><div class="tb-num-tig">ሠሉስ</div><div class="tb-num-rom">Selus — Tuesday</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">3</div><div><div class="tb-num-tig">ሮቡዕ</div><div class="tb-num-rom">Robu' — Wednesday</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">4</div><div><div class="tb-num-tig">ሓሙስ</div><div class="tb-num-rom">Hamus — Thursday</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">5</div><div><div class="tb-num-tig">ዓርቢ</div><div class="tb-num-rom">'Arbi — Friday</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">6</div><div><div class="tb-num-tig">ቀዳም</div><div class="tb-num-rom">Qedam — Saturday</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">7</div><div><div class="tb-num-tig">ሰንበት</div><div class="tb-num-rom">Senbet — Sunday</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Say today's day: <strong>ሎሚ _____ ኢዩ</strong></li><li>Say tomorrow: <strong>ጽባሕ _____ ኢዩ</strong></li><li>Which days do you go to school? List them in Tigrinya</li><li>Ask a friend: <strong>ዓርቢ እንታይ ትገብር?</strong> (What do you do on Friday?)</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p><strong>ሰንበት</strong> (Sunday) is the holiest day of the week for Orthodox Christian Eritreans — families go to church, dress in white <strong>zuria</strong> or <strong>netela</strong>, and share a special meal together. For Muslim Eritreans, <strong>ዓርቢ</strong> (Friday) is the day of communal prayer at the mosque. Both days are deeply tied to community, prayer, and family togetherness across all religions.</p></div>`
+      },
+      {
+        title:'ምዕራፍ 4 — ኣዋርሕ · Unit 4: Months of the Year',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 4 · Unit 4</div><div class="tb-unit-title">ኣዋርሕ — Months of the Year</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ዓመት ዓሰርተ ክልተ ወርሒ ኣሎ።</span><span class="eng">The year has twelve months.</span>
+<span class="tig">ወርሒ ጥሪ ናይ ዓመት ቀዳማይ ወርሒ ኢዩ።</span><span class="eng">January (Tiri) is the first month of the year.</span>
+<span class="tig">ወርሒ ሚያዝያ ልደተ ናስሬት ኢዩ።</span><span class="eng">April (Miyazya) is Nasret's birthday.</span>
+<span class="tig">ወርሒ ግንቦት ናይ ኤርትራ ናጽነት ኢዩ!</span><span class="eng">May (Ginbot) is Eritrea's independence!</span></div>
+<div class="tb-num-row"><div class="tb-num-big">1</div><div><div class="tb-num-tig">ጥሪ</div><div class="tb-num-rom">T'iri — January</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">2</div><div><div class="tb-num-tig">ለካቲት</div><div class="tb-num-rom">Lekatit — February</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">3</div><div><div class="tb-num-tig">መጋቢት</div><div class="tb-num-rom">Megabit — March</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">4</div><div><div class="tb-num-tig">ሚያዝያ</div><div class="tb-num-rom">Miyazya — April</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">5</div><div><div class="tb-num-tig">ግንቦት</div><div class="tb-num-rom">Ginbot — May · <em>24 ግንቦት = ናጽነት!</em></div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">6</div><div><div class="tb-num-tig">ሰነ</div><div class="tb-num-rom">Sene — June</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">7</div><div><div class="tb-num-tig">ሓምለ</div><div class="tb-num-rom">Hamle — July</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">8</div><div><div class="tb-num-tig">ነሓሰ</div><div class="tb-num-rom">Nehase — August</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">9</div><div><div class="tb-num-tig">መስከረም</div><div class="tb-num-rom">Meskerem — September · <em>1 መስከረም = Eritrean New Year</em></div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">10</div><div><div class="tb-num-tig">ጥቅምቲ</div><div class="tb-num-rom">T'iqimti — October</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">11</div><div><div class="tb-num-tig">ሕዳር</div><div class="tb-num-rom">Hidar — November</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">12</div><div><div class="tb-num-tig">ታሕሳስ</div><div class="tb-num-rom">Tahsas — December</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Say your birth month: <strong>ወርሒ _____ ልደተይ ኢዩ</strong></li><li>Name the month of Eritrean Independence Day: <strong>24 _____ ናጽነት ኢዩ</strong></li><li>Which month is coldest where you live? Warmest?</li><li>Memorise all 12 months by singing them 3 times in order</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p><strong>1 መስከረም</strong> (September 1) is Eritrea's New Year — <strong>ርእሲ ዓመት</strong>. Families gather, churches hold services, and children receive new clothes. The Ge'ez calendar used in Eritrea is about 7–8 years behind the Gregorian calendar — so 2024 Gregorian = 2016/2017 Ge'ez. <strong>24 ግንቦት</strong> (May 24, 1991) is Independence Day — the most celebrated national holiday. Every Eritrean should know this date by heart.</p></div>`
+      },
+      {
+        title:'ምዕራፍ 5 — ቁጽርታት 10–100 · Unit 5: Numbers 10–100',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 5 · Unit 5</div><div class="tb-unit-title">ቁጽርታት 10–100 — Numbers 10 to 100</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ኣብ ክፍልና ዕስራ ተምሃሮ ኣሎ።</span><span class="eng">In our class there are 20 students.</span>
+<span class="tig">ዕዳጋ ሓምሳ ናቕፋ ዋጋ ኣሎ ። ሚኢቲ ናቕፋ ኣሎካ።</span><span class="eng">The market price is 50 Nakfa. You have 100 Nakfa.</span>
+<span class="tig">ሚኢቲ ቀሊሉ — ዕስራ + ዕስራ + ዕስራ + ዕስራ + ዕስራ።</span><span class="eng">100 is easy — 20 + 20 + 20 + 20 + 20.</span></div>
+<div class="tb-num-row"><div class="tb-num-big">10</div><div><div class="tb-num-tig">ዓሰርተ</div><div class="tb-num-rom">Aserte</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">11</div><div><div class="tb-num-tig">ዓሰርተ ሓደ</div><div class="tb-num-rom">Aserte hade — eleven</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">12</div><div><div class="tb-num-tig">ዓሰርተ ክልተ</div><div class="tb-num-rom">Aserte kilte — twelve</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">20</div><div><div class="tb-num-tig">ዕስራ</div><div class="tb-num-rom">'Isra — twenty</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">30</div><div><div class="tb-num-tig">ሰሉሳ</div><div class="tb-num-rom">Selusa — thirty</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">40</div><div><div class="tb-num-tig">ኣርብዓ</div><div class="tb-num-rom">Arb'a — forty</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">50</div><div><div class="tb-num-tig">ሓምሳ</div><div class="tb-num-rom">Hamsa — fifty</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">60</div><div><div class="tb-num-tig">ሱሳ</div><div class="tb-num-rom">Susa — sixty</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">70</div><div><div class="tb-num-tig">ሰብዓ</div><div class="tb-num-rom">Seb'a — seventy</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">80</div><div><div class="tb-num-tig">ሰማንያ</div><div class="tb-num-rom">Semanya — eighty</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">90</div><div><div class="tb-num-tig">ተስዓ</div><div class="tb-num-rom">Tes'a — ninety</div></div></div>
+<div class="tb-num-row"><div class="tb-num-big">100</div><div><div class="tb-num-tig">ሚኢቲ</div><div class="tb-num-rom">Mi'iti — one hundred</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Count by 10s from 10 to 100 in Tigrinya out loud</li><li>How old is your father? Say it: <strong>ኣቦይ _____ ዓመት ዕድሚኡ ኣሎ</strong></li><li>You have 75 Nakfa — how do you say it? (ሰብዓ ሓሙሽተ ናቕፋ)</li><li>Practice: <strong>ሓምሳ + ሓምሳ = ?</strong> (ሚኢቲ!)</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>Eritrea's currency is the <strong>ናቕፋ (Nakfa)</strong> — named after the mountain town of <strong>ናቕፋ</strong>, which became a symbol of Eritrean resistance during the liberation war. Knowing how to count money helps you at the <strong>ዕዳጋ</strong> (market). Practice saying prices: <strong>ሰሉሳ ናቕፋ</strong> (30 Nakfa), <strong>ሓምሳ ናቕፋ</strong> (50 Nakfa). Always be honest when counting money!</p></div>`
+      },
+      {
+        title:'ምዕራፍ 6 — ኣብ ቤት · Unit 6: Things at Home',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 6 · Unit 6</div><div class="tb-unit-title">ኣብ ቤት — Things at Home</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ቤትና ዓቢ ኣይኮነን ግን ጽቡቕ ኢዩ።</span><span class="eng">Our house is not big but it is nice.</span>
+<span class="tig">ኣብ ክፍሊ ምሕዳር ሶፋን ጠረጴዛን ኣሎ።</span><span class="eng">In the living room there is a sofa and a table.</span>
+<span class="tig">ክፍሊ ምድቃሰይ ዓራት፣ ቁሸሽን ስእሊ ኣሎ።</span><span class="eng">In my bedroom there is a bed, a shelf and a picture.</span>
+<span class="tig">ኣደይ ኣብ ቤት ምግቢ ትሰርሕ — ሽታ ጽቡቕ ኢዩ!</span><span class="eng">My mother cooks in the kitchen — the smell is great!</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ክፍሊ ምሕዳር</div><div class="tig-rom">K'fli mihdar</div><div class="tig-eng">Living room</div></div><div class="tig-block"><div class="tig-script">ቤት ምግቢ</div><div class="tig-rom">Bet migbi</div><div class="tig-eng">Kitchen</div></div><div class="tig-block"><div class="tig-script">ክፍሊ ምድቃስ</div><div class="tig-rom">K'fli midqas</div><div class="tig-eng">Bedroom</div></div><div class="tig-block"><div class="tig-script">ሽቃቕ</div><div class="tig-rom">Shiqaq</div><div class="tig-eng">Bathroom</div></div><div class="tig-block"><div class="tig-script">ዓራት</div><div class="tig-rom">'Arat</div><div class="tig-eng">Bed</div></div><div class="tig-block"><div class="tig-script">ወንበር</div><div class="tig-rom">Wenber</div><div class="tig-eng">Chair</div></div><div class="tig-block"><div class="tig-script">ሶፋ</div><div class="tig-rom">Sofa</div><div class="tig-eng">Sofa / Couch</div></div><div class="tig-block"><div class="tig-script">ቁሸሽ</div><div class="tig-rom">Qushesh</div><div class="tig-eng">Shelf / Cabinet</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Draw your home and label each room in Tigrinya</li><li>Say what is in your bedroom: <strong>ኣብ ክፍሊ ምድቃሰይ _____ ኣሎ</strong></li><li>Ask: <strong>ሽቃቕ ኣበይ ኣሎ?</strong> (Where is the bathroom?)</li><li>Name 5 household objects around you right now in Tigrinya</li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>In Eritrea, the <strong>ኩሽና (kitchen)</strong> is often the heart of the home — a place of warmth, smell, and gathering. Traditional Eritrean homes use a <strong>ማድጎ (clay stove/fire)</strong> for cooking injera. The guest room (<strong>ክፍሊ ሳሎን</strong>) is kept very clean because receiving guests is a sacred duty — <strong>ኣጋይሽ ምቕባል</strong> (welcoming guests) is one of the highest Eritrean values.</p></div>`
+      },
+      {
+        title:'ምዕራፍ 7 — ኣብ ከተማ · Unit 7: In the City',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 7 · Unit 7</div><div class="tb-unit-title">ኣብ ከተማ — In the City</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ኣስመራ ርእሰ ከተማ ኤርትራ ኢያ።</span><span class="eng">Asmara is the capital city of Eritrea.</span>
+<span class="tig">ኣብ ኣስመራ ብዙሕ ህንጻ ኣሎ — ቤት ባንክ፣ ሆቴልን ቤት ምርምርን።</span><span class="eng">In Asmara there are many buildings — banks, hotels and a museum.</span>
+<span class="tig">ሎሚ ምስ ኣቦይ ናብ ቤት ባንክ ንኸይድ ኢና።</span><span class="eng">Today my father and I are going to the bank.</span>
+<span class="tig">ኣውቶቡስ ወሲድና ናብ ማእከል ከተማ ከድና።</span><span class="eng">We took a bus and went to the city centre.</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ቤት ባንክ</div><div class="tig-rom">Bet bank</div><div class="tig-eng">Bank</div></div><div class="tig-block"><div class="tig-script">ቤት ፖስታ</div><div class="tig-rom">Bet posta</div><div class="tig-eng">Post office</div></div><div class="tig-block"><div class="tig-script">ሆቴል</div><div class="tig-rom">Hotel</div><div class="tig-eng">Hotel</div></div><div class="tig-block"><div class="tig-script">ኣፖቴካ</div><div class="tig-rom">Apoteka</div><div class="tig-eng">Pharmacy</div></div><div class="tig-block"><div class="tig-script">ኣውቶቡስ</div><div class="tig-rom">Awtobus</div><div class="tig-eng">Bus</div></div><div class="tig-block"><div class="tig-script">ታክሲ</div><div class="tig-rom">Taksi</div><div class="tig-eng">Taxi</div></div><div class="tig-block"><div class="tig-script">ብሽክለታ</div><div class="tig-rom">Bishkileta</div><div class="tig-eng">Bicycle</div></div><div class="tig-block"><div class="tig-script">ቦታ ማቆም</div><div class="tig-rom">Bota maqom</div><div class="tig-eng">Bus stop</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Name the capital of Eritrea and say it in a sentence: <strong>_____ ርእሰ ከተማ ኤርትራ ኢያ</strong></li><li>How do you get to school? Say it using a transport word</li><li>Give directions: <strong>ቀጥ ኢልካ ኺድ — ድሕሪ ዳርጋ ቤት ባንክ ኣሎ</strong></li><li>Ask someone: <strong>ኣውቶቡስ ቦታ ምቁም ኣበይ ኣሎ?</strong></li></ol></div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p><strong>ኣስመራ (Asmara)</strong> is one of Africa's most architecturally beautiful cities. It was designated a <strong>UNESCO World Heritage Site</strong> in 2017 for its remarkable Italian Modernist buildings from the colonial era — but today it belongs fully to Eritrea. The city is known for its wide tree-lined boulevards, outdoor cafés, and the famous <strong>ፓስተጁ ሰፋ (Corso Italia)</strong> evening promenade. Walking is the favourite way to travel in Asmara!</p></div>`
+      },
+      {
+        title:'ምዕራፍ 8 — ጥዕናን ሓኪምን · Unit 8: Health & the Doctor',
+        body:`<div class="tb-unit"><div class="tb-unit-num">ምዕራፍ 8 · Unit 8</div><div class="tb-unit-title">ጥዕናን ሓኪምን — Health &amp; the Doctor</div></div>
+<div class="tb-reading"><div class="tb-reading-label">📖 ምንባብ · Reading</div>
+<span class="tig">ናስሬት ሓሚሙ ኢዩ። ርእሱ ይቃናጠሎ።</span><span class="eng">Nasret is sick. His head hurts.</span>
+<span class="tig">ኣደኡ ናብ ሆስፒታል ወሰደቶ።</span><span class="eng">His mother took him to the hospital.</span>
+<span class="tig">ሓኪም ርኢዩ፣ ሙቐቱ ፈቲሹ።</span><span class="eng">The doctor examined him and checked his temperature.</span>
+<span class="tig">ሓኪም ሃቦ፡ ናይ ምሸት ሓደ ሽጣሪ ምድሓን ውሰድ።</span><span class="eng">The doctor said: take one tablet of medicine in the evening.</span>
+<span class="tig">ድሕሪ ክልተ መዓልቲ ናስሬት ሓውዩ።</span><span class="eng">After two days, Nasret got better.</span></div>
+<div class="tb-vocab-grid"><div class="tig-block"><div class="tig-script">ሓሚሙ</div><div class="tig-rom">Hamimu</div><div class="tig-eng">Sick (he is sick)</div></div><div class="tig-block"><div class="tig-script">ሓኪም</div><div class="tig-rom">Hakim</div><div class="tig-eng">Doctor</div></div><div class="tig-block"><div class="tig-script">ሆስፒታል</div><div class="tig-rom">Hospital</div><div class="tig-eng">Hospital</div></div><div class="tig-block"><div class="tig-script">ምድሓን</div><div class="tig-rom">Midhan</div><div class="tig-eng">Medicine</div></div><div class="tig-block"><div class="tig-script">ሙቐት</div><div class="tig-rom">Muqet</div><div class="tig-eng">Temperature / Fever</div></div><div class="tig-block"><div class="tig-script">ሕማም</div><div class="tig-rom">Himam</div><div class="tig-eng">Illness / Disease</div></div><div class="tig-block"><div class="tig-script">ሓዊሱ</div><div class="tig-rom">Hawisu</div><div class="tig-eng">He recovered</div></div><div class="tig-block"><div class="tig-script">ኣፖቴካ</div><div class="tig-rom">Apoteka</div><div class="tig-eng">Pharmacy</div></div></div>
+<div class="tb-exercise"><div class="tb-exercise-label">✏ ለማምድ · Practice</div><ol><li>Say you have a headache: <strong>ርእሰይ ይቃናጠሉ</strong> — practise saying it to a partner</li><li>Say you have a stomachache: <strong>ሆደይ ይቃናጠሉ</strong></li><li>Role-play: one student is the doctor, one is the patient — use Tigrinya words</li><li>What do you do when you are sick? Write 3 sentences using today's vocabulary</li></ol></div>
+<div class="tb-song">🎵 <strong>Health Rhyme — ምዝሙር ጥዕና</strong><br>ኢዳትካ ሓጽብ — Wash your hands<br>ማይ ስተ — Drink water<br>ተቀረበካ ካብ ሓሚም — Stay away from illness<br>ዕረፍቲ ውሰድ — Get rest<br>ሓኪም ዘረባ ስምዕ — Listen to the doctor</div>
+<div class="tb-cultural"><div class="tb-cultural-label">🌍 Cultural Note</div><p>In Eritrea, healthcare is provided free of charge by the government. Community health workers called <strong>ምጽዋዕቲ ጥዕና</strong> visit villages to educate families about nutrition, hygiene, and immunisation. Eritrea is internationally recognised for its success in reducing child mortality through community health programmes. Washing hands (<strong>ኢዳትካ ሓጽብ</strong>) before eating is one of the most important lessons every Eritrean child learns from a very young age.</p></div>`
+      },
+    ]
+  },
 ];
 
 let libCat = 'all', libQuery = '';
+
+function getTbDone(bookId) {
+  const all = JSON.parse(localStorage.getItem('hub-tb-done') || '{}');
+  return all[bookId] || [];
+}
+function markChapterDone(bookId, chIdx) {
+  const all = JSON.parse(localStorage.getItem('hub-tb-done') || '{}');
+  if (!all[bookId]) all[bookId] = [];
+  if (!all[bookId].includes(chIdx)) all[bookId].push(chIdx);
+  localStorage.setItem('hub-tb-done', JSON.stringify(all));
+}
+function isBookLocked(book) {
+  if (book.id === 19) {
+    const g1 = BOOKS.find(b => b.id === 18);
+    return g1 && getTbDone(18).length < g1.chapters.length;
+  }
+  return false;
+}
 
 function renderBooks() {
   const grid = document.getElementById('bookGrid');
@@ -2115,21 +2276,29 @@ function renderBooks() {
     (libQuery === '' || b.title.toLowerCase().includes(libQuery) || b.author.toLowerCase().includes(libQuery))
   );
   if (!items.length) { grid.innerHTML = '<div class="lib-empty">No books found 📚</div>'; return; }
-  grid.innerHTML = items.map(b =>
-    '<div class="book-card">' +
-      '<div class="book-cover">' + b.emoji + '</div>' +
+  grid.innerHTML = items.map(b => {
+    const locked = isBookLocked(b);
+    const progStr = b.cat === 'textbook' ? getTbDone(b.id).length + '/' + b.chapters.length + ' units done' : '';
+    return '<div class="book-card' + (locked ? ' book-locked' : '') + '">' +
+      '<div class="book-cover-wrap">' +
+        '<div class="book-cover">' + b.emoji + '</div>' +
+        (locked ? '<div class="book-lock-over">🔒</div>' : '') +
+      '</div>' +
       '<div class="book-info">' +
         '<div class="book-title">' + b.title + '</div>' +
         '<div class="book-author">by ' + b.author + '</div>' +
         '<div class="book-desc">' + b.desc + '</div>' +
+        (progStr ? '<div class="tb-grade-prog">' + progStr + '</div>' : '') +
         '<div class="book-footer">' +
           '<span class="book-cat">' + b.cat + '</span>' +
-          '<button class="book-read-btn" data-bid="' + b.id + '">Read →</button>' +
+          (locked
+            ? '<button class="book-read-btn btn-locked" disabled>🔒 Complete Grade 1 first</button>'
+            : '<button class="book-read-btn" data-bid="' + b.id + '">Read →</button>') +
         '</div>' +
       '</div>' +
-    '</div>'
-  ).join('');
-  grid.querySelectorAll('.book-read-btn').forEach(btn =>
+    '</div>';
+  }).join('');
+  grid.querySelectorAll('.book-read-btn:not(.btn-locked)').forEach(btn =>
     btn.addEventListener('click', () => openBook(+btn.dataset.bid))
   );
 }
@@ -2140,13 +2309,36 @@ function openBook(id) {
   document.getElementById('readerEmoji').textContent = book.emoji;
   document.getElementById('readerTitle').textContent = book.title;
   document.getElementById('readerAuthor').textContent = 'by ' + book.author;
-  document.getElementById('readerBody').innerHTML = book.chapters.map(ch =>
-    '<div class="reader-ch"><h3>' + ch.title + '</h3>' + ch.body + '</div>'
-  ).join('');
+  const doneChs = book.cat === 'textbook' ? getTbDone(book.id) : [];
+  document.getElementById('readerBody').innerHTML = book.chapters.map((ch, i) => {
+    const isDone = doneChs.includes(i);
+    const doneBtn = book.cat === 'textbook'
+      ? '<button class="tb-done-btn' + (isDone ? ' done' : '') + '" data-bid="' + book.id + '" data-chi="' + i + '">' +
+          (isDone ? '✓ Unit Complete' : '✓ Mark Unit Complete') +
+        '</button>' +
+        '<div class="tb-done-hint">' + (isDone ? 'Completed!' : 'Tap when you finish this unit') + '</div>'
+      : '';
+    return '<div class="reader-ch"><h3>' + ch.title + '</h3>' + ch.body + doneBtn + '</div>';
+  }).join('');
   const reader = document.getElementById('bookReader');
   reader.classList.add('open');
   reader.querySelector('.reader-body').scrollTop = 0;
   document.body.style.overflow = 'hidden';
+  document.getElementById('readerBody').querySelectorAll('.tb-done-btn:not(.done)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const bid = +btn.dataset.bid, chi = +btn.dataset.chi;
+      markChapterDone(bid, chi);
+      btn.classList.add('done');
+      btn.textContent = '✓ Unit Complete';
+      const hint = btn.nextElementSibling;
+      if (hint) hint.textContent = 'Completed!';
+      const g1 = BOOKS.find(b => b.id === 18);
+      if (bid === 18 && g1 && getTbDone(18).length === g1.chapters.length) {
+        hubToast('🎉 Grade 1 complete! Grade 2 is now unlocked!');
+        renderBooks();
+      }
+    });
+  });
 }
 
 document.getElementById('readerClose').addEventListener('click', () => {
