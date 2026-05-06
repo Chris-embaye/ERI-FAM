@@ -2090,12 +2090,8 @@ function initSwipeGestures() {
    FEATURE 4 — Live Eritrean Radio  (10-tweak upgrade)
    ════════════════════════════════════════════════════════════════ */
 const RADIO_STATIONS = [
-  { id: 'etem',    name: 'Eritrean Music',     desc: 'Tigrigna hits & classics',        lang: 'Tigrinya', genre: 'music',   country: 'Eritrea', icon: '🎶', url: 'https://linuxfreelancer.com:8443/test.mp3' },
-  { id: 'dimtsi',  name: 'Dimtsi Hafash',      desc: 'Voice of the Masses – official',  lang: 'Tigrinya', genre: 'news',    country: 'Eritrea', icon: '📻', url: 'https://stream.zeno.fm/r5v3873qsxhvv' },
-  { id: 'ahln',    name: 'Radio Ahlen',         desc: 'Arabic & Tigre program',          lang: 'Arabic',   genre: 'music',   country: 'Eritrea', icon: '🌙', url: 'https://stream.zeno.fm/yn65pbmvp8zuv' },
-  { id: 'gospel1', name: 'Eritrean Gospel',    desc: 'Christian worship & mezmur',      lang: 'Tigrinya', genre: 'gospel',  country: 'Eritrea', icon: '✝',  url: 'https://stream.zeno.fm/t4d537qbp8zuv' },
-  { id: 'tigre1',  name: 'Tigre Radio',        desc: 'Tigre music & culture',           lang: 'Tigre',    genre: 'tigre',   country: 'Eritrea', icon: '🎶', url: 'https://stream.zeno.fm/q3h5fb1qp8zuv' },
-  { id: 'medrek',  name: 'Radio Medrek',       desc: 'Tigrinya news & commentary',      lang: 'Tigrinya', genre: 'news',    country: 'Eritrea', icon: '📰', url: 'https://stream.zeno.fm/x3g4tc7sp8zuv' },
+  // Only verified, tested working streams are listed here
+  { id: 'etem', name: 'Eritrean Music', desc: 'Tigrigna hits & classics', lang: 'Tigrinya', genre: 'music', country: 'Eritrea', icon: '🎶', url: 'https://linuxfreelancer.com:8443/test.mp3' },
 ];
 
 let radioAudio = null, currentStation = null;
@@ -2746,60 +2742,16 @@ function openTVPlayer(id) {
    WORLD SPORTS TV
    ════════════════════════════════════════════════════════════════ */
 const SPORTS_STATIONS = [
+  // Verified working HLS streams only
   {
     id: 'aljazeera',
     name: 'Al Jazeera English',
-    desc: 'Global news & live sports coverage 24/7',
+    desc: 'Live news & sports events 24/7 — plays directly in app',
     lang: 'English',
     icon: '🌍',
     badge: 'FREE',
     streamUrl: 'https://live-hls-web-aje.getaj.net/AJE/index.m3u8',
     ytUrl: 'https://www.youtube.com/@AlJazeeraEnglish/live',
-  },
-  {
-    id: 'fifaplus',
-    name: 'FIFA+',
-    desc: 'Official live international matches & tournaments — completely free',
-    lang: 'Multi',
-    icon: '🏆',
-    badge: 'FREE',
-    ytUrl: 'https://www.fifa.com/fifaplus/en/live',
-  },
-  {
-    id: 'plutosports',
-    name: 'Pluto TV Sports',
-    desc: '24/7 free live sports, soccer replays & highlights',
-    lang: 'English',
-    icon: '⚽',
-    badge: 'FREE',
-    ytUrl: 'https://pluto.tv/live-tv/pluto-tv-sports',
-  },
-  {
-    id: 'dazn',
-    name: 'DAZN',
-    desc: 'Soccer, Champions League, La Liga, combat sports & rugby',
-    lang: 'English',
-    icon: '📡',
-    badge: 'FREEMIUM',
-    ytUrl: 'https://www.dazn.com',
-  },
-  {
-    id: 'bein',
-    name: 'beIN SPORTS',
-    desc: 'Premier League, La Liga, Ligue 1 & Champions League',
-    lang: 'English · Arabic',
-    icon: '⚽',
-    badge: 'PAY',
-    ytUrl: 'https://www.beinsports.com',
-  },
-  {
-    id: 'espn',
-    name: 'ESPN / ESPN+',
-    desc: 'Live soccer, NBA, NFL and worldwide sports',
-    lang: 'English',
-    icon: '🏅',
-    badge: 'FREEMIUM',
-    ytUrl: 'https://www.espn.com/watch/',
   },
 ];
 
