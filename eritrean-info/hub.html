@@ -613,6 +613,49 @@
     .trans-tip:last-child { border-bottom: none; }
     .trans-tip strong { color: var(--text); }
 
+    /* ── DICTIONARY ── */
+    .dict-search-row {
+      padding: 12px 16px 6px; position: sticky; top: 56px; z-index: 50; background: var(--bg);
+    }
+    .dict-search {
+      width: 100%; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.85rem;
+      color: var(--text); outline: none; transition: border-color .15s;
+    }
+    .dict-search:focus { border-color: var(--green); }
+    .dict-cats {
+      display: flex; gap: 6px; padding: 6px 16px 8px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .dict-cats::-webkit-scrollbar { display: none; }
+    .dict-cat {
+      flex-shrink: 0; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 20px; padding: 5px 13px; font-size: 0.73rem; font-weight: 600;
+      color: var(--text-sub); cursor: pointer; transition: all .15s;
+    }
+    .dict-cat.active { background: var(--green); border-color: var(--green); color: white; }
+    .dict-count { padding: 0 16px 6px; font-size: 0.72rem; color: var(--text-dim); }
+    .dict-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 16px;
+    }
+    .dict-card {
+      background: var(--card); border-radius: var(--radius-sm); padding: 11px 12px;
+      box-shadow: var(--shadow); border-top: 3px solid var(--green); cursor: default;
+      transition: transform .12s;
+    }
+    .dict-card:active { transform: scale(.97); }
+    .dict-tig {
+      font-size: 1.2rem; font-family: 'Noto Serif Ethiopic', serif; line-height: 1.3;
+      color: var(--green); margin-bottom: 3px;
+    }
+    .dict-rom { font-size: 0.68rem; color: var(--text-dim); font-style: italic; margin-bottom: 4px; }
+    .dict-eng { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+    .dict-badge {
+      display: inline-block; background: var(--green-light); color: var(--green);
+      font-size: 0.6rem; font-weight: 700; border-radius: 5px; padding: 2px 6px; margin-top: 5px;
+    }
+    .dict-empty { grid-column: 1/-1; text-align: center; padding: 48px 16px; color: var(--text-dim); font-size: 0.85rem; }
+
     /* ── INSTALL BANNER ── */
     .install-banner {
       position: fixed;
@@ -1011,11 +1054,26 @@
     </div>
   </div>
 
+  <!-- ══ VIEW — DICTIONARY ══ -->
+  <div class="view" id="view-dictionary">
+    <div class="s-head">
+      <h2>📖 Dictionary</h2>
+      <p>Tigrinya ↔ English word reference</p>
+    </div>
+    <div class="dict-search-row">
+      <input class="dict-search" id="dictSearch" type="text" placeholder="Search Tigrinya, romanization or English…">
+    </div>
+    <div class="dict-cats" id="dictCats"></div>
+    <div class="dict-count" id="dictCount"></div>
+    <div class="dict-grid" id="dictGrid"></div>
+  </div>
+
 </div><!-- /page-wrap -->
 
 <nav class="hub-nav">
   <button class="hnav-btn active" data-view="learn"><div class="hnav-icon">🎓</div>Learn</button>
   <button class="hnav-btn" data-view="translate"><div class="hnav-icon">🔤</div>Translate</button>
+  <button class="hnav-btn" data-view="dictionary"><div class="hnav-icon">📖</div>Dictionary</button>
   <button class="hnav-btn" data-view="community"><div class="hnav-icon-wrap">🌍<span class="nav-badge show" id="communityBadge"></span></div>Community</button>
   <button class="hnav-btn" data-view="library"><div class="hnav-icon">📚</div>Library</button>
   <button class="hnav-btn" data-view="money" id="moneyNavBtn" style="display:none"><div class="hnav-icon">💸</div>Money</button>
@@ -2448,6 +2506,174 @@ const BOOKS = [
   },
 ];
 
+/* ═══════════════════════════════
+   DATA — DICTIONARY
+═══════════════════════════════ */
+const DICT = [
+  // ── Greetings ──
+  {tig:'ሰላም',           rom:'Selam',             eng:'Hello / Peace',               cat:'Greetings'},
+  {tig:'ከመይ ኢኻ?',      rom:'Kemey ikha?',        eng:'How are you? (to a man)',      cat:'Greetings'},
+  {tig:'ከመይ ኢኺ?',      rom:'Kemey ikhi?',        eng:'How are you? (to a woman)',    cat:'Greetings'},
+  {tig:'ጽቡቕ',           rom:"Ts'buq",             eng:'Fine / Good',                  cat:'Greetings'},
+  {tig:'የቐንየለይ',       rom:'Yeqenyeley',         eng:'Thank you',                   cat:'Greetings'},
+  {tig:'ይቅርታ',         rom:'Yiqirta',            eng:'Sorry / Excuse me',           cat:'Greetings'},
+  {tig:'እወ',             rom:'Iwe',                eng:'Yes',                         cat:'Greetings'},
+  {tig:'ኣይፋሉ',         rom:'Ayfalu',             eng:'No',                          cat:'Greetings'},
+  {tig:'ሰናይ ምሸት',     rom:'Senay mishet',        eng:'Good evening',                cat:'Greetings'},
+  {tig:'ሰናይ ምዓልቲ',   rom:"Senay m'alti",        eng:'Good morning / Good day',     cat:'Greetings'},
+  {tig:'ሰናይ ሕደር',     rom:"Senay h'der",         eng:'Good night',                  cat:'Greetings'},
+  {tig:'ብሰላም',         rom:"Bis'elam",            eng:'Goodbye / Go in peace',       cat:'Greetings'},
+  // ── Family ──
+  {tig:'ኣቦ',             rom:'Abo',                eng:'Father',                      cat:'Family'},
+  {tig:'ኣደ',             rom:'Ade',                eng:'Mother',                      cat:'Family'},
+  {tig:'ወዲ',             rom:'Wedi',               eng:'Son / Boy',                   cat:'Family'},
+  {tig:'ጓል',             rom:'Gual',               eng:'Daughter / Girl',             cat:'Family'},
+  {tig:'ሓው',             rom:'Haw',                eng:'Brother',                     cat:'Family'},
+  {tig:'ሓብቲ',           rom:'Habti',              eng:'Sister',                      cat:'Family'},
+  {tig:'ኣቦሓጎ',         rom:'Abohago',            eng:'Grandfather',                 cat:'Family'},
+  {tig:'ኣደሓጎ',         rom:'Adehago',            eng:'Grandmother',                 cat:'Family'},
+  {tig:'ሓወቦ',           rom:'Hawebo',             eng:'Uncle (father\'s side)',       cat:'Family'},
+  {tig:'ኣሞ',             rom:'Amo',                eng:'Aunt (mother\'s side)',        cat:'Family'},
+  {tig:'ቆልዓ',           rom:"Qol'a",              eng:'Child',                       cat:'Family'},
+  {tig:'ስድራ ቤት',       rom:'Sidra bet',          eng:'Family',                      cat:'Family'},
+  // ── Numbers ──
+  {tig:'ዜሮ',             rom:'Zero',               eng:'Zero',                        cat:'Numbers'},
+  {tig:'ሓደ',             rom:'Hade',               eng:'One',                         cat:'Numbers'},
+  {tig:'ክልተ',           rom:'Kilte',              eng:'Two',                         cat:'Numbers'},
+  {tig:'ሰለስተ',         rom:'Seleste',            eng:'Three',                       cat:'Numbers'},
+  {tig:'ኣርባዕተ',       rom:"Arba'te",            eng:'Four',                        cat:'Numbers'},
+  {tig:'ሓሙሽተ',         rom:'Hamushte',           eng:'Five',                        cat:'Numbers'},
+  {tig:'ሽዱሽተ',         rom:'Shidushte',          eng:'Six',                         cat:'Numbers'},
+  {tig:'ሸውዓተ',         rom:"Shew'ate",           eng:'Seven',                       cat:'Numbers'},
+  {tig:'ሸሞንተ',         rom:'Shemonte',           eng:'Eight',                       cat:'Numbers'},
+  {tig:'ትሽዓተ',         rom:"Tish'ate",           eng:'Nine',                        cat:'Numbers'},
+  {tig:'ዓሰርተ',         rom:"'Aserte",            eng:'Ten',                         cat:'Numbers'},
+  {tig:'ዕስራ',           rom:"'Isra",              eng:'Twenty',                      cat:'Numbers'},
+  {tig:'ሰላሳ',           rom:'Selasa',             eng:'Thirty',                      cat:'Numbers'},
+  {tig:'ሚእቲ',           rom:"Mi'eti",             eng:'One hundred',                 cat:'Numbers'},
+  {tig:'ሽሕ',             rom:'Shih',               eng:'One thousand',                cat:'Numbers'},
+  // ── Food ──
+  {tig:'ኢንጀራ',         rom:'Injera',             eng:'Injera (flatbread)',           cat:'Food'},
+  {tig:'ጺብሒ',           rom:"Ts'ibhi",            eng:'Stew / Sauce',                cat:'Food'},
+  {tig:'ሽሮ',             rom:'Shiro',              eng:'Chickpea stew',               cat:'Food'},
+  {tig:'ዝጕ',             rom:'Zigni',              eng:'Spiced meat stew',            cat:'Food'},
+  {tig:'ስጋ',             rom:'Siga',               eng:'Meat',                        cat:'Food'},
+  {tig:'ዓሳ',             rom:"'Asa",               eng:'Fish',                        cat:'Food'},
+  {tig:'ዶሮ',             rom:'Doro',               eng:'Chicken',                     cat:'Food'},
+  {tig:'ቡን',             rom:'Bun',                eng:'Coffee',                      cat:'Food'},
+  {tig:'ሻሂ',             rom:'Shahi',              eng:'Tea',                         cat:'Food'},
+  {tig:'ወተሓሊብ',       rom:'Wetehalib',          eng:'Milk',                        cat:'Food'},
+  {tig:'ማይ',             rom:'May',                eng:'Water',                       cat:'Food'},
+  {tig:'ሽኮር',           rom:'Shikor',             eng:'Sugar',                       cat:'Food'},
+  {tig:'ጨው',             rom:"Ch'ew",              eng:'Salt',                        cat:'Food'},
+  {tig:'ፍረ',             rom:'Fre',                eng:'Fruit',                       cat:'Food'},
+  {tig:'ዓተር',           rom:"'Ater",              eng:'Lentils / Peas',              cat:'Food'},
+  // ── Body ──
+  {tig:'ርእሲ',           rom:"Re'si",              eng:'Head',                        cat:'Body'},
+  {tig:'ዓይኒ',           rom:"'Ayni",              eng:'Eye',                         cat:'Body'},
+  {tig:'እዝኒ',           rom:'Izni',               eng:'Ear',                         cat:'Body'},
+  {tig:'ኣፍ',             rom:'Af',                 eng:'Mouth',                       cat:'Body'},
+  {tig:'ኣፍንጫ',         rom:'Afncha',             eng:'Nose',                        cat:'Body'},
+  {tig:'ኢድ',             rom:'Id',                 eng:'Hand / Arm',                  cat:'Body'},
+  {tig:'ኣጻብዕ',         rom:"Ats'abi'",           eng:'Fingers',                     cat:'Body'},
+  {tig:'እግሪ',           rom:'Igri',               eng:'Leg / Foot',                  cat:'Body'},
+  {tig:'ሆዲ',             rom:'Hodi',               eng:'Stomach / Belly',             cat:'Body'},
+  {tig:'ልቢ',             rom:'Libi',               eng:'Heart',                       cat:'Body'},
+  {tig:'ሓንጎል',         rom:'Hangol',             eng:'Brain',                       cat:'Body'},
+  {tig:'ኣስናን',         rom:'Asnan',              eng:'Teeth',                       cat:'Body'},
+  // ── Colors ──
+  {tig:'ቀይሕ',           rom:'Qeyih',              eng:'Red',                         cat:'Colors'},
+  {tig:'ሓምለዋይ',       rom:'Hamlewai',           eng:'Green',                       cat:'Colors'},
+  {tig:'ጸሊም',           rom:'Tselim',             eng:'Black',                       cat:'Colors'},
+  {tig:'ጻዕዳ',           rom:"Ts'a'da",            eng:'White',                       cat:'Colors'},
+  {tig:'ሰማያዊ',         rom:'Semayawi',           eng:'Blue',                        cat:'Colors'},
+  {tig:'ቢጫ',             rom:'Bicha',              eng:'Yellow',                      cat:'Colors'},
+  {tig:'ቡናዊ',           rom:'Bunawi',             eng:'Brown',                       cat:'Colors'},
+  {tig:'ሮዜ',             rom:'Roze',               eng:'Pink',                        cat:'Colors'},
+  // ── Days ──
+  {tig:'ሰኑይ',           rom:'Senuy',              eng:'Monday',                      cat:'Days'},
+  {tig:'ሰሉስ',           rom:'Selus',              eng:'Tuesday',                     cat:'Days'},
+  {tig:'ረቡዕ',           rom:"Rebu'",              eng:'Wednesday',                   cat:'Days'},
+  {tig:'ሓሙስ',           rom:'Hamus',              eng:'Thursday',                    cat:'Days'},
+  {tig:'ዓርቢ',           rom:"'Arbi",              eng:'Friday',                      cat:'Days'},
+  {tig:'ቀዳም',           rom:'Qedam',              eng:'Saturday',                    cat:'Days'},
+  {tig:'ሰንበት',         rom:'Senbet',             eng:'Sunday',                      cat:'Days'},
+  // ── Months ──
+  {tig:'ጥሪ',             rom:"T'iri",              eng:'January',                     cat:'Months'},
+  {tig:'ለካቲት',         rom:'Lekhatit',           eng:'February',                    cat:'Months'},
+  {tig:'መጋቢት',         rom:'Megabit',            eng:'March',                       cat:'Months'},
+  {tig:'ሚያዝያ',         rom:'Miyazya',            eng:'April',                       cat:'Months'},
+  {tig:'ግንቦት',         rom:'Ginbot',             eng:'May',                         cat:'Months'},
+  {tig:'ሰነ',             rom:'Sene',               eng:'June',                        cat:'Months'},
+  {tig:'ሓምለ',           rom:'Hamle',              eng:'July',                        cat:'Months'},
+  {tig:'ነሓሰ',           rom:'Nehase',             eng:'August',                      cat:'Months'},
+  {tig:'መስከረም',       rom:'Meskerem',           eng:'September',                   cat:'Months'},
+  {tig:'ጥቅምቲ',         rom:"T'iqimti",           eng:'October',                     cat:'Months'},
+  {tig:'ሕዳር',           rom:'Hidar',              eng:'November',                    cat:'Months'},
+  {tig:'ታሕሳስ',         rom:'Tahsas',             eng:'December',                    cat:'Months'},
+  // ── Verbs ──
+  {tig:'ምብላዕ',         rom:"Mibla'",             eng:'To eat',                      cat:'Verbs'},
+  {tig:'ምስታይ',         rom:'Mistay',             eng:'To drink',                    cat:'Verbs'},
+  {tig:'ምኻድ',           rom:'Mikhad',             eng:'To go',                       cat:'Verbs'},
+  {tig:'ምምጻእ',         rom:"Mimtsa'",            eng:'To come',                     cat:'Verbs'},
+  {tig:'ምዝራብ',         rom:'Mizrab',             eng:'To speak / talk',             cat:'Verbs'},
+  {tig:'ምስማዕ',         rom:"Misma'",             eng:'To listen / hear',            cat:'Verbs'},
+  {tig:'ምርኣይ',         rom:"Mira'ay",            eng:'To see / look',               cat:'Verbs'},
+  {tig:'ምድቃስ',         rom:'Midqas',             eng:'To sleep',                    cat:'Verbs'},
+  {tig:'ምስራሕ',         rom:"Mis'raq",            eng:'To work',                     cat:'Verbs'},
+  {tig:'ምምሃር',         rom:'Mimhar',             eng:'To study / learn',            cat:'Verbs'},
+  {tig:'ምጽሓፍ',         rom:"Mits'haf",           eng:'To write',                    cat:'Verbs'},
+  {tig:'ምንባብ',         rom:'Minbab',             eng:'To read',                     cat:'Verbs'},
+  // ── Places ──
+  {tig:'ቤት',             rom:'Bet',                eng:'House / Home',                cat:'Places'},
+  {tig:'ቤት ትምህርቲ',   rom:'Bet timhirti',       eng:'School',                      cat:'Places'},
+  {tig:'ሆስፒታል',       rom:'Hospital',           eng:'Hospital',                    cat:'Places'},
+  {tig:'ዕዳጋ',           rom:"'Edaga",             eng:'Market / Bazaar',             cat:'Places'},
+  {tig:'ቤተ ክርስቲያን', rom:'Bete kristiyan',     eng:'Church',                      cat:'Places'},
+  {tig:'መስጊድ',         rom:'Mesgid',             eng:'Mosque',                      cat:'Places'},
+  {tig:'ሃገር',           rom:'Hager',              eng:'Country / Nation',            cat:'Places'},
+  {tig:'ከተማ',           rom:'Ketema',             eng:'City / Town',                 cat:'Places'},
+  {tig:'ዓዲ',             rom:"'Adi",               eng:'Village',                     cat:'Places'},
+  {tig:'ቤት ምግቢ',     rom:'Bet migbi',          eng:'Restaurant',                  cat:'Places'},
+  // ── Animals ──
+  {tig:'ኣንበሳ',         rom:'Anbesa',             eng:'Lion',                        cat:'Animals'},
+  {tig:'ሃሽሙ',           rom:'Hashmu',             eng:'Elephant',                    cat:'Animals'},
+  {tig:'ፍየል',           rom:'Fiyel',              eng:'Goat',                        cat:'Animals'},
+  {tig:'ላም',             rom:'Lam',                eng:'Cow',                         cat:'Animals'},
+  {tig:'ኣድጊ',           rom:'Adgi',               eng:'Donkey',                      cat:'Animals'},
+  {tig:'ወፈይ',           rom:'Wefey',              eng:'Bird',                        cat:'Animals'},
+  {tig:'ከልቢ',           rom:'Kelbi',              eng:'Dog',                         cat:'Animals'},
+  {tig:'ድሙ',             rom:'Dimu',               eng:'Cat',                         cat:'Animals'},
+  {tig:'ኣናጹ',           rom:'Anatsu',             eng:'Mouse / Rat',                 cat:'Animals'},
+  {tig:'ዝሆን',           rom:'Zihon',              eng:'Elephant (alt.)',             cat:'Animals'},
+  // ── Adjectives ──
+  {tig:'ዓቢ',             rom:"'Abi",               eng:'Big / Large',                 cat:'Adjectives'},
+  {tig:'ንኢሽ',           rom:"Ni'ish",             eng:'Small / Little',              cat:'Adjectives'},
+  {tig:'ጽቡቕ',           rom:"Ts'buq",             eng:'Good / Beautiful',            cat:'Adjectives'},
+  {tig:'ሕማቕ',           rom:"Himaq",              eng:'Bad',                         cat:'Adjectives'},
+  {tig:'ሓዲሽ',           rom:'Hadish',             eng:'New',                         cat:'Adjectives'},
+  {tig:'ኣረጊት',         rom:'Aregit',             eng:'Old',                         cat:'Adjectives'},
+  {tig:'ሓጺር',           rom:'Hatsir',             eng:'Short',                       cat:'Adjectives'},
+  {tig:'ነዊሕ',           rom:'Newih',              eng:'Long / Tall',                 cat:'Adjectives'},
+  {tig:'ሞቖ',             rom:'Moqo',               eng:'Hot / Warm',                  cat:'Adjectives'},
+  {tig:'ቀዝሒ',           rom:'Qezhi',              eng:'Cold',                        cat:'Adjectives'},
+  {tig:'ቀልጢፍ',         rom:'Qeltif',             eng:'Fast / Quick',                cat:'Adjectives'},
+  {tig:'ዕዙዝ',           rom:"'Uzuz",              eng:'Heavy',                       cat:'Adjectives'},
+  // ── School ──
+  {tig:'ቤት ትምህርቲ',   rom:'Bet timhirti',       eng:'School',                      cat:'School'},
+  {tig:'መምህር',         rom:'Memhir',             eng:'Teacher (male)',               cat:'School'},
+  {tig:'መምህርቲ',       rom:'Memhirti',           eng:'Teacher (female)',             cat:'School'},
+  {tig:'ተምሃሮ',         rom:'Temharo',            eng:'Students',                    cat:'School'},
+  {tig:'ደብተር',         rom:'Debtir',             eng:'Notebook',                    cat:'School'},
+  {tig:'ብርዒ',           rom:"Biri'",              eng:'Pen / Pencil',                cat:'School'},
+  {tig:'መጽሓፍ',         rom:"Mets'haf",           eng:'Book',                        cat:'School'},
+  {tig:'ሕቶ',             rom:'Hito',               eng:'Question',                    cat:'School'},
+  {tig:'መልሲ',           rom:'Melsi',              eng:'Answer',                      cat:'School'},
+  {tig:'ፈተና',           rom:'Fetena',             eng:'Exam / Test',                 cat:'School'},
+  {tig:'ክፍሊ',           rom:'Kifli',              eng:'Classroom',                   cat:'School'},
+  {tig:'ትምህርቲ',       rom:'Timhirti',           eng:'Education / Lesson',          cat:'School'},
+];
+
 let libCat = 'all', libQuery = '';
 
 function getTbDone(bookId) {
@@ -2637,6 +2863,53 @@ document.getElementById('transBtn').addEventListener('click', async () => {
     btn.disabled = false; btn.textContent = 'Translate →';
   }
 });
+
+/* ═══════════════════════════════
+   DICTIONARY
+═══════════════════════════════ */
+const DICT_CATS = ['All','Greetings','Family','Numbers','Food','Body','Colors','Days','Months','Verbs','Places','Animals','Adjectives','School'];
+let _dictCat = 'All', _dictQ = '';
+
+function renderDict() {
+  const q = _dictQ.toLowerCase();
+  const pool = _dictCat === 'All' ? DICT : DICT.filter(d => d.cat === _dictCat);
+  const filtered = q
+    ? pool.filter(d => d.tig.includes(q) || d.rom.toLowerCase().includes(q) || d.eng.toLowerCase().includes(q))
+    : pool;
+  document.getElementById('dictCount').textContent = filtered.length + ' word' + (filtered.length !== 1 ? 's' : '');
+  const grid = document.getElementById('dictGrid');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="dict-empty">No words found — try a different search.</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(d =>
+    `<div class="dict-card">
+      <div class="dict-tig">${d.tig}</div>
+      <div class="dict-rom">${d.rom}</div>
+      <div class="dict-eng">${d.eng}</div>
+      <span class="dict-badge">${d.cat}</span>
+    </div>`
+  ).join('');
+}
+
+(function initDict() {
+  const catsEl = document.getElementById('dictCats');
+  catsEl.innerHTML = DICT_CATS.map(c =>
+    `<button class="dict-cat${c === 'All' ? ' active' : ''}" data-cat="${c}">${c}</button>`
+  ).join('');
+  catsEl.addEventListener('click', e => {
+    const btn = e.target.closest('.dict-cat');
+    if (!btn) return;
+    _dictCat = btn.dataset.cat;
+    catsEl.querySelectorAll('.dict-cat').forEach(b => b.classList.toggle('active', b === btn));
+    renderDict();
+  });
+  document.getElementById('dictSearch').addEventListener('input', e => {
+    _dictQ = e.target.value;
+    renderDict();
+  });
+  renderDict();
+})();
 
 /* ═══════════════════════════════
    TOAST
