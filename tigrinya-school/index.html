@@ -22,12 +22,12 @@
     :root {
       --green: #16a34a; --green-d: #15803d; --green-light: rgba(22,163,74,0.15);
       --red: #ef4444;
-      --bg:   rgba(255,255,255,0.40);
-      --card: rgba(255,255,255,0.84);
-      --text: #0f172a; --text-sub: rgba(15,23,42,0.62); --text-dim: rgba(15,23,42,0.40);
-      --border: rgba(255,255,255,0.90);
-      --shadow:    0 2px 16px rgba(0,30,100,.14), 0 1px 5px rgba(0,30,100,.09);
-      --shadow-md: 0 8px 38px rgba(0,30,100,.20);
+      --bg:   rgba(255,255,255,0.44);
+      --card: rgba(255,255,255,0.92);
+      --text: #0f172a; --text-sub: rgba(15,23,42,0.65); --text-dim: rgba(15,23,42,0.42);
+      --border: rgba(255,255,255,0.95);
+      --shadow:    0 2px 18px rgba(0,20,80,.16), 0 1px 6px rgba(0,20,80,.10);
+      --shadow-md: 0 8px 40px rgba(0,20,80,.24);
       --radius: 14px; --radius-sm: 9px; --nav-h: 62px;
     }
     [data-sky="night"] {
@@ -88,19 +88,19 @@
 
     /* ── HEADER ── */
     .hub-header {
-      background: rgba(14,45,120,0.52);
-      backdrop-filter: blur(28px) saturate(2.2) brightness(1.0);
-      -webkit-backdrop-filter: blur(28px) saturate(2.2) brightness(1.0);
-      border-bottom: 1px solid rgba(255,255,255,0.22);
-      box-shadow: 0 1px 0 rgba(255,255,255,0.12), 0 2px 18px rgba(0,30,100,.20);
+      background: rgba(10,35,110,0.62);
+      backdrop-filter: blur(32px) saturate(2.4) brightness(1.06);
+      -webkit-backdrop-filter: blur(32px) saturate(2.4) brightness(1.06);
+      border-bottom: 1.5px solid rgba(255,255,255,0.30);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 20px rgba(0,20,80,.22);
       color: white; padding: 14px 18px 12px;
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 100;
     }
     [data-sky="night"] .hub-header {
-      background: rgba(4,10,42,0.68);
-      border-bottom-color: rgba(147,197,253,0.16);
-      box-shadow: 0 1px 0 rgba(255,255,255,0.06), 0 2px 18px rgba(0,10,60,.40);
+      background: rgba(3,6,30,0.78);
+      border-bottom-color: rgba(147,197,253,0.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 2px 20px rgba(0,10,60,.45);
     }
     .hub-logo { display: flex; align-items: center; gap: 10px; }
     .hub-logo-icon { font-size: 1.6rem; }
@@ -124,18 +124,18 @@
     /* ── BOTTOM NAV ── */
     .hub-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(14,45,120,0.60);
-      border-top: 1px solid rgba(255,255,255,0.26);
-      box-shadow: 0 -1px 0 rgba(255,255,255,0.12), 0 -4px 30px rgba(0,30,100,.18);
-      backdrop-filter: blur(28px) saturate(2.2);
-      -webkit-backdrop-filter: blur(28px) saturate(2.2);
+      background: rgba(10,35,110,0.72);
+      border-top: 1.5px solid rgba(255,255,255,0.30);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 -4px 30px rgba(0,20,80,.22);
+      backdrop-filter: blur(32px) saturate(2.4) brightness(1.06);
+      -webkit-backdrop-filter: blur(32px) saturate(2.4) brightness(1.06);
       display: flex; height: var(--nav-h);
       padding-bottom: env(safe-area-inset-bottom); z-index: 100;
     }
     [data-sky="night"] .hub-nav {
-      background: rgba(4,8,40,0.72);
-      border-top-color: rgba(147,197,253,0.15);
-      box-shadow: 0 -1px 0 rgba(255,255,255,0.05), 0 -4px 30px rgba(0,10,60,.45);
+      background: rgba(3,6,30,0.82);
+      border-top-color: rgba(147,197,253,0.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 -4px 30px rgba(0,10,60,.50);
     }
     .hnav-btn {
       flex: 1; display: flex; flex-direction: column;
@@ -651,8 +651,7 @@
       font-size: 0.7rem; color: var(--text-sub);
     }
     .sync-bar-left { display: flex; align-items: center; gap: 7px; }
-    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; display: none; }
-    .sync-dot.active { display: inline-block; }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.25); flex-shrink: 0; }
     .sync-bar-btn {
       font-size: 0.68rem; font-weight: 700; color: var(--green);
       padding: 3px 10px; border: 1.5px solid currentColor; border-radius: 20px;
@@ -826,8 +825,9 @@
     .ctrl-backdrop.open { opacity: 1; pointer-events: auto; }
     .ctrl-modal {
       background: var(--card); border-radius: var(--radius); padding: 22px 20px 18px;
-      width: min(380px, 100%); box-shadow: var(--shadow-md); position: relative;
+      width: min(420px, 100%); box-shadow: var(--shadow-md); position: relative;
       transform: translateY(12px); transition: transform .2s;
+      max-height: 90vh; overflow-y: auto;
     }
     .ctrl-backdrop.open .ctrl-modal { transform: translateY(0); }
     .ctrl-close {
@@ -1037,11 +1037,12 @@
       display: flex; align-items: center; justify-content: center; padding: 20px;
       overflow: hidden;
       background: linear-gradient(180deg,
-        #1e3a8a 0%, #1d4ed8 20%, #2563eb 48%, #3b82f6 74%, #60a5fa 100%);
+        #030e28 0%, #071a52 14%, #0d2880 30%, #1638b0 50%,
+        #1d4ed8 68%, #2258e8 84%, #3878f0 100%);
     }
     [data-sky="night"] .auth-gate {
       background: linear-gradient(180deg,
-        #020617 0%, #0c1445 36%, #1a3680 70%, #0e4c75 100%);
+        #010207 0%, #04091c 25%, #080f38 52%, #0c1445 75%, #0e1a55 100%);
     }
     .auth-gate::before {
       content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -1059,10 +1060,14 @@
     .auth-card {
       background: var(--card); border-radius: 22px;
       padding: 34px 26px 28px; width: 100%; max-width: 380px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 12px 48px rgba(0,20,80,.20);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.80),
+        0 4px 24px rgba(0,0,0,.12), 0 20px 60px rgba(0,20,80,.28);
+      border: 1px solid rgba(255,255,255,0.60);
     }
     [data-sky="night"] .auth-card {
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 48px rgba(0,0,0,.40);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18),
+        0 4px 24px rgba(0,0,0,.30), 0 20px 60px rgba(0,0,0,.55);
+      border: 1px solid rgba(147,197,253,0.20);
     }
     .auth-logo { font-size: 2.6rem; text-align: center; margin-bottom: 4px; }
     .auth-title { font-size: 1.35rem; font-weight: 900; text-align: center; color: var(--text); letter-spacing: -.4px; }
@@ -1107,14 +1112,15 @@
     .sky-scene {
       position: fixed; inset: 0; z-index: -1;
       pointer-events: none; overflow: hidden;
-      /* Day — deep sapphire sky, serious + clean */
+      /* Day — deep ocean-to-sky gradient, rich + professional */
       background: linear-gradient(180deg,
-        #0f2468 0%, #1a3a9f 22%, #1d4ed8 50%, #2563eb 76%, #3b82f6 100%);
+        #030e28 0%, #071a52 14%, #0d2880 30%, #1638b0 50%,
+        #1d4ed8 68%, #2258e8 84%, #3878f0 100%);
     }
     [data-sky="night"] .sky-scene {
       /* Night — deep starfield */
       background: linear-gradient(180deg,
-        #020617 0%, #0c1445 36%, #1a3680 70%, #0e4c75 100%);
+        #010207 0%, #04091c 25%, #080f38 52%, #0c1445 75%, #0e1a55 100%);
     }
 
     /* Soft cloud wisps — day only */
@@ -1177,6 +1183,75 @@
       display: none;
     }
     [data-sky="night"] .sky-stars { display: block; }
+
+    /* ── SYNC DOT in header ── */
+    .sync-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.25); flex-shrink: 0; display: inline-block;
+      transition: background 0.3s;
+    }
+    .sync-dot.active { background: #4ade80; }
+
+    /* ── 3-DOT MENU ── */
+    .dot-menu-wrap { position: relative; }
+    .dot-menu-btn {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 900; color: white;
+      letter-spacing: -.5px; line-height: 1;
+      transition: background 0.15s;
+    }
+    .dot-menu-btn:hover { background: rgba(255,255,255,0.28); }
+    .dot-menu-panel {
+      position: fixed; top: 58px; left: 8px; right: 8px;
+      max-height: calc(100svh - 78px); overflow-y: auto;
+      background: rgba(8,24,80,0.93);
+      backdrop-filter: blur(32px) saturate(2.2) brightness(1.05);
+      -webkit-backdrop-filter: blur(32px) saturate(2.2) brightness(1.05);
+      border: 1.5px solid rgba(255,255,255,0.22);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 16px 60px rgba(0,10,50,0.60);
+      border-radius: 20px; z-index: 200;
+      opacity: 0; transform: translateY(-8px);
+      pointer-events: none; transition: opacity .22s, transform .22s;
+    }
+    [data-sky="night"] .dot-menu-panel {
+      background: rgba(2,4,18,0.96);
+      border-color: rgba(147,197,253,0.14);
+    }
+    .dot-menu-panel.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    @media all and (display-mode: standalone) {
+      .dot-menu-panel { top: calc(62px + env(safe-area-inset-top)); }
+    }
+    .dm-section { border-bottom: 1px solid rgba(255,255,255,0.09); padding: 10px 0; }
+    .dm-section:last-child { border-bottom: none; }
+    .dm-sync-msg { font-size: 0.76rem; color: rgba(255,255,255,0.52); padding: 10px 18px 4px; display: block; }
+    .dm-acct-details { padding: 2px 18px 10px; }
+    .dm-acct-email { font-size: 0.84rem; font-weight: 700; color: rgba(255,255,255,0.88); margin-bottom: 2px; }
+    .dm-acct-id { font-size: 0.68rem; color: rgba(255,255,255,0.45); font-family: monospace; letter-spacing: .3px; }
+    .dm-progress-wrap { padding: 10px 14px; }
+    .dm-progress-wrap .progress-strip {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: var(--radius-sm); margin: 0;
+      backdrop-filter: none; box-shadow: none;
+    }
+    .dm-progress-wrap .ps-lbl { color: rgba(255,255,255,0.48); }
+    .dm-progress-wrap .ps-val { color: white; }
+    .dm-progress-wrap .ps-ring-track { stroke: rgba(255,255,255,0.18); }
+    .dm-progress-wrap .ps-divider { background: rgba(255,255,255,0.12); }
+    .dm-progress-wrap .ps-reset-btn { color: rgba(255,255,255,0.45); }
+    .dm-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 18px; }
+    .dm-toggle-label { font-size: 0.84rem; font-weight: 600; color: rgba(255,255,255,0.82); }
+    .dm-action {
+      width: 100%; text-align: left; padding: 12px 18px;
+      font-size: 0.84rem; font-weight: 600; color: rgba(255,255,255,0.82);
+      display: flex; align-items: center; gap: 10px;
+      transition: background 0.12s; background: none; border-radius: 0;
+    }
+    .dm-action:hover { background: rgba(255,255,255,0.08); }
+    .dm-action.dm-signout { color: #f87171; }
+    .dm-action.dm-signin { color: #4ade80; }
   </style>
 </head>
 <body>
@@ -1239,67 +1314,91 @@
       </div>
     </div>
     <div class="hub-hdr-right">
-      <button class="ctrl-btn" id="ctrlBtn" style="display:none" title="Parental Controls">🎛️</button>
-      <button class="theme-btn" id="themeBtn" title="Toggle night mode">🌙</button>
+      <span class="sync-dot" id="syncDot"></span>
+      <div class="dot-menu-wrap">
+        <button class="dot-menu-btn" id="dotMenuBtn" aria-label="Menu">···</button>
+        <div class="dot-menu-panel" id="dotMenuPanel">
+
+          <!-- Account info -->
+          <div class="dm-section">
+            <span class="dm-sync-msg" id="syncMsg">☁ Sign in to save your progress</span>
+            <div class="dm-acct-details" id="acctPanel">
+              <div class="dm-acct-email acct-email" id="acctEmail"></div>
+              <div class="dm-acct-id acct-id" id="acctStudentId"></div>
+            </div>
+          </div>
+
+          <!-- Progress stats -->
+          <div class="dm-section dm-progress-wrap">
+            <div class="progress-strip">
+              <div class="ps-item">
+                <div class="ps-icon">🏆</div>
+                <div class="ps-val" id="psXP">0</div>
+                <div class="ps-lbl" id="psLevel">Learner</div>
+              </div>
+              <div class="ps-divider"></div>
+              <div class="ps-item">
+                <div class="ps-icon">🔥</div>
+                <div class="ps-val" id="psStreak">0</div>
+                <div class="ps-lbl">Streak</div>
+              </div>
+              <div class="ps-divider"></div>
+              <div class="ps-item">
+                <div class="ps-icon">⭐</div>
+                <div class="ps-val" id="psStars">0</div>
+                <div class="ps-lbl">Stars</div>
+              </div>
+              <div class="ps-divider"></div>
+              <div class="ps-item">
+                <svg class="ps-ring" viewBox="0 0 36 36" width="34" height="34">
+                  <circle class="ps-ring-track" cx="18" cy="18" r="14" fill="none" stroke-width="4"/>
+                  <circle class="ps-ring-fill" cx="18" cy="18" r="14" fill="none" stroke-width="4"
+                          stroke-dasharray="0 87.96" stroke-linecap="round"
+                          transform="rotate(-90 18 18)" id="psRingFill"/>
+                  <text x="18" y="22" text-anchor="middle" font-size="9" font-weight="800"
+                        fill="currentColor" id="psRingNum">0</text>
+                </svg>
+                <div class="ps-lbl">Daily</div>
+              </div>
+              <button class="ps-reset-btn" id="psResetBtn" title="Reset progress">⚙</button>
+            </div>
+          </div>
+
+          <!-- Profile + Night + Sound -->
+          <div class="dm-section">
+            <button class="dm-action" id="acctProfileBtn">👤 View Profile</button>
+          </div>
+          <div class="dm-section">
+            <div class="dm-toggle-row">
+              <span class="dm-toggle-label">Night Mode</span>
+              <button class="theme-btn" id="themeBtn">🌙</button>
+            </div>
+            <div class="dm-toggle-row">
+              <span class="dm-toggle-label">Sound</span>
+              <button class="sound-btn" id="soundBtn">🔊</button>
+            </div>
+          </div>
+
+          <!-- Parental controls (parent only) + Sign in/out -->
+          <div class="dm-section">
+            <button class="dm-action" id="ctrlBtn" style="display:none">🎛️ Parental Controls</button>
+            <button class="dm-action dm-signin" id="syncBarBtn">Sign In →</button>
+            <button class="dm-action dm-signout" id="acctSignOut" style="display:none">Sign Out</button>
+          </div>
+
+        </div>
+      </div>
     </div>
   </header>
 
-  <div class="sync-bar" id="syncBar" style="position:relative">
-    <div class="sync-bar-left">
-      <span class="sync-dot" id="syncDot"></span>
-      <span id="syncMsg">☁ Sign in to save your progress</span>
-    </div>
-    <button class="sync-bar-btn" id="syncBarBtn">Sign In →</button>
-    <div class="acct-panel" id="acctPanel">
-      <div class="acct-email" id="acctEmail"></div>
-      <div class="acct-id" id="acctStudentId"></div>
-      <button class="acct-profile-btn" id="acctProfileBtn">View Profile</button>
-      <button class="acct-signout" id="acctSignOut">Sign Out</button>
-    </div>
-  </div>
-
   <!-- ══ VIEW 1 — LEARN ══ -->
   <div class="view active" id="view-learn">
-
-    <div class="progress-strip">
-      <div class="ps-item">
-        <div class="ps-icon">🏆</div>
-        <div class="ps-val" id="psXP">0</div>
-        <div class="ps-lbl" id="psLevel">Learner</div>
-      </div>
-      <div class="ps-divider"></div>
-      <div class="ps-item">
-        <div class="ps-icon">🔥</div>
-        <div class="ps-val" id="psStreak">0</div>
-        <div class="ps-lbl">Streak</div>
-      </div>
-      <div class="ps-divider"></div>
-      <div class="ps-item">
-        <div class="ps-icon">⭐</div>
-        <div class="ps-val" id="psStars">0</div>
-        <div class="ps-lbl">Stars</div>
-      </div>
-      <div class="ps-divider"></div>
-      <div class="ps-item">
-        <svg class="ps-ring" viewBox="0 0 36 36" width="34" height="34">
-          <circle class="ps-ring-track" cx="18" cy="18" r="14" fill="none" stroke-width="4"/>
-          <circle class="ps-ring-fill" cx="18" cy="18" r="14" fill="none" stroke-width="4"
-                  stroke-dasharray="0 87.96" stroke-linecap="round"
-                  transform="rotate(-90 18 18)" id="psRingFill"/>
-          <text x="18" y="22" text-anchor="middle" font-size="9" font-weight="800"
-                fill="currentColor" id="psRingNum">0</text>
-        </svg>
-        <div class="ps-lbl">Daily</div>
-      </div>
-      <button class="ps-reset-btn" id="psResetBtn" title="Reset progress">⚙</button>
-    </div>
 
     <div class="learn-head">
       <div>
         <h2 style="font-size:1.25rem;font-weight:800;letter-spacing:-.4px">🎓 Learn Tigrinya</h2>
         <p style="font-size:0.8rem;color:var(--text-sub);margin-top:3px">Alphabet, vocabulary, flashcards, quiz &amp; lessons</p>
       </div>
-      <button class="sound-btn" id="soundBtn" title="Toggle pronunciation">🔊</button>
     </div>
 
     <div class="tabs" id="learnTabs">
@@ -1720,6 +1819,14 @@
       <div class="ctrl-row">
         <span class="ctrl-row-label">🌍 Community</span>
         <label class="ctrl-switch"><input type="checkbox" id="ctrlCommunity" checked><span class="ctrl-track"></span></label>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-row-label">🧩 Games &amp; Puzzles</span>
+        <label class="ctrl-switch"><input type="checkbox" id="ctrlPuzzle" checked><span class="ctrl-track"></span></label>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-row-label">📚 Library</span>
+        <label class="ctrl-switch"><input type="checkbox" id="ctrlLibrary" checked><span class="ctrl-track"></span></label>
       </div>
       <button class="ctrl-save" id="ctrlSaveBtn">Save Changes</button>
     </div>
@@ -3840,12 +3947,14 @@ function renderDict() {
    PARENTAL CONTROLS
 ═══════════════════════════════ */
 function applyStudentControls(controls) {
-  const c = Object.assign({ translate: true, dictionary: true, community: true }, controls || {});
-  ['translate', 'dictionary', 'community'].forEach(view => {
-    const btn = document.querySelector(`.hnav-btn[data-view="${view}"]`);
+  const c = Object.assign(
+    { translate: true, dictionary: true, community: true, puzzle: true, library: true },
+    controls || {}
+  );
+  ['translate', 'dictionary', 'community', 'puzzle', 'library'].forEach(view => {
+    const btn = document.querySelector('.hnav-btn[data-view="' + view + '"]');
     if (btn) btn.style.display = c[view] ? '' : 'none';
   });
-  // Redirect away from a now-hidden view
   const activeBtn = document.querySelector('.hnav-btn.active');
   if (activeBtn && activeBtn.style.display === 'none') showView('learn');
 }
@@ -3870,6 +3979,8 @@ function subscribeStudentControls(studentId) {
   const toggles  = document.getElementById('ctrlToggles');
   const msgEl    = document.getElementById('ctrlMsg');
 
+  idInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadBtn.click(); });
+
   loadBtn.addEventListener('click', async () => {
     const sid = idInput.value.trim().toUpperCase();
     if (!/^ERI-\d{6}$/.test(sid)) {
@@ -3886,6 +3997,8 @@ function subscribeStudentControls(studentId) {
       document.getElementById('ctrlTranslate').checked  = c.translate  !== false;
       document.getElementById('ctrlDictionary').checked = c.dictionary !== false;
       document.getElementById('ctrlCommunity').checked  = c.community  !== false;
+      document.getElementById('ctrlPuzzle').checked     = c.puzzle     !== false;
+      document.getElementById('ctrlLibrary').checked    = c.library    !== false;
       toggles.style.display = '';
       // Child progress
       const cp = document.getElementById('childProgress');
@@ -3909,13 +4022,15 @@ function subscribeStudentControls(studentId) {
 
   saveBtn.addEventListener('click', async () => {
     const sid = idInput.value.trim().toUpperCase();
-    if (!sid || !_syncDb) return;
+    if (!/^ERI-\d{6}$/.test(sid) || !_syncDb) return;
     saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; msgEl.textContent = '';
     try {
       await _syncDb.collection('controls').doc(sid).set({
         translate:  document.getElementById('ctrlTranslate').checked,
         dictionary: document.getElementById('ctrlDictionary').checked,
         community:  document.getElementById('ctrlCommunity').checked,
+        puzzle:     document.getElementById('ctrlPuzzle').checked,
+        library:    document.getElementById('ctrlLibrary').checked,
       });
       msgEl.style.color = 'var(--green)'; msgEl.textContent = '✓ Saved! Changes apply to the student instantly';
     } catch(e) {
@@ -4329,9 +4444,10 @@ function syncProgress() {
 }
 
 function updateSyncBar() {
-  const msg = document.getElementById('syncMsg');
-  const btn = document.getElementById('syncBarBtn');
-  const dot = document.getElementById('syncDot');
+  const msg    = document.getElementById('syncMsg');
+  const signIn = document.getElementById('syncBarBtn');
+  const signOut= document.getElementById('acctSignOut');
+  const dot    = document.getElementById('syncDot');
   const moneyBtn = document.getElementById('moneyNavBtn');
   if (!msg) return;
   const isParent = syncProfile && syncProfile.role === 'parent';
@@ -4342,41 +4458,50 @@ function updateSyncBar() {
   if (!syncUser) {
     dot && dot.classList.remove('active');
     msg.textContent = '☁ Sign in to save your progress';
-    if (btn) btn.textContent = 'Sign In →';
-    document.getElementById('acctPanel')?.classList.remove('open');
+    if (signIn)  signIn.style.display  = '';
+    if (signOut) signOut.style.display = 'none';
   } else {
     dot && dot.classList.add('active');
     const name = ((syncProfile && syncProfile.name) || syncUser.email || '').split(' ')[0];
-    msg.textContent = '☁ Synced · ' + name;
-    if (btn) btn.textContent = 'Account ↗';
+    msg.textContent = '✓ Synced · ' + name;
+    if (signIn)  signIn.style.display  = 'none';
+    if (signOut) signOut.style.display = '';
     const emailEl = document.getElementById('acctEmail');
-    const idEl = document.getElementById('acctStudentId');
+    const idEl    = document.getElementById('acctStudentId');
     if (emailEl) emailEl.textContent = syncUser.email || '';
-    if (idEl) idEl.textContent = (syncProfile?.studentId) ? ('Student ID: ' + syncProfile.studentId) : (isParent ? 'Parent account' : '');
+    if (idEl) idEl.textContent = (syncProfile?.studentId) ? ('ID: ' + syncProfile.studentId) : (isParent ? 'Parent account' : '');
   }
 }
 
-/* ── Account panel ── */
+/* ── 3-dot menu ── */
+(function() {
+  const dotBtn   = document.getElementById('dotMenuBtn');
+  const dotPanel = document.getElementById('dotMenuPanel');
+  dotBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    dotPanel.classList.toggle('open');
+  });
+  document.addEventListener('click', e => {
+    if (dotPanel.classList.contains('open') &&
+        !dotPanel.contains(e.target) && e.target !== dotBtn) {
+      dotPanel.classList.remove('open');
+    }
+  });
+})();
+
+/* ── Sign in / out ── */
 document.getElementById('syncBarBtn').addEventListener('click', () => {
-  if (!syncUser) { showAuthGate(); return; }
-  const panel = document.getElementById('acctPanel');
-  panel.classList.toggle('open');
+  document.getElementById('dotMenuPanel').classList.remove('open');
+  showAuthGate();
 });
 document.getElementById('acctSignOut').addEventListener('click', () => {
-  document.getElementById('acctPanel').classList.remove('open');
+  document.getElementById('dotMenuPanel').classList.remove('open');
   firebase.auth().signOut().catch(() => {});
-});
-document.addEventListener('click', e => {
-  const panel = document.getElementById('acctPanel');
-  if (!panel.classList.contains('open')) return;
-  if (!panel.contains(e.target) && e.target !== document.getElementById('syncBarBtn')) {
-    panel.classList.remove('open');
-  }
 });
 
 /* ── Profile modal ── */
 document.getElementById('acctProfileBtn').addEventListener('click', () => {
-  document.getElementById('acctPanel').classList.remove('open');
+  document.getElementById('dotMenuPanel').classList.remove('open');
   openProfile();
 });
 document.getElementById('profileModalClose').addEventListener('click', () => {
