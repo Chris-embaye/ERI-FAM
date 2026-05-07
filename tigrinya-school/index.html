@@ -166,8 +166,10 @@
     .tab-panel.active { display: block; }
 
     .s-head { margin-bottom: 14px; }
-    .s-head h2 { font-size: 1.25rem; font-weight: 800; letter-spacing: -.4px; }
-    .s-head p { font-size: 0.8rem; color: var(--text-sub); margin-top: 3px; }
+    .s-head h2 { font-size: 1.25rem; font-weight: 800; letter-spacing: -.4px; color: rgba(255,255,255,0.95); }
+    .s-head p { font-size: 0.8rem; color: rgba(255,255,255,0.65); margin-top: 3px; }
+    .learn-head h2 { color: rgba(255,255,255,0.95); }
+    .learn-head p { color: rgba(255,255,255,0.65); }
 
     /* ── PROGRESS STRIP ── */
     .progress-strip {
@@ -1396,8 +1398,8 @@
 
     <div class="learn-head">
       <div>
-        <h2 style="font-size:1.25rem;font-weight:800;letter-spacing:-.4px">🎓 Learn Tigrinya</h2>
-        <p style="font-size:0.8rem;color:var(--text-sub);margin-top:3px">Alphabet, vocabulary, flashcards, quiz &amp; lessons</p>
+        <h2 style="font-size:1.25rem;font-weight:800;letter-spacing:-.4px;color:rgba(255,255,255,0.95)">🎓 Learn Tigrinya</h2>
+        <p style="font-size:0.8rem;color:rgba(255,255,255,0.65);margin-top:3px">Alphabet, vocabulary, flashcards, quiz &amp; lessons</p>
       </div>
     </div>
 
@@ -1900,6 +1902,10 @@
 
 <script>
 'use strict';
+
+/* Shared auth/db state — must be global so functions outside DOMContentLoaded
+   (initCtrlModal, subscribeStudentControls, etc.) can read them */
+let syncUser = null, syncProfile = null, _syncDb = null;
 
 /* ═══════════════════════════════
    DATA — ALPHABET
@@ -4427,7 +4433,6 @@ window.addEventListener('appinstalled', () => {
    have already executed.
 ═══════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
-let syncUser = null, syncProfile = null, _syncDb = null;
 let authRole = 'student';
 
 function syncProgress() {
