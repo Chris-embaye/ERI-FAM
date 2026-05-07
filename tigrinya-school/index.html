@@ -1254,6 +1254,166 @@
     .dm-action:hover { background: rgba(255,255,255,0.08); }
     .dm-action.dm-signout { color: #f87171; }
     .dm-action.dm-signin { color: #4ade80; }
+
+    /* ── NAV ACTIVE INDICATOR — glowing line above active tab ── */
+    .hnav-btn { position: relative; }
+    .hnav-btn.active::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 34px; height: 3px; background: #4ade80; border-radius: 0 0 4px 4px;
+      box-shadow: 0 0 10px rgba(74,222,128,0.85), 0 0 22px rgba(74,222,128,0.40);
+    }
+
+    /* ── TAB ACTIVE GLOW ── */
+    .tab-btn.active {
+      box-shadow: 0 0 16px rgba(22,163,74,0.55), 0 2px 10px rgba(22,163,74,0.25);
+    }
+
+    /* ── CTRL MODAL ENHANCED ── */
+    .ctrl-section-title {
+      font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .7px;
+      color: rgba(255,255,255,0.35); padding: 14px 18px 6px; display: flex; align-items: center; gap: 8px;
+    }
+    .ctrl-section-title::after {
+      content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.10);
+    }
+    .saved-kids-wrap { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 18px 12px; min-height: 0; }
+    .saved-kids-wrap:empty { display: none; }
+    .saved-kid-chip {
+      font-size: 0.72rem; font-weight: 700; font-family: monospace;
+      background: rgba(74,222,128,0.12); color: #4ade80;
+      border: 1.5px solid rgba(74,222,128,0.30); border-radius: 20px;
+      padding: 5px 14px; cursor: pointer; transition: all 0.12s;
+    }
+    .saved-kid-chip:hover { background: rgba(74,222,128,0.24); }
+
+    /* Time limit option buttons */
+    .time-opts { display: flex; gap: 7px; padding: 4px 18px 12px; }
+    .time-opt-btn {
+      flex: 1; padding: 9px 4px; border-radius: 10px;
+      font-size: 0.72rem; font-weight: 700; text-align: center;
+      background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.60);
+      border: 1.5px solid rgba(255,255,255,0.12); cursor: pointer; transition: all 0.14s;
+    }
+    .time-opt-btn.active {
+      background: rgba(74,222,128,0.16); color: #4ade80;
+      border-color: rgba(74,222,128,0.45);
+      box-shadow: 0 0 12px rgba(74,222,128,0.22);
+    }
+
+    /* Schedule settings */
+    .sched-wrap { padding: 2px 18px 12px; }
+    .sched-enable-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .sched-enable-label { font-size: 0.8rem; color: rgba(255,255,255,0.70); font-weight: 600; }
+    .sched-days { display: flex; gap: 5px; margin-bottom: 12px; }
+    .sched-day-btn {
+      flex: 1; padding: 8px 0; border-radius: 8px;
+      font-size: 0.64rem; font-weight: 800; text-align: center;
+      background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.42);
+      border: 1.5px solid rgba(255,255,255,0.10); cursor: pointer; transition: all 0.14s;
+    }
+    .sched-day-btn.on {
+      background: rgba(74,222,128,0.16); color: #4ade80;
+      border-color: rgba(74,222,128,0.40);
+    }
+    .sched-time-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .sched-time-label { font-size: 0.70rem; color: rgba(255,255,255,0.50); min-width: 32px; }
+    .sched-time-input {
+      flex: 1; padding: 8px 10px; border-radius: 8px;
+      background: rgba(255,255,255,0.10); color: white;
+      border: 1.5px solid rgba(255,255,255,0.18); font-size: 0.82rem;
+      color-scheme: dark; outline: none;
+    }
+    .sched-time-input:focus { border-color: rgba(74,222,128,0.5); }
+
+    /* Weekly bar chart */
+    .weekly-chart-wrap { padding: 4px 18px 12px; }
+    .weekly-chart { display: flex; align-items: flex-end; gap: 5px; height: 72px; }
+    .weekly-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; }
+    .weekly-bar-track {
+      flex: 1; width: 100%; background: rgba(255,255,255,0.08); border-radius: 4px;
+      overflow: hidden; display: flex; align-items: flex-end;
+    }
+    .weekly-bar-fill { width: 100%; background: rgba(74,222,128,0.50); border-radius: 4px; min-height: 0; transition: height .5s ease; }
+    .weekly-bar-fill.today { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.6); }
+    .weekly-bar-fill.zero { display: none; }
+    .weekly-bar-lbl { font-size: 0.58rem; color: rgba(255,255,255,0.38); font-weight: 700; }
+
+    /* PIN setup row */
+    .pin-set-row { padding: 4px 18px 12px; display: flex; gap: 10px; align-items: center; }
+    .pin-set-input {
+      flex: 1; padding: 9px 12px; border-radius: 9px;
+      background: rgba(255,255,255,0.10); color: white;
+      border: 1.5px solid rgba(255,255,255,0.18); font-size: 0.92rem; font-family: monospace;
+      letter-spacing: 5px; text-align: center; outline: none;
+    }
+    .pin-set-input:focus { border-color: rgba(74,222,128,0.5); }
+    .pin-set-btn {
+      padding: 9px 16px; border-radius: 9px;
+      background: rgba(74,222,128,0.16); color: #4ade80;
+      border: 1.5px solid rgba(74,222,128,0.35); font-size: 0.78rem; font-weight: 800;
+      cursor: pointer; transition: background 0.12s; white-space: nowrap;
+    }
+    .pin-set-btn:hover { background: rgba(74,222,128,0.28); }
+    .pin-status { font-size: 0.68rem; padding: 0 18px 10px; color: rgba(255,255,255,0.42); }
+
+    /* ── PIN ENTRY OVERLAY ── */
+    .pin-overlay {
+      position: fixed; inset: 0; z-index: 600;
+      background: rgba(2,6,30,0.88);
+      backdrop-filter: blur(18px) saturate(1.8);
+      -webkit-backdrop-filter: blur(18px) saturate(1.8);
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .pin-overlay.open { display: flex; }
+    .pin-card {
+      background: rgba(8,22,78,0.97); border: 1.5px solid rgba(255,255,255,0.22);
+      border-radius: 24px; padding: 32px 24px 26px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 24px 70px rgba(0,0,0,0.65);
+      width: 100%; max-width: 300px; text-align: center;
+    }
+    .pin-card-title { font-size: 1.05rem; font-weight: 800; color: white; margin-bottom: 5px; }
+    .pin-card-sub { font-size: 0.72rem; color: rgba(255,255,255,0.48); margin-bottom: 22px; }
+    .pin-dots { display: flex; justify-content: center; gap: 14px; margin-bottom: 24px; }
+    .pin-dot {
+      width: 13px; height: 13px; border-radius: 50%;
+      background: rgba(255,255,255,0.18); border: 2px solid rgba(255,255,255,0.28);
+      transition: all 0.12s;
+    }
+    .pin-dot.filled { background: #4ade80; border-color: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.7); }
+    .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .pin-key {
+      padding: 15px; border-radius: 12px; font-size: 1.15rem; font-weight: 700; color: white;
+      background: rgba(255,255,255,0.09); border: 1.5px solid rgba(255,255,255,0.13);
+      cursor: pointer; transition: background 0.10s; user-select: none;
+    }
+    .pin-key:active { background: rgba(255,255,255,0.22); }
+    .pin-key.pin-zero { grid-column: 2; }
+    .pin-key.pin-del { color: #f87171; font-size: 1.0rem; }
+    .pin-err-msg { font-size: 0.72rem; color: #f87171; margin-top: 12px; min-height: 18px; }
+    .pin-cancel-link { font-size: 0.70rem; color: rgba(255,255,255,0.35); margin-top: 14px; cursor: pointer; }
+
+    /* ── STUDENT BLOCK OVERLAYS ── */
+    .student-block {
+      position: fixed; inset: 0; z-index: 350;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 28px;
+      background: linear-gradient(180deg,
+        #030e28 0%, #071a52 18%, #0d2880 40%, #1638b0 70%, #1d4ed8 100%);
+    }
+    .student-block.show { display: flex; }
+    [data-sky="night"] .student-block {
+      background: linear-gradient(180deg, #010207 0%, #04091c 30%, #080f38 70%, #0c1445 100%);
+    }
+    .student-block-card {
+      background: rgba(10,25,80,0.94); border: 1.5px solid rgba(255,255,255,0.20);
+      border-radius: 26px; padding: 38px 28px 32px; text-align: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 24px 70px rgba(0,0,0,0.55);
+      width: 100%; max-width: 320px;
+    }
+    .student-block-icon { font-size: 3.2rem; margin-bottom: 16px; }
+    .student-block-title { font-size: 1.25rem; font-weight: 900; color: white; margin-bottom: 10px; }
+    .student-block-msg { font-size: 0.83rem; color: rgba(255,255,255,0.58); line-height: 1.65; }
+    .student-block-sub { font-size: 0.70rem; color: rgba(255,255,255,0.36); margin-top: 16px; }
   </style>
 </head>
 <body>
@@ -1800,16 +1960,75 @@
 </div>
 <div class="hub-toast" id="hubToast"></div>
 
+<!-- ══ PIN ENTRY OVERLAY ══ -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-card">
+    <div class="pin-card-title">🔒 Parent PIN</div>
+    <div class="pin-card-sub">Enter your 4-digit PIN to access parental controls</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" data-k="1">1</button>
+      <button class="pin-key" data-k="2">2</button>
+      <button class="pin-key" data-k="3">3</button>
+      <button class="pin-key" data-k="4">4</button>
+      <button class="pin-key" data-k="5">5</button>
+      <button class="pin-key" data-k="6">6</button>
+      <button class="pin-key" data-k="7">7</button>
+      <button class="pin-key" data-k="8">8</button>
+      <button class="pin-key" data-k="9">9</button>
+      <button class="pin-key pin-zero" data-k="0">0</button>
+      <button class="pin-key pin-del" id="pinDelBtn">⌫</button>
+    </div>
+    <div class="pin-err-msg" id="pinErrMsg"></div>
+    <div class="pin-cancel-link" id="pinCancelLink">Cancel</div>
+  </div>
+</div>
+
+<!-- ══ STUDENT BLOCK — TIME LIMIT ══ -->
+<div class="student-block" id="blockTimeUp">
+  <div class="student-block-card">
+    <div class="student-block-icon">⏰</div>
+    <div class="student-block-title">Time's Up!</div>
+    <div class="student-block-msg">You've reached your daily learning limit.<br>Come back tomorrow to keep going!</div>
+    <div class="student-block-sub">Your progress has been saved</div>
+  </div>
+</div>
+
+<!-- ══ STUDENT BLOCK — SCHEDULE ══ -->
+<div class="student-block" id="blockSchedule">
+  <div class="student-block-card">
+    <div class="student-block-icon">📅</div>
+    <div class="student-block-title">Learning Time</div>
+    <div class="student-block-msg" id="blockScheduleMsg">Learning is available during scheduled hours.<br>Check back during your learning time!</div>
+    <div class="student-block-sub" id="blockScheduleSub"></div>
+  </div>
+</div>
+
 <div class="ctrl-backdrop" id="ctrlBackdrop">
   <div class="ctrl-modal">
     <button class="ctrl-close" id="ctrlClose">✕</button>
     <div class="ctrl-title">🎛️ Parental Controls</div>
     <div class="ctrl-sub">Enter your student's ERI-ID to manage what they can access</div>
+
+    <!-- Saved students chips -->
+    <div class="saved-kids-wrap" id="savedKidsWrap"></div>
+
     <div class="ctrl-id-row">
       <input class="ctrl-id-input" id="ctrlIdInput" placeholder="ERI-000000" maxlength="10">
       <button class="ctrl-load-btn" id="ctrlLoadBtn">Load</button>
     </div>
+    <div class="ctrl-msg" id="ctrlMsg"></div>
+
+    <!-- Settings (shown after loading student) -->
     <div id="ctrlToggles" class="ctrl-toggles" style="display:none">
+
+      <!-- App Access -->
+      <div class="ctrl-section-title">App Access</div>
       <div class="ctrl-row">
         <span class="ctrl-row-label">🔤 Translate</span>
         <label class="ctrl-switch"><input type="checkbox" id="ctrlTranslate" checked><span class="ctrl-track"></span></label>
@@ -1830,20 +2049,71 @@
         <span class="ctrl-row-label">📚 Library</span>
         <label class="ctrl-switch"><input type="checkbox" id="ctrlLibrary" checked><span class="ctrl-track"></span></label>
       </div>
+
+      <!-- Daily Time Limit -->
+      <div class="ctrl-section-title">Daily Time Limit</div>
+      <div class="time-opts">
+        <button class="time-opt-btn active" data-mins="0">No limit</button>
+        <button class="time-opt-btn" data-mins="30">30 min</button>
+        <button class="time-opt-btn" data-mins="60">1 hour</button>
+        <button class="time-opt-btn" data-mins="120">2 hours</button>
+      </div>
+
+      <!-- Learning Schedule -->
+      <div class="ctrl-section-title">Learning Schedule</div>
+      <div class="sched-wrap">
+        <div class="sched-enable-row">
+          <span class="sched-enable-label">Scheduled hours only</span>
+          <label class="ctrl-switch"><input type="checkbox" id="schedEnabled"><span class="ctrl-track"></span></label>
+        </div>
+        <div class="sched-days" id="schedDays">
+          <button class="sched-day-btn on" data-d="0">Su</button>
+          <button class="sched-day-btn on" data-d="1">Mo</button>
+          <button class="sched-day-btn on" data-d="2">Tu</button>
+          <button class="sched-day-btn on" data-d="3">We</button>
+          <button class="sched-day-btn on" data-d="4">Th</button>
+          <button class="sched-day-btn on" data-d="5">Fr</button>
+          <button class="sched-day-btn on" data-d="6">Sa</button>
+        </div>
+        <div class="sched-time-row">
+          <span class="sched-time-label">From</span>
+          <input type="time" class="sched-time-input" id="schedStart" value="07:00">
+        </div>
+        <div class="sched-time-row">
+          <span class="sched-time-label">To</span>
+          <input type="time" class="sched-time-input" id="schedEnd" value="21:00">
+        </div>
+      </div>
+
+      <!-- Weekly Activity Report -->
+      <div class="ctrl-section-title">Weekly Activity</div>
+      <div class="weekly-chart-wrap">
+        <div class="weekly-chart" id="weeklyChart"></div>
+      </div>
+
+      <!-- Student Progress -->
+      <div class="child-progress show" id="childProgress">
+        <div class="ctrl-section-title">Student Stats</div>
+        <div class="child-level-row">
+          <span class="child-level-name" id="childLevelName">Lv.1 Learner</span>
+          <span class="child-last-active" id="childLastActive"></span>
+        </div>
+        <div class="child-stat-row">
+          <div class="child-stat"><div class="child-stat-val" id="childXp">0</div><div class="child-stat-lbl">XP</div></div>
+          <div class="child-stat"><div class="child-stat-val" id="childStreak">0</div><div class="child-stat-lbl">Streak</div></div>
+          <div class="child-stat"><div class="child-stat-val" id="childLessons">0</div><div class="child-stat-lbl">Lessons</div></div>
+        </div>
+      </div>
+
+      <!-- PIN Lock -->
+      <div class="ctrl-section-title">PIN Lock</div>
+      <div class="pin-set-row">
+        <input type="password" class="pin-set-input" id="pinSetInput" placeholder="••••" maxlength="4" inputmode="numeric">
+        <button class="pin-set-btn" id="pinSetBtn">Set PIN</button>
+      </div>
+      <div class="pin-status" id="pinStatus"></div>
+
       <button class="ctrl-save" id="ctrlSaveBtn">Save Changes</button>
-    </div>
-    <div class="ctrl-msg" id="ctrlMsg"></div>
-    <div class="child-progress" id="childProgress">
-      <div class="child-progress-title" id="childProgressTitle">Student Progress</div>
-      <div class="child-level-row">
-        <span class="child-level-name" id="childLevelName">Lv.1 Learner</span>
-        <span class="child-last-active" id="childLastActive"></span>
-      </div>
-      <div class="child-stat-row">
-        <div class="child-stat"><div class="child-stat-val" id="childXp">0</div><div class="child-stat-lbl">XP</div></div>
-        <div class="child-stat"><div class="child-stat-val" id="childStreak">0</div><div class="child-stat-lbl">Streak</div></div>
-        <div class="child-stat"><div class="child-stat-val" id="childLessons">0</div><div class="child-stat-lbl">Lessons</div></div>
-      </div>
     </div>
   </div>
 </div>
@@ -1906,6 +2176,171 @@
 /* Shared auth/db state — must be global so functions outside DOMContentLoaded
    (initCtrlModal, subscribeStudentControls, etc.) can read them */
 let syncUser = null, syncProfile = null, _syncDb = null;
+
+/* ── Parental controls state (student-side) ── */
+let _studentControls = null;
+let _scheduleCheckInterval = null;
+
+/* ── Study time tracking (uses existing fidel-time-YYYY-MM-DD storage) ── */
+function getStudyMinsToday() {
+  const secs = window.getStudyTimeToday ? window.getStudyTimeToday() : 0;
+  return Math.floor(secs / 60);
+}
+
+/* ── PIN helpers ── */
+function getPIN()        { return localStorage.getItem('fidel-parent-pin') || ''; }
+function setPIN(p)       { localStorage.setItem('fidel-parent-pin', p); }
+function hasPIN()        { return getPIN().length === 4; }
+
+/* ── Saved students helpers ── */
+function getSavedKids() {
+  try { return JSON.parse(localStorage.getItem('fidel-saved-kids') || '[]'); } catch(e) { return []; }
+}
+function saveKid(id) {
+  const kids = getSavedKids().filter(k => k.id !== id);
+  kids.unshift({ id });
+  localStorage.setItem('fidel-saved-kids', JSON.stringify(kids.slice(0, 8)));
+}
+function renderSavedKids(onSelect) {
+  const wrap = document.getElementById('savedKidsWrap');
+  if (!wrap) return;
+  const kids = getSavedKids();
+  wrap.innerHTML = kids.map(k =>
+    `<button class="saved-kid-chip" data-id="${k.id}">${k.id}</button>`
+  ).join('');
+  wrap.querySelectorAll('.saved-kid-chip').forEach(btn => {
+    btn.addEventListener('click', () => onSelect(btn.dataset.id));
+  });
+}
+
+/* ── Schedule check ── */
+function isWithinSchedule(controls) {
+  if (!controls || !controls.scheduleEnabled) return true;
+  const now  = new Date();
+  const day  = now.getDay();
+  const days = controls.scheduleDays || [0,1,2,3,4,5,6];
+  if (!days.includes(day)) return false;
+  const hm = h => { const [hh,mm] = h.split(':').map(Number); return hh * 60 + mm; };
+  const cur  = now.getHours() * 60 + now.getMinutes();
+  const start = hm(controls.scheduleStart || '07:00');
+  const end   = hm(controls.scheduleEnd   || '21:00');
+  return cur >= start && cur <= end;
+}
+
+function fmtScheduleWindow(controls) {
+  const days = controls.scheduleDays || [0,1,2,3,4,5,6];
+  const names = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dayStr = days.length === 7 ? 'Every day' : days.map(d => names[d]).join(', ');
+  return dayStr + ' · ' + (controls.scheduleStart || '07:00') + ' – ' + (controls.scheduleEnd || '21:00');
+}
+
+/* ── Student block overlay ── */
+function checkStudentBlocks() {
+  if (!_studentControls) return;
+  const c = _studentControls;
+
+  // Time limit check
+  const limitMins = c.dailyMinutes || 0;
+  if (limitMins > 0) {
+    const usedMins = getStudyMinsToday();
+    if (usedMins >= limitMins) {
+      document.getElementById('blockTimeUp').classList.add('show');
+      return;
+    }
+    document.getElementById('blockTimeUp').classList.remove('show');
+  } else {
+    document.getElementById('blockTimeUp').classList.remove('show');
+  }
+
+  // Schedule check
+  if (!isWithinSchedule(c)) {
+    const msgEl = document.getElementById('blockScheduleMsg');
+    const subEl = document.getElementById('blockScheduleSub');
+    if (msgEl) msgEl.textContent = 'Learning is only available during scheduled hours.';
+    if (subEl) subEl.textContent = fmtScheduleWindow(c);
+    document.getElementById('blockSchedule').classList.add('show');
+    return;
+  }
+  document.getElementById('blockSchedule').classList.remove('show');
+}
+
+/* ── Weekly chart renderer (parent view) ── */
+function renderWeeklyChart(activeDaysMap) {
+  const chartEl = document.getElementById('weeklyChart');
+  if (!chartEl) return;
+  const today = new Date();
+  const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  chartEl.innerHTML = '';
+  let maxXp = 1;
+  const entries = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const xp = (activeDaysMap && activeDaysMap[key]) || 0;
+    if (xp > maxXp) maxXp = xp;
+    entries.push({ key, xp, isToday: i === 0, dayLabel: days[d.getDay()] });
+  }
+  entries.forEach(({ xp, isToday, dayLabel }) => {
+    const pct = Math.round((xp / maxXp) * 100);
+    const col = document.createElement('div');
+    col.className = 'weekly-bar-col';
+    col.innerHTML =
+      '<div class="weekly-bar-track"><div class="weekly-bar-fill' +
+      (isToday ? ' today' : '') + (xp === 0 ? ' zero' : '') +
+      '" style="height:' + pct + '%"></div></div>' +
+      '<div class="weekly-bar-lbl">' + dayLabel + '</div>';
+    chartEl.appendChild(col);
+  });
+}
+
+/* ── PIN overlay logic ── */
+(function initPinOverlay() {
+  let _pinBuffer = '';
+  let _pinCallback = null;
+
+  window.openPinEntry = function(onSuccess) {
+    _pinBuffer = '';
+    _pinCallback = onSuccess;
+    _renderPinDots();
+    document.getElementById('pinErrMsg').textContent = '';
+    document.getElementById('pinOverlay').classList.add('open');
+  };
+
+  function _renderPinDots() {
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('pd' + i);
+      if (dot) dot.classList.toggle('filled', i < _pinBuffer.length);
+    }
+  }
+
+  function _onKey(k) {
+    if (_pinBuffer.length < 4) {
+      _pinBuffer += k;
+      _renderPinDots();
+      if (_pinBuffer.length === 4) {
+        const stored = getPIN();
+        if (_pinBuffer === stored) {
+          document.getElementById('pinOverlay').classList.remove('open');
+          if (_pinCallback) _pinCallback();
+        } else {
+          document.getElementById('pinErrMsg').textContent = 'Incorrect PIN. Try again.';
+          setTimeout(() => { _pinBuffer = ''; _renderPinDots(); document.getElementById('pinErrMsg').textContent = ''; }, 900);
+        }
+      }
+    }
+  }
+
+  document.querySelectorAll('.pin-key[data-k]').forEach(btn => {
+    btn.addEventListener('click', () => _onKey(btn.dataset.k));
+  });
+  document.getElementById('pinDelBtn').addEventListener('click', () => {
+    _pinBuffer = _pinBuffer.slice(0, -1); _renderPinDots();
+    document.getElementById('pinErrMsg').textContent = '';
+  });
+  document.getElementById('pinCancelLink').addEventListener('click', () => {
+    document.getElementById('pinOverlay').classList.remove('open');
+  });
+})();
 
 /* ═══════════════════════════════
    DATA — ALPHABET
@@ -3953,6 +4388,7 @@ function renderDict() {
    PARENTAL CONTROLS
 ═══════════════════════════════ */
 function applyStudentControls(controls) {
+  _studentControls = controls || null;
   const c = Object.assign(
     { translate: true, dictionary: true, community: true, puzzle: true, library: true },
     controls || {}
@@ -3963,6 +4399,13 @@ function applyStudentControls(controls) {
   });
   const activeBtn = document.querySelector('.hnav-btn.active');
   if (activeBtn && activeBtn.style.display === 'none') showView('learn');
+
+  // Start schedule re-check interval
+  clearInterval(_scheduleCheckInterval);
+  if (controls) {
+    checkStudentBlocks();
+    _scheduleCheckInterval = setInterval(checkStudentBlocks, 60000);
+  }
 }
 
 function subscribeStudentControls(studentId) {
@@ -3975,15 +4418,58 @@ function subscribeStudentControls(studentId) {
 
 (function initCtrlModal() {
   const backdrop = document.getElementById('ctrlBackdrop');
-  document.getElementById('ctrlBtn').addEventListener('click', () => backdrop.classList.add('open'));
-  document.getElementById('ctrlClose').addEventListener('click', () => { backdrop.classList.remove('open'); document.getElementById('childProgress').classList.remove('show'); });
-  backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.classList.remove('open'); });
-
   const loadBtn  = document.getElementById('ctrlLoadBtn');
   const saveBtn  = document.getElementById('ctrlSaveBtn');
   const idInput  = document.getElementById('ctrlIdInput');
   const toggles  = document.getElementById('ctrlToggles');
   const msgEl    = document.getElementById('ctrlMsg');
+
+  // ── Open with PIN if set ──
+  document.getElementById('ctrlBtn').addEventListener('click', () => {
+    if (hasPIN()) {
+      openPinEntry(() => { _openCtrlModal(); });
+    } else {
+      _openCtrlModal();
+    }
+  });
+
+  function _openCtrlModal() {
+    renderSavedKids(id => {
+      idInput.value = id;
+      loadBtn.click();
+    });
+    backdrop.classList.add('open');
+  }
+
+  document.getElementById('ctrlClose').addEventListener('click', () => {
+    backdrop.classList.remove('open');
+  });
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.classList.remove('open'); });
+
+  // ── Time limit option buttons ──
+  document.querySelectorAll('.time-opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.time-opt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // ── Schedule day toggles ──
+  document.querySelectorAll('.sched-day-btn').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('on'));
+  });
+
+  // ── PIN set ──
+  document.getElementById('pinSetBtn').addEventListener('click', () => {
+    const val = document.getElementById('pinSetInput').value.trim();
+    const statusEl = document.getElementById('pinStatus');
+    if (val.length !== 4 || !/^\d{4}$/.test(val)) {
+      statusEl.style.color = 'var(--red)'; statusEl.textContent = 'PIN must be exactly 4 digits'; return;
+    }
+    setPIN(val);
+    document.getElementById('pinSetInput').value = '';
+    statusEl.style.color = '#4ade80'; statusEl.textContent = '✓ PIN saved — required next time you open controls';
+  });
 
   idInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadBtn.click(); });
 
@@ -4000,26 +4486,52 @@ function subscribeStudentControls(studentId) {
         _syncDb.collection('progress').doc(sid).get(),
       ]);
       const c = ctrlSnap.exists ? ctrlSnap.data() : {};
+
+      // App access toggles
       document.getElementById('ctrlTranslate').checked  = c.translate  !== false;
       document.getElementById('ctrlDictionary').checked = c.dictionary !== false;
       document.getElementById('ctrlCommunity').checked  = c.community  !== false;
       document.getElementById('ctrlPuzzle').checked     = c.puzzle     !== false;
       document.getElementById('ctrlLibrary').checked    = c.library    !== false;
-      toggles.style.display = '';
-      // Child progress
-      const cp = document.getElementById('childProgress');
+
+      // Time limit
+      const mins = c.dailyMinutes || 0;
+      document.querySelectorAll('.time-opt-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.mins, 10) === mins);
+      });
+
+      // Schedule
+      document.getElementById('schedEnabled').checked = !!c.scheduleEnabled;
+      const days = c.scheduleDays || [0,1,2,3,4,5,6];
+      document.querySelectorAll('.sched-day-btn').forEach(b => {
+        b.classList.toggle('on', days.includes(parseInt(b.dataset.d, 10)));
+      });
+      document.getElementById('schedStart').value = c.scheduleStart || '07:00';
+      document.getElementById('schedEnd').value   = c.scheduleEnd   || '21:00';
+
+      // Student progress
       if (progSnap.exists) {
         const p = progSnap.data();
         const lv = getLevel(p.xp || 0);
         document.getElementById('childLevelName').textContent  = 'Lv.' + lv.level + ' ' + lv.name;
-        document.getElementById('childLastActive').textContent = p.lastActive ? 'Active: ' + p.lastActive : '';
-        document.getElementById('childXp').textContent         = p.xp || 0;
-        document.getElementById('childStreak').textContent     = p.streak || 0;
-        document.getElementById('childLessons').textContent    = (p.lessonsCompleted || []).length;
-        cp.classList.add('show');
+        document.getElementById('childLastActive').textContent = p.lastActive ? '· ' + p.lastActive : '';
+        document.getElementById('childXp').textContent      = p.xp || 0;
+        document.getElementById('childStreak').textContent  = p.streak || 0;
+        document.getElementById('childLessons').textContent = (p.lessonsCompleted || []).length;
+        // Weekly chart
+        renderWeeklyChart(p.activeDays || {});
       } else {
-        cp.classList.remove('show');
+        renderWeeklyChart({});
       }
+
+      // PIN status
+      const pinSt = document.getElementById('pinStatus');
+      if (pinSt) pinSt.textContent = hasPIN() ? '🔒 PIN is set — controls are protected' : 'No PIN set (anyone can open controls)';
+      if (pinSt) pinSt.style.color = hasPIN() ? '#4ade80' : 'rgba(255,255,255,0.38)';
+
+      toggles.style.display = '';
+      saveKid(sid);
+      renderSavedKids(id => { idInput.value = id; loadBtn.click(); });
       msgEl.style.color = 'var(--green)'; msgEl.textContent = '✓ Student loaded — adjust settings below';
     } catch(e) {
       msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Could not load — check the ID and try again';
@@ -4031,12 +4543,22 @@ function subscribeStudentControls(studentId) {
     if (!/^ERI-\d{6}$/.test(sid) || !_syncDb) return;
     saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; msgEl.textContent = '';
     try {
+      const activeTimeBtn = document.querySelector('.time-opt-btn.active');
+      const dailyMinutes = activeTimeBtn ? parseInt(activeTimeBtn.dataset.mins, 10) : 0;
+      const scheduleDays = [];
+      document.querySelectorAll('.sched-day-btn.on').forEach(b => scheduleDays.push(parseInt(b.dataset.d, 10)));
+
       await _syncDb.collection('controls').doc(sid).set({
-        translate:  document.getElementById('ctrlTranslate').checked,
-        dictionary: document.getElementById('ctrlDictionary').checked,
-        community:  document.getElementById('ctrlCommunity').checked,
-        puzzle:     document.getElementById('ctrlPuzzle').checked,
-        library:    document.getElementById('ctrlLibrary').checked,
+        translate:      document.getElementById('ctrlTranslate').checked,
+        dictionary:     document.getElementById('ctrlDictionary').checked,
+        community:      document.getElementById('ctrlCommunity').checked,
+        puzzle:         document.getElementById('ctrlPuzzle').checked,
+        library:        document.getElementById('ctrlLibrary').checked,
+        dailyMinutes,
+        scheduleEnabled: document.getElementById('schedEnabled').checked,
+        scheduleDays,
+        scheduleStart:  document.getElementById('schedStart').value,
+        scheduleEnd:    document.getElementById('schedEnd').value,
       });
       msgEl.style.color = 'var(--green)'; msgEl.textContent = '✓ Saved! Changes apply to the student instantly';
     } catch(e) {
@@ -4439,6 +4961,10 @@ function syncProgress() {
   if (!syncUser || !syncProfile || syncProfile.role !== 'student' || !_syncDb) return;
   const sid = syncProfile.studentId;
   if (!sid) return;
+  const d = new Date();
+  const todayKey = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const activeDayUpdate = {};
+  activeDayUpdate['activeDays.' + todayKey] = prog.xp;
   _syncDb.collection('progress').doc(sid).set({
     xp: prog.xp, streak: prog.streak, stars: prog.stars,
     quizBest: prog.quizBest || 0, catStars: getCatStars(),
@@ -4446,6 +4972,7 @@ function syncProgress() {
     lastActive: new Date().toDateString(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(() => {});
+  _syncDb.collection('progress').doc(sid).update(activeDayUpdate).catch(() => {});
 }
 
 function updateSyncBar() {
