@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-sky="day">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -20,22 +20,24 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --green: #16a34a; --green-d: #15803d; --green-light: rgba(22,163,74,0.18);
-      --red: #f87171;
-      --bg: rgba(255,255,255,0.06);
-      --card: rgba(255,255,255,0.09);
-      --text: #dbeafe; --text-sub: rgba(219,234,254,0.7); --text-dim: rgba(219,234,254,0.42);
-      --border: rgba(147,197,253,0.22);
-      --shadow: 0 2px 12px rgba(0,10,60,.4), 0 1px 4px rgba(0,10,60,.3);
-      --shadow-md: 0 8px 32px rgba(0,10,80,.55);
+      --green: #16a34a; --green-d: #15803d; --green-light: rgba(22,163,74,0.15);
+      --red: #ef4444;
+      --bg:   rgba(255,255,255,0.20);
+      --card: rgba(255,255,255,0.32);
+      --text: #0f172a; --text-sub: rgba(15,23,42,0.60); --text-dim: rgba(15,23,42,0.35);
+      --border: rgba(255,255,255,0.62);
+      --shadow:    0 2px 14px rgba(0,40,120,.10), 0 1px 4px rgba(0,40,120,.07);
+      --shadow-md: 0 8px 36px rgba(0,40,120,.16);
       --radius: 14px; --radius-sm: 9px; --nav-h: 62px;
     }
-    [data-theme="dark"] {
+    [data-sky="night"] {
       --green: #22c55e; --green-d: #16a34a; --green-light: rgba(34,197,94,0.15);
-      --bg: rgba(0,5,30,0.35); --card: rgba(0,10,60,0.45);
-      --text: #dbeafe; --text-sub: rgba(219,234,254,0.65); --text-dim: rgba(219,234,254,0.38);
-      --border: rgba(147,197,253,0.15);
-      --shadow: 0 2px 12px rgba(0,0,0,.5); --shadow-md: 0 8px 32px rgba(0,0,0,.6);
+      --bg:   rgba(255,255,255,0.06);
+      --card: rgba(8,20,90,0.52);
+      --text: #e0f2fe; --text-sub: rgba(224,242,254,0.62); --text-dim: rgba(224,242,254,0.36);
+      --border: rgba(147,197,253,0.22);
+      --shadow:    0 2px 12px rgba(0,10,60,.45), 0 1px 4px rgba(0,10,60,.30);
+      --shadow-md: 0 8px 32px rgba(0,10,80,.60);
     }
     html, body { height: 100%; }
     body {
@@ -43,21 +45,27 @@
       background: transparent; color: var(--text); line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: -1;
-      background:
-        radial-gradient(ellipse 80% 55% at 15% 20%, rgba(59,130,246,0.22) 0%, transparent 60%),
-        radial-gradient(ellipse 65% 45% at 85% 80%, rgba(139,92,246,0.14) 0%, transparent 55%),
-        linear-gradient(135deg, #020617 0%, #0c1445 28%, #1e3a8a 60%, #0369a1 100%);
-    }
-
-    /* ── GLASS EFFECT — key panels ── */
+    /* ── SHINY GLASS EFFECT ── */
     .hub-nav, .progress-strip, .sync-bar,
     .auth-card, .profile-modal-card, .ctrl-modal, .acct-panel,
     .fc-card, .quiz-hero, .quiz-done, .book-reader {
-      backdrop-filter: blur(20px) saturate(1.5);
-      -webkit-backdrop-filter: blur(20px) saturate(1.5);
+      backdrop-filter: blur(24px) saturate(2.0) brightness(1.05);
+      -webkit-backdrop-filter: blur(24px) saturate(2.0) brightness(1.05);
+    }
+    /* Top-edge shine highlight on cards */
+    .progress-strip, .auth-card, .profile-modal-card, .ctrl-modal,
+    .fc-card, .quiz-hero, .quiz-done, .acct-panel {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.60), var(--shadow);
+    }
+    [data-sky="night"] .progress-strip,
+    [data-sky="night"] .auth-card,
+    [data-sky="night"] .profile-modal-card,
+    [data-sky="night"] .ctrl-modal,
+    [data-sky="night"] .fc-card,
+    [data-sky="night"] .quiz-hero,
+    [data-sky="night"] .quiz-done,
+    [data-sky="night"] .acct-panel {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), var(--shadow);
     }
     .fidel, .vc-tig, .fc-tig, .quiz-word, .lw-tig, .dict-tig, .pz-cell, .sc-tile {
       font-family: 'Noto Sans Ethiopic', 'Ebrima', 'Nyala', sans-serif;
@@ -80,13 +88,19 @@
 
     /* ── HEADER ── */
     .hub-header {
-      background: rgba(10,30,80,0.55);
-      backdrop-filter: blur(24px) saturate(1.6);
-      -webkit-backdrop-filter: blur(24px) saturate(1.6);
-      border-bottom: 1px solid rgba(147,197,253,0.18);
+      background: rgba(14,45,120,0.35);
+      backdrop-filter: blur(28px) saturate(2.2) brightness(1.0);
+      -webkit-backdrop-filter: blur(28px) saturate(2.2) brightness(1.0);
+      border-bottom: 1px solid rgba(255,255,255,0.26);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.14), 0 2px 18px rgba(0,30,100,.14);
       color: white; padding: 14px 18px 12px;
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 100;
+    }
+    [data-sky="night"] .hub-header {
+      background: rgba(4,10,42,0.68);
+      border-bottom-color: rgba(147,197,253,0.16);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.06), 0 2px 18px rgba(0,10,60,.40);
     }
     .hub-logo { display: flex; align-items: center; gap: 10px; }
     .hub-logo-icon { font-size: 1.6rem; }
@@ -110,11 +124,18 @@
     /* ── BOTTOM NAV ── */
     .hub-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(5,12,50,0.65);
-      border-top: 1px solid rgba(147,197,253,0.15);
+      background: rgba(14,45,120,0.40);
+      border-top: 1px solid rgba(255,255,255,0.26);
+      box-shadow: 0 -1px 0 rgba(255,255,255,0.12), 0 -4px 30px rgba(0,30,100,.18);
+      backdrop-filter: blur(28px) saturate(2.2);
+      -webkit-backdrop-filter: blur(28px) saturate(2.2);
       display: flex; height: var(--nav-h);
       padding-bottom: env(safe-area-inset-bottom); z-index: 100;
-      box-shadow: 0 -4px 24px rgba(0,0,40,.4);
+    }
+    [data-sky="night"] .hub-nav {
+      background: rgba(4,8,40,0.72);
+      border-top-color: rgba(147,197,253,0.15);
+      box-shadow: 0 -1px 0 rgba(255,255,255,0.05), 0 -4px 30px rgba(0,10,60,.45);
     }
     .hnav-btn {
       flex: 1; display: flex; flex-direction: column;
@@ -305,8 +326,8 @@
     .quiz-choice.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; pointer-events: none; }
     .quiz-choice.wrong { background: #fee2e2; border-color: #dc2626; color: #991b1b; pointer-events: none; }
     .quiz-choice.disabled { pointer-events: none; opacity: .55; }
-    [data-theme="dark"] .quiz-choice.correct { background: #14532d; border-color: #22c55e; color: #86efac; }
-    [data-theme="dark"] .quiz-choice.wrong { background: #450a0a; border-color: #dc2626; color: #fca5a5; }
+    [data-sky="night"] .quiz-choice.correct { background: #14532d; border-color: #22c55e; color: #86efac; }
+    [data-sky="night"] .quiz-choice.wrong { background: #450a0a; border-color: #dc2626; color: #fca5a5; }
     .quiz-feedback { text-align: center; font-size: 0.88rem; font-weight: 700; min-height: 22px; margin-bottom: 8px; }
     .quiz-feedback.ok { color: var(--green); }
     .quiz-feedback.err { color: var(--red); }
@@ -400,8 +421,8 @@
     .lq-choice:hover:not(.correct):not(.wrong) { border-color: var(--green); }
     .lq-choice.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; pointer-events: none; }
     .lq-choice.wrong { background: #fee2e2; border-color: #dc2626; color: #991b1b; pointer-events: none; }
-    [data-theme="dark"] .lq-choice.correct { background: #14532d; border-color: #22c55e; color: #86efac; }
-    [data-theme="dark"] .lq-choice.wrong { background: #450a0a; border-color: #dc2626; color: #fca5a5; }
+    [data-sky="night"] .lq-choice.correct { background: #14532d; border-color: #22c55e; color: #86efac; }
+    [data-sky="night"] .lq-choice.wrong { background: #450a0a; border-color: #dc2626; color: #fca5a5; }
     .lq-result { text-align: center; padding: 10px 0 4px; }
     .lq-result p { font-size: 0.82rem; color: var(--text-sub); margin: 8px 0 14px; }
 
@@ -413,7 +434,7 @@
       background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
       display: flex; align-items: center; justify-content: center; font-size: 2.8rem;
     }
-    [data-theme="dark"] .news-img-ph { background: linear-gradient(135deg, #14532d, #166534); }
+    [data-sky="night"] .news-img-ph { background: linear-gradient(135deg, #14532d, #166534); }
     .news-body { padding: 13px 14px 14px; }
     .news-src { font-size: 0.62rem; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
     .news-src-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
@@ -482,11 +503,11 @@
     .badge-yes { background: #dcfce7; color: #15803d; }
     .badge-partial { background: #fef9c3; color: #854d0e; }
     .badge-no { background: #fee2e2; color: #991b1b; }
-    [data-theme="dark"] .badge-yes { background: #14532d; color: #86efac; }
-    [data-theme="dark"] .badge-partial { background: #78350f; color: #fde68a; }
-    [data-theme="dark"] .badge-no { background: #450a0a; color: #fca5a5; }
+    [data-sky="night"] .badge-yes { background: #14532d; color: #86efac; }
+    [data-sky="night"] .badge-partial { background: #78350f; color: #fde68a; }
+    [data-sky="night"] .badge-no { background: #450a0a; color: #fca5a5; }
     .money-note { background: #fefce8; border: 1px solid #fde68a; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 0.74rem; color: #92400e; line-height: 1.55; margin-bottom: 14px; }
-    [data-theme="dark"] .money-note { background: #451a03; border-color: #78350f; color: #fde68a; }
+    [data-sky="night"] .money-note { background: #451a03; border-color: #78350f; color: #fde68a; }
     .money-note strong { display: block; margin-bottom: 3px; font-size: 0.78rem; }
 
     /* ── TOAST ── */
@@ -498,7 +519,7 @@
       pointer-events: none; transition: opacity .2s, transform .2s;
       white-space: nowrap; z-index: 999;
     }
-    [data-theme="dark"] .hub-toast { background: #f1f5f9; color: #0f172a; }
+    [data-sky="night"] .hub-toast { background: #f1f5f9; color: #0f172a; }
     .hub-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     @media (min-width: 520px) {
@@ -1014,23 +1035,22 @@
     .auth-gate {
       position: fixed; inset: 0; z-index: 500;
       display: flex; align-items: center; justify-content: center; padding: 20px;
-      overflow: hidden;
-      background:
-        /* light from above — deep ocean / underwater light shaft */
-        radial-gradient(ellipse 90% 55% at 50% -8%, rgba(56,189,248,0.35) 0%, transparent 65%),
-        /* side glow — cyan light left */
-        radial-gradient(ellipse 60% 40% at 8% 45%, rgba(6,182,212,0.18) 0%, transparent 55%),
-        /* moon / orb top-right */
-        radial-gradient(circle 100px at 82% 14%, rgba(186,230,253,0.35) 0%, rgba(56,189,248,0.1) 40%, transparent 70%),
-        /* base deep blue gradient */
-        linear-gradient(180deg, #020c2e 0%, #0a1f5e 30%, #0a3d8f 62%, #0369a1 100%);
+      overflow: hidden; background: transparent;
     }
+    .auth-gate::before {
+      content: ''; position: absolute; inset: 0;
+      background: rgba(0,20,80,0.08);
+    }
+    [data-sky="night"] .auth-gate::before { background: rgba(0,5,30,0.30); }
     .auth-gate > * { position: relative; z-index: 1; }
     .auth-gate.hidden { display: none; }
     .auth-card {
       background: var(--card); border-radius: 22px;
       padding: 34px 26px 28px; width: 100%; max-width: 380px;
-      box-shadow: 0 12px 48px rgba(0,0,0,.28);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 12px 48px rgba(0,20,80,.20);
+    }
+    [data-sky="night"] .auth-card {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 12px 48px rgba(0,0,0,.40);
     }
     .auth-logo { font-size: 2.6rem; text-align: center; margin-bottom: 4px; }
     .auth-title { font-size: 1.35rem; font-weight: 900; text-align: center; color: var(--text); letter-spacing: -.4px; }
@@ -1070,9 +1090,90 @@
       display: block; margin: 0 auto 16px;
     }
     .auth-id-note { font-size: 0.7rem; color: var(--text-dim); text-align: center; margin-bottom: 20px; line-height: 1.5; }
+
+    /* ══ SKY SCENE ══ */
+    .sky-scene {
+      position: fixed; inset: 0; z-index: -1;
+      pointer-events: none; overflow: hidden;
+      /* Day — clear azure sky */
+      background: linear-gradient(180deg,
+        #0ea5e9 0%, #38bdf8 22%, #7dd3fc 50%, #bae6fd 78%, #e0f2fe 100%);
+    }
+    [data-sky="night"] .sky-scene {
+      /* Night — deep starfield */
+      background: linear-gradient(180deg,
+        #020617 0%, #0c1445 36%, #1a3680 70%, #0e4c75 100%);
+    }
+
+    /* Soft cloud wisps — day only */
+    .sky-scene::before, .sky-scene::after {
+      content: ''; position: absolute;
+      border-radius: 50%; pointer-events: none;
+      filter: blur(20px);
+    }
+    .sky-scene::before {
+      width: 300px; height: 90px;
+      top: 20%; left: -60px;
+      background: rgba(255,255,255,0.32);
+      animation: cloudDrift 26s linear infinite;
+    }
+    .sky-scene::after {
+      width: 220px; height: 70px;
+      top: 38%; left: -40px;
+      background: rgba(255,255,255,0.22);
+      animation: cloudDrift 38s linear infinite;
+      animation-delay: -14s;
+    }
+    [data-sky="night"] .sky-scene::before,
+    [data-sky="night"] .sky-scene::after { opacity: 0; }
+    @keyframes cloudDrift {
+      from { transform: translateX(0); }
+      to   { transform: translateX(110vw); }
+    }
+
+    /* Sun / Moon orb */
+    .sky-orb {
+      position: absolute; border-radius: 50%;
+      top: 6%; right: 10%;
+      /* Sun */
+      width: 100px; height: 100px;
+      background: radial-gradient(circle, #fef9c3 0%, #fbbf24 30%,
+        rgba(251,191,36,0.55) 55%, transparent 76%);
+      box-shadow:
+        0 0 68px 24px rgba(251,191,36,0.58),
+        0 0 160px 70px rgba(251,191,36,0.20);
+      animation: orbFloat 7s ease-in-out infinite;
+    }
+    [data-sky="night"] .sky-orb {
+      /* Moon crescent — soft warm circle with shadow cutout */
+      width: 72px; height: 72px;
+      background: #fef9c3;
+      box-shadow:
+        inset -20px -5px 0 5px #0c1445,
+        0 0 38px 12px rgba(255,248,180,0.40),
+        0 0 90px 36px rgba(200,220,255,0.13);
+      animation: orbFloat 10s ease-in-out infinite;
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    /* Stars — rendered via JS as SVG, day hidden */
+    .sky-stars {
+      position: absolute; inset: 0;
+      display: none;
+    }
+    [data-sky="night"] .sky-stars { display: block; }
   </style>
 </head>
 <body>
+
+<!-- ══ SKY SCENE — fixed background layer ══ -->
+<div class="sky-scene" aria-hidden="true">
+  <div class="sky-orb" id="skyOrb"></div>
+  <div class="sky-stars" id="skyStars"></div>
+</div>
 
 <!-- ══ AUTH GATE — shown until signed in ══ -->
 <div class="auth-gate" id="authGate">
@@ -2306,16 +2407,39 @@ function showConfetti() {
 }
 
 /* ═══════════════════════════════
-   DARK MODE
+   SKY — DAY / NIGHT
 ═══════════════════════════════ */
-let darkMode = localStorage.getItem('hub-theme') === 'dark';
-function applyTheme() {
-  document.documentElement.dataset.theme = darkMode ? 'dark' : 'light';
-  document.getElementById('themeBtn').textContent = darkMode ? '☀️' : '🌙';
-  localStorage.setItem('hub-theme', darkMode ? 'dark' : 'light');
-}
-document.getElementById('themeBtn').addEventListener('click', () => { darkMode = !darkMode; applyTheme(); });
-applyTheme();
+(function() {
+  // Auto-detect: daytime = 6 am–8 pm
+  const h = new Date().getHours();
+  const autoNight = h < 6 || h >= 20;
+  const saved = localStorage.getItem('hub-sky');
+  let night = saved !== null ? saved === 'night' : autoNight;
+
+  function applySky() {
+    const sky = night ? 'night' : 'day';
+    document.documentElement.setAttribute('data-sky', sky);
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = night ? '☀️' : '🌙';
+    localStorage.setItem('hub-sky', sky);
+  }
+
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    night = !night; applySky();
+  });
+  applySky();
+
+  // Generate night star field via SVG
+  const starsEl = document.getElementById('skyStars');
+  if (starsEl) {
+    const rng = (a, b) => (a + Math.random() * (b - a)).toFixed(2);
+    const dots = Array.from({ length: 70 }, () =>
+      `<circle cx="${rng(1,99)}%" cy="${rng(1,58)}%" r="${rng(.4,1.7)}" fill="white" opacity="${rng(.3,.9)}"/>`
+    ).join('');
+    starsEl.innerHTML =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">${dots}</svg>`;
+  }
+})();
 
 /* ═══════════════════════════════
    NAVIGATION
