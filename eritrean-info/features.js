@@ -3135,6 +3135,66 @@ function checkAchievement(id) {
   document.addEventListener('DOMContentLoaded', init);
 })();
 
+// ── T40b: IMPORT LEARNING KIT ────────────────────────────────────────────
+(function T40b_ImportKit() {
+  function restoreData(kit) {
+    const set = (key, val) => localStorage.setItem(key, JSON.stringify(val));
+
+    if (Array.isArray(kit.sectionsVisited)) {
+      set('eri_visited_v1', kit.sectionsVisited);
+      set('eri_visited_v2', kit.sectionsVisited);
+    }
+    if (Array.isArray(kit.badges))          set('eri_badges_v1',  kit.badges);
+    if (kit.sectionRatings && typeof kit.sectionRatings === 'object')
+                                             set('eri_ratings',    kit.sectionRatings);
+    if (Array.isArray(kit.annotations))      set('eri_annotations', kit.annotations);
+    if (Array.isArray(kit.recentTranslations))
+      set('eri_trans_hist', kit.recentTranslations.map(t => ({ src: t.from, tgt: t.to })));
+    if (kit.learningStreak && typeof kit.learningStreak === 'object')
+                                             set('eri_streak',     kit.learningStreak);
+  }
+
+  function init() {
+    const navRight = document.querySelector('.nav-right');
+    if (!navRight) return;
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file'; fileInput.accept = '.json';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+
+    const btn = document.createElement('button');
+    btn.className = 'nav-print-btn'; btn.title = 'Restore learning kit from file';
+    btn.textContent = '📤 Import';
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const kit = JSON.parse(e.target.result);
+          if (!kit.exportDate) throw new Error('Not a valid kit file');
+          restoreData(kit);
+          if (typeof showToast === 'function')
+            showToast('✅ Learning kit restored! Refreshing…', 'success');
+          setTimeout(() => location.reload(), 1200);
+        } catch {
+          if (typeof showToast === 'function')
+            showToast('❌ Invalid kit file', 'error');
+        }
+        fileInput.value = '';
+      };
+      reader.readAsText(file);
+    });
+
+    btn.addEventListener('click', () => fileInput.click());
+    navRight.prepend(btn);
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
 // ── T41: SECTION COLOR BADGES ────────────────────────────────────────────
 (function T41_SectionBadges() {
   const MAP = {
