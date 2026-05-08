@@ -5487,3 +5487,129 @@ html.dark .map-spinner-wrap { background: rgba(15,17,23,0.75); color: #94a3b8; }
   .hero-stats { padding: 0 20px; }
   .hero-map-viz { width: min(200px, 60vw); order: -1; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   LIQUID GLASS REDESIGN — EritreanInfo
+   Apple Liquid Glass: immersive background, floating glass UI
+   Shape system: fixed (14px) · capsule (999px) · concentric
+══════════════════════════════════════════════════════════════ */
+:root {
+  --lg-blur:    blur(28px) saturate(2.2) brightness(1.04);
+  --lg-blur-sm: blur(16px) saturate(1.8);
+  --lg-shine:   inset 0 1px 0 rgba(255,255,255,0.48);
+  --lg-shine-d: inset 0 1px 0 rgba(255,255,255,0.12);
+  --capsule:    999px;
+}
+/* Immersive background: Eritrean sunrise over Red Sea */
+body {
+  background:
+    radial-gradient(ellipse 130% 70% at 50% -8%, rgba(0,100,45,0.42) 0%, transparent 52%),
+    radial-gradient(ellipse 75% 55% at 88% 18%, rgba(65,137,221,0.28) 0%, transparent 48%),
+    radial-gradient(ellipse 65% 50% at 8% 72%,  rgba(0,100,45,0.22) 0%, transparent 50%),
+    linear-gradient(172deg, #091510 0%, #0d2418 22%, #0e2e1c 45%, #0b1f2e 68%, #071422 100%) !important;
+  background-attachment: fixed !important;
+  color: rgba(255,255,255,0.90) !important;
+}
+html.dark body {
+  background:
+    radial-gradient(ellipse 110% 65% at 50% -5%, rgba(0,65,25,0.55) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 85% 14%, rgba(40,80,160,0.24) 0%, transparent 45%),
+    linear-gradient(172deg, #040c07 0%, #050c06 30%, #040810 65%, #030508 100%) !important;
+  background-attachment: fixed !important;
+}
+/* Navbar: deep Eritrean green Liquid Glass */
+#navbar {
+  background: rgba(0,40,16,0.62) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  border-bottom: 1.5px solid rgba(0,200,80,0.24) !important;
+  box-shadow: var(--lg-shine-d), 0 4px 32px rgba(0,30,10,0.40) !important;
+  border-image: none !important;
+}
+html.dark #navbar { background: rgba(0,18,6,0.82) !important; border-bottom-color: rgba(0,180,70,0.16) !important; }
+.nav-logo { color: white !important; }
+.nav-logo strong { color: #4ade80 !important; }
+.nav-menu-btn { border-radius: var(--capsule) !important; background: rgba(0,180,80,0.22) !important; border: 1.5px solid rgba(0,220,90,0.30) !important; }
+.nav-menu-btn:hover { background: rgba(0,200,80,0.32) !important; }
+.nav-icon-btn, .dark-toggle, .nav-search-btn, .lang-picker-btn {
+  background: rgba(255,255,255,0.14) !important; border: 1.5px solid rgba(255,255,255,0.20) !important;
+  border-radius: var(--capsule) !important; color: white !important;
+}
+.nav-icon-btn:hover, .dark-toggle:hover, .nav-search-btn:hover { background: rgba(255,255,255,0.24) !important; }
+/* Nav dropdown */
+.nav-dropdown {
+  background: rgba(4,22,10,0.92) !important;
+  backdrop-filter: var(--lg-blur) !important; -webkit-backdrop-filter: var(--lg-blur) !important;
+  border-top: 1.5px solid rgba(0,180,70,0.20) !important;
+  box-shadow: 0 18px 60px rgba(0,15,6,0.65) !important;
+}
+html.dark .nav-dropdown { background: rgba(1,7,3,0.96) !important; }
+.nav-dd-item { border-radius: 10px !important; color: rgba(255,255,255,0.70) !important; font-weight: 500 !important; }
+.nav-dd-item:hover, .nav-dd-item.active { background: rgba(0,180,70,0.18) !important; color: #4ade80 !important; }
+/* Language dropdown */
+.lang-dropdown {
+  background: rgba(4,22,10,0.94) !important; backdrop-filter: var(--lg-blur) !important; -webkit-backdrop-filter: var(--lg-blur) !important;
+  border: 1.5px solid rgba(0,180,70,0.22) !important; border-radius: 16px !important;
+  box-shadow: 0 12px 48px rgba(0,15,6,0.65) !important;
+}
+.lang-opt { border-radius: 10px !important; color: rgba(255,255,255,0.72) !important; }
+.lang-opt.active, .lang-opt:hover { background: rgba(0,180,70,0.18) !important; color: #4ade80 !important; }
+/* Word of Day strip */
+.wod-bar {
+  background: rgba(0,35,14,0.75) !important; backdrop-filter: var(--lg-blur-sm) !important; -webkit-backdrop-filter: var(--lg-blur-sm) !important;
+  border-bottom: 1.5px solid rgba(0,180,70,0.20) !important; color: rgba(255,255,255,0.88) !important;
+}
+/* Hero */
+.hero-section { background: transparent !important; }
+.hero-text h1, .hero-title { color: white !important; font-weight: 900 !important; }
+.hero-subtitle, .hero-desc { color: rgba(255,255,255,0.72) !important; }
+/* Section cards: Liquid Glass panels */
+.timeline-card,.geo-card,.ethnic-card,.culture-card,.economy-card,.gov-card,
+.lang-card,.religion-card,.tourism-card,.famous-card,.asmara-content,.geo-borders,
+.overview-text,.translator-card,.live-card,.stat-card,.community-card,.news-card {
+  background: rgba(255,255,255,0.08) !important;
+  backdrop-filter: var(--lg-blur) !important; -webkit-backdrop-filter: var(--lg-blur) !important;
+  border: 1.5px solid rgba(255,255,255,0.18) !important;
+  box-shadow: var(--lg-shine), 0 8px 40px rgba(0,20,8,0.38) !important;
+}
+html.dark .timeline-card,html.dark .geo-card,html.dark .ethnic-card,html.dark .culture-card,
+html.dark .economy-card,html.dark .gov-card,html.dark .lang-card,html.dark .religion-card,
+html.dark .tourism-card,html.dark .famous-card,html.dark .asmara-content,html.dark .geo-borders,
+html.dark .overview-text {
+  background: rgba(255,255,255,0.055) !important; border-color: rgba(255,255,255,0.10) !important;
+  box-shadow: var(--lg-shine-d), 0 8px 32px rgba(0,0,0,0.50) !important;
+}
+/* Headings bold on dark bg */
+.section-header h2,.timeline-card h3,.geo-card h3,.culture-card h3,.economy-card h3,
+.gov-card h3,.lang-card h3,.religion-card h4,.tourism-card h3,.asmara-text h3,
+.asmara-text h4,.geo-borders h3,.religion-section h3,.famous-name {
+  color: rgba(255,255,255,0.95) !important; font-weight: 800 !important;
+}
+.section-header p,.timeline-card p,.geo-card p,.culture-card p,.economy-card p,
+.gov-card p,.lang-card p,.religion-card p,.tourism-card p,.asmara-text p,
+.overview-text p,.famous-info p { color: rgba(255,255,255,0.65) !important; }
+/* Section tag chip */
+.section-tag { background: rgba(0,180,70,0.20) !important; color: #4ade80 !important; border-radius: var(--capsule) !important; border: 1px solid rgba(0,200,80,0.28) !important; }
+/* All buttons: capsule shapes */
+.btn,.btn-primary,.btn-secondary,.cta-btn,.hero-btn,.hero-cta-btn,.nav-dd-app-btn,
+.filter-btn,.tab-btn,.share-story-float,.read-more-btn,.section-cta-btn,
+.translator-btn,.wod-close,.install-confirm-btn,.global-search-btn {
+  border-radius: var(--capsule) !important;
+}
+.tab-btn.active { box-shadow: 0 0 16px rgba(0,180,70,0.50), var(--shadow) !important; }
+.filter-btn.active { background: var(--green) !important; color: white !important; box-shadow: 0 0 12px rgba(0,180,70,0.44) !important; }
+.share-story-float { box-shadow: 0 6px 28px rgba(0,122,61,0.55) !important; }
+/* Reading progress */
+.reading-progress { background: linear-gradient(to right, #007A3D, #4ade80, #4189DD) !important; height: 3px !important; }
+/* Footer */
+footer, #footer, .site-footer {
+  background: rgba(0,18,7,0.82) !important; backdrop-filter: var(--lg-blur-sm) !important;
+  border-top: 1.5px solid rgba(0,180,70,0.16) !important;
+}
+/* Concentric shapes */
+.timeline-card,.overview-text,.asmara-content { border-radius: 20px !important; }
+.geo-card,.culture-card,.economy-card,.gov-card,.lang-card,.religion-card,.tourism-card,.famous-card,.stat-card,.live-card { border-radius: 14px !important; }
+/* Global search */
+#globalSearchModal,.global-search-modal {
+  background: rgba(2,12,5,0.88) !important; backdrop-filter: var(--lg-blur) !important; -webkit-backdrop-filter: var(--lg-blur) !important;
+}

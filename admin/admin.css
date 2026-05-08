@@ -2593,3 +2593,82 @@ body[data-accent="gold"] {
 
 /* ── END ─────────────────────────────────────────────────────── */
 
+
+/* ══════════════════════════════════════════════════════════════
+   LIQUID GLASS REDESIGN — HUB Admin
+   Apple Liquid Glass: deeper drama, true glass panels, capsules
+══════════════════════════════════════════════════════════════ */
+:root {
+  --lg-blur:    blur(32px) saturate(2.1) brightness(1.06);
+  --lg-blur-sm: blur(18px) saturate(1.8);
+  --lg-shine:   inset 0 1px 0 rgba(255,255,255,0.14);
+  --capsule:    999px;
+}
+/* More dramatic immersive background */
+body {
+  background:
+    radial-gradient(ellipse 110% 70% at 28% -12%, rgba(88,28,255,0.22) 0%, transparent 52%),
+    radial-gradient(ellipse 80% 60% at 82% 92%, rgba(99,78,220,0.18) 0%, transparent 50%),
+    radial-gradient(ellipse 55% 45% at 60% 38%, rgba(30,20,90,0.14) 0%, transparent 48%),
+    linear-gradient(160deg, #020109 0%, #04021a 28%, #060318 55%, #040210 80%, #020109 100%) !important;
+  background-attachment: fixed !important;
+}
+/* Sidebar: true Liquid Glass */
+.sidebar {
+  background: rgba(5,3,18,0.82) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  border-right: 1.5px solid rgba(124,114,255,0.22) !important;
+  box-shadow: var(--lg-shine), 4px 0 48px rgba(0,0,0,0.55) !important;
+}
+.sb-item { border-radius: 10px !important; }
+.sb-item.active {
+  background: linear-gradient(135deg, rgba(124,114,255,0.26), rgba(167,139,250,0.18)) !important;
+  box-shadow: inset 0 0 0 1.5px rgba(124,114,255,0.35), 0 0 18px rgba(124,114,255,0.18) !important;
+}
+.sb-item:hover:not(.active) { background: rgba(124,114,255,0.10) !important; }
+/* Auth card */
+.auth-card {
+  background: rgba(4,2,20,0.94) !important;
+  border: 1.5px solid rgba(124,114,255,0.24) !important;
+  box-shadow: var(--lg-shine), 0 24px 80px rgba(0,0,0,0.72), 0 0 70px rgba(124,114,255,0.16) !important;
+}
+/* Auth button: capsule */
+.auth-btn { border-radius: var(--capsule) !important; }
+/* Input fields */
+.auth-input { border-radius: 12px !important; }
+.auth-input:focus {
+  border-color: rgba(124,114,255,0.55) !important;
+  box-shadow: 0 0 0 3px rgba(124,114,255,0.14), 0 0 14px rgba(124,114,255,0.20) !important;
+}
+/* Content cards */
+.card,.dash-card,.stat-block,.app-card,.user-card,.analytics-card,.config-card,
+.cat-card-wrap,.kpi-card,.activity-card,.log-card {
+  background: rgba(255,255,255,0.038) !important;
+  backdrop-filter: var(--lg-blur) !important; -webkit-backdrop-filter: var(--lg-blur) !important;
+  border: 1.5px solid rgba(255,255,255,0.08) !important;
+  box-shadow: var(--lg-shine), 0 8px 36px rgba(0,0,0,0.48) !important;
+}
+/* Top bar */
+.top-bar,#topBar,.page-header {
+  background: rgba(3,2,14,0.75) !important;
+  backdrop-filter: var(--lg-blur) !important; -webkit-backdrop-filter: var(--lg-blur) !important;
+  border-bottom: 1.5px solid rgba(124,114,255,0.16) !important;
+  box-shadow: var(--lg-shine), 0 2px 24px rgba(0,0,0,0.45) !important;
+}
+/* Badges & pills: capsule */
+.sb-badge,.status-badge,.user-badge,.tag,.tag-badge,.badge { border-radius: var(--capsule) !important; }
+/* Primary buttons: capsule */
+button[class*="btn-primary"],button[class*="add-btn"],button[class*="save-btn"],
+button[class*="publish-btn"],button[class*="action-btn"] {
+  border-radius: var(--capsule) !important;
+}
+/* Modals & sheets */
+.modal-content,.modal-card,.bottom-sheet,.drawer {
+  background: rgba(5,3,20,0.96) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  border: 1.5px solid rgba(124,114,255,0.18) !important;
+  border-radius: 24px !important;
+}
+/* Scrollbar: accent color */
+::-webkit-scrollbar-thumb { background: rgba(124,114,255,0.35) !important; }
