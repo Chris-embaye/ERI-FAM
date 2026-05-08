@@ -1044,10 +1044,15 @@
       position: fixed; inset: 0; z-index: 500;
       display: flex; align-items: center; justify-content: center; padding: 20px;
       overflow: hidden;
-      background: transparent;
+      /* Day — light sky, mirrors the sky-scene gradient */
+      background: linear-gradient(180deg,
+        #a8cfe8 0%, #b8d8ef 20%, #cce5f5 45%,
+        #deeef8 70%, #eef5fb 100%);
     }
     [data-sky="night"] .auth-gate {
-      background: transparent;
+      /* Night — deep navy, mirrors the sky-scene gradient */
+      background: linear-gradient(180deg,
+        #080810 0%, #0c0c1a 30%, #10101e 60%, #0e0e1c 100%);
     }
     .auth-gate::before {
       content: ''; position: absolute; inset: 0; pointer-events: none;
