@@ -5736,3 +5736,36 @@ footer,#footer,.site-footer { background: var(--ios-bg2) !important; backdrop-fi
 #globalSearchModal,.global-search-modal { background: rgba(14,14,22,0.90) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important; }
 /* Install banner */
 .install-banner-inner { background: var(--ios-bg2) !important; backdrop-filter: none !important; border: 1px solid var(--ios-border) !important; border-radius: 16px !important; box-shadow: var(--ios-shadow) !important; }
+
+/* ════════════════════════════════════
+   iOS COMPONENT SYSTEM — EritreanInfo
+════════════════════════════════════ */
+/* Segmented tab / filter pill container */
+.tabs, .filter-tabs, .tab-group {
+  background: rgba(118,118,128,0.16) !important;
+  border-radius: 999px !important;
+  padding: 3px !important; gap: 1px !important;
+}
+.tab-btn, .filter-btn {
+  background: transparent !important; border: none !important;
+  border-radius: 999px !important; transition: background .2s, color .2s !important;
+}
+.tab-btn.active, .filter-btn.active {
+  background: #0A84FF !important; color: white !important;
+  box-shadow: 0 1px 6px rgba(10,132,255,.30) !important;
+}
+html.dark .tabs, html.dark .filter-tabs { background: rgba(118,118,128,0.22) !important; }
+
+/* iOS range sliders */
+input[type="range"], .mpf-volume-slider {
+  -webkit-appearance: none; appearance: none;
+  height: 4px !important; background: rgba(255,255,255,.18) !important;
+  border-radius: 4px !important; outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb,
+.mpf-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: white !important; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.28) !important;
+}

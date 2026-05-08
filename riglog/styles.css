@@ -246,3 +246,42 @@ input:focus, textarea:focus, select:focus {
 .dvir-defect { background: rgba(255,59,48,0.14) !important; border-color: #FF3B30 !important; }
 /* Tax bar */
 .tax-bar { background: #0A84FF !important; }
+
+/* ════════════════════════════════════
+   iOS COMPONENT SYSTEM — Riglog
+════════════════════════════════════ */
+/* Primary — blue capsule */
+.btn-primary {
+  background: #0A84FF !important; color: white !important;
+  border-radius: 999px !important; border: none !important;
+  box-shadow: 0 2px 10px rgba(10,132,255,.30) !important;
+  transition: background .15s !important;
+}
+.btn-primary:active { background: #0070e0 !important; }
+/* Cancel / ghost — neutral gray */
+.btn-ghost {
+  background: rgba(255,255,255,0.12) !important; color: white !important;
+  border-radius: 999px !important; border: none !important; box-shadow: none !important;
+}
+.btn-ghost:active { background: rgba(255,255,255,0.22) !important; }
+/* Destructive — red */
+.btn-danger, .btn-delete {
+  background: #FF3B30 !important; color: white !important;
+  border-radius: 999px !important; border: none !important;
+  box-shadow: 0 2px 8px rgba(255,59,48,.28) !important;
+}
+/* iOS range sliders */
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  height: 4px; background: rgba(255,255,255,.20);
+  border-radius: 4px; outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px;
+  border-radius: 50%; background: white; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.26);
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, #0A84FF var(--val, 50%), rgba(255,255,255,.20) var(--val, 50%));
+  border-radius: 4px; height: 4px;
+}

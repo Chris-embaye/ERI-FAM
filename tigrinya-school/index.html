@@ -1459,6 +1459,113 @@
     .student-block-title { font-size: 1.25rem; font-weight: 900; color: white; margin-bottom: 10px; }
     .student-block-msg { font-size: 0.83rem; color: rgba(255,255,255,0.58); line-height: 1.65; }
     .student-block-sub { font-size: 0.70rem; color: rgba(255,255,255,0.36); margin-top: 16px; }
+
+    /* ════════════════════════════════════
+       iOS COMPONENT SYSTEM
+    ════════════════════════════════════ */
+
+    /* ─ iOS Toggle Switch — 51 × 31 ─ */
+    .ctrl-switch { width: 51px; height: 31px; }
+    .ctrl-track {
+      background: rgba(120,120,128,0.32);
+      transition: background 0.25s;
+    }
+    .ctrl-track::before {
+      width: 27px; height: 27px; left: 2px; bottom: 2px;
+      box-shadow: 0 3px 8px rgba(0,0,0,.24), 0 1px 2px rgba(0,0,0,.10);
+      transition: transform 0.26s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .ctrl-switch input:checked + .ctrl-track { background: #34C759; }
+    .ctrl-switch input:checked + .ctrl-track::before { transform: translateX(20px); }
+
+    /* ─ Segmented Tab Bar ─ */
+    .tabs {
+      background: rgba(118,118,128,0.16);
+      border-radius: 999px; padding: 3px; gap: 1px;
+    }
+    .tab-btn {
+      background: transparent; border: none;
+      color: var(--text-sub); border-radius: 999px; box-shadow: none;
+      transition: background .2s, color .2s, box-shadow .2s;
+    }
+    .tab-btn.active {
+      background: var(--card) !important; color: var(--text) !important;
+      box-shadow: 0 1px 4px rgba(0,0,0,.15) !important;
+    }
+    [data-sky="night"] .tab-btn.active {
+      background: #0A84FF !important; color: white !important;
+      box-shadow: 0 2px 10px rgba(10,132,255,.35) !important;
+    }
+
+    /* ─ Time Limit Segmented Control ─ */
+    .time-opts {
+      background: rgba(118,118,128,0.16);
+      border-radius: 999px; padding: 3px; gap: 1px; margin: 0 18px 12px;
+    }
+    .time-opt-btn {
+      flex: 1; padding: 8px 4px; border: none;
+      background: transparent; color: var(--text-sub);
+      border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+      box-shadow: none; transition: background .2s, color .2s;
+    }
+    .time-opt-btn.active {
+      background: var(--card) !important; color: var(--text) !important;
+      box-shadow: 0 1px 4px rgba(0,0,0,.14) !important;
+    }
+    [data-sky="night"] .time-opt-btn.active {
+      background: #0A84FF !important; color: white !important;
+      box-shadow: 0 2px 8px rgba(10,132,255,.30) !important;
+    }
+
+    /* ─ Schedule Day Selector ─ */
+    .sched-day-btn {
+      border: none; background: rgba(118,118,128,0.16);
+      color: var(--text-sub); border-radius: 999px;
+      transition: background .2s, color .2s, box-shadow .2s;
+    }
+    .sched-day-btn.on {
+      background: #0A84FF; color: white; border-color: transparent;
+      box-shadow: 0 2px 8px rgba(10,132,255,.28);
+    }
+
+    /* ─ iOS Action Buttons ─ */
+    /* Primary — blue */
+    .ctrl-save { background: #0A84FF; box-shadow: 0 2px 12px rgba(10,132,255,.35); }
+    .ctrl-save:hover:not(:disabled) { background: #0070e0; }
+    .qh-start-btn, .quiz-again, .fc-btn-know, .fc-restart, .sc-check {
+      background: #0A84FF !important; border-color: transparent !important;
+      box-shadow: 0 2px 10px rgba(10,132,255,.30) !important;
+    }
+    .qh-start-btn:active, .quiz-again:active, .fc-btn-know:active,
+    .fc-restart:active, .sc-check:active { background: #0070e0 !important; }
+    /* Cancel — neutral gray pill */
+    .fc-btn-skip, .sc-clear {
+      background: rgba(118,118,128,0.18) !important;
+      color: var(--text) !important; border-color: transparent !important;
+      box-shadow: none !important;
+    }
+    [data-sky="night"] .fc-btn-skip,
+    [data-sky="night"] .sc-clear {
+      background: rgba(255,255,255,0.12) !important; color: white !important;
+    }
+
+    /* ─ Day Mode: ctrl-modal label fixes ─ */
+    [data-sky="day"] .ctrl-section-title { color: rgba(0,0,0,0.40); }
+    [data-sky="day"] .ctrl-section-title::after { background: rgba(0,0,0,0.10); }
+    [data-sky="day"] .sched-enable-label { color: var(--text); }
+    [data-sky="day"] .sched-time-label { color: var(--text-dim); }
+    [data-sky="day"] .sched-time-input {
+      background: rgba(0,0,0,0.05); color: var(--text);
+      border-color: rgba(0,0,0,0.14); color-scheme: light;
+    }
+    [data-sky="day"] .weekly-bar-track { background: rgba(0,0,0,0.08); }
+    [data-sky="day"] .weekly-bar-lbl { color: var(--text-dim); }
+    [data-sky="day"] .pin-status { color: var(--text-dim); }
+    [data-sky="day"] .saved-kid-chip {
+      background: rgba(10,132,255,0.10); color: #0A84FF;
+      border-color: rgba(10,132,255,0.30);
+    }
+    [data-sky="day"] .saved-kid-chip:hover { background: rgba(10,132,255,0.20); }
   </style>
 </head>
 <body>

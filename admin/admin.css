@@ -2772,3 +2772,50 @@ body {
 }
 /* Scrollbar */
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14) !important; }
+
+/* ════════════════════════════════════
+   iOS COMPONENT SYSTEM — Admin
+════════════════════════════════════ */
+/* Primary — blue capsule */
+.btn-primary, .auth-btn {
+  background: #0A84FF !important;
+  border-radius: 999px !important; border: none !important; color: white !important;
+  box-shadow: 0 2px 10px rgba(10,132,255,.32) !important;
+  transition: background .18s !important;
+}
+.btn-primary:hover:not(:disabled), .auth-btn:hover:not(:disabled) { background: #0070e0 !important; }
+.btn-primary:active, .auth-btn:active { background: #005cc8 !important; transform: none !important; }
+/* Destructive — red capsule */
+.btn-danger {
+  background: #FF3B30 !important; color: white !important;
+  border-radius: 999px !important; border: none !important;
+  box-shadow: 0 2px 10px rgba(255,59,48,.28) !important;
+}
+.btn-danger:hover:not(:disabled) { background: #e02820 !important; }
+/* Secondary / cancel — neutral gray */
+.btn-secondary {
+  background: rgba(118,118,128,0.18) !important; color: var(--text) !important;
+  border-radius: 999px !important; border: none !important; box-shadow: none !important;
+}
+.btn-secondary:hover { background: rgba(118,118,128,0.28) !important; }
+/* Small utility */
+.btn-sm {
+  background: rgba(118,118,128,0.14) !important; color: var(--text) !important;
+  border-radius: 999px !important; border: none !important; box-shadow: none !important;
+}
+.btn-sm:hover { background: rgba(118,118,128,0.24) !important; }
+
+/* iOS toggle switches (if any checkbox-based toggles exist) */
+input[type="checkbox"].ios-toggle-input { display: none; }
+
+/* iOS sliders */
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  height: 4px; background: rgba(255,255,255,.18);
+  border-radius: 4px; outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px;
+  border-radius: 50%; background: white; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.26);
+}
