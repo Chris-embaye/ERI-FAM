@@ -1044,10 +1044,10 @@
       position: fixed; inset: 0; z-index: 500;
       display: flex; align-items: center; justify-content: center; padding: 20px;
       overflow: hidden;
-      background: linear-gradient(180deg, #a8cfe8 0%, #c2ddf0 30%, #d8edf7 70%, #eef5fb 100%);
+      background: transparent;
     }
     [data-sky="night"] .auth-gate {
-      background: linear-gradient(180deg, #080810 0%, #0c0c1a 40%, #10101e 100%);
+      background: transparent;
     }
     .auth-gate::before {
       content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -1063,11 +1063,11 @@
     .auth-gate > * { position: relative; z-index: 1; }
     .auth-gate.hidden { display: none; }
     .auth-card {
-      background: var(--card); border-radius: 22px;
-      padding: 34px 26px 28px; width: 100%; max-width: 380px;
+      background: var(--card); border-radius: 26px;
+      padding: 36px 28px 30px; width: 100%; max-width: 380px;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.80),
-        0 4px 24px rgba(0,0,0,.12), 0 20px 60px rgba(0,20,80,.28);
-      border: 1px solid rgba(255,255,255,0.60);
+        0 8px 32px rgba(0,0,0,.18), 0 24px 70px rgba(0,0,0,.30);
+      border: 1px solid rgba(255,255,255,0.55);
     }
     [data-sky="night"] .auth-card {
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.18),
@@ -1075,7 +1075,8 @@
       border: 1px solid rgba(147,197,253,0.20);
     }
     .auth-logo { font-size: 2.6rem; text-align: center; margin-bottom: 4px; }
-    .auth-title { font-size: 1.6rem; font-weight: 900; text-align: center; color: var(--text); letter-spacing: 0; font-family: 'Noto Sans Ethiopic', 'Ebrima', 'Nyala', -apple-system, sans-serif; }
+    .auth-title { font-size: 2.4rem; font-weight: 900; text-align: center; color: var(--text); letter-spacing: 0; font-family: 'Noto Sans Ethiopic', 'Ebrima', 'Nyala', -apple-system, sans-serif; text-shadow: 0 0 24px rgba(52,199,89,0.45), 0 0 50px rgba(52,199,89,0.18); }
+    .auth-tagline { font-size: 0.68rem; text-align: center; color: var(--text-sub); font-family: 'Noto Sans Ethiopic', 'Ebrima', 'Nyala', sans-serif; letter-spacing: .4px; margin-bottom: 2px; }
     .auth-sub { font-size: 0.76rem; color: var(--text-sub); text-align: center; margin: 4px 0 22px; }
     .auth-role-pick { display: flex; gap: 9px; margin-bottom: 16px; }
     .role-btn {
@@ -1084,19 +1085,20 @@
     }
     .role-btn.active { border-color: var(--green); color: var(--green); background: var(--green-light); }
     .auth-input {
-      width: 100%; padding: 11px 14px; border-radius: 11px;
+      width: 100%; padding: 13px 16px; border-radius: 14px;
       border: 1.5px solid var(--border); background: var(--bg);
       color: var(--text); font-size: 0.87rem; margin-bottom: 10px; display: block;
-      outline: none; transition: border .15s;
+      outline: none; transition: border .15s, box-shadow .15s;
     }
-    .auth-input:focus { border-color: var(--green); }
+    .auth-input:focus { border-color: #0A84FF; box-shadow: 0 0 0 3px rgba(10,132,255,0.16); }
     .auth-err { font-size: 0.72rem; color: var(--red); min-height: 16px; margin-bottom: 6px; }
     .auth-submit {
-      width: 100%; padding: 13px; border-radius: 13px;
-      background: var(--green); color: white; font-size: 0.92rem; font-weight: 800;
+      width: 100%; padding: 14px; border-radius: 999px;
+      background: #0A84FF; color: white; font-size: 0.92rem; font-weight: 800;
       transition: background .15s; margin-bottom: 14px; border: none; cursor: pointer;
+      box-shadow: 0 2px 14px rgba(10,132,255,.38);
     }
-    .auth-submit:hover:not(:disabled) { background: var(--green-d); }
+    .auth-submit:hover:not(:disabled) { background: #0070e0; }
     .auth-submit:disabled { background: #94a3b8; cursor: default; }
     .auth-switch { font-size: 0.73rem; color: var(--text-sub); text-align: center; }
     .auth-switch span { color: var(--green); font-weight: 700; cursor: pointer; }
@@ -1581,6 +1583,7 @@
   <div class="auth-card">
     <div class="auth-logo"><img src="./icons/fidel-logo.svg" alt="Fidel" style="width:72px;height:72px;border-radius:18px;margin:0 auto;display:block;box-shadow:0 3px 16px rgba(0,0,0,.22)"></div>
     <div class="auth-title">ፊደል</div>
+    <div class="auth-tagline">ተምሃር · ትርጉም · ማሕበረሰብ</div>
     <p class="auth-sub" id="authSub">Sign in to continue learning</p>
 
     <!-- Sign-Up Panel -->
