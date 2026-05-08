@@ -177,3 +177,72 @@ input:focus, textarea:focus, select:focus {
   backdrop-filter: blur(12px) !important;
   border: 1.5px dashed rgba(234,88,12,0.32) !important;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   iOS DARK MODE STYLE — Truck-Log
+   Navy base · solid glass nav · iOS button colors
+══════════════════════════════════════════════════════════════ */
+body {
+  background: #1c1c2e !important;
+  background-attachment: initial !important;
+}
+#bottom-nav {
+  background: rgba(28,28,46,0.96) !important;
+  backdrop-filter: blur(20px) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.8) !important;
+  border-top: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 -1px 0 rgba(255,255,255,0.06) !important;
+}
+/* Active nav tab: blue tint */
+.nav-btn[style*="orange-600"], .nav-btn.active-nav { color: #0A84FF !important; }
+/* Buttons: iOS capsule */
+.btn-primary {
+  background: #0A84FF !important;
+  border-radius: 999px !important;
+  color: white !important;
+  box-shadow: none !important;
+}
+.btn-primary:active { background: #0070e0 !important; }
+.btn-ghost { border-radius: 999px !important; }
+.filter-pill { border-radius: 999px !important; border-color: rgba(255,255,255,0.12) !important; color: rgba(255,255,255,0.55) !important; }
+.filter-pill.active { background: #0A84FF !important; border-color: #0A84FF !important; color: white !important; box-shadow: none !important; }
+/* Inputs: iOS field style */
+input, textarea, select {
+  background-color: #252538 !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-radius: 12px !important;
+  color: rgba(255,255,255,0.96) !important;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: #0A84FF !important;
+  box-shadow: 0 0 0 3px rgba(10,132,255,0.18) !important;
+}
+.form-input {
+  background: #252538 !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-radius: 12px !important;
+}
+.form-input:focus { border-color: #0A84FF !important; box-shadow: 0 0 0 3px rgba(10,132,255,0.18) !important; }
+/* Modal: iOS sheet */
+#modal-overlay { background: rgba(0,0,0,0.60) !important; backdrop-filter: blur(8px) !important; }
+#modal-content {
+  background: #252538 !important;
+  backdrop-filter: none !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-top-left-radius: 22px !important;
+  border-top-right-radius: 22px !important;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.55) !important;
+}
+/* Receipt area */
+.receipt-cap-label {
+  background: #2e2e44 !important;
+  backdrop-filter: none !important;
+  border: 1.5px dashed rgba(255,255,255,0.16) !important;
+  border-radius: 14px !important;
+  color: rgba(255,255,255,0.55) !important;
+}
+/* DVIR states */
+.dvir-ok    { background: rgba(52,199,89,0.14) !important; border-color: #34C759 !important; }
+.dvir-defect { background: rgba(255,59,48,0.14) !important; border-color: #FF3B30 !important; }
+/* Tax bar */
+.tax-bar { background: #0A84FF !important; }

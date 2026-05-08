@@ -2672,3 +2672,103 @@ button[class*="publish-btn"],button[class*="action-btn"] {
 }
 /* Scrollbar: accent color */
 ::-webkit-scrollbar-thumb { background: rgba(124,114,255,0.35) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   iOS DARK MODE STYLE — HUB Admin
+   Clean navy base · elevated panels · iOS button colors
+══════════════════════════════════════════════════════════════ */
+:root {
+  --ios-bg:       #1c1c2e;
+  --ios-bg2:      #252538;
+  --ios-bg3:      #2e2e44;
+  --ios-blue:     #0A84FF;
+  --ios-red:      #FF3B30;
+  --ios-green:    #34C759;
+  --ios-text:     rgba(255,255,255,0.96);
+  --ios-text2:    rgba(255,255,255,0.55);
+  --ios-border:   rgba(255,255,255,0.10);
+  --ios-border2:  rgba(255,255,255,0.06);
+  --ios-capsule:  999px;
+  --ios-r:        18px;
+  --ios-r-sm:     12px;
+  --ios-shadow:   0 4px 24px rgba(0,0,0,0.40);
+  --ios-shadow-lg:0 12px 48px rgba(0,0,0,0.60);
+}
+body {
+  background: var(--ios-bg) !important;
+  background-attachment: initial !important;
+}
+/* Sidebar */
+.sidebar {
+  background: rgba(26,26,42,0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right: 1px solid var(--ios-border) !important;
+  box-shadow: 2px 0 24px rgba(0,0,0,0.40) !important;
+}
+.sb-item { border-radius: 10px !important; color: var(--ios-text2) !important; }
+.sb-item.active {
+  background: rgba(10,132,255,0.18) !important;
+  color: var(--ios-blue) !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+.sb-item:hover:not(.active) { background: rgba(255,255,255,0.06) !important; color: var(--ios-text) !important; }
+/* Top bar */
+.top-bar,#topBar,.page-header {
+  background: rgba(26,26,42,0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid var(--ios-border) !important;
+  box-shadow: none !important;
+}
+/* Auth card */
+.auth-card {
+  background: var(--ios-bg2) !important;
+  border: 1px solid var(--ios-border) !important;
+  box-shadow: var(--ios-shadow-lg) !important;
+  border-radius: 22px !important;
+}
+.auth-btn {
+  background: var(--ios-blue) !important;
+  border-radius: var(--ios-capsule) !important;
+  box-shadow: none !important;
+  letter-spacing: 0 !important;
+}
+.auth-btn::after { display: none !important; }
+.auth-btn:hover { box-shadow: 0 4px 20px rgba(10,132,255,0.40) !important; transform: none !important; }
+.auth-input {
+  background: var(--ios-bg3) !important;
+  border: 1px solid var(--ios-border) !important;
+  border-radius: var(--ios-r-sm) !important;
+  color: var(--ios-text) !important;
+}
+.auth-input:focus {
+  border-color: var(--ios-blue) !important;
+  box-shadow: 0 0 0 3px rgba(10,132,255,0.18) !important;
+  background: var(--ios-bg3) !important;
+}
+/* Dashboard cards */
+.card,.dash-card,.stat-block,.app-card,.user-card,.analytics-card,.config-card,
+.cat-card-wrap,.kpi-card,.activity-card,.log-card {
+  background: var(--ios-bg2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid var(--ios-border) !important;
+  box-shadow: var(--ios-shadow) !important;
+  border-radius: var(--ios-r) !important;
+}
+/* Badges & pills */
+.sb-badge,.status-badge,.user-badge,.tag,.tag-badge,.badge {
+  border-radius: var(--ios-capsule) !important;
+}
+/* Modals */
+.modal-content,.modal-card,.bottom-sheet,.drawer {
+  background: var(--ios-bg2) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--ios-border) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--ios-shadow-lg) !important;
+}
+/* Scrollbar */
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14) !important; }

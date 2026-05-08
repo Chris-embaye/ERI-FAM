@@ -5613,3 +5613,126 @@ footer, #footer, .site-footer {
 #globalSearchModal,.global-search-modal {
   background: rgba(2,12,5,0.88) !important; backdrop-filter: var(--lg-blur) !important; -webkit-backdrop-filter: var(--lg-blur) !important;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   iOS DARK MODE STYLE — Clean & Soft
+   Deep navy base · elevated panels · iOS capsule buttons
+   #1c1c2e bg · #252538 cards · #0A84FF blue · #FF3B30 red
+══════════════════════════════════════════════════════════════ */
+:root {
+  --ios-bg:       #1c1c2e;
+  --ios-bg2:      #252538;
+  --ios-bg3:      #2e2e44;
+  --ios-blue:     #0A84FF;
+  --ios-red:      #FF3B30;
+  --ios-green:    #34C759;
+  --ios-text:     rgba(255,255,255,0.96);
+  --ios-text2:    rgba(255,255,255,0.55);
+  --ios-text3:    rgba(255,255,255,0.32);
+  --ios-border:   rgba(255,255,255,0.10);
+  --ios-border2:  rgba(255,255,255,0.06);
+  --ios-capsule:  999px;
+  --ios-r:        18px;
+  --ios-r-sm:     12px;
+  --ios-shadow:   0 4px 24px rgba(0,0,0,0.35);
+  --ios-shadow-lg:0 12px 48px rgba(0,0,0,0.55);
+}
+/* ── Base ── */
+body {
+  background: var(--ios-bg) !important;
+  background-attachment: initial !important;
+  color: var(--ios-text) !important;
+}
+/* ── Navbar ── */
+#navbar {
+  background: rgba(28,28,46,0.92) !important;
+  backdrop-filter: blur(20px) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.8) !important;
+  border-bottom: 1px solid var(--ios-border) !important;
+  box-shadow: 0 1px 0 var(--ios-border2) !important;
+}
+html.dark #navbar { background: rgba(20,20,36,0.95) !important; }
+.nav-logo { color: var(--ios-text) !important; }
+.nav-logo strong { color: #4ade80 !important; }
+.nav-menu-btn {
+  background: var(--ios-blue) !important;
+  border: none !important;
+  border-radius: var(--ios-capsule) !important;
+  box-shadow: none !important;
+}
+.nav-menu-btn:hover { background: #0070e0 !important; }
+.nav-icon-btn, .dark-toggle, .nav-search-btn, .lang-picker-btn {
+  background: var(--ios-bg3) !important;
+  border: 1px solid var(--ios-border) !important;
+  border-radius: var(--ios-capsule) !important;
+  color: var(--ios-text) !important;
+}
+/* ── Nav dropdown ── */
+.nav-dropdown {
+  background: var(--ios-bg2) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top: 1px solid var(--ios-border) !important;
+  box-shadow: var(--ios-shadow-lg) !important;
+}
+.nav-dd-item { border-radius: 10px !important; color: var(--ios-text2) !important; font-weight: 500 !important; }
+.nav-dd-item:hover, .nav-dd-item.active { background: rgba(10,132,255,0.15) !important; color: var(--ios-blue) !important; }
+/* ── Language dropdown ── */
+.lang-dropdown {
+  background: var(--ios-bg2) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--ios-border) !important; border-radius: 16px !important; box-shadow: var(--ios-shadow-lg) !important;
+}
+.lang-opt { border-radius: 10px !important; color: var(--ios-text2) !important; }
+.lang-opt.active, .lang-opt:hover { background: rgba(10,132,255,0.15) !important; color: var(--ios-blue) !important; }
+/* ── Word of Day strip ── */
+.wod-bar { background: var(--ios-bg2) !important; border-bottom: 1px solid var(--ios-border) !important; color: var(--ios-text) !important; backdrop-filter: none !important; }
+/* ── Hero ── */
+.hero-section { background: transparent !important; }
+.hero-text h1, .hero-title { color: var(--ios-text) !important; font-weight: 800 !important; }
+.hero-subtitle, .hero-desc { color: var(--ios-text2) !important; }
+/* ── Section cards: iOS elevated panels ── */
+.timeline-card,.geo-card,.ethnic-card,.culture-card,.economy-card,.gov-card,
+.lang-card,.religion-card,.tourism-card,.famous-card,.asmara-content,.geo-borders,
+.overview-text,.translator-card,.live-card,.stat-card,.community-card,.news-card {
+  background: var(--ios-bg2) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  border: 1px solid var(--ios-border) !important;
+  box-shadow: var(--ios-shadow) !important;
+  color: var(--ios-text) !important;
+}
+/* Card text */
+.section-header h2,.timeline-card h3,.geo-card h3,.culture-card h3,.economy-card h3,
+.gov-card h3,.lang-card h3,.religion-card h4,.tourism-card h3,.asmara-text h3,
+.asmara-text h4,.geo-borders h3,.religion-section h3,.famous-name {
+  color: var(--ios-text) !important; font-weight: 700 !important;
+}
+.section-header p,.timeline-card p,.geo-card p,.culture-card p,.economy-card p,
+.gov-card p,.lang-card p,.religion-card p,.tourism-card p,.asmara-text p,
+.overview-text p,.famous-info p { color: var(--ios-text2) !important; }
+/* Section tag */
+.section-tag { background: rgba(10,132,255,0.18) !important; color: var(--ios-blue) !important; border-radius: var(--ios-capsule) !important; border: none !important; }
+/* ── Buttons: iOS capsule style ── */
+.btn,.btn-primary,.cta-btn,.hero-btn,.hero-cta-btn,.nav-dd-app-btn,
+.share-story-float,.read-more-btn,.section-cta-btn,.translator-btn,.install-confirm-btn {
+  border-radius: var(--ios-capsule) !important;
+  background: var(--ios-blue) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.btn-secondary { border-radius: var(--ios-capsule) !important; background: var(--ios-bg3) !important; color: var(--ios-text) !important; border: 1px solid var(--ios-border) !important; box-shadow: none !important; }
+.filter-btn, .tab-btn { border-radius: var(--ios-capsule) !important; background: var(--ios-bg3) !important; color: var(--ios-text2) !important; border: 1px solid var(--ios-border) !important; }
+.tab-btn.active,.filter-btn.active { background: var(--ios-blue) !important; color: white !important; border-color: transparent !important; box-shadow: none !important; }
+.share-story-float { background: var(--ios-blue) !important; box-shadow: var(--ios-shadow) !important; }
+.wod-close { background: var(--ios-bg3) !important; border-radius: var(--ios-capsule) !important; color: var(--ios-text2) !important; }
+/* Reading progress */
+.reading-progress { background: var(--ios-blue) !important; height: 3px !important; }
+/* Footer */
+footer,#footer,.site-footer { background: var(--ios-bg2) !important; backdrop-filter: none !important; border-top: 1px solid var(--ios-border) !important; }
+/* Shape radii */
+.timeline-card,.overview-text,.asmara-content { border-radius: 20px !important; }
+.geo-card,.culture-card,.economy-card,.gov-card,.lang-card,.religion-card,.tourism-card,.famous-card,.stat-card,.live-card { border-radius: var(--ios-r) !important; }
+/* Search modal */
+#globalSearchModal,.global-search-modal { background: rgba(14,14,22,0.90) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important; }
+/* Install banner */
+.install-banner-inner { background: var(--ios-bg2) !important; backdrop-filter: none !important; border: 1px solid var(--ios-border) !important; border-radius: 16px !important; box-shadow: var(--ios-shadow) !important; }

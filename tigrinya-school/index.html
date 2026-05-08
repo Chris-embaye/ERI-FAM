@@ -20,24 +20,24 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --green: #16a34a; --green-d: #15803d; --green-light: rgba(22,163,74,0.15);
-      --red: #ef4444;
-      --bg:   rgba(255,255,255,0.44);
-      --card: rgba(255,255,255,0.92);
-      --text: #0f172a; --text-sub: rgba(15,23,42,0.65); --text-dim: rgba(15,23,42,0.42);
-      --border: rgba(255,255,255,0.95);
-      --shadow:    0 2px 18px rgba(0,20,80,.16), 0 1px 6px rgba(0,20,80,.10);
-      --shadow-md: 0 8px 40px rgba(0,20,80,.24);
+      --green: #34C759; --green-d: #2db84e; --green-light: rgba(52,199,89,0.15);
+      --red: #FF3B30;
+      --bg:   rgba(255,255,255,0.07);
+      --card: #252538;
+      --text: rgba(255,255,255,0.96); --text-sub: rgba(255,255,255,0.55); --text-dim: rgba(255,255,255,0.32);
+      --border: rgba(255,255,255,0.10);
+      --shadow:    0 2px 18px rgba(0,0,0,.30), 0 1px 6px rgba(0,0,0,.20);
+      --shadow-md: 0 8px 40px rgba(0,0,0,.45);
       --radius: 14px; --radius-sm: 9px; --nav-h: 62px;
     }
     [data-sky="night"] {
-      --green: #22c55e; --green-d: #16a34a; --green-light: rgba(34,197,94,0.15);
-      --bg:   rgba(255,255,255,0.07);
-      --card: rgba(8,20,90,0.72);
-      --text: #e0f2fe; --text-sub: rgba(224,242,254,0.65); --text-dim: rgba(224,242,254,0.40);
-      --border: rgba(147,197,253,0.25);
-      --shadow:    0 2px 12px rgba(0,10,60,.50), 0 1px 4px rgba(0,10,60,.32);
-      --shadow-md: 0 8px 32px rgba(0,10,80,.65);
+      --green: #34C759; --green-d: #2db84e; --green-light: rgba(52,199,89,0.15);
+      --bg:   rgba(255,255,255,0.05);
+      --card: #1e1e2e;
+      --text: rgba(255,255,255,0.96); --text-sub: rgba(255,255,255,0.52); --text-dim: rgba(255,255,255,0.30);
+      --border: rgba(255,255,255,0.09);
+      --shadow:    0 2px 12px rgba(0,0,0,.50), 0 1px 4px rgba(0,0,0,.32);
+      --shadow-md: 0 8px 32px rgba(0,0,0,.65);
     }
     html, body { height: 100%; }
     body {
@@ -88,19 +88,19 @@
 
     /* ── HEADER ── */
     .hub-header {
-      background: rgba(10,35,110,0.62);
-      backdrop-filter: blur(32px) saturate(2.4) brightness(1.06);
-      -webkit-backdrop-filter: blur(32px) saturate(2.4) brightness(1.06);
-      border-bottom: 1.5px solid rgba(255,255,255,0.30);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 20px rgba(0,20,80,.22);
+      background: rgba(26,26,46,0.92);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.06);
       color: white; padding: 14px 18px 12px;
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 100;
     }
     [data-sky="night"] .hub-header {
-      background: rgba(3,6,30,0.78);
-      border-bottom-color: rgba(147,197,253,0.18);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 2px 20px rgba(0,10,60,.45);
+      background: rgba(16,16,28,0.96);
+      border-bottom-color: rgba(255,255,255,0.08);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.04);
     }
     .hub-logo { display: flex; align-items: center; gap: 10px; }
     .hub-logo-icon { font-size: 1.6rem; }
@@ -124,18 +124,18 @@
     /* ── BOTTOM NAV ── */
     .hub-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(10,35,110,0.72);
-      border-top: 1.5px solid rgba(255,255,255,0.30);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 -4px 30px rgba(0,20,80,.22);
-      backdrop-filter: blur(32px) saturate(2.4) brightness(1.06);
-      -webkit-backdrop-filter: blur(32px) saturate(2.4) brightness(1.06);
+      background: rgba(26,26,46,0.96);
+      border-top: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 -1px 0 rgba(255,255,255,0.06);
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
       display: flex; height: var(--nav-h);
       padding-bottom: env(safe-area-inset-bottom); z-index: 100;
     }
     [data-sky="night"] .hub-nav {
-      background: rgba(3,6,30,0.82);
-      border-top-color: rgba(147,197,253,0.18);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 -4px 30px rgba(0,10,60,.50);
+      background: rgba(14,14,26,0.98);
+      border-top-color: rgba(255,255,255,0.08);
+      box-shadow: 0 -1px 0 rgba(255,255,255,0.04);
     }
     .hnav-btn {
       flex: 1; display: flex; flex-direction: column;
@@ -144,7 +144,7 @@
       color: rgba(255,255,255,0.52); transition: color 0.15s; padding-top: 6px;
     }
     .hnav-icon { font-size: 1.45rem; }
-    .hnav-btn.active { color: #4ade80; }
+    .hnav-btn.active { color: #34C759; }
 
     /* ── VIEWS & TABS ── */
     .view { display: none; padding: 16px 14px 0; }
@@ -1038,13 +1038,10 @@
       position: fixed; inset: 0; z-index: 500;
       display: flex; align-items: center; justify-content: center; padding: 20px;
       overflow: hidden;
-      background: linear-gradient(180deg,
-        #030e28 0%, #071a52 14%, #0d2880 30%, #1638b0 50%,
-        #1d4ed8 68%, #2258e8 84%, #3878f0 100%);
+      background: linear-gradient(180deg, #0f0f1e 0%, #141428 30%, #1a1a30 70%, #1c1c2e 100%);
     }
     [data-sky="night"] .auth-gate {
-      background: linear-gradient(180deg,
-        #010207 0%, #04091c 25%, #080f38 52%, #0c1445 75%, #0e1a55 100%);
+      background: linear-gradient(180deg, #080810 0%, #0c0c1a 40%, #10101e 100%);
     }
     .auth-gate::before {
       content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -1114,15 +1111,15 @@
     .sky-scene {
       position: fixed; inset: 0; z-index: -1;
       pointer-events: none; overflow: hidden;
-      /* Day — deep ocean-to-sky gradient, rich + professional */
+      /* Day — iOS dark navy, clean and soft */
       background: linear-gradient(180deg,
-        #030e28 0%, #071a52 14%, #0d2880 30%, #1638b0 50%,
-        #1d4ed8 68%, #2258e8 84%, #3878f0 100%);
+        #0f0f1e 0%, #141428 20%, #1a1a30 45%,
+        #1e1e36 70%, #1c1c2e 100%);
     }
     [data-sky="night"] .sky-scene {
-      /* Night — deep starfield */
+      /* Night — deeper navy */
       background: linear-gradient(180deg,
-        #010207 0%, #04091c 25%, #080f38 52%, #0c1445 75%, #0e1a55 100%);
+        #080810 0%, #0c0c1a 30%, #10101e 60%, #0e0e1c 100%);
     }
 
     /* Soft cloud wisps — day only */
@@ -1208,18 +1205,18 @@
     .dot-menu-panel {
       position: fixed; top: 58px; left: 8px; right: 8px;
       max-height: calc(100svh - 78px); overflow-y: auto;
-      background: rgba(8,24,80,0.93);
-      backdrop-filter: blur(32px) saturate(2.2) brightness(1.05);
-      -webkit-backdrop-filter: blur(32px) saturate(2.2) brightness(1.05);
-      border: 1.5px solid rgba(255,255,255,0.22);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 16px 60px rgba(0,10,50,0.60);
+      background: rgba(30,30,48,0.97);
+      backdrop-filter: blur(24px) saturate(1.8);
+      -webkit-backdrop-filter: blur(24px) saturate(1.8);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 16px 60px rgba(0,0,0,0.55);
       border-radius: 20px; z-index: 200;
       opacity: 0; transform: translateY(-8px);
       pointer-events: none; transition: opacity .22s, transform .22s;
     }
     [data-sky="night"] .dot-menu-panel {
-      background: rgba(2,4,18,0.96);
-      border-color: rgba(147,197,253,0.14);
+      background: rgba(18,18,30,0.98);
+      border-color: rgba(255,255,255,0.08);
     }
     .dot-menu-panel.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
     @media all and (display-mode: standalone) {
@@ -1299,8 +1296,8 @@
     .hnav-btn { position: relative; }
     .hnav-btn.active::before {
       content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 34px; height: 3px; background: #4ade80; border-radius: 0 0 4px 4px;
-      box-shadow: 0 0 10px rgba(74,222,128,0.85), 0 0 22px rgba(74,222,128,0.40);
+      width: 34px; height: 3px; background: #34C759; border-radius: 0 0 4px 4px;
+      box-shadow: 0 0 10px rgba(52,199,89,0.85), 0 0 22px rgba(52,199,89,0.40);
     }
 
     /* ── TAB ACTIVE GLOW ── */
