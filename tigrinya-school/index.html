@@ -1581,10 +1581,10 @@
   <div class="auth-card">
     <div class="auth-logo"><img src="./icons/fidel-logo.svg" alt="Fidel" style="width:72px;height:72px;border-radius:18px;margin:0 auto;display:block;box-shadow:0 3px 16px rgba(0,0,0,.22)"></div>
     <div class="auth-title">Fidel</div>
-    <p class="auth-sub" id="authSub">Create your account to start learning</p>
+    <p class="auth-sub" id="authSub">Sign in to continue learning</p>
 
     <!-- Sign-Up Panel -->
-    <div id="authSignupPanel">
+    <div id="authSignupPanel" style="display:none">
       <div class="auth-role-pick">
         <button class="role-btn active" data-role="student">👦 Student</button>
         <button class="role-btn" data-role="parent">👨‍👩‍👧 Parent</button>
@@ -1607,7 +1607,7 @@
     </div>
 
     <!-- Sign-In Panel -->
-    <div id="authSigninPanel" style="display:none">
+    <div id="authSigninPanel">
       <input class="auth-input" id="siEmail" type="text" placeholder="Email or Student ID (ERI-XXXXXX)" autocomplete="username">
       <input class="auth-input" id="siPass" type="password" placeholder="Password" autocomplete="current-password">
       <div class="auth-err" id="siErr"></div>
