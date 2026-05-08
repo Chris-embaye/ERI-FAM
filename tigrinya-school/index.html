@@ -1462,6 +1462,14 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 24px 70px rgba(0,0,0,0.55);
       width: 100%; max-width: 320px;
     }
+    /* ── Floating alphabet ambient ── */
+    @keyframes fidelFloat {
+      0%   { opacity: 0; transform: translateY(0) translateX(0); }
+      12%  { opacity: 0.16; }
+      88%  { opacity: 0.16; }
+      100% { opacity: 0; transform: translateY(-80px) translateX(var(--drift, 0px)); }
+    }
+
     .student-block-icon { font-size: 3.2rem; margin-bottom: 16px; }
     .student-block-title { font-size: 1.25rem; font-weight: 900; color: white; margin-bottom: 10px; }
     .student-block-msg { font-size: 0.83rem; color: rgba(255,255,255,0.58); line-height: 1.65; }
@@ -5453,6 +5461,29 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
   } catch(e) { /* Firebase unavailable */ }
 }
 }); // end DOMContentLoaded
+
+/* ── Floating ፊደል ambient background ── */
+(function() {
+  const gate = document.getElementById('authGate');
+  if (!gate) return;
+  const C = 'ሀሁሂሃሄህሆለሉሊላሌልሎሐሑሒሓሔሕሖመሙሚማሜምሞረሩሪራሬርሮሰሱሲሳሴስሶሸሹሺሻሼሽሾቀቁቂቃቄቅቆበቡቢባቤብቦተቱቲታቴትቶቸቹቺቻቼችቾነኑኒናኔንኖአኡኢኣኤእኦከኩኪካኬክኮወዉዊዋዌውዎዘዙዚዛዜዝዞደዱዲዳዴድዶጀጁጂጃጄጅጆገጉጊጋጌግጎጠጡጢጣጤጥጦፀፁፂፃፄፅፆፈፉፊፋፌፍፎፐፑፒፓፔፕፖ';
+  for (let i = 0; i < 32; i++) {
+    const el    = document.createElement('span');
+    el.textContent = C[Math.floor(Math.random() * C.length)];
+    const dur   = 16 + Math.random() * 14;
+    const delay = -(Math.random() * dur);
+    const size  = (0.9 + Math.random() * 1.3).toFixed(2);
+    const x     = (2  + Math.random() * 94).toFixed(1);
+    const y     = (5  + Math.random() * 85).toFixed(1);
+    const drift = ((Math.random() - 0.5) * 48).toFixed(1);
+    el.style.cssText =
+      `position:absolute;left:${x}%;top:${y}%;font-size:${size}rem;` +
+      `font-family:'Noto Sans Ethiopic','Ebrima',sans-serif;color:#34C759;opacity:0;` +
+      `animation:fidelFloat ${dur.toFixed(1)}s ${delay.toFixed(1)}s linear infinite;` +
+      `--drift:${drift}px;pointer-events:none;z-index:0;user-select:none;`;
+    gate.prepend(el);
+  }
+})();
 
 </script>
 </body>
