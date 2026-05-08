@@ -1462,19 +1462,6 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 24px 70px rgba(0,0,0,0.55);
       width: 100%; max-width: 320px;
     }
-    /* ── Eritrea map glow ── */
-    .eritrea-glow {
-      position: absolute; bottom: 6%; left: 50%;
-      transform: translateX(-50%);
-      width: min(420px, 88vw); height: auto;
-      z-index: 0; pointer-events: none;
-      animation: eritreaPulse 5s ease-in-out infinite;
-    }
-    @keyframes eritreaPulse {
-      0%, 100% { opacity: 0.55; filter: drop-shadow(0 0 18px rgba(52,199,89,0.30)); }
-      50%       { opacity: 0.85; filter: drop-shadow(0 0 38px rgba(52,199,89,0.55)); }
-    }
-
     .student-block-icon { font-size: 3.2rem; margin-bottom: 16px; }
     .student-block-title { font-size: 1.25rem; font-weight: 900; color: white; margin-bottom: 10px; }
     .student-block-msg { font-size: 0.83rem; color: rgba(255,255,255,0.58); line-height: 1.65; }
@@ -1598,28 +1585,6 @@
 
 <!-- ══ AUTH GATE — shown until signed in ══ -->
 <div class="auth-gate" id="authGate">
-
-  <!-- Eritrea map glow — decorative background -->
-  <svg class="eritrea-glow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 270" aria-hidden="true">
-    <defs>
-      <filter id="mapGlow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="10"/>
-      </filter>
-    </defs>
-    <!-- Soft glow fill -->
-    <path d="M52,32 L105,18 L155,13 L185,17 L222,28 L258,48 L282,82 L296,118 L300,152 L290,182 L275,208 L252,230 L212,222 L175,218 L145,213 L112,198 L88,172 L63,148 L46,108 L43,72 L46,52 Z"
-          fill="#34C759" opacity="0.18" filter="url(#mapGlow)"/>
-    <!-- Crisp outline -->
-    <path d="M52,32 L105,18 L155,13 L185,17 L222,28 L258,48 L282,82 L296,118 L300,152 L290,182 L275,208 L252,230 L212,222 L175,218 L145,213 L112,198 L88,172 L63,148 L46,108 L43,72 L46,52 Z"
-          fill="none" stroke="#34C759" stroke-width="1.5" opacity="0.55"/>
-    <!-- Dahlak islands -->
-    <circle cx="308" cy="108" r="3.5" fill="#34C759" opacity="0.55"/>
-    <circle cx="318" cy="125" r="2.5" fill="#34C759" opacity="0.45"/>
-    <circle cx="312" cy="142" r="2"   fill="#34C759" opacity="0.40"/>
-    <!-- Asmara dot -->
-    <circle cx="192" cy="88"  r="4"   fill="#34C759" opacity="0.80"/>
-    <circle cx="192" cy="88"  r="8"   fill="none" stroke="#34C759" stroke-width="1" opacity="0.40"/>
-  </svg>
 
   <div class="auth-card">
     <div class="auth-logo"><img src="./icons/fidel-logo.svg" alt="Fidel" style="width:72px;height:72px;border-radius:18px;margin:0 auto;display:block;box-shadow:0 3px 16px rgba(0,0,0,.22)"></div>
