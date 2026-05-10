@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-sky="day">
 <head>
   <meta charset="UTF-8">
@@ -1044,17 +1044,20 @@
       background: var(--card); border-radius: var(--radius); border: 1.5px solid var(--border);
       box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px;
     }
-    .trans-dir-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 12px; gap: 8px;
+    .trans-lang-row { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+    .trans-lang-sel-wrap { flex:1; min-width:0; }
+    .trans-lang-sel {
+      width:100%; padding:9px 10px; border-radius:var(--radius-sm); font-size:0.76rem; font-weight:700;
+      color:var(--text); background:var(--card); border:1.5px solid var(--border);
+      outline:none; transition:border-color .15s; cursor:pointer;
     }
-    .trans-lang-lbl { font-size: 0.8rem; font-weight: 800; color: var(--text); flex: 1; text-align: center; }
-    .trans-swap {
-      font-size: 0.75rem; font-weight: 700; color: var(--green);
-      border: 1.5px solid var(--green); border-radius: 20px; padding: 5px 12px;
-      background: none; transition: background .15s; white-space: nowrap; flex-shrink: 0;
+    .trans-lang-sel:focus { border-color:var(--green); }
+    .trans-swap-btn {
+      flex-shrink:0; width:34px; height:34px; border-radius:50%; font-size:1rem; font-weight:800;
+      color:var(--green); background:var(--green-light); border:1.5px solid var(--green);
+      display:flex; align-items:center; justify-content:center; transition:background .15s, color .15s;
     }
-    .trans-swap:hover { background: var(--green-light); }
+    .trans-swap-btn:active { background:var(--green); color:#fff; }
     .trans-input {
       width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
       background: var(--bg); color: var(--text); font-size: 0.9rem; padding: 10px 12px;
@@ -3648,10 +3651,14 @@
       <p>Tigrinya ↔ English</p>
     </div>
     <div class="trans-card">
-      <div class="trans-dir-row">
-        <span class="trans-lang-lbl" id="transFromLbl">English</span>
-        <button class="trans-swap" id="transSwapBtn">⇄ Swap</button>
-        <span class="trans-lang-lbl" id="transToLbl">ትግርኛ Tigrinya</span>
+      <div class="trans-lang-row">
+        <div class="trans-lang-sel-wrap">
+          <select class="trans-lang-sel" id="transFromSel"></select>
+        </div>
+        <button class="trans-swap-btn" id="transSwapBtn" title="Swap languages">⇄</button>
+        <div class="trans-lang-sel-wrap">
+          <select class="trans-lang-sel" id="transToSel"></select>
+        </div>
       </div>
       <textarea class="trans-input" id="transInput" placeholder="Type English here…" rows="4" maxlength="500"></textarea>
       <!-- Ge'ez keyboard (shown when translating FROM Tigrinya) -->
@@ -3677,9 +3684,9 @@
     <div class="trans-tips">
       <div class="trans-tips-title">💡 Tips</div>
       <div class="trans-tip">Keep sentences short for the best results</div>
-      <div class="trans-tip">Tigrinya uses the ancient Ge'ez script — ፊደል (fidel)</div>
-      <div class="trans-tip">Try: <em>"Hello, how are you?"</em> → <strong>ሰላም ከመይ ኣለካ?</strong></div>
-      <div class="trans-tip">Try: <em>"Thank you very much"</em> → <strong>የቐንየለይ ብዙሕ</strong></div>
+      <div class="trans-tip">Use ⇄ to quickly swap source and target language</div>
+      <div class="trans-tip">Tigrinya uses the Ge'ez script (ፊደል) — a keyboard appears when Tigrinya is selected as source</div>
+      <div class="trans-tip">Tigrinya ↔ English uses a local dictionary for common words — faster &amp; more accurate than machine translation</div>
     </div>
   </div>
 
@@ -7950,15 +7957,7 @@ const DICT = [
   {tig:'ወለል',           rom:'Welel',               eng:'Floor',                       cat:'Household', emoji:'🏢'},
   {tig:'ሽሻ',             rom:'Shisha',              eng:'Window glass / Mirror',       cat:'Household', emoji:'🪟'},
   {tig:'ናቐፋ',           rom:'Naqefa',              eng:'Ceiling',                     cat:'Household', emoji:'🏠'},
-  {tig:'ናይ ቤት ክፍሊ', rom:'Nay bet kifli',         eng:'Room',                        cat:'Household', emoji:'🚪'},
-  {tig:'ሽሙጥ',           rom:'Shimut',              eng:'Wall',                        cat:'Household', emoji:'🧱'},
-  // ── MORE Transport ──
-  {tig:'ትኬት',           rom:'Tiket',               eng:'Ticket',                      cat:'Transport', emoji:'🎟️'},
-  {tig:'ናህሪ',           rom:'Nahri',               eng:'Speed',                       cat:'Transport', emoji:'⚡'},
-  {tig:'ዕቃ ቦርሳ',     rom:"'Eqa borsa",            eng:'Luggage / Baggage',           cat:'Transport', emoji:'🧳'},
   // ── MORE Clothing ──
-  {tig:'ሻሽ',             rom:'Shas',                eng:'Shawl / Headscarf',           cat:'Clothing', emoji:'🧕'},
-  {tig:'ዝብደሉ',         rom:'Zibdelu',             eng:'Shorts / Short trousers',     cat:'Clothing', emoji:'🩳'},
   {tig:'ጥሎፊ',           rom:'Tilof',               eng:'Traditional embroidery',      cat:'Clothing', emoji:'🪡'},
 ];
 
@@ -8091,69 +8090,178 @@ renderBooks();
 /* ═══════════════════════════════
    TRANSLATOR
 ═══════════════════════════════ */
-let _transDir = 'en-ti';
+const TRANS_LANGS = [
+  { code:'af',    name:'Afrikaans' },
+  { code:'am',    name:'አማርኛ Amharic' },
+  { code:'ar',    name:'العربية Arabic' },
+  { code:'hy',    name:'Հայերեն Armenian' },
+  { code:'az',    name:'Azərbaycan Azerbaijani' },
+  { code:'eu',    name:'Euskara Basque' },
+  { code:'be',    name:'Беларуская Belarusian' },
+  { code:'bn',    name:'বাংলা Bengali' },
+  { code:'bs',    name:'Bosanski Bosnian' },
+  { code:'bg',    name:'Български Bulgarian' },
+  { code:'ca',    name:'Català Catalan' },
+  { code:'zh-CN', name:'中文 Chinese (Simplified)' },
+  { code:'zh-TW', name:'繁體中文 Chinese (Traditional)' },
+  { code:'hr',    name:'Hrvatski Croatian' },
+  { code:'cs',    name:'Čeština Czech' },
+  { code:'da',    name:'Dansk Danish' },
+  { code:'nl',    name:'Nederlands Dutch' },
+  { code:'en',    name:'English' },
+  { code:'et',    name:'Eesti Estonian' },
+  { code:'tl',    name:'Filipino' },
+  { code:'fi',    name:'Suomi Finnish' },
+  { code:'fr',    name:'Français French' },
+  { code:'gl',    name:'Galego Galician' },
+  { code:'ka',    name:'ქართული Georgian' },
+  { code:'de',    name:'Deutsch German' },
+  { code:'el',    name:'Ελληνικά Greek' },
+  { code:'gu',    name:'ગુજરાતી Gujarati' },
+  { code:'ht',    name:'Kreyòl ayisyen Haitian Creole' },
+  { code:'ha',    name:'Hausa' },
+  { code:'he',    name:'עברית Hebrew' },
+  { code:'hi',    name:'हिन्दी Hindi' },
+  { code:'hu',    name:'Magyar Hungarian' },
+  { code:'is',    name:'Íslenska Icelandic' },
+  { code:'ig',    name:'Igbo' },
+  { code:'id',    name:'Bahasa Indonesia' },
+  { code:'ga',    name:'Gaeilge Irish' },
+  { code:'it',    name:'Italiano Italian' },
+  { code:'ja',    name:'日本語 Japanese' },
+  { code:'jv',    name:'Basa Jawa Javanese' },
+  { code:'kn',    name:'ಕನ್ನಡ Kannada' },
+  { code:'kk',    name:'Қазақша Kazakh' },
+  { code:'km',    name:'ភាសាខ្មែរ Khmer' },
+  { code:'ko',    name:'한국어 Korean' },
+  { code:'ku',    name:'Kurdî Kurdish' },
+  { code:'ky',    name:'Кыргызча Kyrgyz' },
+  { code:'lo',    name:'ລາວ Lao' },
+  { code:'lv',    name:'Latviešu Latvian' },
+  { code:'lt',    name:'Lietuvių Lithuanian' },
+  { code:'mk',    name:'Македонски Macedonian' },
+  { code:'mg',    name:'Malagasy' },
+  { code:'ms',    name:'Bahasa Melayu Malay' },
+  { code:'ml',    name:'മലയാളം Malayalam' },
+  { code:'mt',    name:'Malti Maltese' },
+  { code:'mi',    name:'Māori' },
+  { code:'mr',    name:'मराठी Marathi' },
+  { code:'mn',    name:'Монгол Mongolian' },
+  { code:'my',    name:'မြန်မာ Myanmar' },
+  { code:'ne',    name:'नेपाली Nepali' },
+  { code:'no',    name:'Norsk Norwegian' },
+  { code:'or',    name:'ଓଡ଼ିଆ Odia' },
+  { code:'ps',    name:'پښتو Pashto' },
+  { code:'fa',    name:'فارسی Persian' },
+  { code:'pl',    name:'Polski Polish' },
+  { code:'pt',    name:'Português Portuguese' },
+  { code:'pa',    name:'ਪੰਜਾਬੀ Punjabi' },
+  { code:'ro',    name:'Română Romanian' },
+  { code:'ru',    name:'Русский Russian' },
+  { code:'sm',    name:'Samoan' },
+  { code:'sr',    name:'Српски Serbian' },
+  { code:'sn',    name:'Shona' },
+  { code:'sd',    name:'سنڌي Sindhi' },
+  { code:'si',    name:'සිංහල Sinhala' },
+  { code:'sk',    name:'Slovenčina Slovak' },
+  { code:'sl',    name:'Slovenščina Slovenian' },
+  { code:'so',    name:'Soomaali Somali' },
+  { code:'es',    name:'Español Spanish' },
+  { code:'su',    name:'Basa Sunda Sundanese' },
+  { code:'sw',    name:'Kiswahili Swahili' },
+  { code:'sv',    name:'Svenska Swedish' },
+  { code:'tg',    name:'Тоҷикӣ Tajik' },
+  { code:'ta',    name:'தமிழ் Tamil' },
+  { code:'te',    name:'తెలుగు Telugu' },
+  { code:'th',    name:'ภาษาไทย Thai' },
+  { code:'ti',    name:'ትግርኛ Tigrinya' },
+  { code:'tr',    name:'Türkçe Turkish' },
+  { code:'tk',    name:'Türkmençe Turkmen' },
+  { code:'uk',    name:'Українська Ukrainian' },
+  { code:'ur',    name:'اردو Urdu' },
+  { code:'uz',    name:'Oʻzbekcha Uzbek' },
+  { code:'vi',    name:'Tiếng Việt Vietnamese' },
+  { code:'cy',    name:'Cymraeg Welsh' },
+  { code:'xh',    name:'isiXhosa Xhosa' },
+  { code:'yi',    name:'ייִדיש Yiddish' },
+  { code:'yo',    name:'Yorùbá Yoruba' },
+  { code:'zu',    name:'isiZulu Zulu' },
+];
 
-document.getElementById('transSwapBtn').addEventListener('click', () => {
-  _transDir = _transDir === 'en-ti' ? 'ti-en' : 'en-ti';
-  const inp = document.getElementById('transInput');
-  const from = document.getElementById('transFromLbl');
-  const to   = document.getElementById('transToLbl');
-  if (_transDir === 'en-ti') {
-    from.textContent = 'English';
-    to.textContent   = 'ትግርኛ Tigrinya';
-    inp.placeholder  = 'Type English here…';
-    inp.style.fontFamily = '';
-  } else {
-    from.textContent = 'ትግርኛ Tigrinya';
-    to.textContent   = 'English';
-    inp.placeholder  = 'ትግርኛ ኣብዚ ጸሓፍ…';
-    inp.style.fontFamily = 'serif';
-  }
+(function _initTransSelects() {
+  const opts = TRANS_LANGS.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
+  document.getElementById('transFromSel').innerHTML = opts;
+  document.getElementById('transToSel').innerHTML   = opts;
+  document.getElementById('transFromSel').value = 'en';
+  document.getElementById('transToSel').value   = 'ti';
+})();
+
+function _transFromLang() { return document.getElementById('transFromSel').value; }
+function _transToLang()   { return document.getElementById('transToSel').value; }
+
+const _ETHIOPIC = new Set(['ti', 'am']);
+const _RTL      = new Set(['ar', 'fa', 'he', 'ur', 'ps', 'sd', 'yi', 'ku']);
+
+function _applyTransLangs() {
+  const inp  = document.getElementById('transInput');
+  const from = _transFromLang();
+  inp.value = '';
+  inp.placeholder      = _ETHIOPIC.has(from) ? 'ኣብዚ ጸሓፍ…' : 'Type here…';
+  inp.style.fontFamily = _ETHIOPIC.has(from) ? '"Noto Serif Ethiopic", serif' : '';
+  inp.style.direction  = _RTL.has(from) ? 'rtl' : '';
+  document.getElementById('transChar').textContent = '0 / 500';
   document.getElementById('transOutput').innerHTML = '<span class="trans-ph">Translation will appear here</span>';
   document.getElementById('transCopyBtn').style.display = 'none';
   document.getElementById('transStatus').textContent = '';
+  document.dispatchEvent(new CustomEvent('transDirChanged', { detail: { from } }));
+}
+
+document.getElementById('transFromSel').addEventListener('change', _applyTransLangs);
+document.getElementById('transToSel').addEventListener('change',   _applyTransLangs);
+
+document.getElementById('transSwapBtn').addEventListener('click', () => {
+  const f = document.getElementById('transFromSel');
+  const t = document.getElementById('transToSel');
+  [f.value, t.value] = [t.value, f.value];
+  _applyTransLangs();
 });
 
 document.getElementById('transInput').addEventListener('input', e => {
   document.getElementById('transChar').textContent = e.target.value.length + ' / 500';
 });
 
-/* Local dictionary lookup for translator — checks DICT before hitting API */
+/* Local dictionary lookup — only for Tigrinya ↔ English pairs */
 function _transLookupLocal(text) {
+  const from = _transFromLang();
+  const to   = _transToLang();
+  if (!((from === 'en' && to === 'ti') || (from === 'ti' && to === 'en'))) return [];
   const q = text.toLowerCase().trim();
   const results = [];
-
-  if (_transDir === 'en-ti') {
-    // English → Tigrinya: search eng field
+  if (from === 'en') {
     for (const d of DICT) {
       if (!d.tig || !d.eng) continue;
       const variants = d.eng.toLowerCase().split('/').map(s => s.trim());
-      if (variants.some(v => v === q)) {
+      if (variants.some(v => v === q))
         results.push({ tig: d.tig, rom: d.rom, eng: d.eng, emoji: d.emoji || '', exact: true });
-      }
     }
     if (!results.length) {
       for (const d of DICT) {
         if (!d.tig || !d.eng) continue;
-        if (d.eng.toLowerCase().includes(q) || (d.rom && d.rom.toLowerCase() === q)) {
+        if (d.eng.toLowerCase().includes(q) || (d.rom && d.rom.toLowerCase() === q))
           results.push({ tig: d.tig, rom: d.rom, eng: d.eng, emoji: d.emoji || '', exact: false });
-        }
       }
     }
   } else {
-    // Tigrinya → English: search tig or rom field
     for (const d of DICT) {
       if (!d.tig || !d.eng) continue;
-      if (d.tig === text || (d.rom && d.rom.toLowerCase() === q)) {
+      if (d.tig === text || (d.rom && d.rom.toLowerCase() === q))
         results.push({ tig: d.tig, rom: d.rom, eng: d.eng, emoji: d.emoji || '', exact: true });
-      }
     }
     if (!results.length) {
       for (const d of DICT) {
         if (!d.tig || !d.eng) continue;
-        if (d.tig.includes(text) || (d.rom && d.rom.toLowerCase().includes(q))) {
+        if (d.tig.includes(text) || (d.rom && d.rom.toLowerCase().includes(q)))
           results.push({ tig: d.tig, rom: d.rom, eng: d.eng, emoji: d.emoji || '', exact: false });
-        }
       }
     }
   }
@@ -8161,6 +8269,7 @@ function _transLookupLocal(text) {
 }
 
 function _transShowLocal(results, outEl, statEl, copyBtn) {
+  const showTig = _transFromLang() === 'en';
   outEl.innerHTML = '';
   results.forEach((r, i) => {
     const row = document.createElement('div');
@@ -8172,12 +8281,12 @@ function _transShowLocal(results, outEl, statEl, copyBtn) {
       row.appendChild(em);
     }
     const main = document.createElement('span');
-    main.style.cssText = _transDir === 'en-ti'
+    main.style.cssText = showTig
       ? 'font-family:"Noto Serif Ethiopic",serif;font-size:1.15rem;font-weight:700;'
       : 'font-size:1rem;font-weight:700;';
-    main.textContent = _transDir === 'en-ti' ? r.tig : r.eng;
+    main.textContent = showTig ? r.tig : r.eng;
     row.appendChild(main);
-    if (_transDir === 'en-ti' && r.rom) {
+    if (showTig && r.rom) {
       const rm = document.createElement('div');
       rm.style.cssText = 'font-size:0.75rem;color:var(--text-dim);font-style:italic;margin-top:2px;';
       rm.textContent = r.rom;
@@ -8186,12 +8295,12 @@ function _transShowLocal(results, outEl, statEl, copyBtn) {
     if (results.length > 1) {
       const sub = document.createElement('div');
       sub.style.cssText = 'font-size:0.72rem;color:var(--text-dim);margin-top:1px;';
-      sub.textContent = _transDir === 'en-ti' ? r.eng : r.tig;
+      sub.textContent = showTig ? r.eng : r.tig;
       row.appendChild(sub);
     }
     outEl.appendChild(row);
   });
-  const firstResult = _transDir === 'en-ti' ? results[0].tig : results[0].eng;
+  const firstResult = showTig ? results[0].tig : results[0].eng;
   statEl.style.color = 'var(--green)';
   statEl.textContent = results[0].exact ? '✓ Found in dictionary' : '✓ Best match from dictionary';
   copyBtn.style.display = '';
@@ -8212,15 +8321,11 @@ document.getElementById('transBtn').addEventListener('click', async () => {
   statEl.textContent = ''; statEl.style.color = '';
   copyBtn.style.display = 'none';
 
-  // Always try local dictionary first — much more accurate for Tigrinya
   const localHits = _transLookupLocal(text);
-  if (localHits.length) {
-    _transShowLocal(localHits, outEl, statEl, copyBtn);
-    return;
-  }
+  if (localHits.length) { _transShowLocal(localHits, outEl, statEl, copyBtn); return; }
 
-  // Fall back to API for phrases/sentences not in the dictionary
-  const [src, tgt] = _transDir === 'en-ti' ? ['en', 'ti'] : ['ti', 'en'];
+  const src = _transFromLang();
+  const tgt = _transToLang();
   btn.disabled = true; btn.textContent = 'Translating…';
   outEl.innerHTML = '<span class="trans-ph">Translating…</span>';
   try {
@@ -8232,20 +8337,23 @@ document.getElementById('transBtn').addEventListener('click', async () => {
       const translation = tmp.value;
       outEl.innerHTML = '';
       const p = document.createElement('p');
-      p.style.cssText = tgt === 'ti'
+      p.style.cssText = _ETHIOPIC.has(tgt)
         ? 'font-family:"Noto Serif Ethiopic",serif;font-size:1.1rem;line-height:1.9;'
+        : _RTL.has(tgt) ? 'font-size:0.95rem;line-height:1.7;direction:rtl;text-align:right;'
         : 'font-size:0.95rem;line-height:1.7;';
       p.textContent = translation;
       outEl.appendChild(p);
       statEl.style.color = 'var(--text-dim)';
-      statEl.textContent = '⚠ Machine translation — may be inaccurate for Tigrinya';
+      statEl.textContent = (src === 'ti' || tgt === 'ti')
+        ? '⚠ Machine translation — may be inaccurate for Tigrinya'
+        : '✓ Translated';
       copyBtn.style.display = '';
       copyBtn.onclick = () => navigator.clipboard?.writeText(translation)
         .then(() => hubToast('Copied!')).catch(() => {});
     } else if (data.responseStatus === 429) {
       outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Rate limit reached — please wait a moment and try again.</span>';
     } else {
-      outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Word not found in dictionary. Try a single word or short phrase.</span>';
+      outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Translation not available. Try a shorter phrase.</span>';
     }
   } catch {
     outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Network error. Check your connection.</span>';
@@ -8259,201 +8367,6 @@ document.getElementById('transBtn').addEventListener('click', async () => {
 ═══════════════════════════════ */
 const DICT_DATA = DICT; // alias for global search
 const DICT_CATS = ['All','★ Favorites','Greetings','Family','Numbers','Food','Fruits','Vegetables','Animals','Body','Health','Colors','Clothing','Household','Tools','Transport','Places','Nature','Weather','Jobs','School','Sports','Music','Verbs','Emotions','Adjectives','Days','Months','Technology'];
-
-/* ═══════════════════════════════════════════════════════════
-   AMHARIC DICTIONARY
-═══════════════════════════════════════════════════════════ */
-const DICT_AM = [
-  {word:'ሰላም',rom:'Selam',eng:'Hello / Peace',cat:'Greetings',emoji:'👋'},
-  {word:'እንደምን ነህ?',rom:'Indemen neh?',eng:'How are you? (to a man)',cat:'Greetings',emoji:'🙋‍♂️'},
-  {word:'እንደምን ነሽ?',rom:'Indemen nesh?',eng:'How are you? (to a woman)',cat:'Greetings',emoji:'🙋‍♀️'},
-  {word:'ደህና ነኝ',rom:'Dehna negn',eng:'I am fine',cat:'Greetings',emoji:'😊'},
-  {word:'አመሰግናለሁ',rom:'Ameseginalew',eng:'Thank you',cat:'Greetings',emoji:'🙏'},
-  {word:'ይቅርታ',rom:'Yiqirta',eng:'Sorry / Excuse me',cat:'Greetings',emoji:'🙇'},
-  {word:'አዎ',rom:'Awo',eng:'Yes',cat:'Greetings',emoji:'✅'},
-  {word:'አይደለም',rom:'Ayedelem',eng:'No',cat:'Greetings',emoji:'❌'},
-  {word:'ደህና ሁን',rom:'Dehna hun',eng:'Goodbye',cat:'Greetings',emoji:'🕊️'},
-  {word:'እንኳን ደህና መጣህ',rom:'Inquwan dehna metah',eng:'Welcome',cat:'Greetings',emoji:'🤗'},
-  {word:'ጤና ይስጥልኝ',rom:'Tena yistilign',eng:'Good day / Bless you',cat:'Greetings',emoji:'☀️'},
-  {word:'አባ',rom:'Aba',eng:'Father',cat:'Family',emoji:'👨'},
-  {word:'እናት',rom:'Inat',eng:'Mother',cat:'Family',emoji:'👩'},
-  {word:'ወንድም',rom:'Wendim',eng:'Brother',cat:'Family',emoji:'🧑'},
-  {word:'እህት',rom:'Ihet',eng:'Sister',cat:'Family',emoji:'👩'},
-  {word:'ልጅ',rom:'Lij',eng:'Child',cat:'Family',emoji:'🧒'},
-  {word:'ቤተሰብ',rom:'Beteseb',eng:'Family',cat:'Family',emoji:'👨‍👩‍👧‍👦'},
-  {word:'ባል',rom:'Bal',eng:'Husband',cat:'Family',emoji:'🤵'},
-  {word:'ሚስት',rom:'Mist',eng:'Wife',cat:'Family',emoji:'👰'},
-  {word:'አያት',rom:'Ayat',eng:'Grandparent',cat:'Family',emoji:'👴'},
-  {word:'ጎረቤት',rom:'Gorebetoch',eng:'Neighbor',cat:'Family',emoji:'🏘️'},
-  {word:'ሕጻን',rom:'Hitsan',eng:'Baby / Infant',cat:'Family',emoji:'👶'},
-  {word:'ዜሮ',rom:'Zero',eng:'Zero',cat:'Numbers',emoji:'0️⃣'},
-  {word:'አንድ',rom:'And',eng:'One',cat:'Numbers',emoji:'1️⃣'},
-  {word:'ሁለት',rom:'Hulet',eng:'Two',cat:'Numbers',emoji:'2️⃣'},
-  {word:'ሦስት',rom:'Sost',eng:'Three',cat:'Numbers',emoji:'3️⃣'},
-  {word:'አራት',rom:'Arat',eng:'Four',cat:'Numbers',emoji:'4️⃣'},
-  {word:'አምስት',rom:'Amist',eng:'Five',cat:'Numbers',emoji:'5️⃣'},
-  {word:'ስድስት',rom:'Sidist',eng:'Six',cat:'Numbers',emoji:'6️⃣'},
-  {word:'ሰባት',rom:'Sebat',eng:'Seven',cat:'Numbers',emoji:'7️⃣'},
-  {word:'ስምንት',rom:'Simint',eng:'Eight',cat:'Numbers',emoji:'8️⃣'},
-  {word:'ዘጠኝ',rom:'Zetegn',eng:'Nine',cat:'Numbers',emoji:'9️⃣'},
-  {word:'አስር',rom:'Asir',eng:'Ten',cat:'Numbers',emoji:'🔟'},
-  {word:'ሃያ',rom:'Haya',eng:'Twenty',cat:'Numbers',emoji:'✌️'},
-  {word:'ሠላሳ',rom:'Selasa',eng:'Thirty',cat:'Numbers',emoji:'🔢'},
-  {word:'አርባ',rom:'Arba',eng:'Forty',cat:'Numbers',emoji:'🔢'},
-  {word:'ሃምሳ',rom:'Hamsa',eng:'Fifty',cat:'Numbers',emoji:'🔢'},
-  {word:'መቶ',rom:'Meto',eng:'One hundred',cat:'Numbers',emoji:'💯'},
-  {word:'ሺህ',rom:'Shih',eng:'One thousand',cat:'Numbers',emoji:'🔢'},
-  {word:'እንጀራ',rom:'Injera',eng:'Injera (flatbread)',cat:'Food',emoji:'🫓'},
-  {word:'ወጥ',rom:'Wet',eng:'Stew / Sauce',cat:'Food',emoji:'🥘'},
-  {word:'ሽሮ',rom:'Shiro',eng:'Chickpea stew',cat:'Food',emoji:'🍲'},
-  {word:'ስጋ',rom:'Siga',eng:'Meat',cat:'Food',emoji:'🥩'},
-  {word:'አሳ',rom:'Asa',eng:'Fish',cat:'Food',emoji:'🐟'},
-  {word:'ዶሮ',rom:'Doro',eng:'Chicken',cat:'Food',emoji:'🍗'},
-  {word:'ቡና',rom:'Buna',eng:'Coffee',cat:'Food',emoji:'☕'},
-  {word:'ሻይ',rom:'Shay',eng:'Tea',cat:'Food',emoji:'🍵'},
-  {word:'ወተት',rom:'Wetet',eng:'Milk',cat:'Food',emoji:'🥛'},
-  {word:'ውሃ',rom:'Wiha',eng:'Water',cat:'Food',emoji:'💧'},
-  {word:'ስኳር',rom:'Sikwar',eng:'Sugar',cat:'Food',emoji:'🍬'},
-  {word:'ጨው',rom:'Chew',eng:'Salt',cat:'Food',emoji:'🧂'},
-  {word:'ቅቤ',rom:'Qibe',eng:'Butter / Ghee',cat:'Food',emoji:'🧈'},
-  {word:'ዳቦ',rom:'Dabo',eng:'Bread',cat:'Food',emoji:'🍞'},
-  {word:'እንቁላል',rom:'Inqulal',eng:'Egg',cat:'Food',emoji:'🥚'},
-  {word:'ሽንኩርት',rom:'Shinkurt',eng:'Onion',cat:'Food',emoji:'🧅'},
-  {word:'ቲማቲም',rom:'Timmatim',eng:'Tomato',cat:'Food',emoji:'🍅'},
-  {word:'ማር',rom:'Mar',eng:'Honey',cat:'Food',emoji:'🍯'},
-  {word:'ዘይት',rom:'Zeyt',eng:'Oil',cat:'Food',emoji:'🫙'},
-  {word:'ድንች',rom:'Dinich',eng:'Potato',cat:'Food',emoji:'🥔'},
-  {word:'ቱፋ',rom:'Tufa',eng:'Apple',cat:'Fruits',emoji:'🍎'},
-  {word:'ሙዝ',rom:'Muz',eng:'Banana',cat:'Fruits',emoji:'🍌'},
-  {word:'ሎሚ',rom:'Lomi',eng:'Lemon / Lime',cat:'Fruits',emoji:'🍋'},
-  {word:'ብርቱካን',rom:'Birtuqan',eng:'Orange',cat:'Fruits',emoji:'🍊'},
-  {word:'ወይን',rom:'Weyn',eng:'Grape',cat:'Fruits',emoji:'🍇'},
-  {word:'ሐምቲ',rom:'Hamti',eng:'Watermelon',cat:'Fruits',emoji:'🍉'},
-  {word:'አናናስ',rom:'Ananas',eng:'Pineapple',cat:'Fruits',emoji:'🍍'},
-  {word:'ማንጎ',rom:'Mango',eng:'Mango',cat:'Fruits',emoji:'🥭'},
-  {word:'ፓፓያ',rom:'Papaya',eng:'Papaya',cat:'Fruits',emoji:'🪴'},
-  {word:'ካሮት',rom:'Karot',eng:'Carrot',cat:'Vegetables',emoji:'🥕'},
-  {word:'ጎምን',rom:'Gomin',eng:'Cabbage',cat:'Vegetables',emoji:'🥬'},
-  {word:'ቃሪያ',rom:'Qariya',eng:'Pepper / Chili',cat:'Vegetables',emoji:'🌶️'},
-  {word:'አቲኬልት',rom:'Atikelti',eng:'Spinach / Greens',cat:'Vegetables',emoji:'🌿'},
-  {word:'ቦሎቄ',rom:'Boloqe',eng:'Peas / Lentils',cat:'Vegetables',emoji:'🫛'},
-  {word:'ቦሎቆ',rom:'Boloqo',eng:'Pumpkin',cat:'Vegetables',emoji:'🎃'},
-  {word:'እንቁሳል',rom:'Inqusal',eng:'Eggplant / Aubergine',cat:'Vegetables',emoji:'🍆'},
-  {word:'አንበሳ',rom:'Anbesa',eng:'Lion',cat:'Animals',emoji:'🦁'},
-  {word:'ዝሆን',rom:'Zihon',eng:'Elephant',cat:'Animals',emoji:'🐘'},
-  {word:'ፍየል',rom:'Fiyel',eng:'Goat',cat:'Animals',emoji:'🐐'},
-  {word:'ላም',rom:'Lam',eng:'Cow',cat:'Animals',emoji:'🐄'},
-  {word:'አህያ',rom:'Ahiya',eng:'Donkey',cat:'Animals',emoji:'🫏'},
-  {word:'ወፍ',rom:'Wef',eng:'Bird',cat:'Animals',emoji:'🐦'},
-  {word:'ውሻ',rom:'Wisha',eng:'Dog',cat:'Animals',emoji:'🐕'},
-  {word:'ድመት',rom:'Dimet',eng:'Cat',cat:'Animals',emoji:'🐈'},
-  {word:'አይጥ',rom:'Ayit',eng:'Mouse / Rat',cat:'Animals',emoji:'🐭'},
-  {word:'ፈረስ',rom:'Feres',eng:'Horse',cat:'Animals',emoji:'🐴'},
-  {word:'በግ',rom:'Beg',eng:'Sheep',cat:'Animals',emoji:'🐑'},
-  {word:'ንስር',rom:'Nisir',eng:'Eagle',cat:'Animals',emoji:'🦅'},
-  {word:'ዶሮ',rom:'Doro',eng:'Hen / Chicken',cat:'Animals',emoji:'🐓'},
-  {word:'ግመል',rom:'Gimel',eng:'Camel',cat:'Animals',emoji:'🐪'},
-  {word:'ጦጣ',rom:'Tota',eng:'Monkey',cat:'Animals',emoji:'🐒'},
-  {word:'እባብ',rom:'Ibab',eng:'Snake',cat:'Animals',emoji:'🐍'},
-  {word:'ቀጭኔ',rom:'Qechine',eng:'Giraffe',cat:'Animals',emoji:'🦒'},
-  {word:'ራስ',rom:'Ras',eng:'Head',cat:'Body',emoji:'🗣️'},
-  {word:'ዓይን',rom:'Ayin',eng:'Eye',cat:'Body',emoji:'👁️'},
-  {word:'ጆሮ',rom:'Joro',eng:'Ear',cat:'Body',emoji:'👂'},
-  {word:'አፍ',rom:'Af',eng:'Mouth',cat:'Body',emoji:'👄'},
-  {word:'አፍንጫ',rom:'Afincha',eng:'Nose',cat:'Body',emoji:'👃'},
-  {word:'እጅ',rom:'Ij',eng:'Hand / Arm',cat:'Body',emoji:'✋'},
-  {word:'ጣት',rom:'Tat',eng:'Finger',cat:'Body',emoji:'🤞'},
-  {word:'እግር',rom:'Igir',eng:'Leg / Foot',cat:'Body',emoji:'🦵'},
-  {word:'ሆድ',rom:'Hod',eng:'Stomach / Belly',cat:'Body',emoji:'🫃'},
-  {word:'ልብ',rom:'Lib',eng:'Heart',cat:'Body',emoji:'❤️'},
-  {word:'አንጎል',rom:'Angol',eng:'Brain',cat:'Body',emoji:'🧠'},
-  {word:'ጥርስ',rom:'Tirs',eng:'Teeth',cat:'Body',emoji:'🦷'},
-  {word:'ፀጉር',rom:'Tsegur',eng:'Hair',cat:'Body',emoji:'💇'},
-  {word:'ትከሻ',rom:'Tikesha',eng:'Shoulder',cat:'Body',emoji:'💪'},
-  {word:'ጉልበት',rom:'Gulbet',eng:'Knee',cat:'Body',emoji:'🦵'},
-  {word:'አንገት',rom:'Anget',eng:'Neck',cat:'Body',emoji:'🦒'},
-  {word:'ቀይ',rom:'Qey',eng:'Red',cat:'Colors',emoji:'🔴'},
-  {word:'አረንጓዴ',rom:'Arenguade',eng:'Green',cat:'Colors',emoji:'🟢'},
-  {word:'ጥቁር',rom:'Tiqur',eng:'Black',cat:'Colors',emoji:'⚫'},
-  {word:'ነጭ',rom:'Nech',eng:'White',cat:'Colors',emoji:'⚪'},
-  {word:'ሰማያዊ',rom:'Semayawi',eng:'Blue',cat:'Colors',emoji:'🔵'},
-  {word:'ቢጫ',rom:'Bicha',eng:'Yellow',cat:'Colors',emoji:'🟡'},
-  {word:'ቡናማ',rom:'Bunama',eng:'Brown',cat:'Colors',emoji:'🟤'},
-  {word:'ሮዝ',rom:'Roz',eng:'Pink',cat:'Colors',emoji:'🩷'},
-  {word:'ብርቱካናማ',rom:'Birtuqanama',eng:'Orange (color)',cat:'Colors',emoji:'🟠'},
-  {word:'ወርቃማ',rom:'Werqama',eng:'Golden',cat:'Colors',emoji:'🟨'},
-  {word:'ዶክተር',rom:'Doktir',eng:'Doctor',cat:'Jobs',emoji:'👨‍⚕️'},
-  {word:'አስተማሪ',rom:'Astemari',eng:'Teacher',cat:'Jobs',emoji:'👨‍🏫'},
-  {word:'ፖሊስ',rom:'Polis',eng:'Police officer',cat:'Jobs',emoji:'👮'},
-  {word:'ነጋዴ',rom:'Negade',eng:'Merchant / Trader',cat:'Jobs',emoji:'🛒'},
-  {word:'ሹፌር',rom:'Shufer',eng:'Driver',cat:'Jobs',emoji:'🚗'},
-  {word:'ምሐንዲስ',rom:'Mihandis',eng:'Engineer',cat:'Jobs',emoji:'👷'},
-  {word:'ወታደር',rom:'Wetader',eng:'Soldier',cat:'Jobs',emoji:'🪖'},
-  {word:'ዳኛ',rom:'Dagna',eng:'Judge',cat:'Jobs',emoji:'👨‍⚖️'},
-  {word:'ሙዚቀኛ',rom:'Muziqegna',eng:'Musician',cat:'Jobs',emoji:'🎵'},
-  {word:'ጋዜጠኛ',rom:'Gazetegna',eng:'Journalist',cat:'Jobs',emoji:'📰'},
-  {word:'ገበሬ',rom:'Gebere',eng:'Farmer',cat:'Jobs',emoji:'👨‍🌾'},
-  {word:'ነርስ',rom:'Ners',eng:'Nurse',cat:'Jobs',emoji:'🩺'},
-  {word:'ትምህርት ቤት',rom:'Timhirt bet',eng:'School',cat:'School',emoji:'🏫'},
-  {word:'ተማሪ',rom:'Temari',eng:'Student',cat:'School',emoji:'🎒'},
-  {word:'ደብተር',rom:'Debtir',eng:'Notebook',cat:'School',emoji:'📓'},
-  {word:'እስክሪብቶ',rom:'Iskribto',eng:'Pen / Pencil',cat:'School',emoji:'✏️'},
-  {word:'መጽሐፍ',rom:'Metsihaf',eng:'Book',cat:'School',emoji:'📚'},
-  {word:'ፈተና',rom:'Fetena',eng:'Exam / Test',cat:'School',emoji:'📝'},
-  {word:'ቦርድ',rom:'Bord',eng:'Blackboard',cat:'School',emoji:'🖊️'},
-  {word:'ሒሳብ',rom:'Hisab',eng:'Mathematics',cat:'School',emoji:'🔢'},
-  {word:'ሳይንስ',rom:'Sayins',eng:'Science',cat:'School',emoji:'🔬'},
-  {word:'ታሪክ',rom:'Tarik',eng:'History',cat:'School',emoji:'📜'},
-  {word:'ሰኞ',rom:'Segno',eng:'Monday',cat:'Days',emoji:'📅'},
-  {word:'ማክሰኞ',rom:'Maksegno',eng:'Tuesday',cat:'Days',emoji:'📅'},
-  {word:"ረቡዕ",rom:"Rebu'e",eng:'Wednesday',cat:'Days',emoji:'📅'},
-  {word:'ሐሙስ',rom:'Hamus',eng:'Thursday',cat:'Days',emoji:'📅'},
-  {word:"ዓርብ",rom:"'Arb",eng:'Friday',cat:'Days',emoji:'📅'},
-  {word:'ቅዳሜ',rom:'Qidame',eng:'Saturday',cat:'Days',emoji:'🎉'},
-  {word:'እሑድ',rom:'Ihud',eng:'Sunday',cat:'Days',emoji:'⛪'},
-  {word:'ዛሬ',rom:'Zare',eng:'Today',cat:'Days',emoji:'📆'},
-  {word:'ትናንትና',rom:'Tinantina',eng:'Yesterday',cat:'Days',emoji:'⏪'},
-  {word:'ነገ',rom:'Nege',eng:'Tomorrow',cat:'Days',emoji:'⏩'},
-  {word:'መብላት',rom:'Meblat',eng:'To eat',cat:'Verbs',emoji:'🍽️'},
-  {word:'መጠጣት',rom:'Metitat',eng:'To drink',cat:'Verbs',emoji:'🥤'},
-  {word:'መሄድ',rom:'Mehed',eng:'To go',cat:'Verbs',emoji:'🚶'},
-  {word:'መምጣት',rom:'Memtat',eng:'To come',cat:'Verbs',emoji:'🏃'},
-  {word:'መናገር',rom:'Menager',eng:'To speak / talk',cat:'Verbs',emoji:'💬'},
-  {word:'መስማት',rom:'Mesmat',eng:'To listen / hear',cat:'Verbs',emoji:'👂'},
-  {word:'ማየት',rom:'Mayet',eng:'To see / look',cat:'Verbs',emoji:'👁️'},
-  {word:'መተኛት',rom:'Metegnat',eng:'To sleep',cat:'Verbs',emoji:'😴'},
-  {word:'መሥራት',rom:'Mesrat',eng:'To work',cat:'Verbs',emoji:'💼'},
-  {word:'መማር',rom:'Memar',eng:'To study / learn',cat:'Verbs',emoji:'📚'},
-  {word:'መጻፍ',rom:'Metsaf',eng:'To write',cat:'Verbs',emoji:'✍️'},
-  {word:'ማንበብ',rom:'Manbeb',eng:'To read',cat:'Verbs',emoji:'📖'},
-  {word:'መውደድ',rom:'Mewded',eng:'To love',cat:'Verbs',emoji:'❤️'},
-  {word:'መሳቅ',rom:'Mesaq',eng:'To laugh',cat:'Verbs',emoji:'😂'},
-  {word:'ማልቀስ',rom:'Malqes',eng:'To cry',cat:'Verbs',emoji:'😢'},
-  {word:'ደስተኛ',rom:'Destegna',eng:'Happy',cat:'Emotions',emoji:'😊'},
-  {word:'ሐዘን',rom:'Hazen',eng:'Sad',cat:'Emotions',emoji:'😢'},
-  {word:'ተናዶ',rom:'Tenado',eng:'Angry',cat:'Emotions',emoji:'😠'},
-  {word:'ፈርቷል',rom:'Fertwal',eng:'Scared / Afraid',cat:'Emotions',emoji:'😨'},
-  {word:'ተደነቀ',rom:'Tedeneke',eng:'Surprised',cat:'Emotions',emoji:'😲'},
-  {word:'ፍቅር',rom:'Fiqir',eng:'Love',cat:'Emotions',emoji:'❤️'},
-  {word:'ደስታ',rom:'Desta',eng:'Joy / Happiness',cat:'Emotions',emoji:'🥳'},
-  {word:'ተስፋ',rom:'Tesfa',eng:'Hope',cat:'Emotions',emoji:'🌟'},
-  {word:'ትዝታ',rom:'Tizita',eng:'Memory / Nostalgia',cat:'Emotions',emoji:'🥺'},
-  {word:'ትልቅ',rom:'Tiliq',eng:'Big / Large',cat:'Adjectives',emoji:'🐘'},
-  {word:'ትንሽ',rom:'Tinish',eng:'Small / Little',cat:'Adjectives',emoji:'🐭'},
-  {word:'ጥሩ',rom:'Tiru',eng:'Good',cat:'Adjectives',emoji:'✨'},
-  {word:'መጥፎ',rom:'Metfo',eng:'Bad',cat:'Adjectives',emoji:'👎'},
-  {word:'አዲስ',rom:'Addis',eng:'New',cat:'Adjectives',emoji:'🆕'},
-  {word:'አሮጌ',rom:'Aroge',eng:'Old',cat:'Adjectives',emoji:'🕰️'},
-  {word:'ረጅም',rom:'Rejim',eng:'Long / Tall',cat:'Adjectives',emoji:'📐'},
-  {word:'አጭር',rom:'Achir',eng:'Short',cat:'Adjectives',emoji:'📏'},
-  {word:'ሞቅ',rom:'Moq',eng:'Hot / Warm',cat:'Adjectives',emoji:'🔥'},
-  {word:'ቀዝቃዛ',rom:'Qezqaza',eng:'Cold',cat:'Adjectives',emoji:'❄️'},
-  {word:'ፈጣን',rom:'Fetan',eng:'Fast / Quick',cat:'Adjectives',emoji:'⚡'},
-  {word:'ከባድ',rom:'Kebad',eng:'Heavy / Difficult',cat:'Adjectives',emoji:'💪'},
-  {word:'ቀላል',rom:'Qelal',eng:'Easy / Light',cat:'Adjectives',emoji:'🍃'},
-  {word:'ንጹህ',rom:'Nitsuh',eng:'Clean / Pure',cat:'Adjectives',emoji:'✨'},
-  {word:'ቆሻሻ',rom:'Qoshasha',eng:'Dirty',cat:'Adjectives',emoji:'🗑️'},
-];
 
 /* ═══════════════════════════════════════════════════════════
    TIGRE DICTIONARY
@@ -12206,7 +12119,6 @@ setInterval(updateFcDueBadge, 60000);
   const rowsEl = document.getElementById('transKbdRows');
   const spcBtn = document.getElementById('transKbdSpc');
   const delBtn = document.getElementById('transKbdDel');
-  const swapBtn = document.getElementById('transSwapBtn');
   if (!kbd || !input) return;
 
   // The common Ge'ez characters — first form of each consonant row
@@ -12284,16 +12196,11 @@ setInterval(updateFcDueBadge, 60000);
     else kbd.classList.remove('visible');
   }
 
-  // Hook into the swap button
-  if (swapBtn) {
-    swapBtn.addEventListener('click', () => {
-      setTimeout(() => {
-        const fromLbl = document.getElementById('transFromLbl')?.textContent || '';
-        isTigrinya = fromLbl.includes('Tigrinya') || fromLbl.includes('ትግርኛ');
-        updateKbdVisibility();
-      }, 50);
-    });
-  }
+  // Show/hide Ge'ez keyboard when source language changes
+  document.addEventListener('transDirChanged', e => {
+    isTigrinya = e.detail.from === 'ti' || e.detail.from === 'am';
+    updateKbdVisibility();
+  });
 })();
 
 /* ═══════════════════════════════
@@ -12423,16 +12330,18 @@ const _favAuthPatch = setInterval(() => {
 const FIDEL_LANGS = [
   { id:'ti',  flag:'🇪🇷', name:'ትግርኛ',          subtitle:'Tigrinya',  color:'#3B82F6' },
   { id:'en',  flag:'🇬🇧', name:'English',         subtitle:'English',   color:'#10b981' },
-  { id:'am',  flag:'🇪🇹', name:'አማርኛ',           subtitle:'Amharic',   color:'#f59e0b' },
   { id:'tgr', flag:'🇪🇷', name:'ትግረ',            subtitle:'Tigre',     color:'#8b5cf6' },
   { id:'ar',  flag:'🇸🇦', name:'عربي',            subtitle:'Arabic',    color:'#ef4444' },
 ];
 
 window._fidelTargetLang = localStorage.getItem('fidel-target-lang') || 'ti';
+if (!FIDEL_LANGS.some(l => l.id === window._fidelTargetLang)) {
+  window._fidelTargetLang = 'ti';
+  localStorage.setItem('fidel-target-lang', 'ti');
+}
 
 function getActiveLangDict() {
   switch(window._fidelTargetLang) {
-    case 'am':  return typeof DICT_AM  !== 'undefined' ? DICT_AM  : DICT;
     case 'tgr': return typeof DICT_TGR !== 'undefined' ? DICT_TGR : DICT;
     case 'ar':  return typeof DICT_AR  !== 'undefined' ? DICT_AR  : DICT;
     default:    return DICT;
@@ -12746,7 +12655,6 @@ function showLangPicker() {
   if (!el) return;
   document.getElementById('langCardsContainer').innerHTML = FIDEL_LANGS.map(l => {
     const count = l.id === 'ti' || l.id === 'en' ? DICT.length
-                : l.id === 'am' ? DICT_AM.length
                 : l.id === 'tgr' ? DICT_TGR.length
                 : DICT_AR.length;
     const isAr = l.id === 'ar';
