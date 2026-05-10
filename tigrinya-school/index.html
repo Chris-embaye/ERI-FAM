@@ -7907,21 +7907,111 @@ document.getElementById('transInput').addEventListener('input', e => {
   document.getElementById('transChar').textContent = e.target.value.length + ' / 500';
 });
 
+/* Local dictionary lookup for translator — checks DICT before hitting API */
+function _transLookupLocal(text) {
+  const q = text.toLowerCase().trim();
+  const results = [];
+
+  if (_transDir === 'en-ti') {
+    // English → Tigrinya: search eng field
+    for (const d of DICT) {
+      if (!d.tig || !d.eng) continue;
+      const variants = d.eng.toLowerCase().split('/').map(s => s.trim());
+      if (variants.some(v => v === q)) {
+        results.push({ tig: d.tig, rom: d.rom, eng: d.eng, emoji: d.emoji || '', exact: true });
+      }
+    }
+    if (!results.length) {
+      for (const d of DICT) {
+        if (!d.tig || !d.eng) continue;
+        if (d.eng.toLowerCase().includes(q) || (d.rom && d.rom.toLowerCase() === q)) {
+          results.push({ tig: d.tig, rom: d.rom, eng: d.eng, emoji: d.emoji || '', exact: false });
+        }
+      }
+    }
+  } else {
+    // Tigrinya → English: search tig or rom field
+    for (const d of DICT) {
+      if (!d.tig || !d.eng) continue;
+      if (d.tig === text || (d.rom && d.rom.toLowerCase() === q)) {
+        results.push({ tig: d.tig, rom: d.rom, eng: d.eng, emoji: d.emoji || '', exact: true });
+      }
+    }
+    if (!results.length) {
+      for (const d of DICT) {
+        if (!d.tig || !d.eng) continue;
+        if (d.tig.includes(text) || (d.rom && d.rom.toLowerCase().includes(q))) {
+          results.push({ tig: d.tig, rom: d.rom, eng: d.eng, emoji: d.emoji || '', exact: false });
+        }
+      }
+    }
+  }
+  return results.slice(0, 4);
+}
+
+function _transShowLocal(results, outEl, statEl, copyBtn) {
+  outEl.innerHTML = '';
+  results.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:10px 0;' + (i > 0 ? 'border-top:1px solid var(--border);' : '');
+    if (r.emoji) {
+      const em = document.createElement('span');
+      em.style.cssText = 'font-size:1.2rem;margin-right:6px;vertical-align:middle;';
+      em.textContent = r.emoji;
+      row.appendChild(em);
+    }
+    const main = document.createElement('span');
+    main.style.cssText = _transDir === 'en-ti'
+      ? 'font-family:"Noto Serif Ethiopic",serif;font-size:1.15rem;font-weight:700;'
+      : 'font-size:1rem;font-weight:700;';
+    main.textContent = _transDir === 'en-ti' ? r.tig : r.eng;
+    row.appendChild(main);
+    if (_transDir === 'en-ti' && r.rom) {
+      const rm = document.createElement('div');
+      rm.style.cssText = 'font-size:0.75rem;color:var(--text-dim);font-style:italic;margin-top:2px;';
+      rm.textContent = r.rom;
+      row.appendChild(rm);
+    }
+    if (results.length > 1) {
+      const sub = document.createElement('div');
+      sub.style.cssText = 'font-size:0.72rem;color:var(--text-dim);margin-top:1px;';
+      sub.textContent = _transDir === 'en-ti' ? r.eng : r.tig;
+      row.appendChild(sub);
+    }
+    outEl.appendChild(row);
+  });
+  const firstResult = _transDir === 'en-ti' ? results[0].tig : results[0].eng;
+  statEl.style.color = 'var(--green)';
+  statEl.textContent = results[0].exact ? '✓ Found in dictionary' : '✓ Best match from dictionary';
+  copyBtn.style.display = '';
+  copyBtn.onclick = () => navigator.clipboard?.writeText(firstResult)
+    .then(() => hubToast('Copied!')).catch(() => {});
+}
+
 document.getElementById('transBtn').addEventListener('click', async () => {
-  const text   = document.getElementById('transInput').value.trim();
-  const outEl  = document.getElementById('transOutput');
-  const statEl = document.getElementById('transStatus');
-  const btn    = document.getElementById('transBtn');
+  const text    = document.getElementById('transInput').value.trim();
+  const outEl   = document.getElementById('transOutput');
+  const statEl  = document.getElementById('transStatus');
+  const btn     = document.getElementById('transBtn');
   const copyBtn = document.getElementById('transCopyBtn');
   if (!text) {
     outEl.innerHTML = '<span class="trans-ph">Please enter some text first.</span>';
     return;
   }
+  statEl.textContent = ''; statEl.style.color = '';
+  copyBtn.style.display = 'none';
+
+  // Always try local dictionary first — much more accurate for Tigrinya
+  const localHits = _transLookupLocal(text);
+  if (localHits.length) {
+    _transShowLocal(localHits, outEl, statEl, copyBtn);
+    return;
+  }
+
+  // Fall back to API for phrases/sentences not in the dictionary
   const [src, tgt] = _transDir === 'en-ti' ? ['en', 'ti'] : ['ti', 'en'];
   btn.disabled = true; btn.textContent = 'Translating…';
-  statEl.textContent = ''; statEl.style.color = '';
   outEl.innerHTML = '<span class="trans-ph">Translating…</span>';
-  copyBtn.style.display = 'none';
   try {
     const res  = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=' + src + '|' + tgt);
     const data = await res.json();
@@ -7932,19 +8022,19 @@ document.getElementById('transBtn').addEventListener('click', async () => {
       outEl.innerHTML = '';
       const p = document.createElement('p');
       p.style.cssText = tgt === 'ti'
-        ? 'font-family:serif;font-size:1.1rem;line-height:1.9;'
+        ? 'font-family:"Noto Serif Ethiopic",serif;font-size:1.1rem;line-height:1.9;'
         : 'font-size:0.95rem;line-height:1.7;';
       p.textContent = translation;
       outEl.appendChild(p);
-      statEl.style.color = 'var(--green)';
-      statEl.textContent = '✓ Translation complete';
+      statEl.style.color = 'var(--text-dim)';
+      statEl.textContent = '⚠ Machine translation — may be inaccurate for Tigrinya';
       copyBtn.style.display = '';
       copyBtn.onclick = () => navigator.clipboard?.writeText(translation)
         .then(() => hubToast('Copied!')).catch(() => {});
     } else if (data.responseStatus === 429) {
       outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Rate limit reached — please wait a moment and try again.</span>';
     } else {
-      outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Translation failed. Try again.</span>';
+      outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Word not found in dictionary. Try a single word or short phrase.</span>';
     }
   } catch {
     outEl.innerHTML = '<span class="trans-ph" style="color:var(--red)">Network error. Check your connection.</span>';
