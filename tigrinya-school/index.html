@@ -1308,7 +1308,7 @@
       font-size: 0.8rem; font-weight: 700; color: var(--green); cursor: pointer;
     }
     /* ── MATCH GAME ── */
-    .match-stats { display: flex; gap: 20px; padding: 4px 16px 10px; }
+    .match-stats { display: flex; align-items: center; gap: 16px; padding: 4px 16px 10px; }
     .match-stat { font-size: 0.78rem; font-weight: 700; color: var(--text-sub); }
     .match-stat span { color: var(--green); }
     .match-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 12px 14px; }
@@ -1326,11 +1326,21 @@
     .match-card-front { background: var(--green); color: white; font-size: 1.5rem; font-weight: 900; }
     .match-card-back {
       background: var(--card); border: 2px solid var(--border);
-      transform: rotateY(180deg); font-size: 0.7rem; font-weight: 700;
+      transform: rotateY(180deg);
       text-align: center; line-height: 1.3; color: var(--text);
+      flex-direction: column; gap: 2px;
     }
-    .match-card-back.tig { font-family: 'Noto Serif Ethiopic', serif; font-size: 1.05rem; color: var(--green); }
+    .mc-emoji { font-size: 1.5rem; line-height: 1; }
+    .mc-text  { font-size: 0.78rem; font-weight: 700; }
+    .mc-hint  { font-size: 0.58rem; color: var(--text-dim); font-style: italic; }
+    .match-card-back.tig .mc-text { font-family: 'Noto Serif Ethiopic', serif; font-size: 1.25rem; color: var(--green); }
     .match-card.matched .match-card-back { background: var(--green-light); border-color: var(--green); }
+    .match-new-btn {
+      padding: 5px 13px; border-radius: 16px; border: 1.5px solid var(--green);
+      background: none; color: var(--green); font-size: 0.76rem; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: all .15s; margin-left: auto;
+    }
+    .match-new-btn:hover { background: var(--green); color: #fff; }
     /* ── QUIZ GAME ── */
     .quiz-progress { padding: 4px 16px 6px; font-size: 0.74rem; color: var(--text-sub); font-weight: 600; }
     .quiz-card {
@@ -3811,6 +3821,7 @@
       <div class="match-stats">
         <div class="match-stat">Pairs: <span id="matchPairs">0 / 8</span></div>
         <div class="match-stat">Flips: <span id="matchFlips">0</span></div>
+        <button class="match-new-btn" id="matchNewBtn">🔄 New Game</button>
       </div>
       <div class="match-grid" id="matchGrid"></div>
       <div class="puzzle-win" id="matchWin">🎉 ጽቡቕ! All pairs matched!</div>
@@ -8964,18 +8975,33 @@ function startMatch() {
   document.getElementById('matchWin').classList.remove('show');
 
   const _aDict = typeof getActiveLangDict === 'function' ? getActiveLangDict() : DICT;
-  const _flat  = _aDict.map(d => ({ tig: d.tig || d.word || '', rom: d.rom || '', eng: d.eng || '' }));
-  const pool = _shuffle(_flat.filter(d => !d.tig.includes(' ')));
+  const _flat  = _aDict.map(d => ({
+    tig:   d.tig   || d.word || '',
+    rom:   d.rom   || '',
+    eng:   d.eng   || '',
+    emoji: d.emoji || '⭐',
+  }));
+  const pool   = _shuffle(_flat.filter(d => d.tig && !d.tig.includes(' ') && d.eng));
   const chosen = pool.slice(0, 8);
+
+  if (!chosen.length) {
+    document.getElementById('matchGrid').innerHTML = '<p style="padding:20px;text-align:center;color:var(--text-sub)">No words available — try a different language.</p>';
+    return;
+  }
+
   _matchCards = _shuffle([
-    ...chosen.map((d, i) => ({ pairId: i, type: 'tig', text: d.tig })),
-    ...chosen.map((d, i) => ({ pairId: i, type: 'eng', text: d.eng.split('/')[0].trim() })),
+    ...chosen.map((d, i) => ({ pairId: i, type: 'tig', text: d.tig, emoji: d.emoji, hint: d.rom })),
+    ...chosen.map((d, i) => ({ pairId: i, type: 'eng', text: d.eng.split('/')[0].trim(), emoji: d.emoji })),
   ]);
 
   document.getElementById('matchGrid').innerHTML = _matchCards.map((c, i) => `
     <div class="match-card" id="mc${i}" data-idx="${i}">
       <div class="match-card-front">?</div>
-      <div class="match-card-back${c.type==='tig'?' tig':''}">${c.text}</div>
+      <div class="match-card-back${c.type === 'tig' ? ' tig' : ''}">
+        <div class="mc-emoji">${c.emoji}</div>
+        <div class="mc-text">${c.text}</div>
+        ${c.type === 'tig' && c.hint ? `<div class="mc-hint">${c.hint}</div>` : ''}
+      </div>
     </div>`).join('');
 
   document.querySelectorAll('#matchGrid .match-card').forEach(el =>
@@ -8983,6 +9009,8 @@ function startMatch() {
   );
   _updateMatch();
 }
+
+document.getElementById('matchNewBtn')?.addEventListener('click', startMatch);
 
 function _matchTap(idx) {
   if (_matchLocked || _matchMatched.has(idx) || _matchFlipped.includes(idx)) return;
