@@ -33,8 +33,8 @@ function estTax(net) {
 }
 
 export function renderDashboard() {
-  const allTrips    = getTrips();
-  const allExpenses = getExpenses();
+  const allTrips    = getTrips()   || [];
+  const allExpenses = getExpenses() || [];
   const settings    = getSettings();
   const dispatchPct = Number(settings.dispatchPct) || 0;
 
@@ -75,9 +75,34 @@ export function renderDashboard() {
     ? `${Number(weekChange) >= 0 ? '↑' : '↓'} ${Math.abs(Number(weekChange))}% vs last week`
     : 'No prior week comparison';
 
+  // 8-week revenue sparkline data (oldest → newest)
+  const weekBuckets = [];
+  for (let i = 7; i >= 0; i--) {
+    const endDate   = daysAgo(i * 7);
+    const startDate = daysAgo(i * 7 + 6);
+    const rev = allTrips
+      .filter(t => t.date >= startDate && t.date <= endDate)
+      .reduce((s, t) => s + Number(t.revenue || 0), 0) * (1 - dispatchPct / 100);
+    const d = new Date(endDate + 'T12:00:00');
+    const label = i === 0 ? 'Now' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    weekBuckets.push({ rev, label, isCurrent: i === 0 });
+  }
+  const maxBucketRev = Math.max(...weekBuckets.map(w => w.rev), 1);
+  const avgBucketRev = weekBuckets.reduce((s, w) => s + w.rev, 0) / 8;
+
   const bestLane = monthTrips
     .filter(t => Number(t.miles) > 0 && Number(t.revenue) > 0)
     .sort((a, b) => (Number(b.revenue) / Number(b.miles)) - (Number(a.revenue) / Number(a.miles)))[0];
+
+  // Monthly expense breakdown by category
+  const monthExpenses = allExpenses.filter(e => e.date >= thisMonthStart);
+  const expByCat = {};
+  monthExpenses.forEach(e => {
+    const cat = e.category || 'Other';
+    expByCat[cat] = (expByCat[cat] || 0) + Number(e.amount || 0);
+  });
+  const expCatEntries = Object.entries(expByCat).sort((a, b) => b[1] - a[1]);
+  const maxExpCat = Math.max(...expCatEntries.map(([, v]) => v), 1);
 
   const isEmpty = allTrips.length === 0 && allExpenses.length === 0;
 
@@ -150,6 +175,28 @@ export function renderDashboard() {
           <p class="text-xs mt-1 text-black/70">${changeStr}</p>
         </div>
 
+        <!-- 8-week revenue chart -->
+        ${allTrips.length > 0 ? `
+        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
+          <div class="flex justify-between items-center mb-3">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">8-Week Revenue</p>
+            <p class="text-xs text-gray-500">${fmtMoney(avgBucketRev)}/wk avg</p>
+          </div>
+          <div class="flex items-end gap-1.5" style="height:60px">
+            ${weekBuckets.map(w => {
+              const pct = Math.max(Math.round(w.rev / maxBucketRev * 100), w.rev > 0 ? 4 : 2);
+              const bg  = w.isCurrent ? '#ea580c' : w.rev > 0 ? '#4b5563' : '#1f2937';
+              return `<div class="flex-1 rounded-sm" style="height:${pct}%;background:${bg}"></div>`;
+            }).join('')}
+          </div>
+          <div class="flex gap-1.5 mt-1.5">
+            ${weekBuckets.map(w =>
+              `<div class="flex-1 text-center truncate" style="font-size:8px;color:${w.isCurrent ? '#ea580c' : '#6b7280'}">${w.label}</div>`
+            ).join('')}
+          </div>
+        </div>
+        ` : ''}
+
         <!-- Key metrics grid -->
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
@@ -201,6 +248,25 @@ export function renderDashboard() {
             </div>
           `).join('')}
           ${weekExpenses.length > 4 ? `<p class="text-xs text-gray-500 mt-2">+${weekExpenses.length - 4} more</p>` : ''}
+        </div>
+        ` : ''}
+
+        ${expCatEntries.length > 0 ? `
+        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
+          <div class="flex justify-between items-center mb-3">
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">This Month's Expenses</p>
+            <span class="text-xs text-orange-600 font-bold">${fmtMoney(monthExpenses.reduce((s, e) => s + Number(e.amount || 0), 0))}</span>
+          </div>
+          ${expCatEntries.map(([cat, amt]) => {
+            const pct = Math.max(Math.round(amt / maxExpCat * 100), 4);
+            return `<div class="flex items-center gap-2 mb-2 last:mb-0">
+              <span class="text-xs text-gray-400 w-24 truncate shrink-0">${cat}</span>
+              <div class="flex-1 bg-gray-800 rounded-full h-2">
+                <div class="h-2 rounded-full bg-orange-600" style="width:${pct}%"></div>
+              </div>
+              <span class="text-xs text-gray-300 font-bold w-14 text-right shrink-0">${fmtMoney(amt)}</span>
+            </div>`;
+          }).join('')}
         </div>
         ` : ''}
 

@@ -1,4 +1,4 @@
-import { getSettings, saveSettings, clearCloudData, syncUp } from '../store.js';
+import { getSettings, saveSettings, clearCloudData, syncUp, getTrips, getExpenses } from '../store.js';
 import { getCurrentUser, signOut, saveProfile } from '../auth.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 
@@ -9,6 +9,35 @@ function collectExportData(user) {
   });
   if (user) data._account = { uid: user.uid, email: user.email, name: user.displayName };
   return data;
+}
+
+function downloadCSV(rows, filename) {
+  const csv  = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  Object.assign(document.createElement('a'), { href: url, download: filename }).click();
+  URL.revokeObjectURL(url);
+}
+
+function exportTripsCSV() {
+  const rows = [
+    ['Date','Origin','Destination','Miles','Gross Revenue','Per Diem Days','State Miles','Load #','Duration (hrs)','Notes'],
+    ...getTrips().map(t => [
+      t.date, t.origin || '', t.destination || '',
+      t.miles || 0, t.revenue || 0,
+      t.perDiemDays ?? '', t.stateMiles || '',
+      t.loadNum || '', t.durationHours || '', t.notes || '',
+    ]),
+  ];
+  downloadCSV(rows, `rig-log-trips-${new Date().toISOString().slice(0, 10)}.csv`);
+}
+
+function exportExpensesCSV() {
+  const rows = [
+    ['Date','Category','Description','Amount'],
+    ...getExpenses().map(e => [e.date, e.category || '', e.description || '', e.amount || 0]),
+  ];
+  downloadCSV(rows, `rig-log-expenses-${new Date().toISOString().slice(0, 10)}.csv`);
 }
 
 function downloadBackup(user) {
@@ -206,8 +235,14 @@ export function renderSettings() {
           <button id="sync-now-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
             ☁ Sync Now to Cloud
           </button>
+          <button id="export-trips-csv-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
+            ↓ Export Trips CSV
+          </button>
+          <button id="export-expenses-csv-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
+            ↓ Export Expenses CSV
+          </button>
           <button id="export-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
-            ↓ Download Backup (JSON)
+            ↓ Download Full Backup (JSON)
           </button>
           <button id="share-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
             ↗ Send to Email / Share
@@ -294,6 +329,16 @@ export function renderSettings() {
         toast('Sync failed — check your connection', 'error');
       }
       btn.textContent = '☁ Sync Now to Cloud'; btn.disabled = false;
+    });
+
+    container.querySelector('#export-trips-csv-btn')?.addEventListener('click', () => {
+      exportTripsCSV();
+      toast('Trips CSV downloaded ✓');
+    });
+
+    container.querySelector('#export-expenses-csv-btn')?.addEventListener('click', () => {
+      exportExpensesCSV();
+      toast('Expenses CSV downloaded ✓');
     });
 
     container.querySelector('#export-btn').addEventListener('click', () => {

@@ -32,7 +32,7 @@ async function pushKey(key, val) {
 }
 
 export async function syncUp() {
-  const SYNC_KEYS = ['expenses', 'trips', 'dvirs', 'detention', 'fuel', 'settings'];
+  const SYNC_KEYS = ['expenses', 'trips', 'dvirs', 'detention', 'fuel', 'maintenance', 'settings'];
   await Promise.all(SYNC_KEYS.map(k => pushKey(k, load(k))));
 }
 
@@ -52,7 +52,7 @@ export async function syncDown(uid) {
   const db = getDB();
   if (!uid || !db) return;
 
-  const SYNC_KEYS = ['expenses', 'trips', 'dvirs', 'detention', 'fuel', 'settings'];
+  const SYNC_KEYS = ['expenses', 'trips', 'dvirs', 'detention', 'fuel', 'maintenance', 'settings'];
   const hasLocal = SYNC_KEYS.some(k => localStorage.getItem(KEYS[k]) !== null);
 
   if (hasLocal) {
@@ -85,6 +85,7 @@ const KEYS = {
   dvirs: 'rl_dvirs',
   detention: 'rl_detention',
   fuel: 'rl_fuel',
+  maintenance: 'rl_maintenance',
   settings: 'rl_settings',
   activeDetention: 'rl_active_detention',
 };
@@ -248,6 +249,44 @@ export function deleteFuelLog(id) {
 
 export function updateFuelLog(id, data) {
   save('fuel', getFuelLogs().map(l => l.id === id ? { ...l, ...data } : l));
+}
+
+// ── Maintenance logs ──────────────────────────────────────────────────────────
+export const getMaintenanceLogs = () => load('maintenance');
+
+export function addMaintenanceLog(data) {
+  const list = getMaintenanceLogs();
+  const item = { id: genId(), date: today(), ...data };
+  list.unshift(item);
+  save('maintenance', list);
+  return item;
+}
+
+export function deleteMaintenanceLog(id) {
+  save('maintenance', getMaintenanceLogs().filter(l => l.id !== id));
+}
+
+export function updateMaintenanceLog(id, data) {
+  save('maintenance', getMaintenanceLogs().map(l => l.id === id ? { ...l, ...data } : l));
+}
+
+// ── Trip Templates (recurring trips) ─────────────────────────────────────────
+const TMPL_KEY = 'rl_trip_templates';
+
+export function getTripTemplates() {
+  try { return JSON.parse(localStorage.getItem(TMPL_KEY) || '[]'); } catch { return []; }
+}
+
+export function saveTripTemplate(trip) {
+  const list = getTripTemplates().filter(t => !(t.origin === trip.origin && t.destination === trip.destination));
+  const tmpl = { origin: trip.origin, destination: trip.destination, miles: trip.miles, revenue: trip.revenue, savedAt: Date.now() };
+  list.unshift(tmpl);
+  localStorage.setItem(TMPL_KEY, JSON.stringify(list.slice(0, 10)));
+}
+
+export function deleteTripTemplate(origin, destination) {
+  const list = getTripTemplates().filter(t => !(t.origin === origin && t.destination === destination));
+  localStorage.setItem(TMPL_KEY, JSON.stringify(list));
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { getTrips, addTrip, deleteTrip, updateTrip, getSettings, fmtMoney, fmtDate, today } from '../store.js';
+import { getTrips, addTrip, deleteTrip, updateTrip, getSettings, fmtMoney, fmtDate, today, getTripTemplates, saveTripTemplate, deleteTripTemplate } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
 
 let _filter = 'month';
@@ -89,6 +89,20 @@ function tripForm(existing = null) {
           <input type="text" name="loadNum" placeholder="Optional load or BOL number"
             class="form-input" value="${t.loadNum || ''}">
         </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Per Diem Days</label>
+            <input type="number" name="perDiemDays" step="1" min="0" max="30" placeholder="1"
+              class="form-input" value="${t.perDiemDays ?? 1}">
+            <p class="text-xs text-gray-700 mt-0.5">Nights away from home</p>
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">State Miles (IFTA)</label>
+            <input type="text" name="stateMiles" placeholder="GA 200, FL 100"
+              class="form-input" value="${t.stateMiles || ''}">
+            <p class="text-xs text-gray-700 mt-0.5">State code + miles, optional</p>
+          </div>
+        </div>
         <div>
           <label class="text-xs text-gray-400 block mb-1">Notes</label>
           <textarea name="notes" rows="2" placeholder="Optional notes..."
@@ -139,6 +153,25 @@ export function renderTrips() {
         <button class="filter-pill ${_filter === 'all'   ? 'active' : ''}" data-filter="all">All Time</button>
       </div>
 
+      <!-- Quick-log templates -->
+      ${getTripTemplates().length > 0 ? `
+      <div class="px-4 pt-2 pb-1 shrink-0">
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Quick Log</p>
+        <div class="flex gap-2 overflow-x-auto pb-1">
+          ${getTripTemplates().map(t => `
+            <div class="flex items-center gap-1 bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 shrink-0">
+              <button class="quick-log-tmpl text-left" data-origin="${t.origin}" data-dest="${t.destination}">
+                <p class="text-xs font-black text-orange-500">${t.origin} → ${t.destination}</p>
+                <p class="text-xs text-gray-600">${fmtMoney(t.revenue||0)} · ${(t.miles||0).toLocaleString()} mi</p>
+              </button>
+              <button class="edit-tmpl-btn text-gray-700 hover:text-orange-500 p-0.5" data-origin="${t.origin}" data-dest="${t.destination}" data-miles="${t.miles||0}" data-revenue="${t.revenue||0}" title="Edit template">
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="del-tmpl-btn text-gray-700 hover:text-red-500 p-0.5" data-origin="${t.origin}" data-dest="${t.destination}">✕</button>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
       <div class="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
         ${displayTrips.length === 0 ? `
           <div class="flex flex-col items-center justify-center py-16 text-center">
@@ -172,6 +205,9 @@ export function renderTrips() {
             <div class="flex justify-between items-center mt-2">
               <span class="text-xs text-gray-500">${miles.toLocaleString()} miles</span>
               <div class="flex gap-1">
+                <button class="save-tmpl-btn text-gray-600 hover:text-orange-500 p-1" data-id="${t.id}" title="Save as template">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                </button>
                 <button class="edit-trip-btn text-gray-500 hover:text-white p-1" data-id="${t.id}">
                   <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
@@ -227,6 +263,8 @@ export function renderTrips() {
             miles:         parseFloat(fd.get('miles')),
             revenue:       parseFloat(fd.get('revenue')),
             durationHours: fd.get('durationHours') ? parseFloat(fd.get('durationHours')) : null,
+            perDiemDays:   fd.get('perDiemDays') ? parseInt(fd.get('perDiemDays')) : 1,
+            stateMiles:    fd.get('stateMiles').trim(),
             date:          fd.get('date'),
             loadNum:       fd.get('loadNum').trim(),
             notes:         fd.get('notes').trim(),
@@ -253,6 +291,8 @@ export function renderTrips() {
               miles:         parseFloat(fd.get('miles')),
               revenue:       parseFloat(fd.get('revenue')),
               durationHours: fd.get('durationHours') ? parseFloat(fd.get('durationHours')) : null,
+              perDiemDays:   fd.get('perDiemDays') ? parseInt(fd.get('perDiemDays')) : 1,
+              stateMiles:    fd.get('stateMiles').trim(),
               date:          fd.get('date'),
               loadNum:       fd.get('loadNum').trim(),
               notes:         fd.get('notes').trim(),
@@ -272,6 +312,77 @@ export function renderTrips() {
           toast('Trip deleted', 'info');
           window.refresh();
         });
+      });
+    });
+
+    // Save trip as recurring template
+    container.querySelectorAll('.save-tmpl-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const trip = getTrips().find(t => t.id === btn.dataset.id);
+        if (!trip) return;
+        saveTripTemplate(trip);
+        toast(`Template saved: ${trip.origin} → ${trip.destination} ✓`);
+        window.refresh();
+      });
+    });
+
+    // Quick-log from template
+    container.querySelectorAll('.quick-log-tmpl').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tmpl = getTripTemplates().find(t => t.origin === btn.dataset.origin && t.destination === btn.dataset.dest);
+        if (!tmpl) return;
+        addTrip({ origin: tmpl.origin, destination: tmpl.destination, miles: tmpl.miles, revenue: tmpl.revenue });
+        toast(`Quick-logged: ${tmpl.origin} → ${tmpl.destination} ✓`);
+        window.refresh();
+      });
+    });
+
+    // Edit template
+    container.querySelectorAll('.edit-tmpl-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const origin  = btn.dataset.origin;
+        const dest    = btn.dataset.dest;
+        const miles   = btn.dataset.miles;
+        const revenue = btn.dataset.revenue;
+        openModal(`
+          <div class="p-5">
+            <div class="flex justify-between items-center mb-5">
+              <h2 class="text-lg font-black">${origin} → ${dest}</h2>
+              <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
+            </div>
+            <form id="edit-tmpl-form" class="space-y-4">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs text-gray-400 block mb-1">Miles</label>
+                  <input type="number" name="miles" step="1" min="0" class="form-input" value="${miles}" required>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400 block mb-1">Revenue ($)</label>
+                  <input type="number" name="revenue" step="0.01" min="0" class="form-input" value="${revenue}" required>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary">Update Template</button>
+            </form>
+          </div>
+        `, el => {
+          el.querySelector('#edit-tmpl-form').addEventListener('submit', ev => {
+            ev.preventDefault();
+            const fd = new FormData(ev.target);
+            saveTripTemplate({ origin, destination: dest, miles: parseFloat(fd.get('miles')), revenue: parseFloat(fd.get('revenue')) });
+            closeModal();
+            toast('Template updated ✓');
+            window.refresh();
+          });
+        });
+      });
+    });
+
+    // Delete template
+    container.querySelectorAll('.del-tmpl-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        deleteTripTemplate(btn.dataset.origin, btn.dataset.dest);
+        toast('Template removed', 'info');
+        window.refresh();
       });
     });
   }

@@ -82,10 +82,13 @@ export function renderDVIR() {
         <button onclick="navigate('more')" class="text-gray-400">
           <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <div>
+        <div class="flex-1">
           <h1 class="text-2xl font-black">DVIR</h1>
           <p class="text-xs text-gray-500">Driver Vehicle Inspection Report</p>
         </div>
+        <button id="dvir-print-btn" class="text-xs text-gray-400 border border-gray-700 rounded-lg px-3 py-1.5 font-bold hover:text-white">
+          🖨 Print
+        </button>
       </div>
 
       <div class="flex-1 overflow-y-auto p-4 space-y-4">
@@ -230,6 +233,38 @@ export function renderDVIR() {
           window.refresh();
         });
       });
+    });
+
+    container.querySelector('#dvir-print-btn')?.addEventListener('click', () => {
+      const dvirs = getDVIRs();
+      if (!dvirs.length) { toast('No inspections to print yet.', 'info'); return; }
+      const rows = dvirs.slice(0, 30).map(d => {
+        const defects = ALL_ITEMS.filter(i => d.items?.[i.key] === 'defect');
+        const oks     = ALL_ITEMS.filter(i => d.items?.[i.key] === 'ok');
+        const total   = oks.length + defects.length;
+        return `<tr>
+          <td>${d.type === 'pre' ? 'Pre-Trip' : 'Post-Trip'}</td>
+          <td>${d.date || ''}</td>
+          <td>${d.unit || '—'}</td>
+          <td>${d.odometer ? Number(d.odometer).toLocaleString() + ' mi' : '—'}</td>
+          <td style="color:#16a34a">${oks.length}/${total} ✓</td>
+          <td style="color:${defects.length > 0 ? '#ea580c' : '#16a34a'}">${defects.length > 0 ? defects.map(i => i.label).join(', ') : 'None'}</td>
+          <td>${d.defectNotes || ''}</td>
+        </tr>`;
+      }).join('');
+      const win = window.open('', '_blank');
+      win.document.write(`<!DOCTYPE html><html><head><title>DVIR Report</title>
+        <style>body{font-family:Arial,sans-serif;padding:20px;font-size:12px}
+        h2{margin-bottom:16px}
+        table{border-collapse:collapse;width:100%}
+        th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
+        th{background:#f3f4f6;font-weight:700}
+        @media print{@page{margin:1cm}}</style></head>
+        <body><h2>Driver Vehicle Inspection Reports</h2>
+        <table><thead><tr><th>Type</th><th>Date</th><th>Unit</th><th>Odometer</th><th>Status</th><th>Defects</th><th>Notes</th></tr></thead>
+        <tbody>${rows}</tbody></table></body></html>`);
+      win.document.close();
+      win.print();
     });
 
     container.querySelector('#dvir-submit').addEventListener('click', () => {

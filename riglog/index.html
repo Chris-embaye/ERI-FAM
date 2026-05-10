@@ -65,11 +65,34 @@
     </nav>
   </div>
 
+  <!-- Offline indicator -->
+  <div id="offline-bar" class="hidden fixed top-0 left-0 right-0 z-[9999] bg-orange-600 text-white text-center text-xs font-bold py-2 tracking-wide" style="letter-spacing:.04em">
+    📡 OFFLINE — data saved locally, syncs when reconnected
+  </div>
+
   <!-- Bottom-sheet modal -->
   <div id="modal-overlay" class="hidden fixed inset-0 bg-black/80 z-50 flex items-end justify-center">
     <div id="modal-content" class="bg-gray-900 rounded-t-2xl w-full max-w-md overflow-y-auto" style="max-height:92dvh"></div>
   </div>
 
+  <script>
+    (function() {
+      const bar = document.getElementById('offline-bar');
+      function update() {
+        bar.classList.toggle('hidden', navigator.onLine);
+        if (navigator.onLine) {
+          const t = document.createElement('div');
+          t.textContent = '✓ Back online — syncing…';
+          t.className = 'fixed top-0 left-0 right-0 z-[9999] bg-green-600 text-white text-center text-xs font-bold py-2';
+          document.body.appendChild(t);
+          setTimeout(() => t.remove(), 2500);
+        }
+      }
+      if (!navigator.onLine) bar.classList.remove('hidden');
+      window.addEventListener('online',  update);
+      window.addEventListener('offline', update);
+    })();
+  </script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
