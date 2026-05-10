@@ -1364,6 +1364,24 @@
     .quiz-score-out { font-size: 1rem; color: var(--text-sub); margin-bottom: 6px; }
     .quiz-score-msg { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 24px; }
     .quiz-again { background: var(--green); color: white; border-radius: var(--radius-sm); padding: 13px 32px; font-size: 0.9rem; font-weight: 800; }
+    /* ── QUIZ DIRECTION TOGGLE ── */
+    .quiz-dir-btn {
+      background: var(--bg2,#f3f4f6); border: 1.5px solid var(--border,#e5e7eb);
+      border-radius: 20px; padding: 5px 16px; font-size: 0.72rem; font-weight: 700;
+      cursor: pointer; margin-bottom: 4px; transition: all .15s;
+    }
+    .quiz-dir-btn.eng { background: #eff6ff; border-color: #3b82f6; color: #2563eb; }
+    /* ── WORD TOAST ── */
+    .word-toast {
+      position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%) translateY(16px);
+      background: rgba(20,20,20,.91); color: #fff; padding: 10px 22px;
+      border-radius: 24px; font-size: 0.82rem; font-weight: 600;
+      opacity: 0; transition: opacity .22s, transform .22s; pointer-events: none;
+      z-index: 9999; max-width: 88vw; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .word-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* ── DICT CAT MASTERY BADGE ── */
+    .dict-cat-mastery { font-size: 0.6rem; font-weight: 700; background: var(--green-light,#d1fae5); color: var(--green,#059669); border-radius: 10px; padding: 1px 5px; margin-left: 3px; vertical-align: middle; }
     /* ── SCRAMBLE GAME ── */
     .scramble-prog { text-align: center; font-size: 0.74rem; color: var(--text-dim); padding: 2px 0 10px; }
     .scramble-clue {
@@ -3746,6 +3764,12 @@
           <div class="game-card-desc">See English — type the translation</div>
           <div class="gc-best" id="gcBestType" style="display:none"></div>
         </div>
+        <div class="game-card" id="gcReview">
+          <div class="game-card-icon">📅</div>
+          <div class="game-card-name">Daily Review</div>
+          <div class="game-card-desc">Spaced repetition — review your weakest words</div>
+          <div class="gc-best" id="gcBestReview" style="display:none"></div>
+        </div>
       </div>
     </div>
 
@@ -3831,7 +3855,9 @@
     <div id="gameQuiz" style="display:none">
       <div class="game-back" id="quizBack">← Games</div>
       <div id="quizPlay">
-        <div class="s-head" style="padding-top:4px"><h2>❓ Quiz</h2></div>
+        <div class="s-head" style="padding-top:4px;padding-bottom:4px"><h2>❓ Quiz</h2>
+          <div style="text-align:center;margin-top:6px"><button class="quiz-dir-btn" id="quizDirBtn">Tigrinya → English</button></div>
+        </div>
         <div class="quiz-progress" id="quizProgress">Question 1 of 10</div>
         <div class="quiz-card">
           <div class="quiz-q-label">What does this mean?</div>
@@ -9014,7 +9040,9 @@ document.getElementById('matchNewBtn')?.addEventListener('click', startMatch);
 
 function _matchTap(idx) {
   if (_matchLocked || _matchMatched.has(idx) || _matchFlipped.includes(idx)) return;
+  const card = _matchCards[idx];
   document.getElementById('mc' + idx).classList.add('flipped');
+  if (card.type === 'tig') speak(card.text);
   _matchFlipped.push(idx); _matchFlips++;
   _updateMatch();
   if (_matchFlipped.length < 2) return;
@@ -9025,6 +9053,9 @@ function _matchTap(idx) {
     setTimeout(() => {
       [a,b].forEach(i => { document.getElementById('mc'+i).classList.add('matched'); _matchMatched.add(i); });
       _matchFlipped = []; _matchLocked = false; _updateMatch();
+      const tc = ca.type === 'tig' ? ca : cb;
+      showWordToast((tc.emoji ? tc.emoji + ' ' : '') + tc.text + (tc.hint ? ' · ' + tc.hint : ''));
+      markWordLearned((window._fidelTargetLang||'ti') + ':' + tc.text + ':' + (tc.hint||''));
       if (_matchMatched.size === 16) setTimeout(() => document.getElementById('matchWin').classList.add('show'), 300);
     }, 500);
   } else {
@@ -9059,25 +9090,58 @@ function startQuiz() {
 function _renderQuizQ() {
   const w = _quizWords[_quizIdx];
   document.getElementById('quizProgress').textContent = `Question ${_quizIdx+1} of ${GQ_LEN}`;
-  document.getElementById('quizWord').textContent = w.tig;
-  document.getElementById('quizRom').textContent  = w.rom;
   const _aDict3 = typeof getActiveLangDict === 'function' ? getActiveLangDict() : DICT;
   const _flat3  = _aDict3.map(d => ({ tig: d.tig || d.word || '', rom: d.rom || '', eng: d.eng || '' }));
-  const wrongs = _shuffle(_flat3.filter(d => d.eng !== w.eng));
-  const opts = _shuffle([w.eng, wrongs[0].eng, wrongs[1].eng, wrongs[2].eng]);
-  document.getElementById('quizOpts').innerHTML = opts.map(o =>
-    `<button class="quiz-opt">${o}</button>`).join('');
-  document.querySelectorAll('.quiz-opt').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.quiz-opt').forEach(b => { b.disabled = true; });
-      if (btn.textContent === w.eng) { btn.classList.add('correct'); _quizScore++; if (typeof flashAvatar === 'function') flashAvatar(); }
-      else {
-        btn.classList.add('wrong');
-        document.querySelectorAll('.quiz-opt').forEach(b => { if (b.textContent === w.eng) b.classList.add('correct'); });
-      }
-      setTimeout(() => { _quizIdx < GQ_LEN - 1 ? (++_quizIdx, _renderQuizQ()) : _showQuizResult(); }, 900);
+  const label = document.querySelector('#gameQuiz .quiz-q-label');
+
+  if (_quizDir === 'eng-to-tig') {
+    if (label) label.textContent = 'How do you say this in Tigrinya?';
+    document.getElementById('quizWord').textContent = w.eng.split('/')[0].trim();
+    document.getElementById('quizRom').textContent  = '';
+    const wrongs = _shuffle(_flat3.filter(d => d.tig && d.tig !== w.tig && !d.tig.includes(' ')));
+    const opts = _shuffle([w.tig, wrongs[0]?.tig || '', wrongs[1]?.tig || '', wrongs[2]?.tig || ''].filter(Boolean));
+    document.getElementById('quizOpts').innerHTML = opts.map(o =>
+      `<button class="quiz-opt" style="font-family:'Noto Serif Ethiopic',serif;font-size:1.1rem">${o}</button>`).join('');
+    document.querySelectorAll('.quiz-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.quiz-opt').forEach(b => { b.disabled = true; });
+        if (btn.textContent === w.tig) {
+          btn.classList.add('correct'); _quizScore++;
+          if (typeof flashAvatar === 'function') flashAvatar();
+          showWordToast((w.emoji ? w.emoji + ' ' : '') + w.tig + (w.rom ? ' · ' + w.rom : ''));
+          markWordLearned((window._fidelTargetLang||'ti') + ':' + w.tig + ':' + (w.rom||''));
+        } else {
+          btn.classList.add('wrong');
+          document.querySelectorAll('.quiz-opt').forEach(b => { if (b.textContent === w.tig) b.classList.add('correct'); });
+        }
+        setTimeout(() => { _quizIdx < GQ_LEN - 1 ? (++_quizIdx, _renderQuizQ()) : _showQuizResult(); }, 900);
+      });
     });
-  });
+  } else {
+    if (label) label.textContent = 'What does this mean?';
+    document.getElementById('quizWord').textContent = w.tig;
+    document.getElementById('quizRom').textContent  = w.rom;
+    speak(w.tig);
+    const wrongs = _shuffle(_flat3.filter(d => d.eng !== w.eng));
+    const opts = _shuffle([w.eng, wrongs[0].eng, wrongs[1].eng, wrongs[2].eng]);
+    document.getElementById('quizOpts').innerHTML = opts.map(o =>
+      `<button class="quiz-opt">${o}</button>`).join('');
+    document.querySelectorAll('.quiz-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.quiz-opt').forEach(b => { b.disabled = true; });
+        if (btn.textContent === w.eng) {
+          btn.classList.add('correct'); _quizScore++;
+          if (typeof flashAvatar === 'function') flashAvatar();
+          showWordToast((w.emoji ? w.emoji + ' ' : '') + w.tig + (w.rom ? ' · ' + w.rom : ''));
+          markWordLearned((window._fidelTargetLang||'ti') + ':' + w.tig + ':' + (w.rom||''));
+        } else {
+          btn.classList.add('wrong');
+          document.querySelectorAll('.quiz-opt').forEach(b => { if (b.textContent === w.eng) b.classList.add('correct'); });
+        }
+        setTimeout(() => { _quizIdx < GQ_LEN - 1 ? (++_quizIdx, _renderQuizQ()) : _showQuizResult(); }, 900);
+      });
+    });
+  }
 }
 
 function _showQuizResult() {
@@ -11551,11 +11615,15 @@ function wotdSpeak() {
 ═══════════════════════════════ */
 function updateDictCatBadges() {
   const favs = getDictFavs ? getDictFavs() : new Set();
+  const learnedSet = typeof getLearnedWords === 'function' ? getLearnedWords() : new Set();
+  const _lang = window._fidelTargetLang || 'ti';
   document.querySelectorAll('.dict-cat[data-cat]').forEach(btn => {
     const cat = btn.dataset.cat;
     if (cat === 'All' || cat === '★ Favorites') return;
-    const total = DICT.filter(d => d.cat === cat).length;
-    const faved = DICT.filter(d => d.cat === cat && favs.has(d.tig + ':' + d.rom)).length;
+    const catWords = DICT.filter(d => d.cat === cat);
+    const total   = catWords.length;
+    const faved   = catWords.filter(d => favs.has(d.tig + ':' + d.rom)).length;
+    const learned = catWords.filter(d => learnedSet.has(_lang + ':' + (d.tig||'') + ':' + (d.rom||''))).length;
     let badge = btn.querySelector('.dict-cat-badge');
     if (faved > 0) {
       if (!badge) { badge = document.createElement('span'); badge.className = 'dict-cat-badge'; btn.appendChild(badge); }
@@ -11563,8 +11631,65 @@ function updateDictCatBadges() {
     } else if (badge) {
       badge.remove();
     }
+    let mbadge = btn.querySelector('.dict-cat-mastery');
+    if (learned > 0) {
+      if (!mbadge) { mbadge = document.createElement('span'); mbadge.className = 'dict-cat-mastery'; btn.appendChild(mbadge); }
+      mbadge.textContent = '✓' + learned;
+    } else if (mbadge) {
+      mbadge.remove();
+    }
   });
 }
+
+/* ═══════════════════════════════
+   WORD TOAST
+═══════════════════════════════ */
+let _toastTimer = null;
+function showWordToast(msg) {
+  const el = document.getElementById('wordToast'); if (!el) return;
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+/* ═══════════════════════════════
+   QUIZ DIRECTION TOGGLE
+═══════════════════════════════ */
+let _quizDir = 'tig-to-eng';
+document.getElementById('quizDirBtn')?.addEventListener('click', () => {
+  _quizDir = _quizDir === 'tig-to-eng' ? 'eng-to-tig' : 'tig-to-eng';
+  const btn = document.getElementById('quizDirBtn');
+  btn.textContent = _quizDir === 'tig-to-eng' ? 'Tigrinya → English' : 'English → Tigrinya';
+  btn.classList.toggle('eng', _quizDir === 'eng-to-tig');
+});
+
+/* ═══════════════════════════════
+   DAILY REVIEW
+═══════════════════════════════ */
+function startQuizReview() {
+  const _aDict = typeof getActiveLangDict === 'function' ? getActiveLangDict() : DICT;
+  const flat = _aDict.map(d => ({
+    tig: d.tig || d.word || '', rom: d.rom || '', eng: d.eng || '', emoji: d.emoji || '',
+  })).filter(d => d.tig && d.eng);
+  const srs = typeof window._fidelGetSRS === 'function' ? window._fidelGetSRS() : null;
+  let pool;
+  if (srs && srs.due && srs.due.length > 0) {
+    pool = _shuffle(srs.due).slice(0, GQ_LEN);
+  } else {
+    const _lw = typeof getLearnedWords === 'function' ? getLearnedWords() : new Set();
+    const _lg = window._fidelTargetLang || 'ti';
+    pool = flat.slice().sort((a, b) =>
+      (_lw.has(_lg+':'+a.tig+':'+a.rom) ? 1 : 0) - (_lw.has(_lg+':'+b.tig+':'+b.rom) ? 1 : 0)
+    ).slice(0, GQ_LEN);
+  }
+  if (!pool.length) { showWordToast('No words to review yet — play Quiz first!'); return; }
+  _quizWords = _shuffle(pool); _quizIdx = 0; _quizScore = 0;
+  document.getElementById('quizPlay').style.display = '';
+  document.getElementById('quizResult').style.display = 'none';
+  showGame('gameQuiz');
+  _renderQuizQ();
+}
+_gcTap('gcReview', () => startQuizReview());
 
 /* ═══════════════════════════════
    FAVORITES — FIRESTORE SYNC
@@ -12438,5 +12563,6 @@ document.addEventListener('DOMContentLoaded', () => {
     <p style="text-align:center;font-size:.72rem;color:var(--text-dim);margin-top:24px">You can change this anytime from Settings</p>
   </div>
 </div>
+<div id="wordToast" class="word-toast"></div>
 </body>
 </html>
