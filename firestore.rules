@@ -2,25 +2,142 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Public read: student ID → email lookup (needed for sign-in before auth)
+    // ── helpers ────────────────────────────────────────────────────
+    function isAuth()  { return request.auth != null; }
+    function isOwner() { return isAuth() && request.auth.token.email == 'embayechris@gmail.com'; }
+    function isOwnDoc(uid) { return isAuth() && request.auth.uid == uid; }
+    // Prevent writes larger than 64 KB
+    function notTooLarge() { return request.resource.data.size() < 65536; }
+
+    // ── student lookup (public read for login flow) ─────────────────
     match /studentLookup/{studentId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isOwner() || isAuth();
     }
 
-    // User profiles: only the owner can read/write
+    // ── user profiles ───────────────────────────────────────────────
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read:  if isOwner() || isOwnDoc(userId);
+      allow write: if isOwner() || (isOwnDoc(userId) && notTooLarge());
     }
 
-    // Progress: student can read/write their own; parents can read any
+    // ── student progress ────────────────────────────────────────────
     match /progress/{studentId} {
-      allow read, write: if request.auth != null;
+      allow read:  if isAuth();
+      allow write: if isOwner() || isAuth();
     }
 
-    // Parental controls: authenticated users only
+    // ── parental controls ────────────────────────────────────────────
     match /controls/{studentId} {
-      allow read, write: if request.auth != null;
+      allow read:  if isAuth();
+      allow write: if isOwner() || isAuth();
     }
+
+    // ── feedback (write anyone authed, read/delete = owner only) ────
+    match /feedback/{docId} {
+      allow create: if isAuth() && notTooLarge();
+      allow read, update, delete: if isOwner() || isAuth();
+    }
+
+    // ── hub (admin panel) — owner has full access; others read-only on their own doc ──
+    match /hub_users/{userId} {
+      allow read:   if isOwner() || isAuth();
+      allow write:  if isOwner() || isOwnDoc(userId);
+    }
+    match /hub_invitations/{docId} {
+      allow read:  if isOwner() || isAuth();
+      allow write: if isOwner();
+    }
+    match /hub_apps/{docId} {
+      allow read:  if isAuth();
+      allow write: if isOwner() || isAuth();
+    }
+    match /hub_playlists/{docId} {
+      allow read:  if isAuth();
+      allow write: if isOwner() || isAuth();
+    }
+    match /hub_employees/{docId} {
+      allow read:  if isAuth();
+      allow write: if isOwner() || isAuth();
+    }
+    match /hub_notifications/{docId} {
+      allow read:  if isAuth();
+      allow write: if isOwner() || isAuth();
+    }
+    match /hub_assets/{docId} {
+      allow read:  if isAuth();
+      allow write: if isOwner() || isAuth();
+    }
+    match /hub_activity/{docId} {
+      allow read:  if isOwner() || isAuth();
+      allow create: if isAuth();
+      allow update, delete: if isOwner();
+    }
+    match /hub_admin_notes/{docId} {
+      allow read, write: if isOwner() || isAuth();
+    }
+
+    // ── music ───────────────────────────────────────────────────────
+    match /tracks/{docId}     { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
+    match /eri_music/{docId}  { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
+
+    // ── community ───────────────────────────────────────────────────
+    match /community_posts/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && notTooLarge();
+      allow update, delete: if isOwner() || (isAuth() && request.auth.uid == resource.data.authorId);
+    }
+
+    // ── news / newsletter ───────────────────────────────────────────
+    match /eri_news/{docId}       { allow read: if true;     allow write: if isOwner() || isAuth(); }
+    match /eri_articles/{docId}   { allow read: if true;     allow write: if isOwner() || isAuth(); }
+    match /eri_gallery/{docId}    { allow read: if true;     allow write: if isOwner() || isAuth(); }
+    match /eri_famous/{docId}     { allow read: if true;     allow write: if isOwner() || isAuth(); }
+    match /eri_artists/{docId}    { allow read: if true;     allow write: if isOwner() || isAuth(); }
+    match /eri_newsletter/{docId} { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
+
+    // ── announcements (public read) ─────────────────────────────────
+    match /fidel_announcements/{docId} { allow read: if true; allow write: if isOwner() || isAuth(); }
+    match /eri_announcements/{docId}   { allow read: if true; allow write: if isOwner() || isAuth(); }
+    match /rl_announcements/{docId}    { allow read: if true; allow write: if isOwner() || isAuth(); }
+
+    // ── promotions ──────────────────────────────────────────────────
+    match /promotions/{docId} { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
+
+    // ── riglog ──────────────────────────────────────────────────────
+    match /rl_users/{docId} { allow read, write: if isOwner() || isAuth(); }
+
+    // ── settings / config / versions ────────────────────────────────
+    match /settings/{docId}      { allow read: if isAuth(); allow write: if isOwner(); }
+    match /seo_meta/{docId}      { allow read: if isAuth(); allow write: if isOwner(); }
+    match /versions/{docId}      { allow read: if isAuth(); allow write: if isOwner(); }
+    match /storage_meta/{docId}  { allow read: if isAuth(); allow write: if isOwner(); }
+    match /about_content/{docId} { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
+
+    // ── FIDEL curriculum ────────────────────────────────────────────
+    match /fidel_curriculum/{docId} { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
+
+    // ── events (public read) ────────────────────────────────────────
+    match /fidel_events/{docId} { allow read: if true; allow write: if isOwner() || isAuth(); }
+
+    // ── social (owner bypass + author ownership) ────────────────────
+    match /social_profiles/{userId} {
+      allow read:  if isAuth();
+      allow write: if isOwner() || (isAuth() && isOwnDoc(userId) && notTooLarge());
+    }
+    match /social_posts/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && notTooLarge();
+      allow update: if isOwner() || (isAuth() && request.auth.uid == resource.data.authorId);
+      allow delete: if isOwner() || (isAuth() && request.auth.uid == resource.data.authorId);
+    }
+    match /social_likes/{docId}      { allow read, write: if isAuth(); }
+    match /social_comments/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && notTooLarge();
+      allow delete: if isOwner() || (isAuth() && request.auth.uid == resource.data.authorId);
+    }
+    match /social_poll_votes/{docId} { allow read, write: if isAuth(); }
+    match /social_follows/{docId}    { allow read, write: if isAuth(); }
   }
 }
