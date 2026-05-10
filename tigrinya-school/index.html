@@ -1078,17 +1078,22 @@
     }
     .trans-ph { color: var(--text-dim); font-style: italic; font-size: 0.82rem; }
     .trans-status { font-size: 0.7rem; color: var(--green); margin-top: 6px; min-height: 16px; }
-    .trans-copy {
-      width: 100%; margin-top: 10px; padding: 9px; border-radius: var(--radius-sm);
-      font-size: 0.78rem; font-weight: 700; background: var(--green-light); color: var(--green);
-      transition: background .15s;
+    .trans-out-actions { display:flex; gap:8px; margin-top:10px; }
+    .trans-out-btn {
+      flex:1; padding:9px 6px; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:700;
+      background:var(--card); border:1.5px solid var(--border); color:var(--text);
+      cursor:pointer; transition:background .15s, border-color .15s, color .15s;
     }
-    .trans-copy:hover { background: #bbf7d0; }
+    .trans-out-btn:hover { background:var(--green-light); border-color:var(--green); color:var(--green); }
     .trans-tips {
       background: var(--card); border-radius: var(--radius); border: 1.5px solid var(--border);
-      padding: 14px 16px;
+      padding: 12px 16px;
     }
-    .trans-tips-title { font-size: 0.8rem; font-weight: 800; margin-bottom: 8px; color: var(--text); }
+    .trans-tips-toggle {
+      width:100%; background:none; border:none; color:var(--text); font-size:0.8rem; font-weight:800;
+      display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding:0;
+    }
+    .trans-tips-body { margin-top:8px; }
     .trans-tip {
       font-size: 0.76rem; color: var(--text-sub); padding: 5px 0;
       border-bottom: 1px solid var(--border);
@@ -3673,14 +3678,19 @@
       </div>
       <div class="trans-output" id="transOutput"><span class="trans-ph">Translation will appear here</span></div>
       <div class="trans-status" id="transStatus"></div>
-      <button class="trans-copy" id="transCopyBtn" style="display:none">📋 Copy translation</button>
+      <div class="trans-out-actions" id="transOutActions" style="display:none">
+        <button class="trans-out-btn" id="transSpeak">🔊 Listen</button>
+        <button class="trans-out-btn" id="transCopyBtn">📋 Copy</button>
+      </div>
     </div>
     <div class="trans-tips">
-      <div class="trans-tips-title">💡 Tips</div>
-      <div class="trans-tip">Keep sentences short for the best results</div>
-      <div class="trans-tip">Use ⇄ to quickly swap source and target language</div>
-      <div class="trans-tip">Tigrinya uses the Ge'ez script (ፊደል) — a keyboard appears when Tigrinya is selected as source</div>
-      <div class="trans-tip">Tigrinya ↔ English uses a local dictionary for common words — faster &amp; more accurate than machine translation</div>
+      <button class="trans-tips-toggle" id="transTipsToggle">💡 Tips <span id="transTipsArrow">▼</span></button>
+      <div class="trans-tips-body" id="transTipsBody" style="display:none">
+        <div class="trans-tip">Keep sentences short for the best results</div>
+        <div class="trans-tip">Use ⇄ to quickly swap source and target language — the translation moves to the input</div>
+        <div class="trans-tip">Tigrinya uses the Ge'ez script (ፊደል) — a keyboard appears when Tigrinya is selected as source</div>
+        <div class="trans-tip">Tigrinya ↔ English uses a local dictionary for common words — faster &amp; more accurate than machine translation</div>
+      </div>
     </div>
   </div>
 
@@ -8205,7 +8215,8 @@ function _applyTransLangs() {
   inp.style.direction  = _RTL.has(from) ? 'rtl' : '';
   document.getElementById('transChar').textContent = '0 / 500';
   document.getElementById('transOutput').innerHTML = '<span class="trans-ph">Translation will appear here</span>';
-  document.getElementById('transCopyBtn').style.display = 'none';
+  const _actEl = document.getElementById('transOutActions');
+  if (_actEl) _actEl.style.display = 'none';
   document.getElementById('transStatus').textContent = '';
   document.dispatchEvent(new CustomEvent('transDirChanged', { detail: { from } }));
 }
@@ -8216,12 +8227,25 @@ document.getElementById('transToSel').addEventListener('change',   _applyTransLa
 document.getElementById('transSwapBtn').addEventListener('click', () => {
   const f = document.getElementById('transFromSel');
   const t = document.getElementById('transToSel');
+  const outEl = document.getElementById('transOutput');
+  const carried = outEl.querySelector('.trans-ph') ? '' : outEl.textContent.trim();
   [f.value, t.value] = [t.value, f.value];
   _applyTransLangs();
+  if (carried) {
+    const inp = document.getElementById('transInput');
+    inp.value = carried;
+    document.getElementById('transChar').textContent = carried.length + ' / 500';
+    setTimeout(_doTranslate, 80);
+  }
 });
 
+let _transDebounce;
 document.getElementById('transInput').addEventListener('input', e => {
   document.getElementById('transChar').textContent = e.target.value.length + ' / 500';
+  clearTimeout(_transDebounce);
+  if (e.target.value.trim().length > 1) {
+    _transDebounce = setTimeout(_doTranslate, 800);
+  }
 });
 
 /* Local dictionary lookup — only for Tigrinya ↔ English pairs */
@@ -8297,23 +8321,28 @@ function _transShowLocal(results, outEl, statEl, copyBtn) {
   const firstResult = showTig ? results[0].tig : results[0].eng;
   statEl.style.color = 'var(--green)';
   statEl.textContent = results[0].exact ? '✓ Found in dictionary' : '✓ Best match from dictionary';
-  copyBtn.style.display = '';
+  const actEl = document.getElementById('transOutActions');
+  if (actEl) actEl.style.display = '';
   copyBtn.onclick = () => navigator.clipboard?.writeText(firstResult)
     .then(() => hubToast('Copied!')).catch(() => {});
+  window._lastTranslation = firstResult;
+  window._lastTransLang = _transToLang();
 }
 
-document.getElementById('transBtn').addEventListener('click', async () => {
+async function _doTranslate() {
   const text    = document.getElementById('transInput').value.trim();
   const outEl   = document.getElementById('transOutput');
   const statEl  = document.getElementById('transStatus');
   const btn     = document.getElementById('transBtn');
   const copyBtn = document.getElementById('transCopyBtn');
+  const actEl   = document.getElementById('transOutActions');
   if (!text) {
     outEl.innerHTML = '<span class="trans-ph">Please enter some text first.</span>';
+    if (actEl) actEl.style.display = 'none';
     return;
   }
   statEl.textContent = ''; statEl.style.color = '';
-  copyBtn.style.display = 'none';
+  if (actEl) actEl.style.display = 'none';
 
   const localHits = _transLookupLocal(text);
   if (localHits.length) { _transShowLocal(localHits, outEl, statEl, copyBtn); return; }
@@ -8329,6 +8358,8 @@ document.getElementById('transBtn').addEventListener('click', async () => {
       const tmp = document.createElement('textarea');
       tmp.innerHTML = data.responseData.translatedText;
       const translation = tmp.value;
+      window._lastTranslation = translation;
+      window._lastTransLang = tgt;
       outEl.innerHTML = '';
       const p = document.createElement('p');
       p.style.cssText = _ETHIOPIC.has(tgt)
@@ -8341,7 +8372,7 @@ document.getElementById('transBtn').addEventListener('click', async () => {
       statEl.textContent = (src === 'ti' || tgt === 'ti')
         ? '⚠ Machine translation — may be inaccurate for Tigrinya'
         : '✓ Translated';
-      copyBtn.style.display = '';
+      if (actEl) actEl.style.display = '';
       copyBtn.onclick = () => navigator.clipboard?.writeText(translation)
         .then(() => hubToast('Copied!')).catch(() => {});
     } else if (data.responseStatus === 429) {
@@ -8354,6 +8385,27 @@ document.getElementById('transBtn').addEventListener('click', async () => {
   } finally {
     btn.disabled = false; btn.textContent = 'Translate →';
   }
+}
+document.getElementById('transBtn').addEventListener('click', _doTranslate);
+
+/* Speak output */
+document.getElementById('transSpeak').addEventListener('click', () => {
+  const txt = (window._lastTranslation || '').trim();
+  if (!txt) return;
+  const lang = window._lastTransLang || _transToLang();
+  const utt = new SpeechSynthesisUtterance(txt);
+  utt.lang = lang === 'ti' ? 'ti-ET' : lang;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utt);
+});
+
+/* Tips toggle */
+document.getElementById('transTipsToggle').addEventListener('click', () => {
+  const body  = document.getElementById('transTipsBody');
+  const arrow = document.getElementById('transTipsArrow');
+  const open  = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  arrow.textContent  = open ? '▼' : '▲';
 });
 
 /* ═══════════════════════════════
@@ -10238,23 +10290,7 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
   });
 })();
 
-/* 5. TAP-TO-COPY TRANSLATE OUTPUT */
-(function() {
-  const out = document.getElementById('transOutput');
-  const copyBtn = document.getElementById('transCopyBtn');
-  if (!out) return;
-  out.style.cursor = 'default';
-  out.addEventListener('click', () => {
-    const txt = out.textContent.trim();
-    if (!txt || out.querySelector('.trans-ph')) return;
-    navigator.clipboard?.writeText(txt).then(() => hubToast('Translation copied!')).catch(() => {});
-    out.style.cursor = 'pointer';
-  });
-  /* Style the output as tappable when it has content */
-  new MutationObserver(() => {
-    out.style.cursor = out.querySelector('.trans-ph') ? 'default' : 'pointer';
-  }).observe(out, { childList: true, subtree: true });
-})();
+/* 5. (tap-to-copy replaced by Copy button in trans-out-actions) */
 
 /* 6. GAME HIGH SCORES */
 (function() {
@@ -10295,18 +10331,9 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
 /* 1. TRANSLATE GLOW INPUT */
 (function() {
   const inp = document.getElementById('transInput');
-  const copyBtn = document.getElementById('transCopyBtn');
   if (!inp) return;
   inp.addEventListener('input', () => inp.classList.toggle('glow', inp.value.length > 0));
   inp.addEventListener('blur', () => inp.classList.remove('glow'));
-  if (copyBtn) {
-    new MutationObserver(() => {
-      if (copyBtn.style.display !== 'none') {
-        copyBtn.classList.add('pulsing');
-        setTimeout(() => copyBtn.classList.remove('pulsing'), 3500);
-      }
-    }).observe(copyBtn, { attributes: true, attributeFilter: ['style'] });
-  }
 })();
 
 /* 2. COMMUNITY CARD STAGGER */
