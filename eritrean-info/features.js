@@ -939,7 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── T1: READING PROGRESS BAR ─────────────────────────────────────────────────
 function initReadingProgressBar() {
-  const bar = document.getElementById('readingBar');
+  const bar = document.getElementById('readingProgress');
   if (!bar) return;
   window.addEventListener('scroll', () => {
     const max = document.documentElement.scrollHeight - window.innerHeight;
