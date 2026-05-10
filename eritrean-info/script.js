@@ -666,6 +666,21 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
   });
 });
 
+// Shared toast (Tweaks 4, 10)
+function showFidelToast(msg) {
+  let t = document.getElementById('fidelToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'fidelToast';
+    t.className = 'fidel-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
 // ── FIDEL WORDS & VOCABULARY ─────────────────
 (function initFidelWords() {
   const WORDS = [
@@ -678,7 +693,6 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
     { cat:'Greetings', w:'የቐንየለይ',   r:'Yekenyeley',  m:'Thank you',                    ex:'የቐንየለይ ብዙሕ — Thank you very much' },
     { cat:'Greetings', w:'ስለምንታይ',   r:'Slemnita',    m:'Why',                          ex:'ስለምንታይ ምስ ናይ — Why is that?' },
     { cat:'Greetings', w:'ምስ ሰናይ',   r:'Ms senay',   m:'Goodbye',                      ex:'ምስ ሰናይ ቁሩ — Goodbye, go well' },
-
     // Family
     { cat:'Family',    w:'ኣቦ',       r:'Abo',         m:'Father',                       ex:'ኣቦይ ሓኪም — My father is a doctor' },
     { cat:'Family',    w:'ኣደ',       r:'Ade',         m:'Mother',                       ex:'ኣደይ ምሉእ — My mother is complete' },
@@ -688,7 +702,6 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
     { cat:'Family',    w:'ሓፍቲ',      r:'Hafti',       m:'Sister',                       ex:'ሓፍተይ ፈቓር — My sister is kind' },
     { cat:'Family',    w:'ስድራቤት',    r:'Sidra-bet',   m:'Family',                       ex:'ስድራቤትና ሓቢርና — Our family together' },
     { cat:'Family',    w:'ሓዳር',      r:'Hadar',       m:'Marriage / Home',              ex:'ሓዳር ሰናይ — A good marriage' },
-
     // Numbers
     { cat:'Numbers',   w:'ሓደ',       r:'Hade',        m:'One (1)',                      ex:'ሓደ ሰብ — One person' },
     { cat:'Numbers',   w:'ክልተ',      r:'Kilte',       m:'Two (2)',                      ex:'ክልተ ቀለምቲ — Two colors' },
@@ -699,7 +712,6 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
     { cat:'Numbers',   w:'ሸሞንተ',     r:'Shemonte',    m:'Eight (8)',                    ex:'ሸሞንተ ሰዓት — Eight hours' },
     { cat:'Numbers',   w:'ዓሰርተ',     r:'Aserte',      m:'Ten (10)',                     ex:'ዓሰርተ ዓመት — Ten years' },
     { cat:'Numbers',   w:'ሚእቲ',      r:'Mieti',       m:'One hundred (100)',            ex:'ሚእቲ ናቕፋ — One hundred Nakfa' },
-
     // Nature & Places
     { cat:'Nature',    w:'ባሕሪ',      r:'Bahri',       m:'Sea / Ocean',                  ex:'ባሕሪ ቀይሕ — The Red Sea' },
     { cat:'Nature',    w:'ደጋ',       r:'Dega',        m:'Highland / Mountain plateau',  ex:'ደጋ ኤርትራ — The Eritrean highlands' },
@@ -710,7 +722,6 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
     { cat:'Nature',    w:'ፀሓይ',      r:'Tsehay',      m:'Sun',                          ex:'ፀሓይ ወጺኡ — The sun has risen' },
     { cat:'Nature',    w:'ወርሒ',      r:'Werhi',       m:'Moon / Month',                 ex:'ወርሒ ምሉእ — Full moon' },
     { cat:'Nature',    w:'ኣዶቦ',      r:'Adobo',       m:'Tree',                         ex:'ኣዶቦ ዓቢ — A big tree' },
-
     // Food & Drink
     { cat:'Food',      w:'እንጀራ',    r:'Injera',      m:'Injera — sour flatbread',      ex:'እንጀራ ምስ ጸብሒ — Injera with stew' },
     { cat:'Food',      w:'ጸብሒ',      r:'Tsebhi',      m:'Stew / Sauce',                 ex:'ጸብሒ ደርሆ — Chicken stew' },
@@ -720,7 +731,6 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
     { cat:'Food',      w:'ስጋ',       r:'Siga',        m:'Meat',                         ex:'ስጋ ዝርጋዕ — Minced meat' },
     { cat:'Food',      w:'ዓሳ',       r:'Asa',         m:'Fish',                         ex:'ዓሳ ካብ ባሕሪ — Fish from the sea' },
     { cat:'Food',      w:'ዳቦ',       r:'Dabo',        m:'Bread',                        ex:'ዳቦ ምሩቕ — Fresh bread' },
-
     // Values & Identity
     { cat:'Values',    w:'ናጽነት',     r:'Natsnet',     m:'Freedom / Independence',       ex:'ናጽነት ኤርትራ — Independence of Eritrea' },
     { cat:'Values',    w:'ሃገር',      r:'Hager',       m:'Country / Homeland',           ex:'ሃገረ ኤርትራ — The State of Eritrea' },
@@ -732,9 +742,43 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
     { cat:'Values',    w:'ሓቢርና',    r:'Habirna',     m:'Together / United',            ex:'ሓቢርና ንሰርሕ — Together we work' },
   ];
 
-  const container = document.getElementById('fidelWordsContainer');
-  const searchEl  = document.getElementById('fidelWordsSearch');
+  const container   = document.getElementById('fidelWordsContainer');
+  const searchEl    = document.getElementById('fidelWordsSearch');
+  const quizBtn     = document.getElementById('fidelQuizBtn');
+  const quizOverlay = document.getElementById('fidelQuizOverlay');
+  const quizTigEl   = document.getElementById('fidelQuizTigrinya');
+  const quizRevEl   = document.getElementById('fidelQuizReveal');
+  const quizRomEl   = document.getElementById('fidelQuizRoman');
+  const quizMeanEl  = document.getElementById('fidelQuizMeaning');
+  const quizFlip    = document.getElementById('fidelQuizFlip');
+  const quizPrev    = document.getElementById('fidelQuizPrev');
+  const quizNext    = document.getElementById('fidelQuizNext');
+  const quizClose   = document.getElementById('fidelQuizClose');
+  const quizCounter = document.getElementById('fidelQuizCounter');
+  const chipsEl     = document.getElementById('fidelCatChips');
   if (!container) return;
+
+  // Tweak 10: learned words
+  let _learned = new Set(JSON.parse(localStorage.getItem('fidel_learned') || '[]'));
+  function saveLearned() { localStorage.setItem('fidel_learned', JSON.stringify([..._learned])); }
+
+  // Tweak 5: category filter
+  let _activeCat = 'All';
+  const CATS = ['All', ...new Set(WORDS.map(w => w.cat))];
+
+  function renderChips() {
+    if (!chipsEl) return;
+    chipsEl.innerHTML = CATS.map(cat =>
+      `<button class="fidel-chip${cat === _activeCat ? ' active' : ''}" data-cat="${cat}">${cat}</button>`
+    ).join('');
+    chipsEl.querySelectorAll('.fidel-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _activeCat = btn.getAttribute('data-cat');
+        renderChips();
+        renderWords(searchEl ? searchEl.value : '');
+      });
+    });
+  }
 
   function speakWord(word) {
     window.speechSynthesis.cancel();
@@ -748,32 +792,33 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
 
   function renderWords(filter) {
     const q = (filter || '').toLowerCase().trim();
-    const filtered = q ? WORDS.filter(w =>
-      w.w.includes(q) || w.r.toLowerCase().includes(q) || w.m.toLowerCase().includes(q)
-    ) : WORDS;
+    const filtered = WORDS.filter(w => {
+      const matchSearch = !q || w.w.includes(q) || w.r.toLowerCase().includes(q) || w.m.toLowerCase().includes(q);
+      const matchCat = _activeCat === 'All' || w.cat === _activeCat;
+      return matchSearch && matchCat;
+    });
 
     if (!filtered.length) {
       container.innerHTML = '<p style="color:var(--text-muted);padding:20px 0">No words found. Try another search term.</p>';
       return;
     }
 
-    // Group by category
     const cats = {};
-    filtered.forEach(w => {
-      if (!cats[w.cat]) cats[w.cat] = [];
-      cats[w.cat].push(w);
-    });
+    filtered.forEach(w => { if (!cats[w.cat]) cats[w.cat] = []; cats[w.cat].push(w); });
 
     container.innerHTML = Object.entries(cats).map(([cat, words]) => `
       <div class="fidel-category-label">${cat}</div>
       <div class="fidel-words-grid">
-        ${words.map((w, i) => `
-          <div class="fidel-word-card" title="${w.ex}">
+        ${words.map(w => `
+          <div class="fidel-word-card${_learned.has(w.w) ? ' learned' : ''}" data-word="${w.w}">
             <div class="fwc-tigrinya">${w.w}</div>
             <div class="fwc-roman">${w.r}</div>
             <div class="fwc-meaning">${w.m}</div>
             <div class="fwc-example">${w.ex}</div>
-            <button class="fwc-speak" data-word="${w.w}" title="Hear pronunciation">🔊</button>
+            <div class="fwc-actions">
+              <button class="fwc-speak" data-word="${w.w}" title="Hear pronunciation">🔊</button>
+              <button class="fwc-learn" data-word="${w.w}" title="${_learned.has(w.w) ? 'Unmark' : 'I know this'}">${_learned.has(w.w) ? '✓' : '○'}</button>
+            </div>
           </div>`).join('')}
       </div>`).join('');
 
@@ -785,19 +830,78 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
         setTimeout(() => { btn.textContent = '🔊'; }, 1500);
       });
     });
+
+    // Tweak 10: learned toggle
+    container.querySelectorAll('.fwc-learn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const word = btn.getAttribute('data-word');
+        if (_learned.has(word)) { _learned.delete(word); } else { _learned.add(word); }
+        saveLearned();
+        const known = _learned.has(word);
+        btn.closest('.fidel-word-card').classList.toggle('learned', known);
+        btn.textContent = known ? '✓' : '○';
+        btn.title = known ? 'Unmark' : 'I know this';
+        if (known) showFidelToast('Marked as learned ✓');
+      });
+    });
   }
 
+  // Tweak 6: Quiz mode
+  let _quizDeck = [], _quizIdx = 0, _quizRevealed = false;
+
+  function buildQuizDeck() {
+    const shuffle = a => a.slice().sort(() => Math.random() - 0.5);
+    return [...shuffle(WORDS.filter(w => !_learned.has(w.w))), ...shuffle(WORDS.filter(w => _learned.has(w.w)))];
+  }
+
+  function showQuizCard() {
+    if (!_quizDeck.length) return;
+    const w = _quizDeck[_quizIdx];
+    if (quizTigEl)   quizTigEl.textContent = w.w;
+    if (quizRomEl)   quizRomEl.textContent = w.r;
+    if (quizMeanEl)  quizMeanEl.textContent = w.m + ' — ' + w.ex;
+    if (quizRevEl)   quizRevEl.hidden = true;
+    if (quizFlip)    quizFlip.textContent = 'Tap to reveal';
+    if (quizCounter) quizCounter.textContent = `${_quizIdx + 1} / ${_quizDeck.length}`;
+    _quizRevealed = false;
+    document.getElementById('fidelQuizCard')?.classList.remove('flipped');
+  }
+
+  quizBtn?.addEventListener('click', () => {
+    _quizDeck = buildQuizDeck(); _quizIdx = 0;
+    if (quizOverlay) quizOverlay.hidden = false;
+    showQuizCard();
+  });
+  quizFlip?.addEventListener('click', () => {
+    if (!_quizRevealed) {
+      if (quizRevEl) quizRevEl.hidden = false;
+      if (quizFlip)  quizFlip.textContent = 'Next →';
+      document.getElementById('fidelQuizCard')?.classList.add('flipped');
+      _quizRevealed = true;
+    } else {
+      _quizIdx = (_quizIdx + 1) % _quizDeck.length;
+      showQuizCard();
+    }
+  });
+  quizNext?.addEventListener('click',  () => { _quizIdx = (_quizIdx + 1) % _quizDeck.length; showQuizCard(); });
+  quizPrev?.addEventListener('click',  () => { _quizIdx = (_quizIdx - 1 + _quizDeck.length) % _quizDeck.length; showQuizCard(); });
+  quizClose?.addEventListener('click', () => { if (quizOverlay) quizOverlay.hidden = true; });
+
+  renderChips();
   renderWords('');
   if (searchEl) searchEl.addEventListener('input', () => renderWords(searchEl.value));
 })();
 
 // ── FIDEL ALPHABET GRID ──────────────────────
 (function initFidelAlphabet() {
-  const grid     = document.getElementById('fidelGrid');
-  const searchEl = document.getElementById('fidelSearch');
+  const grid          = document.getElementById('fidelGrid');
+  const searchEl      = document.getElementById('fidelSearch');
+  const progressBar   = document.getElementById('fidelProgressBar');
+  const progressLabel = document.getElementById('fidelProgressLabel');
+  const romanToggle   = document.getElementById('fidelRomanToggle');
   if (!grid) return;
 
-  // 33 consonants × 7 vowel orders (ä u i a e ə o) = 231 characters
   const ROWS = [
     { r:'H',    c:['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'] },
     { r:'L',    c:['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'] },
@@ -834,13 +938,64 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
   ];
   const SOUNDS = ['ä','u','i','a','e','ə','o'];
 
+  // Tweak 1: explored progress
+  let _explored = new Set(JSON.parse(localStorage.getItem('fidel_explored') || '[]'));
+  function saveExplored() { localStorage.setItem('fidel_explored', JSON.stringify([..._explored])); }
+  function updateProgress() {
+    const n = _explored.size;
+    if (progressBar)   progressBar.style.width = (n / 231 * 100) + '%';
+    if (progressLabel) progressLabel.textContent = n + ' / 231 explored';
+  }
+  updateProgress();
+
+  // Tweak 2: romanization toggle
+  let _hideRoman = localStorage.getItem('fidel_hide_roman') === 'true';
+  function applyRomanToggle() {
+    grid.classList.toggle('hide-roman', _hideRoman);
+    if (romanToggle) romanToggle.textContent = _hideRoman ? 'Aa Show' : 'Aa Hide';
+  }
+  applyRomanToggle();
+  romanToggle?.addEventListener('click', () => {
+    _hideRoman = !_hideRoman;
+    localStorage.setItem('fidel_hide_roman', _hideRoman);
+    applyRomanToggle();
+  });
+
+  // Tweak 3: active column
+  let _activeCol = null;
+
+  // Tweak 7: Letter of the Day
+  function renderLotd() {
+    const el = document.getElementById('fidelLotd');
+    if (!el) return;
+    const seed = [...new Date().toDateString()].reduce((a, c) => a + c.charCodeAt(0), 0);
+    const rowIdx = seed % ROWS.length;
+    const colIdx = Math.floor(seed / ROWS.length) % 7;
+    const row = ROWS[rowIdx];
+    const ch  = row.c[colIdx];
+    const sound = row.r + SOUNDS[colIdx];
+    el.innerHTML = `
+      <div class="fidel-lotd-inner">
+        <span class="fidel-lotd-badge">✦ Letter of the Day</span>
+        <div class="fidel-lotd-char">${ch}</div>
+        <div class="fidel-lotd-info">
+          <div class="fidel-lotd-sound">${sound}</div>
+          <div class="fidel-lotd-meta">${row.r} consonant · form ${colIdx + 1} of 7</div>
+        </div>
+        <button class="fidel-lotd-speak">🔊 Pronounce</button>
+      </div>`;
+    el.querySelector('.fidel-lotd-speak').addEventListener('click', () => {
+      const u = new SpeechSynthesisUtterance(ch);
+      u.lang = 'ti'; u.rate = 0.7;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    });
+  }
+
   function renderGrid(filter) {
     const q = (filter || '').trim().toLowerCase();
     const rows = q
-      ? ROWS.filter(row =>
-          row.c.some(ch => ch.includes(q)) ||
-          row.r.toLowerCase().startsWith(q)
-        )
+      ? ROWS.filter(row => row.c.some(ch => ch.includes(q)) || row.r.toLowerCase().startsWith(q))
       : ROWS;
 
     if (!rows.length) {
@@ -851,28 +1006,64 @@ document.querySelectorAll('.fidel-tab-btn').forEach(btn => {
     grid.innerHTML = rows.map(row =>
       `<div class="fidel-row">` +
       row.c.map((ch, i) =>
-        `<div class="fidel-cell" title="${row.r + SOUNDS[i]}">` +
-          `<span class="fidel-char">${ch}</span>` +
-          `<span class="fidel-sound">${row.r + SOUNDS[i]}</span>` +
+        `<div class="fidel-cell` +
+        (_explored.has(ch) ? ' explored' : '') +
+        (_activeCol === i   ? ' col-active' : '') +
+        `" data-col="${i}" data-char="${ch}" title="${row.r + SOUNDS[i]}">` +
+        `<span class="fidel-char">${ch}</span>` +
+        `<span class="fidel-sound">${row.r + SOUNDS[i]}</span>` +
         `</div>`
-      ).join('') +
-      `</div>`
+      ).join('') + `</div>`
     ).join('');
 
     grid.querySelectorAll('.fidel-cell').forEach(cell => {
       cell.addEventListener('click', () => {
+        const ch = cell.getAttribute('data-char');
+
+        // Tweak 8: audio pulse animation
         if ('speechSynthesis' in window) {
-          const u = new SpeechSynthesisUtterance(cell.querySelector('.fidel-char').textContent);
+          const u = new SpeechSynthesisUtterance(ch);
           u.lang = 'ti'; u.rate = 0.7;
           window.speechSynthesis.cancel();
+          cell.classList.add('speaking');
+          u.onend = () => cell.classList.remove('speaking');
+          setTimeout(() => cell.classList.remove('speaking'), 2500);
           window.speechSynthesis.speak(u);
         }
+
+        // Tweak 4: copy to clipboard
+        navigator.clipboard?.writeText(ch).then(() => showFidelToast(ch + ' copied'));
+
+        // Tweak 1: mark explored
+        if (!_explored.has(ch)) {
+          _explored.add(ch);
+          saveExplored();
+          updateProgress();
+          cell.classList.add('explored');
+        }
+
         grid.querySelectorAll('.fidel-cell').forEach(c => c.classList.remove('active'));
         cell.classList.add('active');
       });
     });
   }
 
+  // Tweak 3: column header click — set once, mutates cell classes without re-render
+  document.querySelectorAll('.fidel-hcell').forEach(hcell => {
+    hcell.addEventListener('click', () => {
+      const col  = parseInt(hcell.getAttribute('data-col'));
+      const same = _activeCol === col;
+      _activeCol = same ? null : col;
+      document.querySelectorAll('.fidel-hcell').forEach(h =>
+        h.classList.toggle('col-active', parseInt(h.getAttribute('data-col')) === _activeCol)
+      );
+      grid.querySelectorAll('.fidel-cell').forEach(c =>
+        c.classList.toggle('col-active', !same && parseInt(c.getAttribute('data-col')) === col)
+      );
+    });
+  });
+
+  renderLotd();
   renderGrid('');
   if (searchEl) searchEl.addEventListener('input', () => renderGrid(searchEl.value));
 })();

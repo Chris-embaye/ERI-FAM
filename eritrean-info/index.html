@@ -2559,28 +2559,64 @@
 
       <!-- Tab: Alphabet -->
       <div class="fidel-tab-content active" id="ftab-alphabet">
+        <!-- Tweak 7: Letter of the Day -->
+        <div class="fidel-lotd" id="fidelLotd"></div>
+        <!-- Controls row -->
         <div class="fidel-controls">
           <input type="text" id="fidelSearch" class="fidel-search" placeholder="Search letter (e.g. ሀ or Ha)…" />
+          <!-- Tweak 2: Romanization toggle -->
+          <button class="fidel-roman-toggle" id="fidelRomanToggle">Aa Hide</button>
           <span class="fidel-hint">7 forms × 33 consonants = 231 characters</span>
         </div>
-        <div class="fidel-table-wrap">
-          <div class="fidel-header-row">
-            <div class="fidel-hcell">Base</div>
-            <div class="fidel-hcell">—u</div>
-            <div class="fidel-hcell">—i</div>
-            <div class="fidel-hcell">—a</div>
-            <div class="fidel-hcell">—e</div>
-            <div class="fidel-hcell">—ə</div>
-            <div class="fidel-hcell">—o</div>
+        <!-- Tweak 1: Explored progress bar -->
+        <div class="fidel-progress-wrap">
+          <div class="fidel-progress-track">
+            <div class="fidel-progress-bar" id="fidelProgressBar"></div>
           </div>
+          <span class="fidel-progress-label" id="fidelProgressLabel">0 / 231 explored</span>
+        </div>
+        <!-- Tweak 9: Sticky column headers (outside overflow container) -->
+        <div class="fidel-header-row" id="fidelHeaderRow">
+          <div class="fidel-hcell" data-col="0">Base</div>
+          <div class="fidel-hcell" data-col="1">—u</div>
+          <div class="fidel-hcell" data-col="2">—i</div>
+          <div class="fidel-hcell" data-col="3">—a</div>
+          <div class="fidel-hcell" data-col="4">—e</div>
+          <div class="fidel-hcell" data-col="5">—ə</div>
+          <div class="fidel-hcell" data-col="6">—o</div>
+        </div>
+        <div class="fidel-table-wrap">
           <div class="fidel-grid" id="fidelGrid"></div>
         </div>
       </div>
 
       <!-- Tab: Words -->
       <div class="fidel-tab-content" id="ftab-words">
-        <input type="text" id="fidelWordsSearch" class="fidel-words-search" placeholder="Search words in Tigrinya or English…" />
+        <!-- Tweak 5 + 6: toolbar with search, quiz button -->
+        <div class="fidel-words-toolbar">
+          <input type="text" id="fidelWordsSearch" class="fidel-words-search" placeholder="Search words in Tigrinya or English…" />
+          <button class="fidel-quiz-btn" id="fidelQuizBtn">🃏 Quiz me</button>
+        </div>
+        <!-- Tweak 5: Category filter chips -->
+        <div class="fidel-cat-chips" id="fidelCatChips"></div>
         <div id="fidelWordsContainer"></div>
+        <!-- Tweak 6: Quiz overlay -->
+        <div class="fidel-quiz-overlay" id="fidelQuizOverlay" hidden>
+          <div class="fidel-quiz-card" id="fidelQuizCard">
+            <div class="fidel-quiz-tigrinya" id="fidelQuizTigrinya"></div>
+            <div class="fidel-quiz-reveal" id="fidelQuizReveal" hidden>
+              <div class="fidel-quiz-roman" id="fidelQuizRoman"></div>
+              <div class="fidel-quiz-meaning" id="fidelQuizMeaning"></div>
+            </div>
+            <button class="fidel-quiz-flip" id="fidelQuizFlip">Tap to reveal</button>
+          </div>
+          <div class="fidel-quiz-nav">
+            <button class="fidel-quiz-prev" id="fidelQuizPrev">← Prev</button>
+            <span class="fidel-quiz-counter" id="fidelQuizCounter"></span>
+            <button class="fidel-quiz-next" id="fidelQuizNext">Next →</button>
+          </div>
+          <button class="fidel-quiz-close" id="fidelQuizClose">✕ Exit quiz</button>
+        </div>
       </div>
     </div>
   </section>

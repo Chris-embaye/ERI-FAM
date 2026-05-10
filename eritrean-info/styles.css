@@ -5225,6 +5225,325 @@ html.dark .blog-card:hover {
   .fidel-grid  { min-width: 280px; }
 }
 
+/* ── Fidel Tweaks (10 enhancements) ───────── */
+
+/* Tweak 1: Explored progress bar */
+.fidel-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.fidel-progress-track {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+.fidel-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--green), #4ade80);
+  transition: width .5s ease;
+  width: 0%;
+}
+.fidel-progress-label {
+  font-size: .73rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-family: var(--font-sans);
+}
+/* Explored dot on cell */
+.fidel-cell.explored::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  background: var(--green);
+  border-radius: 50%;
+  margin: 1px auto 0;
+}
+
+/* Tweak 2: Romanization toggle */
+.fidel-roman-toggle {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text-muted);
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: border-color .15s, color .15s;
+}
+.fidel-roman-toggle:hover { border-color: var(--green); color: var(--green); }
+.fidel-grid.hide-roman .fidel-sound { opacity: 0; pointer-events: none; }
+
+/* Tweak 3: Column header highlight */
+.fidel-hcell { cursor: pointer; border-radius: 6px; transition: background .15s, color .15s; }
+.fidel-hcell:hover    { background: rgba(0,122,61,.1); }
+.fidel-hcell.col-active { background: var(--gold-light, #fdf5e0); color: var(--gold, #D4A017); }
+.fidel-cell.col-active  { outline: 2px solid var(--gold, #D4A017); outline-offset: -2px; background: rgba(212,160,23,.08); }
+
+/* Tweak 4+8: Toast */
+.fidel-toast {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: rgba(20,20,20,.9);
+  color: #fff;
+  padding: 7px 18px;
+  border-radius: 20px;
+  font-size: .83rem;
+  font-family: var(--font-sans);
+  opacity: 0;
+  transition: opacity .2s, transform .2s;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.fidel-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Tweak 5: Category filter chips */
+.fidel-words-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.fidel-words-search { margin-bottom: 0; flex: 1; min-width: 180px; }
+.fidel-cat-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.fidel-chip {
+  padding: 5px 13px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text-muted);
+  font-size: .76rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all .15s;
+}
+.fidel-chip:hover  { border-color: var(--green); color: var(--green); }
+.fidel-chip.active { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* Tweak 6: Quiz button */
+.fidel-quiz-btn {
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--green);
+  background: none;
+  color: var(--green);
+  font-size: .83rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all .15s;
+  white-space: nowrap;
+}
+.fidel-quiz-btn:hover { background: var(--green); color: #fff; }
+/* Quiz overlay */
+.fidel-quiz-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  gap: 18px;
+  padding: 24px;
+}
+.fidel-quiz-card {
+  background: var(--bg);
+  border-radius: 22px;
+  padding: 36px 28px 28px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 12px 48px rgba(0,0,0,.35);
+  transition: transform .2s;
+}
+.fidel-quiz-card.flipped { transform: scale(1.02); }
+.fidel-quiz-tigrinya {
+  font-family: var(--font-ethiopic);
+  font-size: 3.8rem;
+  line-height: 1.2;
+  color: var(--text);
+}
+.fidel-quiz-roman   { font-size: 1.1rem; font-weight: 700; color: var(--green); }
+.fidel-quiz-meaning { font-size: .88rem; color: var(--text-muted); margin-top: 2px; }
+.fidel-quiz-flip {
+  margin-top: 10px;
+  padding: 10px 26px;
+  border-radius: 10px;
+  border: none;
+  background: var(--green);
+  color: #fff;
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background .15s;
+}
+.fidel-quiz-flip:hover { background: var(--green-dark); }
+.fidel-quiz-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.fidel-quiz-prev, .fidel-quiz-next {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  font-size: .83rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background .15s;
+}
+.fidel-quiz-prev:hover, .fidel-quiz-next:hover { background: rgba(255,255,255,.18); }
+.fidel-quiz-counter { color: rgba(255,255,255,.6); font-size: .83rem; font-family: var(--font-sans); min-width: 60px; text-align: center; }
+.fidel-quiz-close {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: none;
+  color: rgba(255,255,255,.5);
+  font-size: .8rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: color .15s;
+}
+.fidel-quiz-close:hover { color: #fff; }
+
+/* Tweak 7: Letter of the Day */
+.fidel-lotd { margin-bottom: 18px; }
+.fidel-lotd-inner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  background: linear-gradient(120deg, rgba(0,122,61,.07), rgba(65,137,221,.07));
+  border: 1px solid rgba(0,122,61,.18);
+  border-radius: 14px;
+  padding: 14px 20px;
+  position: relative;
+}
+.fidel-lotd-badge {
+  position: absolute;
+  top: -10px;
+  left: 18px;
+  font-size: .65rem;
+  font-weight: 700;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  background: var(--bg);
+  padding: 0 6px;
+  font-family: var(--font-sans);
+}
+.fidel-lotd-char {
+  font-family: var(--font-ethiopic);
+  font-size: 3.2rem;
+  line-height: 1;
+  color: var(--text);
+}
+.fidel-lotd-info { flex: 1; }
+.fidel-lotd-sound {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: .03em;
+}
+.fidel-lotd-meta {
+  font-size: .73rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: var(--font-sans);
+}
+.fidel-lotd-speak {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--green);
+  background: none;
+  color: var(--green);
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all .15s;
+  white-space: nowrap;
+}
+.fidel-lotd-speak:hover { background: var(--green); color: #fff; }
+
+/* Tweak 8: Audio pulse animation */
+@keyframes fidel-pulse {
+  0%, 100% { transform: scale(1);    border-color: var(--green); }
+  50%       { transform: scale(1.14); border-color: var(--green-dark, #005a2d); background: rgba(0,122,61,.28); }
+}
+.fidel-cell.speaking {
+  animation: fidel-pulse .45s ease 2;
+  z-index: 1;
+  position: relative;
+}
+
+/* Tweak 9: Sticky column headers */
+.fidel-header-row {
+  position: sticky;
+  top: 64px;
+  background: var(--bg);
+  z-index: 6;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+html.dark .fidel-header-row { background: var(--bg); }
+
+/* Tweak 10: Learned word cards */
+.fwc-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.fwc-learn {
+  background: none;
+  border: none;
+  font-size: .9rem;
+  cursor: pointer;
+  opacity: .4;
+  padding: 0;
+  line-height: 1;
+  transition: opacity .15s, color .15s;
+  color: var(--text-muted);
+}
+.fwc-learn:hover { opacity: 1; color: var(--green); }
+.fidel-word-card.learned {
+  border-color: rgba(0,122,61,.4);
+  background: rgba(0,122,61,.06);
+}
+.fidel-word-card.learned .fwc-learn { opacity: 1; color: var(--green); }
+
 /* ============================================
    TWEAK 1 — GLASS CARDS (all section cards)
    ============================================ */

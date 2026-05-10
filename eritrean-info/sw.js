@@ -3,7 +3,7 @@
    Caches all app assets for offline use
    ============================================ */
 
-const CACHE_NAME    = 'eritrean-info-v80';
+const CACHE_NAME    = 'eritrean-info-v81';
 const OFFLINE_URL   = './index.html';
 
 const PRECACHE_ASSETS = [
