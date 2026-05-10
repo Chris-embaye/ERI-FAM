@@ -2,6 +2,17 @@
    ERITREAN INFO — JavaScript
    ============================================ */
 
+// ── FIREBASE (shared instance for Famous/Artists) ──────────
+(async function initSharedFirebase() {
+  try {
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const fns = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    window._db     = fns.getFirestore(app);
+    window._fbFns  = fns;
+  } catch(e) {}
+})();
+
 // ── NAVIGATION ──────────────────────────────
 const navbar      = document.getElementById('navbar');
 const navToggle   = document.getElementById('navToggle');
@@ -426,9 +437,6 @@ if ('serviceWorker' in navigator) {
 
 // ── PWA INSTALL PROMPT ───────────────────────
 let deferredPrompt = null;
-const installBanner  = document.getElementById('installBanner');
-const installBtn     = document.getElementById('installBtn');
-const installDismiss = document.getElementById('installDismiss');
 const installModal   = document.getElementById('installModal');
 const installNowWrap = document.getElementById('installNowWrap');
 const installNowBtn  = document.getElementById('installNowBtn');
@@ -443,40 +451,18 @@ function closeInstallModal() {
   installModal.classList.remove('open');
 }
 
-// Collect the deferred prompt when the browser fires it
+// Capture the deferred prompt (needed for "Install Now" inside the modal)
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  // Show bottom banner after 3 s (existing behaviour)
-  setTimeout(() => {
-    if (!localStorage.getItem('pwa-dismissed')) {
-      installBanner.style.display = 'block';
-    }
-  }, 3000);
 });
 
-// Bottom banner buttons (existing)
-installBtn.addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  installBanner.style.display = 'none';
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  console.log('[PWA] Install outcome:', outcome);
-  deferredPrompt = null;
-});
-installDismiss.addEventListener('click', () => {
-  installBanner.style.display = 'none';
-  localStorage.setItem('pwa-dismissed', '1');
-  localStorage.setItem('pwa-dismissed-time', Date.now().toString());
-});
-
-// New modal "Install Now" button
+// Modal "Install Now" button
 installNowBtn.addEventListener('click', async () => {
   if (!deferredPrompt) return;
   closeInstallModal();
   deferredPrompt.prompt();
   const { outcome } = await deferredPrompt.userChoice;
-  console.log('[PWA] Install outcome:', outcome);
   deferredPrompt = null;
 });
 
@@ -488,18 +474,7 @@ heroInstallBtn.addEventListener('click', openInstallModal);
 document.getElementById('installModalClose').addEventListener('click', closeInstallModal);
 installModal.addEventListener('click', e => { if (e.target === installModal) closeInstallModal(); });
 
-// Show banner again if user revisits after 7 days
-const dismissed = localStorage.getItem('pwa-dismissed-time');
-if (dismissed && Date.now() - parseInt(dismissed) > 7 * 24 * 60 * 60 * 1000) {
-  localStorage.removeItem('pwa-dismissed');
-}
-
-// When actually installed, hide everything
-window.addEventListener('appinstalled', () => {
-  installBanner.style.display = 'none';
-  deferredPrompt = null;
-  console.log('[PWA] App installed!');
-});
+window.addEventListener('appinstalled', () => { deferredPrompt = null; });
 
 // ── OFFLINE / ONLINE STATUS ──────────────────
 const offlineToast = document.getElementById('offlineToast');
@@ -1865,30 +1840,102 @@ function initRecipes() {
 }
 initRecipes();
 
-// ── MUSIC ARTISTS ─────────────────────────────────────────
-const ARTISTS_DATA = [
-  { name:'Abraham Afewerki',  role:'Singer-Songwriter',         years:'1966–2006', genre:'Tigrinya Pop / Traditional',  emoji:'🎤', color:'linear-gradient(135deg,#007A3D,#4189DD)', desc:'Called the "Voice of Eritrea", Abraham Afewerki blended traditional Tigrinya music with modern sounds. His songs Hamid and Hagerey remain global anthems of Eritrean identity.' },
-  { name:'Yemane Barya',      role:'Singer & Poet',             years:'1954–1997', genre:'Traditional Tigrinya',         emoji:'📜', color:'linear-gradient(135deg,#7c3aed,#007A3D)', desc:'Known as the "King" (ንጉስ) of Tigrinya music, Yemane Barya was a revolutionary poet-fighter whose timeless songs remain cornerstones of Eritrean cultural heritage.' },
-  { name:'Helen Meles',       role:'Vocalist',                  years:'Born 1974',  genre:'Tigrinya Ballads / Pop',      emoji:'🎵', color:'linear-gradient(135deg,#CE1126,#f59e0b)', desc:'Eritrea\'s "Golden Voice" — her powerful vocals span traditional Tigrinya to modern ballads. Songs like Lbi Haway made her a beloved icon across the diaspora.' },
-  { name:'Dehab Faytinga',    role:'Singer & Cultural Ambassador', years:'Born 1965', genre:'Traditional / Pan-African', emoji:'🌍', color:'linear-gradient(135deg,#4189DD,#CE1126)', desc:'A legendary vocalist who blends Eritrean rhythms with pan-African influences. She performed at major international festivals and is celebrated for keeping traditions alive globally.' },
-  { name:'Yohannes Tikabo',   role:'Singer & Actor',            years:'Born 1971',  genre:'Modern Tigrinya',             emoji:'🎭', color:'linear-gradient(135deg,#f59e0b,#059669)', desc:'A hugely popular contemporary artist known for his melodic voice and modern Tigrinya music. Also an accomplished actor in Eritrean cinema.' },
-  { name:'Alamin Abdullatif', role:'Tigre Music Icon',          years:'Born 1962',  genre:'Tigre Traditional',           emoji:'🎶', color:'linear-gradient(135deg,#059669,#7c3aed)', desc:'Master of traditional Tigre music, Alamin Abdullatif preserves the musical heritage of the Tigre ethnic group with powerful poetry-songs spanning decades.' },
+// ── FAMOUS ERITREANS (fallback data) ──────────────────────
+const FAMOUS_DATA = [
+  { name:'Abraham Afewerki',      title:'Musician · "Voice of Eritrea"',                       years:'1966 – 2006', emoji:'🎵', color:'linear-gradient(135deg,#007A3D,#4189DD)', bio:'One of the most beloved Eritrean artists of all time, Abraham Afewerki blended traditional Tigrinya music with modern sounds. His songs — including Hamid and Hagerey — remain anthems of Eritrean identity worldwide.' },
+  { name:'Zersenay Tadese',       title:'Athlete · World Half-Marathon Champion',               years:'Born 1982',   emoji:'🏃', color:'linear-gradient(135deg,#CE1126,#f59e0b)', bio:'One of Africa\'s greatest long-distance runners, Zersenay Tadese won multiple World Half Marathon Championship titles and held the world record for the half marathon (58:23). He competed at the Beijing and London Olympics.' },
+  { name:'Daniel Teklehaimanot',  title:'Cyclist · First African in Tour de France Polka Dot', years:'Born 1988',   emoji:'🚴', color:'linear-gradient(135deg,#4189DD,#007A3D)', bio:'In 2015, Daniel Teklehaimanot became the first African rider to wear the iconic polka-dot jersey (King of the Mountains) at the Tour de France — a historic milestone for African cycling.' },
+  { name:'Yemane Barya',          title:'Musician & Poet · "King of Tigrinya Music"',           years:'1954 – 1997', emoji:'🎶', color:'linear-gradient(135deg,#7c3aed,#007A3D)', bio:'Known as the "King" (ንጉስ) of Tigrinya music, Yemane Barya was a revolutionary poet, singer and fighter. He composed timeless songs celebrating Eritrean identity, the liberation struggle, and the beauty of his homeland.' },
+  { name:'Dawit Isaak',           title:'Journalist · Press Freedom Icon',                     years:'Born 1964 · Imprisoned 2001', emoji:'✍️', color:'linear-gradient(135deg,#CE1126,#4189DD)', bio:'A Swedish-Eritrean journalist and co-founder of the independent newspaper Setit, Dawit Isaak has been held without trial in Eritrea since September 2001. His case is a global symbol of press freedom.' },
+  { name:'Helen Meles',           title:'Singer · Eritrea\'s Golden Voice',                    years:'Born 1974',   emoji:'🎤', color:'linear-gradient(135deg,#f59e0b,#CE1126)', bio:'Considered one of Eritrea\'s greatest female vocalists, Helen Meles has a powerful voice that spans traditional Tigrinya music and modern ballads. Her songs Lbi Haway and Gereger made her a beloved diaspora icon.' },
+  { name:'Ghirmay Ghebreslassie', title:'Marathon Runner · Olympic & World Champion',           years:'Born 1995',   emoji:'🏆', color:'linear-gradient(135deg,#007A3D,#f59e0b)', bio:'At just 20 years old, Ghirmay Ghebreslassie won the 2015 World Marathon Majors and the 2016 Rio Olympics marathon, becoming one of the youngest marathon champions in Olympic history.' },
+  { name:'Dehab Faytinga',        title:'Singer · Cultural Ambassador',                        years:'Born 1965',   emoji:'🎤', color:'linear-gradient(135deg,#4189DD,#CE1126)', bio:'A legendary Tigrinya singer who blends traditional Eritrean rhythms with pan-African influences. Dehab Faytinga performed at major international festivals and is celebrated for keeping musical traditions alive globally.' },
 ];
 
-function initArtists() {
+function _renderFamousCard(p) {
+  const avatarStyle = p.photoUrl
+    ? `background:${p.color||'linear-gradient(135deg,#007A3D,#4189DD)'};padding:0;overflow:hidden`
+    : `background:${p.color||'linear-gradient(135deg,#007A3D,#4189DD)'}`;
+  const avatarInner = p.photoUrl
+    ? `<img src="${p.photoUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${p.emoji||'🌟'}'"/>`
+    : (p.emoji || '🌟');
+  const musicBtn = p.youtubeUrl
+    ? `<a class="famous-music-btn" href="${p.youtubeUrl}" target="_blank" rel="noopener" title="Listen on YouTube">▶ Listen</a>`
+    : '';
+  return `<div class="famous-card">
+    <div class="famous-avatar" style="${avatarStyle}">${avatarInner}</div>
+    <div class="famous-info">
+      <div class="famous-name">${p.name}</div>
+      <div class="famous-title">${p.title||p.role||''}</div>
+      <div class="famous-years">${p.years||''}</div>
+      <p>${p.bio||p.desc||''}</p>
+      ${musicBtn}
+    </div>
+  </div>`;
+}
+
+async function initFamous() {
+  const grid = document.getElementById('famousGrid');
+  if (!grid) return;
+  grid.innerHTML = FAMOUS_DATA.map(_renderFamousCard).join(''); // render fallback immediately
+  try {
+    // Wait up to 3s for shared Firebase to be ready
+    for (let i = 0; i < 30 && !window._db; i++) await new Promise(r => setTimeout(r, 100));
+    if (window._db && window._fbFns) {
+      const snap = await window._fbFns.getDocs(
+        window._fbFns.query(window._fbFns.collection(window._db, 'eri_famous'), window._fbFns.orderBy('order'))
+      );
+      if (!snap.empty) grid.innerHTML = snap.docs.map(d => _renderFamousCard({ id: d.id, ...d.data() })).join('');
+    }
+  } catch(e) {}
+}
+initFamous();
+
+// ── MUSIC ARTISTS (fallback data) ─────────────────────────
+const ARTISTS_DATA = [
+  { name:'Abraham Afewerki',  role:'Singer-Songwriter',            years:'1966–2006', genre:'Tigrinya Pop / Traditional',  emoji:'🎤', color:'linear-gradient(135deg,#007A3D,#4189DD)', desc:'Called the "Voice of Eritrea", Abraham Afewerki blended traditional Tigrinya music with modern sounds. His songs Hamid and Hagerey remain global anthems of Eritrean identity.' },
+  { name:'Yemane Barya',      role:'Singer & Poet',                years:'1954–1997', genre:'Traditional Tigrinya',         emoji:'📜', color:'linear-gradient(135deg,#7c3aed,#007A3D)', desc:'Known as the "King" (ንጉስ) of Tigrinya music, Yemane Barya was a revolutionary poet-fighter whose timeless songs remain cornerstones of Eritrean cultural heritage.' },
+  { name:'Helen Meles',       role:'Vocalist',                     years:'Born 1974',  genre:'Tigrinya Ballads / Pop',      emoji:'🎵', color:'linear-gradient(135deg,#CE1126,#f59e0b)', desc:'Eritrea\'s "Golden Voice" — her powerful vocals span traditional Tigrinya to modern ballads. Songs like Lbi Haway made her a beloved icon across the diaspora.' },
+  { name:'Dehab Faytinga',    role:'Singer & Cultural Ambassador', years:'Born 1965',  genre:'Traditional / Pan-African',   emoji:'🌍', color:'linear-gradient(135deg,#4189DD,#CE1126)', desc:'A legendary vocalist who blends Eritrean rhythms with pan-African influences. She performed at major international festivals and is celebrated for keeping traditions alive globally.' },
+  { name:'Yohannes Tikabo',   role:'Singer & Actor',               years:'Born 1971',  genre:'Modern Tigrinya',             emoji:'🎭', color:'linear-gradient(135deg,#f59e0b,#059669)', desc:'A hugely popular contemporary artist known for his melodic voice and modern Tigrinya music. Also an accomplished actor in Eritrean cinema.' },
+  { name:'Alamin Abdullatif', role:'Tigre Music Icon',             years:'Born 1962',  genre:'Tigre Traditional',           emoji:'🎶', color:'linear-gradient(135deg,#059669,#7c3aed)', desc:'Master of traditional Tigre music, Alamin Abdullatif preserves the musical heritage of the Tigre ethnic group with powerful poetry-songs spanning decades.' },
+];
+
+function _renderArtistCard(a) {
+  const avatarStyle = a.photoUrl
+    ? `background:${a.color};padding:0;overflow:hidden`
+    : `background:${a.color}`;
+  const avatarInner = a.photoUrl
+    ? `<img src="${a.photoUrl}" alt="${a.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${a.emoji||'🎵'}'"/>`
+    : (a.emoji || '🎵');
+  const musicBtn = a.youtubeUrl
+    ? `<a class="famous-music-btn" href="${a.youtubeUrl}" target="_blank" rel="noopener" title="Listen on YouTube">▶ Listen</a>`
+    : '';
+  return `<div class="artist-card">
+    <div class="artist-avatar" style="${avatarStyle}">${avatarInner}</div>
+    <div class="artist-info">
+      <div class="artist-name">${a.name}</div>
+      <div class="artist-role">${a.role}</div>
+      <div class="artist-years">${a.years} · ${a.genre}</div>
+      <p class="artist-desc">${a.desc}</p>
+      ${musicBtn}
+    </div>
+  </div>`;
+}
+
+async function initArtists() {
   const grid = document.getElementById('artistsGrid');
   if (!grid) return;
-  grid.innerHTML = ARTISTS_DATA.map(a => `
-    <div class="artist-card">
-      <div class="artist-avatar" style="background:${a.color}">${a.emoji}</div>
-      <div class="artist-info">
-        <div class="artist-name">${a.name}</div>
-        <div class="artist-role">${a.role}</div>
-        <div class="artist-years">${a.years} · ${a.genre}</div>
-        <p class="artist-desc">${a.desc}</p>
-      </div>
-    </div>
-  `).join('');
+  grid.innerHTML = ARTISTS_DATA.map(_renderArtistCard).join(''); // render fallback immediately
+  try {
+    for (let i = 0; i < 30 && !window._db; i++) await new Promise(r => setTimeout(r, 100));
+    if (window._db && window._fbFns) {
+      const snap = await window._fbFns.getDocs(
+        window._fbFns.query(window._fbFns.collection(window._db, 'eri_artists'), window._fbFns.orderBy('order'))
+      );
+      if (!snap.empty) grid.innerHTML = snap.docs.map(d => _renderArtistCard({ id: d.id, ...d.data() })).join('');
+    }
+  } catch(e) {}
 }
 initArtists();
 
@@ -2285,51 +2332,62 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
 // ── MUSIC PHONE WIDGET v2 ────────────────────────────────────────
 (function initMusicPhoneWidget() {
   // ─ DOM refs
-  const tabBtn    = document.getElementById('musicPhoneTab');
-  const frame     = document.getElementById('musicPhoneFrame');
-  const closeBtn  = document.getElementById('mpfClose');
-  const mpfAudio  = document.getElementById('mpfAudio');
-  const playBtn   = document.getElementById('mpfPlay');
-  const prevBtn   = document.getElementById('mpfPrev');
-  const nextBtn   = document.getElementById('mpfNext');
-  const shuffleBtn= document.getElementById('mpfShuffle');
-  const repeatBtn = document.getElementById('mpfRepeat');
-  const likeBtn   = document.getElementById('mpfLikeBtn');
-  const volSlider = document.getElementById('mpfVolume');
-  const playlist  = document.getElementById('mpfPlaylist');
-  const progFill  = document.getElementById('mpfProgressFill');
-  const progThumb = document.getElementById('mpfProgressThumb');
-  const progBar   = document.getElementById('mpfProgressBar');
-  const curEl     = document.getElementById('mpfCurrent');
-  const durEl     = document.getElementById('mpfDuration');
-  const titleEl   = document.getElementById('mpfTrackTitle');
-  const artistEl  = document.getElementById('mpfTrackArtist');
-  const disc      = document.getElementById('mpfDisc');
-  const discRing  = document.getElementById('mpfDiscRing');
-  const viz       = document.getElementById('mpfViz');
-  const countEl   = document.getElementById('mpfTrackCount');
-  const timeEl    = document.getElementById('mpfTime');
-  const searchEl  = document.getElementById('mpfSearch');
-  const filterRow = document.getElementById('mpfFilterRow');
-  const miniPill  = document.getElementById('mpfMiniPill');
-  const miniDisc  = document.getElementById('mpfMiniDisc');
-  const miniTitle = document.getElementById('mpfMiniTitle');
-  const miniArtist= document.getElementById('mpfMiniArtist');
-  const miniViz   = document.getElementById('mpfMiniViz');
-  const miniPlay  = document.getElementById('mpfMiniPlay');
-  const miniPrev  = document.getElementById('mpfMiniPrev');
-  const miniNext  = document.getElementById('mpfMiniNext');
-  const miniExpand= document.getElementById('mpfMiniExpand');
+  const tabBtn     = document.getElementById('musicPhoneTab');
+  const frame      = document.getElementById('musicPhoneFrame');
+  const closeBtn   = document.getElementById('mpfClose');
+  const mpfAudio   = document.getElementById('mpfAudio');
+  const playBtn    = document.getElementById('mpfPlay');
+  const prevBtn    = document.getElementById('mpfPrev');
+  const nextBtn    = document.getElementById('mpfNext');
+  const shuffleBtn = document.getElementById('mpfShuffle');
+  const repeatBtn  = document.getElementById('mpfRepeat');
+  const likeBtn    = document.getElementById('mpfLikeBtn');
+  const volSlider  = document.getElementById('mpfVolume');
+  const playlist   = document.getElementById('mpfPlaylist');
+  const arcFill    = document.getElementById('mpfArcFill');
+  const arcThumb   = document.getElementById('mpfArcThumb');
+  const arcSvg     = document.getElementById('mpfArcSvg');
+  const progBar    = document.getElementById('mpfProgressBar');
+  const curEl      = document.getElementById('mpfCurrent');
+  const durEl      = document.getElementById('mpfDuration');
+  const titleEl    = document.getElementById('mpfTrackTitle');
+  const artistEl   = document.getElementById('mpfTrackArtist');
+  const disc       = document.getElementById('mpfDisc');
+  const viz        = document.getElementById('mpfViz');
+  const countEl    = document.getElementById('mpfTrackCount');
+  const timeEl     = document.getElementById('mpfTime');
+  const searchEl   = document.getElementById('mpfSearch');
+  const filterRow  = document.getElementById('mpfFilterRow');
+  // Views
+  const viewPlayer   = document.getElementById('mpfViewPlayer');
+  const viewPlaylist = document.getElementById('mpfViewPlaylist');
+  // Mini bar (inside playlist view)
+  const miniBarTitle = document.getElementById('mpfMiniBarTitle');
+  const miniBarFill  = document.getElementById('mpfMiniBarFill');
+  const miniBarArt   = document.getElementById('mpfMiniBarArt');
+  const miniBarPlay  = document.getElementById('mpfMiniBarPlay');
+  const miniBarPrev  = document.getElementById('mpfMiniBarPrev');
+  const miniBarNext  = document.getElementById('mpfMiniBarNext');
+  // Mini pill (floating, outside frame)
+  const miniPill   = document.getElementById('mpfMiniPill');
+  const miniDisc   = document.getElementById('mpfMiniDisc');
+  const miniTitle  = document.getElementById('mpfMiniTitle');
+  const miniArtist = document.getElementById('mpfMiniArtist');
+  const miniViz    = document.getElementById('mpfMiniViz');
+  const miniPlay   = document.getElementById('mpfMiniPlay');
+  const miniPrev   = document.getElementById('mpfMiniPrev');
+  const miniNext   = document.getElementById('mpfMiniNext');
+  const miniExpand = document.getElementById('mpfMiniExpand');
 
   if (!tabBtn || !frame) return;
 
   // ─ State
   let tracks       = [];
-  let playOrder    = [];   // may be shuffled
-  let currentIdx   = -1;  // index into playOrder
+  let playOrder    = [];
+  let currentIdx   = -1;
   let tracksLoaded = false;
   let shuffle      = false;
-  let repeat       = 'none';   // 'none' | 'one' | 'all'
+  let repeat       = 'none';
   let activeFilter = 'all';
   let searchQuery  = '';
   const LIKED_KEY  = 'mpf_liked_v2';
@@ -2339,16 +2397,16 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
   function saveLiked(s) { localStorage.setItem(LIKED_KEY, JSON.stringify([...s])); }
   let liked = getLiked();
 
-  // ─ Disc gradient themes (cycles per track)
+  // ─ Disc gradient themes
   const DISC_THEMES = [
-    { from:'#007A3D', to:'#004d27', glow:'rgba(0,122,61,.5)'   },
-    { from:'#4189DD', to:'#2d6abf', glow:'rgba(65,137,221,.5)' },
-    { from:'#CE1126', to:'#8a0b1a', glow:'rgba(206,17,38,.5)'  },
-    { from:'#D4A017', to:'#a07800', glow:'rgba(212,160,23,.5)' },
-    { from:'#8B5CF6', to:'#5b21b6', glow:'rgba(139,92,246,.5)' },
-    { from:'#EC4899', to:'#9d174d', glow:'rgba(236,72,153,.5)' },
-    { from:'#14B8A6', to:'#0f766e', glow:'rgba(20,184,166,.5)' },
-    { from:'#F97316', to:'#c2410c', glow:'rgba(249,115,22,.5)' },
+    { from:'#1a3a6e', to:'#0d1e3a', border:'rgba(74,125,255,.7)',  glow:'rgba(74,125,255,.4)'  },
+    { from:'#3a1a6e', to:'#1d0d3a', border:'rgba(139,92,246,.7)',  glow:'rgba(139,92,246,.4)'  },
+    { from:'#6e1a2a', to:'#3a0d15', border:'rgba(206,17,38,.7)',   glow:'rgba(206,17,38,.4)'   },
+    { from:'#1a5e3a', to:'#0d3020', border:'rgba(16,185,129,.7)',  glow:'rgba(16,185,129,.4)'  },
+    { from:'#6e3a1a', to:'#3a1e0d', border:'rgba(245,158,11,.7)',  glow:'rgba(245,158,11,.4)'  },
+    { from:'#1a4e6e', to:'#0d2838', border:'rgba(20,184,166,.7)',  glow:'rgba(20,184,166,.4)'  },
+    { from:'#5a1a5e', to:'#2d0d30', border:'rgba(236,72,153,.7)',  glow:'rgba(236,72,153,.4)'  },
+    { from:'#4e3a1a', to:'#280d0d', border:'rgba(249,115,22,.7)',  glow:'rgba(249,115,22,.4)'  },
   ];
   const DISC_EMOJIS = ['🎵','🎶','🎤','🎸','🎹','🥁','🎺','🎻','🪗','🎙️'];
 
@@ -2376,51 +2434,115 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
     return (!r || UNK.some(p => r.startsWith(p))) ? 'Eritrean Artist' : r;
   }
 
-  // ─ Clock in status bar
+  // ─ Arc progress
+  let _arcLen = 0;
+  function initArc() {
+    if (arcFill) _arcLen = arcFill.getTotalLength() || 246;
+  }
+  function updateArcProgress(pct) {
+    if (!arcFill) return;
+    const filled = _arcLen * pct;
+    arcFill.style.strokeDasharray = `${filled} ${_arcLen}`;
+    if (arcThumb) {
+      if (pct > 0.01) {
+        const pt = arcFill.getPointAtLength(filled);
+        arcThumb.setAttribute('cx', pt.x);
+        arcThumb.setAttribute('cy', pt.y);
+        arcThumb.setAttribute('opacity','1');
+      } else {
+        arcThumb.setAttribute('opacity','0');
+      }
+    }
+  }
+
+  // ─ Clock
   function updateClock() {
     if (timeEl) timeEl.textContent = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', hour12:false });
   }
   updateClock();
   setInterval(updateClock, 30000);
 
+  // ─ View switching
+  function showPlayerView() {
+    viewPlayer?.classList.remove('mpf-view--hidden');
+    viewPlaylist?.classList.add('mpf-view--hidden');
+  }
+  function showPlaylistView() {
+    viewPlaylist?.classList.remove('mpf-view--hidden');
+    viewPlayer?.classList.add('mpf-view--hidden');
+  }
+  document.getElementById('mpfShowPlaylist')?.addEventListener('click', showPlaylistView);
+  document.getElementById('mpfPlaylistBack')?.addEventListener('click', showPlayerView);
+  document.getElementById('mpfSearchToggle')?.addEventListener('click', () => {
+    const w = document.getElementById('mpfSearchWrap');
+    if (!w) return;
+    const vis = w.style.display !== 'none';
+    w.style.display = vis ? 'none' : 'block';
+    if (!vis) searchEl?.focus();
+  });
+  document.getElementById('mpfShuffleAllBtn')?.addEventListener('click', () => {
+    shuffle = true;
+    shuffleBtn?.classList.add('active');
+    const cur = playOrder[currentIdx];
+    buildOrder();
+    currentIdx = cur !== undefined ? playOrder.indexOf(cur) : 0;
+    if (currentIdx < 0) currentIdx = 0;
+    if (currentIdx < 0 && tracks.length) { playOrderIdx(0); }
+    showPlayerView();
+  });
+
   // ─ Open / close
   function openFrame() {
     frame.removeAttribute('hidden');
     miniPill?.setAttribute('hidden','');
     if (!tracksLoaded) loadTracks();
+    initArc();
   }
   function closeFrame() {
     frame.setAttribute('hidden','');
     if (!mpfAudio.paused) showMiniPill();
   }
-
   tabBtn.addEventListener('click', () => frame.hidden ? openFrame() : closeFrame());
-  closeBtn.addEventListener('click', closeFrame);
-  closeBtn.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') closeFrame(); });
+  closeBtn?.addEventListener('click', closeFrame);
   miniExpand?.addEventListener('click', openFrame);
 
   // ─ Mini pill
-  function showMiniPill() {
-    if (!miniPill) return;
-    miniPill.removeAttribute('hidden');
-  }
-  function hideMiniPill() {
-    miniPill?.setAttribute('hidden','');
-  }
+  function showMiniPill() { miniPill?.removeAttribute('hidden'); }
+  function hideMiniPill() { miniPill?.setAttribute('hidden',''); }
   function updateMiniPill() {
     if (!miniPill || miniPill.hidden) return;
     const t = tracks[playOrder[currentIdx]];
     if (!t) return;
-    if (miniTitle)  miniTitle.textContent  = cleanTitle(t).slice(0, 30);
-    if (miniArtist) miniArtist.textContent = cleanArtist(t).slice(0, 24);
+    if (miniTitle)  miniTitle.textContent  = cleanTitle(t).slice(0,30);
+    if (miniArtist) miniArtist.textContent = cleanArtist(t).slice(0,24);
     const playing = !mpfAudio.paused;
-    miniPlay?.textContent && (miniPlay.textContent = playing ? '⏸' : '▶');
-    miniDisc?.classList.toggle('spinning', playing);
+    if (miniPlay) miniPlay.textContent = playing ? '⏸' : '▶';
     miniViz?.classList.toggle('active', playing);
   }
   miniPlay?.addEventListener('click', togglePlayPause);
   miniPrev?.addEventListener('click', playPrev);
   miniNext?.addEventListener('click', playNext);
+
+  // ─ Mini bar update
+  function updateMiniBar() {
+    const t = tracks[playOrder[currentIdx]];
+    if (!t) return;
+    if (miniBarTitle) miniBarTitle.textContent = cleanTitle(t).slice(0,32);
+    const theme = DISC_THEMES[playOrder[currentIdx] % DISC_THEMES.length];
+    if (miniBarArt) {
+      miniBarArt.textContent = DISC_EMOJIS[playOrder[currentIdx] % DISC_EMOJIS.length];
+      miniBarArt.style.background = `linear-gradient(135deg,${theme.from},${theme.to})`;
+    }
+    const playing = !mpfAudio.paused;
+    if (miniBarPlay) {
+      miniBarPlay.innerHTML = playing
+        ? `<svg id="mpfMiniBarSvg" viewBox="0 0 24 24" width="13" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`
+        : `<svg id="mpfMiniBarSvg" viewBox="0 0 24 24" width="13" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+    }
+  }
+  miniBarPlay?.addEventListener('click', togglePlayPause);
+  miniBarPrev?.addEventListener('click', playPrev);
+  miniBarNext?.addEventListener('click', playNext);
 
   // ─ Load tracks from Firebase
   async function loadTracks() {
@@ -2439,13 +2561,13 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
       tracks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       buildOrder();
       renderPlaylist();
-      // Restore last played track
       try {
         const last = JSON.parse(localStorage.getItem(LAST_KEY));
         if (last && typeof last.globalIdx === 'number') {
           highlightRow(last.globalIdx);
           titleEl.textContent  = cleanTitle(tracks[last.globalIdx] || {});
           artistEl.textContent = cleanArtist(tracks[last.globalIdx] || {});
+          updateMiniBar();
         }
       } catch {}
     } catch (err) {
@@ -2454,7 +2576,7 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
     }
   }
 
-  // ─ Build playback order (respects shuffle)
+  // ─ Build playback order
   function buildOrder() {
     playOrder = tracks.map((_,i) => i);
     if (shuffle) {
@@ -2489,20 +2611,21 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
       playlist.innerHTML = '<div class="mpf-loading">No results found</div>';
       return;
     }
-    if (countEl) countEl.textContent = `${tracks.length} ደርፍታት`;
+    if (countEl) countEl.textContent = `${tracks.length} tracks`;
 
-    playlist.innerHTML = indices.map(i => {
+    playlist.innerHTML = indices.map((i, rowNum) => {
       const t = tracks[i];
-      const isLiked = liked.has(t.id);
+      const isLiked  = liked.has(t.id);
       const isActive = playOrder[currentIdx] === i;
+      const num = String(rowNum + 1).padStart(2, '0');
       return `<div class="mpf-track-row${isActive?' active':''}" data-global="${i}">` +
         `<div class="mpf-track-playing-icon"><span></span><span></span><span></span></div>` +
-        `<span class="mpf-track-num">${i + 1}</span>` +
+        `<span class="mpf-track-num">${num}</span>` +
         `<div class="mpf-track-row-info">` +
           `<div class="mpf-track-row-title">${escHtml(cleanTitle(t))}</div>` +
           `<div class="mpf-track-row-artist">${escHtml(cleanArtist(t))}</div>` +
         `</div>` +
-        `<button class="mpf-track-row-like${isLiked?' liked':''}" data-id="${t.id}" title="${isLiked?'Unlike':'Like'}">${isLiked?'♥':'♡'}</button>` +
+        `<button class="mpf-track-row-like${isLiked?' liked':''}" data-id="${t.id}">${isLiked?'♥':'♡'}</button>` +
       `</div>`;
     }).join('');
 
@@ -2576,11 +2699,18 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
   function applyDiscTheme(globalIdx) {
     const theme = DISC_THEMES[globalIdx % DISC_THEMES.length];
     const emoji = DISC_EMOJIS[globalIdx % DISC_EMOJIS.length];
-    disc.style.background = `radial-gradient(circle at 38% 38%, ${theme.from}, #0a0b12)`;
-    disc.style.borderColor = theme.from;
-    disc.style.boxShadow   = `0 0 30px ${theme.glow}`;
+    disc.style.background  = `radial-gradient(circle at 38% 38%, ${theme.from}, ${theme.to})`;
+    disc.style.borderColor = theme.border;
+    disc.style.boxShadow   = `0 8px 32px rgba(0,0,0,.55), 0 0 28px ${theme.glow}`;
     document.getElementById('mpfDiscEmoji').textContent = emoji;
     if (miniDisc) miniDisc.textContent = emoji;
+    // Playlist art
+    const plistArt = document.getElementById('mpfPlistArt');
+    if (plistArt) {
+      plistArt.textContent = emoji;
+      plistArt.style.background = `linear-gradient(135deg,${theme.from},${theme.to})`;
+    }
+    updateMiniBar();
   }
 
   // ─ Like button
@@ -2601,14 +2731,15 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
   });
 
   // ─ Set play state visuals
+  const ICON_PLAY  = `<svg id="mpfPlaySvg" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+  const ICON_PAUSE = `<svg id="mpfPlaySvg" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
   function setPlayState(playing) {
-    playBtn.textContent = playing ? '⏸' : '▶';
-    disc.classList.toggle('spinning', playing);
-    discRing?.classList.toggle('active', playing);
+    if (playBtn) playBtn.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+    disc.classList.toggle('playing', playing);
     viz.classList.toggle('active', playing);
-    miniPlay && (miniPlay.textContent = playing ? '⏸' : '▶');
-    miniDisc?.classList.toggle('spinning', playing);
+    if (miniPlay) miniPlay.textContent = playing ? '⏸' : '▶';
     miniViz?.classList.toggle('active', playing);
+    updateMiniBar();
   }
 
   // ─ Controls
@@ -2625,11 +2756,15 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
     if (currentIdx < 0) currentIdx = 0;
   });
 
+  const REPEAT_SVGS = {
+    none: `<svg viewBox="0 0 24 24" width="19" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
+    all:  `<svg viewBox="0 0 24 24" width="19" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
+    one:  `<svg viewBox="0 0 24 24" width="19" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
+  };
   repeatBtn?.addEventListener('click', () => {
     const modes = ['none','all','one'];
     repeat = modes[(modes.indexOf(repeat) + 1) % modes.length];
-    const icons = { none:'↺', all:'🔁', one:'🔂' };
-    repeatBtn.textContent = icons[repeat];
+    if (repeatBtn) repeatBtn.innerHTML = REPEAT_SVGS[repeat];
     repeatBtn.classList.toggle('active', repeat !== 'none');
   });
 
@@ -2638,7 +2773,7 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
   volSlider?.addEventListener('input', () => {
     mpfAudio.volume = volSlider.value / 100;
     const volIcon = document.getElementById('mpfVolIcon');
-    if (volIcon) volIcon.textContent = volSlider.value == 0 ? '🔇' : volSlider.value < 40 ? '🔈' : '🔊';
+    if (volIcon) volIcon.style.opacity = volSlider.value == 0 ? '0.2' : volSlider.value < 40 ? '0.5' : '0.7';
   });
 
   // ─ Audio events
@@ -2651,27 +2786,29 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
   });
   mpfAudio.addEventListener('timeupdate', () => {
     if (!mpfAudio.duration) return;
-    const pct = (mpfAudio.currentTime / mpfAudio.duration) * 100;
-    if (progFill) progFill.style.width = pct + '%';
-    if (progThumb) progThumb.style.left = pct + '%';
+    const pct = mpfAudio.currentTime / mpfAudio.duration;
+    updateArcProgress(pct);
+    if (miniBarFill) miniBarFill.style.width = (pct * 100) + '%';
     if (curEl) curEl.textContent = fmtTime(mpfAudio.currentTime);
     if (durEl) durEl.textContent = fmtTime(mpfAudio.duration);
     updateMiniPill();
   });
 
-  // ─ Seek on progress bar (click + drag)
+  // ─ Seek via arc click (x-position approximation)
   let seeking = false;
   function seekTo(e) {
-    if (!mpfAudio.duration || !progBar) return;
-    const rect = progBar.getBoundingClientRect();
-    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-    mpfAudio.currentTime = Math.max(0, Math.min(1, x / rect.width)) * mpfAudio.duration;
+    if (!mpfAudio.duration || !arcSvg) return;
+    const rect = arcSvg.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const pct = Math.max(0, Math.min(1, (cx - rect.left - rect.width * (20/240)) / (rect.width * (200/240))));
+    mpfAudio.currentTime = pct * mpfAudio.duration;
+    updateArcProgress(pct);
   }
-  progBar?.addEventListener('mousedown', e => { seeking = true; seekTo(e); });
+  progBar?.addEventListener('mousedown',  e => { seeking = true; seekTo(e); });
   progBar?.addEventListener('touchstart', e => { seeking = true; seekTo(e); }, { passive: true });
-  document.addEventListener('mousemove', e => { if (seeking) seekTo(e); });
-  document.addEventListener('mouseup',  () => { seeking = false; });
-  document.addEventListener('touchend', () => { seeking = false; });
+  document.addEventListener('mousemove',  e => { if (seeking) seekTo(e); });
+  document.addEventListener('mouseup',    () => { seeking = false; });
+  document.addEventListener('touchend',   () => { seeking = false; });
 
   // ─ Search
   searchEl?.addEventListener('input', () => {

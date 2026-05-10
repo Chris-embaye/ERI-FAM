@@ -18,6 +18,13 @@ let activeUserTab   = 'all';
 
 const SUPER_ADMIN  = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'mebrahatom12@gmail.com';
 const SUPER_ADMINS = [SUPER_ADMIN, 'embayechris@gmail.com'];
+
+function withTimeout(promise, ms = 10000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out — check your connection.')), ms))
+  ]);
+}
 const FB_VER      = '10.12.2';
 
 // ── Firebase init (singleton promise) ────────────────────
@@ -44,8 +51,9 @@ async function _loadFB() {
     _auth = au.getAuth(app);
     fb    = { ...appMod, ...fs, ...au };
     // Expose on window so T-series tweaks can access them
-    window._db = _db;
-    window.fb  = fb;
+    window._db    = _db;
+    window.fb     = fb;
+    window._fbApp = app;
     return true;
   } catch(e) {
     console.error('[HUB] Firebase init error:', e);
@@ -82,14 +90,56 @@ function showAuthError(id, msg) {
 }
 function hideAuthError(id) { const el = document.getElementById(id); if (el) el.hidden = true; }
 
+// ── Security: rate limiting + PIN hash ───────────────────────
+const _EMG_HASH = '0e461e2cabfb94b3a4e68a2aa4a2d9174b50a444fbbaef2d4a872d4c1156c619';
+async function _hashPin(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin + 'eri_emg_2025'));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function _isRateLimited() {
+  const key = 'hub_rl'; const now = Date.now();
+  const data = JSON.parse(localStorage.getItem(key) || '{"count":0,"until":0}');
+  if (data.until > now) return Math.ceil((data.until - now) / 1000);
+  return 0;
+}
+function _recordFailedLogin() {
+  const key = 'hub_rl'; const now = Date.now();
+  const data = JSON.parse(localStorage.getItem(key) || '{"count":0,"until":0}');
+  data.count = (data.until > now) ? data.count + 1 : 1;
+  if (data.count >= 5) { data.until = now + 60000; data.count = 0; } // 60s lockout after 5 fails
+  localStorage.setItem(key, JSON.stringify(data));
+}
+function _clearRateLimit() { localStorage.removeItem('hub_rl'); }
+
+// Check for non-expired master bypass from this session only
+function _checkSessionMaster() {
+  try {
+    const raw = sessionStorage.getItem('hub_master');
+    if (!raw) return false;
+    const { ts } = JSON.parse(raw);
+    return (Date.now() - ts) < 8 * 3600 * 1000; // 8-hour session
+  } catch { return false; }
+}
+
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
   if (!email || !pass) { showAuthError('loginError', 'Enter email and password.'); return; }
 
-  // ── Kill code bypass ──────────────────────────────────────
-  if (pass === '5455' || localStorage.getItem('erifam_master') === '1') {
-    localStorage.setItem('erifam_master', '1');
+  // ── Session master bypass (8-hour expiry, sessionStorage only) ──
+  if (_checkSessionMaster()) { _enterMasterMode(); return; }
+
+  // ── Rate limiting ──────────────────────────────────────────
+  const locked = _isRateLimited();
+  if (locked) { showAuthError('loginError', `Too many attempts. Wait ${locked}s.`); return; }
+
+  // ── Emergency PIN (hash-verified, no plaintext) ────────────
+  const pinHash = await _hashPin(pass);
+  if (pinHash === _EMG_HASH && SUPER_ADMINS.includes(email.toLowerCase())) {
+    _clearRateLimit();
+    sessionStorage.setItem('hub_master', JSON.stringify({ ts: Date.now() }));
+    localStorage.removeItem('erifam_master'); // clear old insecure flag
     _enterMasterMode();
     return;
   }
@@ -101,9 +151,10 @@ async function doLogin() {
   if (!ready) { btn.textContent = 'Sign In'; btn.disabled = false; return; }
   try {
     await fb.signInWithEmailAndPassword(_auth, email, pass);
-    // Keep button in loading state — onAuthStateChanged will show the hub or an error
+    _clearRateLimit();
     btn.textContent = 'Loading…';
   } catch(e) {
+    _recordFailedLogin();
     showAuthError('loginError', friendlyAuthError(e.code));
     btn.textContent = 'Sign In'; btn.disabled = false;
   }
@@ -174,6 +225,8 @@ async function doSignOut() {
   switchAuthView('login');
   currentUser = null; currentUserData = null;
   window.currentUser = null;
+  sessionStorage.removeItem('hub_master'); // clear emergency session on sign out
+  localStorage.removeItem('erifam_master'); // clear old insecure flag
 }
 
 function friendlyAuthError(code) {
@@ -362,6 +415,9 @@ function showPage(name) {
   if (name === 'analytics')   loadAnalytics();
   if (name === 'employees')   loadEmployees();
   if (name === 'riglog')      initRiglogPage();
+  if (name === 'fidel')       loadFidel();
+  if (name === 'monetize')    loadMonetize();
+  if (name === 'events')      loadAdminEvents();
 }
 
 // Sidebar toggle
@@ -447,11 +503,26 @@ async function loadDashboard() {
 document.getElementById('addAppBtn').addEventListener('click', () => openAppModal());
 
 const DEFAULT_APPS = [
-  { name: 'ERI-FAM Hub',   icon: '⬡',  color: '#6366f1', url: 'https://eritreaninfo.com',        category: 'Portal', status: 'active', description: 'Main app hub & portal' },
-  { name: 'Eritrean Info', icon: '📰', color: '#10b981', url: 'https://eritreaninfo.com',        category: 'Info',   status: 'active', description: 'Eritrean news and information' },
-  { name: 'RigLog',        icon: '🚚', color: '#f59e0b', url: 'https://trucklogapp.com',         category: 'App',    status: 'active', description: 'Truck driver log and pay tracker' },
-  { name: 'HUB Admin',     icon: '🛠', color: '#8b5cf6', url: 'https://admin.eritreaninfo.com',  category: 'System', status: 'active', description: 'This admin control panel' },
+  { name: 'Eritrean Info', icon: '📰', color: '#10b981', url: 'https://eri-fam.web.app',                     category: 'Info',    status: 'active', description: 'Eritrean news and information' },
+  { name: 'FIDEL',         icon: '🎓', color: '#6366f1', url: 'https://eri-tigrinya-school.web.app',         category: 'Education', status: 'active', description: 'Tigrinya language learning app' },
+  { name: 'Riglog',        icon: '🚛', color: '#f59e0b', url: 'https://trucklogapp-1b40e.web.app',           category: 'App',     status: 'active', description: 'Truck driver log and pay tracker' },
+  { name: 'HUB Admin',     icon: '🛠', color: '#8b5cf6', url: 'https://eri-fam-admin.web.app',              category: 'System',  status: 'active', description: 'Admin control panel' },
 ];
+
+// Ensure canonical apps exist — adds any DEFAULT_APPS entry not already present by URL
+async function ensureCanonicalApps(existing) {
+  const existingUrls = new Set(existing.map(a => (a.url || '').replace(/\/$/, '')));
+  const missing = DEFAULT_APPS.filter(a => !existingUrls.has((a.url || '').replace(/\/$/, '')));
+  for (const app of missing) {
+    try {
+      await fb.addDoc(fb.collection(_db, 'hub_apps'), {
+        ...app, order: existing.length, sections: [],
+        createdAt: fb.serverTimestamp(), updatedAt: fb.serverTimestamp(),
+      });
+    } catch(e) { console.warn('[HUB] ensureCanonicalApps failed for', app.name, e.message); }
+  }
+  return missing.length > 0;
+}
 
 async function seedDefaultApps() {
   try {
@@ -480,6 +551,12 @@ async function loadApps() {
       await seedDefaultApps();
       const snap2 = await fb.getDocs(fb.query(fb.collection(_db, 'hub_apps'), fb.orderBy('createdAt','desc')));
       allApps = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+    } else {
+      const added = await ensureCanonicalApps(allApps);
+      if (added) {
+        const snap2 = await fb.getDocs(fb.query(fb.collection(_db, 'hub_apps'), fb.orderBy('createdAt','desc')));
+        allApps = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+      }
     }
     renderApps(allApps);
     populateAppSelects(allApps);
@@ -606,11 +683,11 @@ async function saveApp() {
   };
   try {
     if (id) {
-      await fb.updateDoc(fb.doc(_db, 'hub_apps', id), data);
+      await withTimeout(fb.updateDoc(fb.doc(_db, 'hub_apps', id), data));
     } else {
       data.createdAt = fb.serverTimestamp();
       data.sections  = [];
-      await fb.addDoc(fb.collection(_db, 'hub_apps'), data);
+      await withTimeout(fb.addDoc(fb.collection(_db, 'hub_apps'), data));
       logActivity(`App "${name}" added`);
     }
     appModal.hidden = true;
@@ -686,8 +763,29 @@ function openEditor(appId) {
   document.getElementById('chromeUrl').textContent = app.url || 'about:blank';
   frame.src = app.url || 'about:blank';
   renderSections(app.sections || []);
+  // Content shortcuts for apps with editable content
+  const sc = document.getElementById('epContentShortcuts');
+  if (sc) {
+    const isEriInfo = (app.name || '').toLowerCase().includes('eritrean info');
+    if (isEriInfo) {
+      sc.innerHTML = `<div class="ep-sect-hd">Content Editor</div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin:0 0 10px">Add photos, music links, and edit profiles directly here.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm" onclick="window._goEriContent('famous')" style="background:var(--accent);color:#fff;border-color:var(--accent)">👤 Edit Famous People</button>
+          <button class="btn-sm" onclick="window._goEriContent('artists')" style="background:var(--accent);color:#fff;border-color:var(--accent)">🎵 Edit Artists</button>
+        </div>`;
+      sc.hidden = false;
+    } else {
+      sc.hidden = true;
+    }
+  }
   showPage('editor');
 }
+
+window._goEriContent = function(tab) {
+  showPage('ericontent');
+  setTimeout(() => { document.querySelector(`.ec-tab[data-ectab="${tab}"]`)?.click(); }, 350);
+};
 
 function renderSections(sections) {
   const list = document.getElementById('sectionsEditor');
@@ -789,7 +887,7 @@ async function saveEditorChanges() {
     updatedAt:   fb.serverTimestamp(),
   };
   try {
-    await fb.updateDoc(fb.doc(_db, 'hub_apps', currentEditApp.id), data);
+    await withTimeout(fb.updateDoc(fb.doc(_db, 'hub_apps', currentEditApp.id), data));
     toast('Changes saved!', 'success');
     document.getElementById('editorTitle').textContent = data.name;
     // Refresh iframe
@@ -943,12 +1041,12 @@ async function doInviteUser() {
   const btn = document.getElementById('inviteModalSave');
   btn.textContent = 'Saving…'; btn.disabled = true;
   try {
-    await fb.setDoc(fb.doc(_db, 'hub_invitations', email), {
+    await withTimeout(fb.setDoc(fb.doc(_db, 'hub_invitations', email), {
       email, role,
       invitedBy: currentUser.uid,
       createdAt: fb.serverTimestamp(),
       status: 'pending'
-    });
+    }));
     toast(`Invite saved for ${email}. They can now sign up and will get ${role} access.`, 'success');
     document.getElementById('inviteModal').hidden = true;
     logActivity(`Invited ${email} as ${role}`);
@@ -1420,35 +1518,52 @@ async function loadFeedback() {
   const list  = document.getElementById('feedbackList');
   const badge = document.getElementById('feedbackBadge');
   list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  let docs = [];
   try {
+    // Try ordered query first
     const snap = await fb.getDocs(
-      fb.query(fb.collection(_db, 'feedback'), fb.orderBy('createdAt', 'desc'), fb.limit(100))
+      fb.query(fb.collection(_db, 'feedback'), fb.orderBy('createdAt', 'desc'), fb.limit(200))
     );
-    if (!snap.size) {
-      list.innerHTML = '<p class="empty-msg">No feedback yet.</p>';
-      badge.hidden = true;
+    docs = snap.docs;
+  } catch(e) {
+    console.warn('[Feedback] Ordered query failed, falling back:', e.message);
+    try {
+      // Fallback: unordered, sort client-side
+      const snap2 = await fb.getDocs(fb.collection(_db, 'feedback'));
+      docs = snap2.docs.sort((a, b) => {
+        const ta = a.data().createdAt?.toMillis?.() ?? a.data().createdAt ?? 0;
+        const tb = b.data().createdAt?.toMillis?.() ?? b.data().createdAt ?? 0;
+        return tb - ta;
+      });
+    } catch(e2) {
+      console.error('[Feedback] Failed to load:', e2);
+      list.innerHTML = `<p class="empty-msg">Error loading feedback: ${e2.message}</p>`;
       return;
     }
-    badge.textContent = snap.size;
-    badge.hidden = false;
-    list.innerHTML = snap.docs.map(d => {
-      const f    = d.data();
-      const time = f.createdAt?.toDate ? timeAgo(f.createdAt.toDate()) : '';
-      const msg  = f.message || f.text || f.body || f.content || f.feedback || '';
-      const stars = typeof f.rating === 'number'
-        ? '<span class="fb-stars">' + '★'.repeat(Math.min(5, f.rating)) + '☆'.repeat(Math.max(0, 5 - f.rating)) + '</span>'
-        : '';
-      const user = esc(f.email || f.userName || f.displayName || f.user || 'Anonymous');
-      return `
-        <div class="feedback-item">
-          ${stars}
-          <div class="feedback-body">${esc(msg || '(no message)')}</div>
-          <div class="feedback-meta"><span>${user}</span><span>${time}</span></div>
-        </div>`;
-    }).join('');
-  } catch(e) {
-    list.innerHTML = `<p class="empty-msg">No feedback found. (Users submit feedback from the main app.)</p>`;
   }
+  if (!docs.length) {
+    list.innerHTML = '<p class="empty-msg">No feedback yet.</p>';
+    badge.hidden = true;
+    return;
+  }
+  badge.textContent = docs.length;
+  badge.hidden = false;
+  list.innerHTML = docs.map(d => {
+    const f    = d.data();
+    const time = f.createdAt?.toDate ? timeAgo(f.createdAt.toDate()) : '';
+    const msg  = f.message || f.text || f.body || f.content || f.feedback || '';
+    const stars = typeof f.rating === 'number'
+      ? '<span class="fb-stars">' + '★'.repeat(Math.min(5, f.rating)) + '☆'.repeat(Math.max(0, 5 - f.rating)) + '</span>'
+      : '';
+    const user = esc(f.email || f.userName || f.displayName || f.user || 'Anonymous');
+    const readDot = f.read ? '' : '<span class="fb-unread-dot" title="Unread"></span>';
+    return `
+      <div class="feedback-item" data-id="${d.id}">
+        ${readDot}${stars}
+        <div class="feedback-body">${esc(msg || '(no message)')}</div>
+        <div class="feedback-meta"><span>${user}</span><span>${time}</span></div>
+      </div>`;
+  }).join('');
 }
 window.loadFeedback = loadFeedback;
 
@@ -1583,6 +1698,133 @@ window.deletePromo = async function(id) {
     toast('Promotion deleted.', 'warn');
     logActivity(`Promotion "${p?.title}" deleted`);
     loadPromotions();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+// ── EVENTS ────────────────────────────────────────────────
+let allAdminEvents = [];
+
+async function loadAdminEvents() {
+  const grid = document.getElementById('eventsAdminGrid');
+  if (!grid) return;
+  grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'fidel_events'), fb.orderBy('dateTs', 'asc')));
+    allAdminEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const now = Date.now();
+    const upcoming = allAdminEvents.filter(e => !e.dateTs || e.dateTs >= now - 86400000).length;
+    const past     = allAdminEvents.length - upcoming;
+    const statsEl  = document.getElementById('eventStats');
+    if (statsEl) {
+      statsEl.style.display = '';
+      document.getElementById('evStatUpcoming').textContent = upcoming;
+      document.getElementById('evStatPast').textContent     = past;
+      document.getElementById('evStatTotal').textContent    = allAdminEvents.length;
+    }
+    if (!allAdminEvents.length) {
+      grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">No events yet. Click + New Event to post one.</p>';
+      return;
+    }
+    grid.innerHTML = allAdminEvents.map(ev => {
+      const d       = ev.dateTs ? new Date(ev.dateTs) : null;
+      const dateStr = d ? d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+      const isPast  = d && d.getTime() < now - 86400000;
+      const typeIco = { Festival:'🎉', Party:'🎊', Cultural:'🌍', Sports:'⚽', Religious:'🕌', Arts:'🎭', Community:'🤝', 'National Holiday':'🇪🇷', Other:'📌' }[ev.type] || '📅';
+      return `
+        <div class="promo-card">
+          ${ev.imageUrl
+            ? `<div class="promo-img" style="background-image:url('${esc(ev.imageUrl)}')"></div>`
+            : `<div class="promo-img-placeholder">${typeIco}</div>`}
+          <div class="promo-card-body">
+            <div class="promo-card-top">
+              <span class="promo-type-badge">${typeIco} ${esc(ev.type || 'Event')}</span>
+              <span class="app-status-pill ${isPast ? 'status-draft' : 'status-active'}">${isPast ? 'past' : 'upcoming'}</span>
+            </div>
+            <div class="promo-card-title">${esc(ev.title || '—')}</div>
+            <div class="promo-card-msg">📅 ${dateStr}${ev.time ? ' · 🕐 ' + esc(ev.time) : ''}</div>
+            <div class="promo-card-msg">📍 ${esc(ev.location || '')}</div>
+            ${ev.desc ? `<div class="promo-card-msg" style="margin-top:4px">${esc(ev.desc)}</div>` : ''}
+          </div>
+          <div class="promo-card-actions">
+            <button class="app-act-edit"   onclick="openEventModal('${ev.id}')">✏ Edit</button>
+            <button class="app-act-delete" onclick="deleteAdminEvent('${ev.id}')">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Error: ${e.message}</p>`;
+  }
+}
+
+window.openEventModal = function(id) {
+  const ev = id ? allAdminEvents.find(x => x.id === id) : null;
+  document.getElementById('eventModalTitle').textContent = ev ? 'Edit Event' : 'New Event';
+  document.getElementById('eventModalId').value   = ev?.id || '';
+  document.getElementById('evAdTitle').value      = ev?.title    || '';
+  document.getElementById('evAdType').value       = ev?.type     || 'Festival';
+  document.getElementById('evAdDate').value       = ev?.dateTs   ? new Date(ev.dateTs).toISOString().split('T')[0] : '';
+  document.getElementById('evAdTime').value       = ev?.time     || '';
+  document.getElementById('evAdLoc').value        = ev?.location || '';
+  document.getElementById('evAdDesc').value       = ev?.desc     || '';
+  document.getElementById('evAdImage').value      = ev?.imageUrl || '';
+  document.getElementById('evAdErr').textContent  = '';
+  document.getElementById('eventModal').hidden    = false;
+  document.getElementById('evAdTitle').focus();
+};
+
+document.getElementById('addEventBtn').addEventListener('click', () => openEventModal(null));
+document.getElementById('eventModalClose').addEventListener('click', () => { document.getElementById('eventModal').hidden = true; });
+document.getElementById('eventModalCancel').addEventListener('click', () => { document.getElementById('eventModal').hidden = true; });
+document.getElementById('eventModal').addEventListener('click', e => { if (e.target === document.getElementById('eventModal')) document.getElementById('eventModal').hidden = true; });
+
+document.getElementById('eventModalSave').addEventListener('click', async () => {
+  const id    = document.getElementById('eventModalId').value;
+  const title = document.getElementById('evAdTitle').value.trim();
+  const date  = document.getElementById('evAdDate').value;
+  const loc   = document.getElementById('evAdLoc').value.trim();
+  const errEl = document.getElementById('evAdErr');
+  errEl.textContent = '';
+  if (!title) { errEl.textContent = 'Title is required.'; return; }
+  if (!date)  { errEl.textContent = 'Date is required.'; return; }
+  if (!loc)   { errEl.textContent = 'Location is required.'; return; }
+  const btn = document.getElementById('eventModalSave');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const data = {
+    title,
+    dateTs:   new Date(date + 'T00:00:00').getTime(),
+    time:     document.getElementById('evAdTime').value  || '',
+    location: loc,
+    desc:     document.getElementById('evAdDesc').value.trim(),
+    type:     document.getElementById('evAdType').value,
+    imageUrl: document.getElementById('evAdImage').value.trim(),
+    updatedAt: fb.serverTimestamp(),
+  };
+  try {
+    if (id) {
+      await fb.updateDoc(fb.doc(_db, 'fidel_events', id), data);
+    } else {
+      data.createdAt = fb.serverTimestamp();
+      data.postedBy  = currentUser?.email || '';
+      await fb.addDoc(fb.collection(_db, 'fidel_events'), data);
+      logActivity(`Event "${title}" created`);
+    }
+    document.getElementById('eventModal').hidden = true;
+    toast(id ? 'Event updated!' : 'Event created!', 'success');
+    loadAdminEvents();
+  } catch(e) {
+    errEl.textContent = 'Error: ' + e.message;
+  }
+  btn.textContent = 'Save Event'; btn.disabled = false;
+});
+
+window.deleteAdminEvent = async function(id) {
+  const ev = allAdminEvents.find(x => x.id === id);
+  if (!confirm(`Delete "${ev?.title}"? This cannot be undone.`)) return;
+  try {
+    await fb.deleteDoc(fb.doc(_db, 'fidel_events', id));
+    toast('Event deleted.', 'warn');
+    logActivity(`Event "${ev?.title}" deleted`);
+    loadAdminEvents();
   } catch(e) { toast('Error: ' + e.message, 'error'); }
 };
 
@@ -1992,8 +2234,106 @@ async function loadAnalytics() {
         return `<div class="activity-item"><div class="act-dot"></div><div><div class="act-text">${esc(a.text)}</div><div class="act-time">${time}</div></div></div>`;
       }).join('');
     }
+    // ── FIDEL / Tigrinya School analytics ────────────────
+    try {
+      const progressSnap = await fb.getDocs(
+        fb.query(fb.collection(_db, 'progress'), fb.orderBy('xp', 'desc'), fb.limit(50))
+      );
+      const learners  = progressSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const totalXP   = learners.reduce((s, l) => s + (Number(l.xp) || 0), 0);
+      const avgXP     = learners.length ? Math.round(totalXP / learners.length) : 0;
+      const topXP     = learners.length ? (Number(learners[0].xp) || 0) : 0;
+      const today     = new Date().toISOString().slice(0, 10);
+      const streakers = learners.filter(l => l.streakDate === today && (l.streak || 0) > 0).length;
+
+      if (document.getElementById('fidelLearners'))  document.getElementById('fidelLearners').textContent  = learners.length;
+      if (document.getElementById('fidelAvgXP'))     document.getElementById('fidelAvgXP').textContent     = avgXP.toLocaleString();
+      if (document.getElementById('fidelStreaks'))   document.getElementById('fidelStreaks').textContent   = streakers;
+      if (document.getElementById('fidelTopXP'))     document.getElementById('fidelTopXP').textContent     = topXP.toLocaleString();
+
+      // Top learners bar chart
+      const topEl = document.getElementById('fidelTopLearners');
+      if (topEl) {
+        if (!learners.length) { topEl.innerHTML = '<p class="empty-msg">No learners yet.</p>'; }
+        else {
+          const maxXP = Math.max(...learners.map(l => Number(l.xp) || 0), 1);
+          topEl.innerHTML = learners.slice(0, 8).map(l => {
+            const pct  = Math.round(((Number(l.xp) || 0) / maxXP) * 100);
+            const name = l.displayName || l.id.slice(0, 8);
+            return `<div class="an-bar-row">
+              <div class="an-bar-label" title="${esc(name)}">${esc(name)}</div>
+              <div class="an-bar-track"><div class="an-bar-fill" style="width:${Math.max(pct,4)}%;background:#34c759"></div></div>
+              <div class="an-bar-val">${(Number(l.xp)||0).toLocaleString()} XP</div>
+            </div>`;
+          }).join('');
+        }
+      }
+
+      // Level distribution chart
+      const lvlEl = document.getElementById('fidelLevelChart');
+      if (lvlEl) {
+        const lvlMap = {};
+        learners.forEach(l => { const lv = l.level || 1; lvlMap[lv] = (lvlMap[lv] || 0) + 1; });
+        const lvlMax = Math.max(...Object.values(lvlMap), 1);
+        const lvlColors = ['#34c759','#30d158','#32ade6','#5e5ce6','#ff9f0a','#ff375f','#ff6961','#bf5af2'];
+        lvlEl.innerHTML = Object.keys(lvlMap).sort((a,b)=>Number(a)-Number(b)).map((lv, i) => `
+          <div class="an-bar-row">
+            <div class="an-bar-label">Level ${lv}</div>
+            <div class="an-bar-track"><div class="an-bar-fill" style="width:${Math.round(lvlMap[lv]/lvlMax*100)}%;background:${lvlColors[i%lvlColors.length]}"></div></div>
+            <div class="an-bar-val">${lvlMap[lv]}</div>
+          </div>`).join('');
+      }
+      // XP distribution histogram
+      const xpDistEl = document.getElementById('fidelXpDist');
+      if (xpDistEl) {
+        const buckets = [
+          { label: '0–99',    min: 0,    max: 99 },
+          { label: '100–499', min: 100,  max: 499 },
+          { label: '500–999', min: 500,  max: 999 },
+          { label: '1k–2k',   min: 1000, max: 1999 },
+          { label: '2k+',     min: 2000, max: Infinity },
+        ];
+        const counts = buckets.map(b => learners.filter(l => {
+          const x = Number(l.xp) || 0; return x >= b.min && x <= b.max;
+        }).length);
+        const maxCount = Math.max(...counts, 1);
+        xpDistEl.innerHTML = buckets.map((b, i) => `
+          <div class="an-bar-row">
+            <div class="an-bar-label">${b.label} XP</div>
+            <div class="an-bar-track"><div class="an-bar-fill" style="width:${Math.max(Math.round(counts[i]/maxCount*100),counts[i]>0?4:0)}%;background:#ff9f0a"></div></div>
+            <div class="an-bar-val">${counts[i]}</div>
+          </div>`).join('');
+      }
+    } catch(e) { console.warn('[Analytics/Fidel]', e); }
+
   } catch(e) { console.warn('[Analytics]', e); }
 }
+
+// ── FIDEL ANNOUNCEMENT SENDER ─────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('sendFidelAnnBtn')?.addEventListener('click', async () => {
+    const title = document.getElementById('fidelAnnTitle')?.value.trim();
+    const msg   = document.getElementById('fidelAnnMsg')?.value.trim();
+    const dur   = parseInt(document.getElementById('fidelAnnDur')?.value || '86400', 10);
+    const statusEl = document.getElementById('fidelAnnStatus');
+    if (!title || !msg) { if (statusEl) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'Title and message are required.'; } return; }
+    if (!_db) { if (statusEl) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'Not connected to Firebase.'; } return; }
+    const btn = document.getElementById('sendFidelAnnBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      const expiresAt = dur > 0 ? Date.now() + dur * 1000 : null;
+      await fb.setDoc(fb.doc(_db, 'fidel_announcements', 'latest'), {
+        title, message: msg, expiresAt, createdAt: fb.serverTimestamp(),
+        createdBy: currentUser?.email || 'admin'
+      });
+      if (statusEl) { statusEl.style.color = 'var(--success)'; statusEl.textContent = '✓ Announcement sent!'; }
+      logActivity('Sent Fidel announcement: ' + title);
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
+    } catch(e) {
+      if (statusEl) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = 'Error: ' + e.message; }
+    } finally { btn.disabled = false; btn.textContent = 'Send'; }
+  });
+});
 
 // ── BULK APPROVE USERS ────────────────────────────────────
 document.getElementById('bulkApproveBtn').addEventListener('click', async () => {
@@ -2591,7 +2931,8 @@ function _renderAboutPreview(d) {
 // ── ESCAPE KEY — close any open modal ─────────────────────
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  ['appModal','trackModal','promoModal','playlistModal','postModal','inviteModal','sectionModal'].forEach(id => {
+  ['appModal','trackModal','promoModal','playlistModal','postModal','inviteModal','sectionModal',
+   'sponsorModal','revenueModal','bioLinkModal','empModal','kbdShortcutModal','broadcastModal','exportHubModal'].forEach(id => {
     const m = document.getElementById(id);
     if (m && !m.hidden) m.hidden = true;
   });
@@ -2602,12 +2943,6 @@ let allSponsors  = [];
 let allRevenue   = [];
 let _bioLinks    = [];
 
-// Wire showPage for monetize
-const _origShowPage2 = window.showPage;
-window.showPage = function(name) {
-  _origShowPage2(name);
-  if (name === 'monetize') loadMonetize();
-};
 
 document.getElementById('saveMonetizeBtn')?.addEventListener('click', saveMonetizeSettings);
 
@@ -3571,6 +3906,8 @@ let _ecActiveTab = 'news';
     if (_ecActiveTab === 'news')    { document.getElementById('ecNewsForm').hidden    = false; document.getElementById('ecNewsTitle').focus(); }
     if (_ecActiveTab === 'blog')    { document.getElementById('ecBlogForm').hidden    = false; document.getElementById('ecBlogTitle').focus(); }
     if (_ecActiveTab === 'gallery') { document.getElementById('ecGalleryForm').hidden = false; document.getElementById('ecGalleryUrl').focus(); }
+    if (_ecActiveTab === 'famous')  { openFamousForm(); }
+    if (_ecActiveTab === 'artists') { openArtistForm(); }
   });
 
   // News form
@@ -3582,6 +3919,22 @@ let _ecActiveTab = 'news';
   // Gallery form
   document.getElementById('ecGalleryCancelBtn').addEventListener('click', () => { document.getElementById('ecGalleryForm').hidden = true; });
   document.getElementById('ecGallerySaveBtn').addEventListener('click',   saveEcGallery);
+  // Famous form
+  document.getElementById('ecFamousCancelBtn').addEventListener('click', () => { document.getElementById('ecFamousForm').hidden = true; resetFamousForm(); });
+  document.getElementById('ecFamousSaveBtn').addEventListener('click',   saveEcFamous);
+  document.getElementById('ecFamousPhoto').addEventListener('input', function() {
+    const prev = document.getElementById('ecFamousPhotoPreview');
+    const img  = document.getElementById('ecFamousPhotoImg');
+    if (this.value) { img.src = this.value; prev.style.display = ''; } else { prev.style.display = 'none'; }
+  });
+  // Artist form
+  document.getElementById('ecArtistCancelBtn').addEventListener('click', () => { document.getElementById('ecArtistForm').hidden = true; resetArtistForm(); });
+  document.getElementById('ecArtistSaveBtn').addEventListener('click',   saveEcArtist);
+  document.getElementById('ecArtistPhoto').addEventListener('input', function() {
+    const prev = document.getElementById('ecArtistPhotoPreview');
+    const img  = document.getElementById('ecArtistPhotoImg');
+    if (this.value) { img.src = this.value; prev.style.display = ''; } else { prev.style.display = 'none'; }
+  });
 })();
 
 function resetEcNewsForm() { ['ecNewsId','ecNewsTitle','ecNewsSummary','ecNewsImage','ecNewsSource'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); }
@@ -3591,6 +3944,8 @@ async function loadEriContent() {
   loadEcNews();
   loadEcBlog();
   loadEcGallery();
+  loadEcFamous();
+  loadEcArtists();
 }
 
 async function loadEcNews() {
@@ -3772,6 +4127,352 @@ window.deleteEcGallery = async function(id) {
   await fb.deleteDoc(fb.doc(_db, 'eri_gallery', id));
   toast('Removed.', 'success'); loadEcGallery();
 };
+
+// ══════════════════════════════════════════════════════════════
+// FAMOUS ERITREANS EDITOR
+// ══════════════════════════════════════════════════════════════
+const FAMOUS_FALLBACK = [
+  { name:'Abraham Afewerki', title:'Musician · "Voice of Eritrea"', years:'1966 – 2006', emoji:'🎵', color:'linear-gradient(135deg,#007A3D,#4189DD)', bio:'One of the most beloved Eritrean artists of all time, Abraham Afewerki blended traditional Tigrinya music with modern sounds. His songs Hamid and Hagerey remain anthems of Eritrean identity worldwide.', order:0 },
+  { name:'Zersenay Tadese',  title:'Athlete · World Half-Marathon Champion', years:'Born 1982', emoji:'🏃', color:'linear-gradient(135deg,#CE1126,#f59e0b)', bio:'One of Africa\'s greatest long-distance runners, Zersenay Tadese won multiple World Half Marathon titles and held the world record (58:23). He competed at the Beijing and London Olympics.', order:1 },
+  { name:'Daniel Teklehaimanot', title:'Cyclist · First African in Tour de France Polka Dot', years:'Born 1988', emoji:'🚴', color:'linear-gradient(135deg,#4189DD,#007A3D)', bio:'In 2015, Daniel Teklehaimanot became the first African rider to wear the iconic polka-dot jersey at the Tour de France — a historic milestone for African cycling.', order:2 },
+  { name:'Yemane Barya',    title:'Musician & Poet · "King of Tigrinya Music"', years:'1954 – 1997', emoji:'🎶', color:'linear-gradient(135deg,#7c3aed,#007A3D)', bio:'Known as the "King" (ንጉስ) of Tigrinya music, Yemane Barya was a revolutionary poet, singer and fighter. He composed timeless songs celebrating Eritrean identity.', order:3 },
+  { name:'Dawit Isaak',     title:'Journalist · Press Freedom Icon', years:'Born 1964 · Imprisoned 2001', emoji:'✍️', color:'linear-gradient(135deg,#CE1126,#4189DD)', bio:'A Swedish-Eritrean journalist and co-founder of Setit, Dawit Isaak has been held without trial since 2001. His case is a global symbol of press freedom.', order:4 },
+  { name:'Helen Meles',     title:"Singer · Eritrea's Golden Voice", years:'Born 1974', emoji:'🎤', color:'linear-gradient(135deg,#f59e0b,#CE1126)', bio:'One of Eritrea\'s greatest female vocalists, Helen Meles has a powerful voice spanning traditional Tigrinya to modern ballads. Lbi Haway made her a diaspora icon.', order:5 },
+  { name:'Ghirmay Ghebreslassie', title:'Marathon Runner · Olympic & World Champion', years:'Born 1995', emoji:'🏆', color:'linear-gradient(135deg,#007A3D,#f59e0b)', bio:'At just 20, Ghirmay won the 2015 World Marathon Majors and the 2016 Rio Olympics marathon, becoming one of the youngest marathon champions in Olympic history.', order:6 },
+  { name:'Dehab Faytinga',  title:'Singer · Cultural Ambassador', years:'Born 1965', emoji:'🎤', color:'linear-gradient(135deg,#4189DD,#CE1126)', bio:'A legendary Tigrinya singer who blends traditional Eritrean rhythms with pan-African influences. She is celebrated for keeping musical traditions alive globally.', order:7 },
+];
+
+let _famousItems = [];
+
+async function loadEcFamous() {
+  const list = document.getElementById('ecFamousList');
+  if (!list) return;
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'eri_famous'), fb.orderBy('order')));
+    _famousItems = snap.empty
+      ? FAMOUS_FALLBACK.map(f => ({ ...f }))
+      : snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderFamousList();
+  } catch(e) {
+    _famousItems = FAMOUS_FALLBACK.map(f => ({ ...f }));
+    renderFamousList();
+  }
+}
+
+function renderFamousList() {
+  const list = document.getElementById('ecFamousList');
+  if (!list) return;
+  if (!_famousItems.length) { list.innerHTML = '<p class="empty-msg">No entries yet. Click + Add Item.</p>'; return; }
+  list.innerHTML = _famousItems.map((p, idx) => {
+    const avatarInner = p.photoUrl
+      ? `<img src="${esc(p.photoUrl)}" onerror="this.style.display='none'" style="width:52px;height:52px;object-fit:cover;border-radius:50%">`
+      : (p.emoji || '🌟');
+    const color = p.color || 'linear-gradient(135deg,#007A3D,#4189DD)';
+    return `<div class="ec-person-item" draggable="true" data-idx="${idx}">
+      <span class="ec-person-drag" title="Drag to reorder">⠿</span>
+      <div class="ec-person-avatar" style="background:${color}">${avatarInner}</div>
+      <div class="ec-person-body">
+        <div class="ec-person-name">${esc(p.name)}</div>
+        <div class="ec-person-role">${esc(p.title||'')} ${p.years ? '· '+esc(p.years) : ''}</div>
+        ${p.youtubeUrl ? `<div class="ec-person-music">🎵 Music linked</div>` : ''}
+      </div>
+      <div class="ec-person-actions">
+        <button class="btn-sm" onclick="editEcFamous(${idx})">✏ Edit</button>
+        <button class="btn-danger" onclick="deleteEcFamous(${idx})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+  initFamousDrag();
+}
+
+function initFamousDrag() {
+  const list = document.getElementById('ecFamousList');
+  let dragIdx = null;
+  list.querySelectorAll('.ec-person-item').forEach(item => {
+    item.addEventListener('dragstart', () => { dragIdx = +item.dataset.idx; item.classList.add('dragging'); });
+    item.addEventListener('dragend',   () => { item.classList.remove('dragging'); dragIdx = null; });
+    item.addEventListener('dragover',  e => { e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', async e => {
+      e.preventDefault(); item.classList.remove('drag-over');
+      const toIdx = +item.dataset.idx;
+      if (dragIdx === null || dragIdx === toIdx) return;
+      const moved = _famousItems.splice(dragIdx, 1)[0];
+      _famousItems.splice(toIdx, 0, moved);
+      renderFamousList();
+      await saveFamousOrder();
+    });
+  });
+}
+
+async function saveFamousOrder() {
+  try {
+    const batch = fb.writeBatch(_db);
+    _famousItems.forEach((p, i) => {
+      if (p.id) batch.update(fb.doc(_db, 'eri_famous', p.id), { order: i });
+    });
+    await batch.commit();
+  } catch(e) {}
+}
+
+function openFamousForm(p) {
+  const form = document.getElementById('ecFamousForm');
+  document.getElementById('ecFamousFormTitle').textContent = p ? 'Edit Person' : 'Add Famous Person';
+  document.getElementById('ecFamousId').value    = p?.id || '';
+  document.getElementById('ecFamousName').value  = p?.name || '';
+  document.getElementById('ecFamousTitle').value = p?.title || '';
+  document.getElementById('ecFamousYears').value = p?.years || '';
+  document.getElementById('ecFamousEmoji').value = p?.emoji || '';
+  document.getElementById('ecFamousPhoto').value = p?.photoUrl || '';
+  document.getElementById('ecFamousMusic').value = p?.youtubeUrl || '';
+  document.getElementById('ecFamousBio').value   = p?.bio || '';
+  const colors = (p?.color || 'linear-gradient(135deg,#007A3D,#4189DD)').match(/#[0-9a-fA-F]{6}/g) || ['#007A3D','#4189DD'];
+  document.getElementById('ecFamousColor1').value = colors[0] || '#007A3D';
+  document.getElementById('ecFamousColor2').value = colors[1] || '#4189DD';
+  const prev = document.getElementById('ecFamousPhotoPreview');
+  const img  = document.getElementById('ecFamousPhotoImg');
+  if (p?.photoUrl) { img.src = p.photoUrl; prev.style.display = ''; } else { prev.style.display = 'none'; }
+  form.hidden = false;
+  document.getElementById('ecFamousName').focus();
+}
+
+function resetFamousForm() {
+  ['ecFamousId','ecFamousName','ecFamousTitle','ecFamousYears','ecFamousEmoji','ecFamousPhoto','ecFamousMusic','ecFamousBio'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('ecFamousPhotoPreview').style.display = 'none';
+}
+
+window.editEcFamous = function(idx) {
+  openFamousForm(_famousItems[idx]);
+  document.getElementById('ecFamousId').value = JSON.stringify(idx); // store index for save
+};
+
+window.deleteEcFamous = async function(idx) {
+  const p = _famousItems[idx];
+  if (!confirm(`Delete "${p.name}"?`)) return;
+  if (p.id) await fb.deleteDoc(fb.doc(_db, 'eri_famous', p.id)).catch(()=>{});
+  _famousItems.splice(idx, 1);
+  renderFamousList();
+  toast('Deleted.', 'success');
+};
+
+async function saveEcFamous() {
+  const name = document.getElementById('ecFamousName').value.trim();
+  const title = document.getElementById('ecFamousTitle').value.trim();
+  if (!name) { toast('Name is required.', 'error'); return; }
+  const btn = document.getElementById('ecFamousSaveBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const c1 = document.getElementById('ecFamousColor1').value;
+  const c2 = document.getElementById('ecFamousColor2').value;
+  const data = {
+    name, title,
+    years:      document.getElementById('ecFamousYears').value.trim(),
+    emoji:      document.getElementById('ecFamousEmoji').value.trim() || '🌟',
+    photoUrl:   document.getElementById('ecFamousPhoto').value.trim(),
+    youtubeUrl: document.getElementById('ecFamousMusic').value.trim(),
+    bio:        document.getElementById('ecFamousBio').value.trim(),
+    color:      `linear-gradient(135deg,${c1},${c2})`,
+    updatedAt:  fb.serverTimestamp(),
+  };
+  try {
+    const rawId = document.getElementById('ecFamousId').value;
+    let docId = null;
+    // Try to parse as a stored idx first; if it's a real Firestore doc id, use that
+    const existingItem = _famousItems[parseInt(rawId, 10)];
+    const parsedFamousIdx = parseInt(rawId, 10);
+    if (existingItem?.id) {
+      docId = existingItem.id;
+      await fb.updateDoc(fb.doc(_db, 'eri_famous', docId), data);
+      Object.assign(existingItem, data, { id: docId });
+    } else {
+      const isFallback = !isNaN(parsedFamousIdx) && parsedFamousIdx >= 0 && parsedFamousIdx < _famousItems.length && !_famousItems[parsedFamousIdx]?.id;
+      data.order = isFallback ? parsedFamousIdx : _famousItems.length;
+      const ref = await fb.addDoc(fb.collection(_db, 'eri_famous'), data);
+      if (isFallback) { _famousItems[parsedFamousIdx] = { ...data, id: ref.id }; }
+      else            { _famousItems.push({ ...data, id: ref.id }); }
+    }
+    document.getElementById('ecFamousForm').hidden = true;
+    resetFamousForm();
+    renderFamousList();
+    toast('Saved! Live site will update automatically.', 'success');
+    logAudit('Saved famous person: ' + name);
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Person'; btn.disabled = false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// ARTISTS EDITOR
+// ══════════════════════════════════════════════════════════════
+const ARTISTS_FALLBACK = [
+  { name:'Abraham Afewerki',  role:'Singer-Songwriter',            years:'1966–2006', genre:'Tigrinya Pop / Traditional',  emoji:'🎤', color:'linear-gradient(135deg,#007A3D,#4189DD)', desc:'Called the "Voice of Eritrea", Abraham Afewerki blended traditional Tigrinya music with modern sounds. His songs Hamid and Hagerey remain global anthems.', order:0 },
+  { name:'Yemane Barya',      role:'Singer & Poet',                years:'1954–1997', genre:'Traditional Tigrinya',         emoji:'📜', color:'linear-gradient(135deg,#7c3aed,#007A3D)', desc:'Known as the "King" (ንጉስ) of Tigrinya music, Yemane Barya was a revolutionary poet-fighter whose timeless songs remain cornerstones of Eritrean cultural heritage.', order:1 },
+  { name:'Helen Meles',       role:'Vocalist',                     years:'Born 1974',  genre:'Tigrinya Ballads / Pop',      emoji:'🎵', color:'linear-gradient(135deg,#CE1126,#f59e0b)', desc:"Eritrea's \"Golden Voice\" — Songs like Lbi Haway made her a beloved icon across the diaspora.", order:2 },
+  { name:'Dehab Faytinga',    role:'Singer & Cultural Ambassador', years:'Born 1965',  genre:'Traditional / Pan-African',   emoji:'🌍', color:'linear-gradient(135deg,#4189DD,#CE1126)', desc:'A legendary vocalist who blends Eritrean rhythms with pan-African influences.', order:3 },
+  { name:'Yohannes Tikabo',   role:'Singer & Actor',               years:'Born 1971',  genre:'Modern Tigrinya',             emoji:'🎭', color:'linear-gradient(135deg,#f59e0b,#059669)', desc:'A hugely popular contemporary artist known for his melodic voice and modern Tigrinya music. Also an accomplished actor in Eritrean cinema.', order:4 },
+  { name:'Alamin Abdullatif', role:'Tigre Music Icon',             years:'Born 1962',  genre:'Tigre Traditional',           emoji:'🎶', color:'linear-gradient(135deg,#059669,#7c3aed)', desc:'Master of traditional Tigre music, Alamin Abdullatif preserves the musical heritage of the Tigre ethnic group with powerful poetry-songs spanning decades.', order:5 },
+];
+
+let _artistItems = [];
+
+async function loadEcArtists() {
+  const list = document.getElementById('ecArtistList');
+  if (!list) return;
+  list.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const snap = await fb.getDocs(fb.query(fb.collection(_db, 'eri_artists'), fb.orderBy('order')));
+    _artistItems = snap.empty
+      ? ARTISTS_FALLBACK.map(a => ({ ...a }))
+      : snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderArtistList();
+  } catch(e) {
+    _artistItems = ARTISTS_FALLBACK.map(a => ({ ...a }));
+    renderArtistList();
+  }
+}
+
+function renderArtistList() {
+  const list = document.getElementById('ecArtistList');
+  if (!list) return;
+  if (!_artistItems.length) { list.innerHTML = '<p class="empty-msg">No artists yet. Click + Add Item.</p>'; return; }
+  list.innerHTML = _artistItems.map((a, idx) => {
+    const avatarInner = a.photoUrl
+      ? `<img src="${esc(a.photoUrl)}" onerror="this.style.display='none'" style="width:52px;height:52px;object-fit:cover;border-radius:50%">`
+      : (a.emoji || '🎵');
+    const color = a.color || 'linear-gradient(135deg,#007A3D,#4189DD)';
+    return `<div class="ec-person-item" draggable="true" data-idx="${idx}">
+      <span class="ec-person-drag" title="Drag to reorder">⠿</span>
+      <div class="ec-person-avatar" style="background:${color}">${avatarInner}</div>
+      <div class="ec-person-body">
+        <div class="ec-person-name">${esc(a.name)}</div>
+        <div class="ec-person-role">${esc(a.role||'')} · ${esc(a.genre||'')}</div>
+        ${a.youtubeUrl ? `<div class="ec-person-music">🎵 Music linked</div>` : ''}
+      </div>
+      <div class="ec-person-actions">
+        <button class="btn-sm" onclick="editEcArtist(${idx})">✏ Edit</button>
+        <button class="btn-danger" onclick="deleteEcArtist(${idx})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+  initArtistDrag();
+}
+
+function initArtistDrag() {
+  const list = document.getElementById('ecArtistList');
+  let dragIdx = null;
+  list.querySelectorAll('.ec-person-item').forEach(item => {
+    item.addEventListener('dragstart', () => { dragIdx = +item.dataset.idx; item.classList.add('dragging'); });
+    item.addEventListener('dragend',   () => { item.classList.remove('dragging'); dragIdx = null; });
+    item.addEventListener('dragover',  e => { e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', async e => {
+      e.preventDefault(); item.classList.remove('drag-over');
+      const toIdx = +item.dataset.idx;
+      if (dragIdx === null || dragIdx === toIdx) return;
+      const moved = _artistItems.splice(dragIdx, 1)[0];
+      _artistItems.splice(toIdx, 0, moved);
+      renderArtistList();
+      await saveArtistOrder();
+    });
+  });
+}
+
+async function saveArtistOrder() {
+  try {
+    const batch = fb.writeBatch(_db);
+    _artistItems.forEach((a, i) => {
+      if (a.id) batch.update(fb.doc(_db, 'eri_artists', a.id), { order: i });
+    });
+    await batch.commit();
+  } catch(e) {}
+}
+
+function openArtistForm(a) {
+  const form = document.getElementById('ecArtistForm');
+  document.getElementById('ecArtistFormTitle').textContent = a ? 'Edit Artist' : 'Add Artist';
+  document.getElementById('ecArtistId').value    = a?.id || '';
+  document.getElementById('ecArtistName').value  = a?.name || '';
+  document.getElementById('ecArtistRole').value  = a?.role || '';
+  document.getElementById('ecArtistYears').value = a?.years || '';
+  document.getElementById('ecArtistGenre').value = a?.genre || '';
+  document.getElementById('ecArtistPhoto').value = a?.photoUrl || '';
+  document.getElementById('ecArtistMusic').value = a?.youtubeUrl || '';
+  document.getElementById('ecArtistEmoji').value = a?.emoji || '';
+  document.getElementById('ecArtistDesc').value  = a?.desc || '';
+  const colors = (a?.color || 'linear-gradient(135deg,#007A3D,#4189DD)').match(/#[0-9a-fA-F]{6}/g) || ['#007A3D','#4189DD'];
+  document.getElementById('ecArtistColor1').value = colors[0] || '#007A3D';
+  document.getElementById('ecArtistColor2').value = colors[1] || '#4189DD';
+  const prev = document.getElementById('ecArtistPhotoPreview');
+  const img  = document.getElementById('ecArtistPhotoImg');
+  if (a?.photoUrl) { img.src = a.photoUrl; prev.style.display = ''; } else { prev.style.display = 'none'; }
+  form.hidden = false;
+  document.getElementById('ecArtistName').focus();
+}
+
+function resetArtistForm() {
+  ['ecArtistId','ecArtistName','ecArtistRole','ecArtistYears','ecArtistGenre','ecArtistPhoto','ecArtistMusic','ecArtistEmoji','ecArtistDesc'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('ecArtistPhotoPreview').style.display = 'none';
+}
+
+window.editEcArtist = function(idx) {
+  const a = _artistItems[idx];
+  openArtistForm(a);
+  document.getElementById('ecArtistId').value = JSON.stringify(idx);
+};
+
+window.deleteEcArtist = async function(idx) {
+  const a = _artistItems[idx];
+  if (!confirm(`Delete "${a.name}"?`)) return;
+  if (a.id) await fb.deleteDoc(fb.doc(_db, 'eri_artists', a.id)).catch(()=>{});
+  _artistItems.splice(idx, 1);
+  renderArtistList();
+  toast('Deleted.', 'success');
+};
+
+async function saveEcArtist() {
+  const name = document.getElementById('ecArtistName').value.trim();
+  if (!name) { toast('Name is required.', 'error'); return; }
+  const btn = document.getElementById('ecArtistSaveBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  const c1 = document.getElementById('ecArtistColor1').value;
+  const c2 = document.getElementById('ecArtistColor2').value;
+  const data = {
+    name,
+    role:       document.getElementById('ecArtistRole').value.trim(),
+    years:      document.getElementById('ecArtistYears').value.trim(),
+    genre:      document.getElementById('ecArtistGenre').value.trim(),
+    emoji:      document.getElementById('ecArtistEmoji').value.trim() || '🎵',
+    photoUrl:   document.getElementById('ecArtistPhoto').value.trim(),
+    youtubeUrl: document.getElementById('ecArtistMusic').value.trim(),
+    desc:       document.getElementById('ecArtistDesc').value.trim(),
+    color:      `linear-gradient(135deg,${c1},${c2})`,
+    updatedAt:  fb.serverTimestamp(),
+  };
+  try {
+    const rawId = document.getElementById('ecArtistId').value;
+    const parsedArtistIdx = parseInt(rawId, 10);
+    const existingItem = _artistItems[parsedArtistIdx];
+    if (existingItem?.id) {
+      await fb.updateDoc(fb.doc(_db, 'eri_artists', existingItem.id), data);
+      Object.assign(existingItem, data, { id: existingItem.id });
+    } else {
+      const isFallback = !isNaN(parsedArtistIdx) && parsedArtistIdx >= 0 && parsedArtistIdx < _artistItems.length && !_artistItems[parsedArtistIdx]?.id;
+      data.order = isFallback ? parsedArtistIdx : _artistItems.length;
+      const ref = await fb.addDoc(fb.collection(_db, 'eri_artists'), data);
+      if (isFallback) { _artistItems[parsedArtistIdx] = { ...data, id: ref.id }; }
+      else            { _artistItems.push({ ...data, id: ref.id }); }
+    }
+    document.getElementById('ecArtistForm').hidden = true;
+    resetArtistForm();
+    renderArtistList();
+    toast('Saved! Live site will update automatically.', 'success');
+    logAudit('Saved artist: ' + name);
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.textContent = 'Save Artist'; btn.disabled = false;
+}
 
 // ══════════════════════════════════════════════════════════════
 // FEATURE 2 — NEWSLETTER MANAGER
@@ -5300,24 +6001,201 @@ function initRiglogPage() {
 }
 
 async function loadRiglogStats() {
+  // Riglog lives in a separate Firebase project; we read rl_users synced here
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   try {
-    const snap = await fb.getDocs(fb.collection(_db, 'riglog_users'));
-    document.getElementById('rlAdmUsers').textContent = snap.size;
+    const snap = await fb.getDocs(fb.collection(_db, 'rl_users'));
+    if (snap.size > 0) {
+      let trips = 0, expenses = 0, revenue = 0;
+      snap.forEach(d => {
+        const data = d.data();
+        trips    += (data.tripCount    || 0);
+        expenses += (data.expenseCount || 0);
+        revenue  += (data.totalRevenue || 0);
+      });
+      set('rlAdmUsers',    snap.size);
+      set('rlAdmTrips',    trips    || '—');
+      set('rlAdmExpenses', expenses || '—');
+      set('rlAdmRevenue',  revenue  ? '$' + revenue.toFixed(0) : '—');
+      return;
+    }
+    // Fallback: riglog_users (older collection name)
+    const snap2 = await fb.getDocs(fb.collection(_db, 'riglog_users'));
     let trips = 0, expenses = 0, revenue = 0;
-    snap.forEach(d => {
+    snap2.forEach(d => {
       const data = d.data();
       trips    += (data.tripCount    || 0);
       expenses += (data.expenseCount || 0);
       revenue  += (data.totalRevenue || 0);
     });
-    document.getElementById('rlAdmTrips').textContent    = trips    || '—';
-    document.getElementById('rlAdmExpenses').textContent = expenses || '—';
-    document.getElementById('rlAdmRevenue').textContent  = revenue  ? '$' + revenue.toFixed(0) : '—';
+    set('rlAdmUsers',    snap2.size || '—');
+    set('rlAdmTrips',    trips    || '—');
+    set('rlAdmExpenses', expenses || '—');
+    set('rlAdmRevenue',  revenue  ? '$' + revenue.toFixed(0) : '—');
   } catch(e) {
-    if (typeof _trucklogUsers !== 'undefined' && _trucklogUsers.length) {
-      document.getElementById('rlAdmUsers').textContent = _trucklogUsers.length;
-    }
+    set('rlAdmUsers', '—'); set('rlAdmTrips', '—'); set('rlAdmExpenses', '—'); set('rlAdmRevenue', '—');
   }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FIDEL PAGE
+   ════════════════════════════════════════════════════════════════ */
+let _fidelLearners = [];
+let _fidelWired = false;
+
+const FIDEL_LEVELS = [
+  { level: 1, name: 'Beginner',     minXP: 0   },
+  { level: 2, name: 'Explorer',     minXP: 100  },
+  { level: 3, name: 'Learner',      minXP: 300  },
+  { level: 4, name: 'Scholar',      minXP: 600  },
+  { level: 5, name: 'Master',       minXP: 1000 },
+];
+function fidelGetLevel(xp) {
+  let lv = FIDEL_LEVELS[0];
+  for (const l of FIDEL_LEVELS) { if (xp >= l.minXP) lv = l; }
+  return lv;
+}
+
+function fidelRenderTable() {
+  const tbody  = document.getElementById('fidelLearnerTable');
+  if (!tbody) return;
+  const q      = (document.getElementById('fidelLearnerSearch')?.value || '').toLowerCase();
+  const lvFilt = document.getElementById('fidelLevelFilter')?.value || '';
+  let list = _fidelLearners.filter(p => {
+    const name = (p.name || p.email || p.uid || '').toLowerCase();
+    if (q && !name.includes(q)) return false;
+    if (lvFilt) {
+      const lv = fidelGetLevel(p.xp || 0).level;
+      if (String(lv) !== lvFilt && !(lvFilt === '4' && lv >= 4)) return false;
+    }
+    return true;
+  });
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="7" class="empty-msg">No learners match your filter.</td></tr>`; return; }
+  const now = Date.now();
+  tbody.innerHTML = list.map(p => {
+    const lv    = fidelGetLevel(p.xp || 0);
+    const lastMs = p.lastActive ? (p.lastActive.seconds ? p.lastActive.seconds * 1000 : Number(p.lastActive)) : null;
+    const lastStr = lastMs ? new Date(lastMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+    const streakBadge = (p.streak || 0) >= 3 ? `<span style="color:#f59e0b">🔥</span>` : '';
+    return `<tr>
+      <td>${esc(p.name || p.email || '—')}</td>
+      <td style="font-size:.75rem;color:var(--text-dim)">${esc(p.uid ? p.uid.slice(0,10) + '…' : '—')}</td>
+      <td style="font-weight:700;color:#ff9f0a">${(p.xp || 0).toLocaleString()}</td>
+      <td>Lv.${lv.level} <span style="color:var(--text-dim)">${lv.name}</span></td>
+      <td>${streakBadge} ${p.streak || 0} days</td>
+      <td>${(p.lessonsCompleted || 0).toLocaleString()}</td>
+      <td style="font-size:.8rem;color:var(--text-dim)">${lastStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadFidel() {
+  const tbl = document.getElementById('fidelLearnerTable');
+  if (!tbl) return;
+  tbl.innerHTML = `<tr><td colspan="7" class="empty-msg">Loading learners…</td></tr>`;
+
+  try {
+    const snap = await fb.getDocs(fb.collection(_db, 'progress'));
+    _fidelLearners = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  } catch(e) {
+    tbl.innerHTML = `<tr><td colspan="7" class="empty-msg" style="color:var(--danger)">Error: ${e.message}</td></tr>`;
+    return;
+  }
+
+  const total    = _fidelLearners.length;
+  const totalXP  = _fidelLearners.reduce((s, p) => s + (p.xp || 0), 0);
+  const avgXP    = total ? Math.round(totalXP / total) : 0;
+  const topXP    = total ? Math.max(..._fidelLearners.map(p => p.xp || 0)) : 0;
+  const streaks  = _fidelLearners.filter(p => (p.streak || 0) >= 1).length;
+  const lessons  = _fidelLearners.reduce((s, p) => s + (p.lessonsCompleted || 0), 0);
+
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('fidelPageLearners', total);
+  set('fidelPageAvgXP',    avgXP.toLocaleString());
+  set('fidelPageTopXP',    topXP.toLocaleString());
+  set('fidelPageStreaks',  streaks);
+  set('fidelPageLessons',  lessons.toLocaleString());
+
+  const badge = document.getElementById('fidelLearnerBadge');
+  if (badge) { badge.textContent = total; badge.hidden = total === 0; }
+
+  fidelRenderTable();
+
+  // Current announcement
+  try {
+    const annSnap = await fb.getDoc(fb.doc(_db, 'fidel_announcements', 'latest'));
+    const annEl   = document.getElementById('fidelCurrentAnn');
+    if (annEl) {
+      if (annSnap.exists()) {
+        const ann = annSnap.data();
+        const ts  = ann.createdAt ? new Date(ann.createdAt.seconds * 1000).toLocaleString() : '';
+        annEl.innerHTML = `<strong>${esc(ann.title || '')}</strong> — ${esc(ann.message || '')}${ts ? `<br><span style="font-size:.75rem;color:var(--text-dim)">${ts}</span>` : ''}`;
+      } else {
+        annEl.textContent = 'No active announcement.';
+      }
+    }
+  } catch(e) {
+    const annEl = document.getElementById('fidelCurrentAnn');
+    if (annEl) annEl.textContent = 'Could not load announcement.';
+  }
+
+  // Wire controls once only
+  if (!_fidelWired) {
+    _fidelWired = true;
+    document.getElementById('fidelRefreshBtn')?.addEventListener('click', loadFidel);
+    document.getElementById('fidelLearnerSearch')?.addEventListener('input', fidelRenderTable);
+    document.getElementById('fidelLevelFilter')?.addEventListener('change', fidelRenderTable);
+  }
+
+  function rewire(id, fn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+    clone.addEventListener('click', fn);
+  }
+
+  rewire('fidelExportBtn', () => {
+    const rows = [['Name','UID','XP','Level','Streak','Lessons','LastActive']];
+    _fidelLearners.forEach(p => {
+      const lv    = fidelGetLevel(p.xp || 0);
+      const lastMs = p.lastActive ? (p.lastActive.seconds ? p.lastActive.seconds * 1000 : Number(p.lastActive)) : null;
+      const lastStr = lastMs ? new Date(lastMs).toLocaleDateString() : '';
+      rows.push([p.name || p.email || '', p.uid || '', p.xp || 0, `Lv.${lv.level} ${lv.name}`, p.streak || 0, p.lessonsCompleted || 0, lastStr]);
+    });
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = `fidel-learners-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  });
+
+  rewire('fidelPageSendAnn', async () => {
+    const title  = document.getElementById('fidelPageAnnTitle')?.value.trim();
+    const msg    = document.getElementById('fidelPageAnnMsg')?.value.trim();
+    const status = document.getElementById('fidelPageAnnStatus');
+    if (!title || !msg) { if (status) { status.style.color = 'var(--danger)'; status.textContent = 'Title and message are required.'; } return; }
+    try {
+      await fb.setDoc(fb.doc(_db, 'fidel_announcements', 'latest'), {
+        title, message: msg,
+        createdAt: fb.serverTimestamp(),
+        createdBy: _auth?.currentUser?.email || 'admin',
+      });
+      if (status) { status.style.color = 'var(--success)'; status.textContent = '✓ Announcement sent!'; }
+      document.getElementById('fidelPageAnnTitle').value = '';
+      document.getElementById('fidelPageAnnMsg').value   = '';
+      setTimeout(() => loadFidel(), 600);
+    } catch(e) {
+      if (status) { status.style.color = 'var(--danger)'; status.textContent = 'Error: ' + e.message; }
+    }
+  });
+
+  rewire('fidelClearAnnBtn', async () => {
+    if (!confirm('Clear the current announcement? Learners will no longer see it.')) return;
+    try {
+      await fb.deleteDoc(fb.doc(_db, 'fidel_announcements', 'latest'));
+      const annEl = document.getElementById('fidelCurrentAnn');
+      if (annEl) annEl.textContent = 'No active announcement.';
+    } catch(e) { alert('Error: ' + e.message); }
+  });
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -7141,59 +8019,6 @@ handleMusicFiles = async function(files) {
 })();
 
 // ── T23: SMART ALERTS DETECTOR ───────────────────────────────────
-(function initSmartAlerts() {
-  const banner    = document.getElementById('smartAlertBanner');
-  const textEl    = document.getElementById('smartAlertText');
-  const iconEl    = document.getElementById('smartAlertIcon');
-  const actionEl  = document.getElementById('smartAlertAction');
-  const dismissEl = document.getElementById('smartAlertDismiss');
-  if (!banner) return;
-
-  dismissEl?.addEventListener('click', () => { banner.hidden = true; });
-
-  function show(msg, type, icon, actionLabel, actionFn) {
-    if (iconEl)  iconEl.textContent  = icon || '⚠️';
-    if (textEl)  textEl.textContent  = msg;
-    banner.className = 'smart-alert-banner' + (type === 'danger' ? ' danger' : type === 'info' ? ' info' : '');
-    if (actionLabel && actionEl) {
-      actionEl.textContent = actionLabel;
-      actionEl.hidden = false;
-      actionEl.onclick = () => { banner.hidden = true; actionFn?.(); };
-    } else if (actionEl) { actionEl.hidden = true; }
-    banner.hidden = false;
-  }
-
-  const shown = new Set();
-
-  function waitDb() {
-    if (!window._db || !window.fb) { setTimeout(waitDb, 800); return; }
-    try {
-      fb.onSnapshot(fb.collection(_db, 'hub_users'), snap => {
-        let pending = 0;
-        snap.forEach(d => { if (d.data().status === 'pending') pending++; });
-        const key = 'pending_' + Math.floor(pending / 3);
-        if (pending >= 5 && !shown.has(key)) {
-          shown.add(key);
-          show(`🚨 ${pending} users awaiting approval`, 'danger', '🚨', 'View Users', () => showPage('users'));
-        }
-      });
-    } catch {}
-
-    try {
-      fb.onSnapshot(fb.collection(_db, 'feedback'), snap => {
-        let unread = 0;
-        snap.forEach(d => { if (!d.data().read) unread++; });
-        const key = 'fb_' + Math.floor(unread / 5);
-        if (unread >= 10 && !shown.has(key)) {
-          shown.add(key);
-          show(`💬 ${unread} unread feedback messages`, 'warn', '💬', 'View Feedback', () => showPage('feedback'));
-        }
-      });
-    } catch {}
-  }
-
-  setTimeout(waitDb, 3000);
-})();
 
 // ── T24: QUICK USER CARD HOVER ───────────────────────────────────
 (function initQuickUserCard() {
@@ -7268,7 +8093,7 @@ handleMusicFiles = async function(files) {
 
 // ── T26: SESSION HISTORY TIMELINE ────────────────────────────────
 (function initSessionHistory() {
-  const LABELS = { dashboard:'Dashboard', apps:'App Manager', users:'Users', erimusic:'Eri Music', music:'Music', posts:'Posts', notify:'Notifications', analytics:'Analytics', feedback:'Feedback', employees:'Employees', auditlog:'Audit Log', newsletter:'Newsletter', playlists:'Playlists', ericontent:'Eri Content', assets:'Assets', monetize:'Monetize', coupons:'Coupons', riglog:'RigLog' };
+  const LABELS = { dashboard:'Dashboard', apps:'App Manager', users:'Users', erimusic:'Eri Music', music:'Music Library', posts:'Posts', notify:'Notifications', analytics:'Analytics', feedback:'Feedback', employees:'Employees', auditlog:'Audit Log', newsletter:'Newsletter', playlists:'Playlists', ericontent:'Eri Content', assets:'Assets', monetize:'Monetize', coupons:'Coupons', riglog:'RigLog', 'truck-log':'Truck Log', fidel:'Fidel', versions:'Versions', storage:'Storage', seo:'SEO', settings:'Settings', about:'About Us', promotions:'Promotions' };
   const hist   = [];
 
   const _orig = window.showPage;
@@ -7621,4 +8446,371 @@ handleMusicFiles = async function(files) {
       }
     });
   });
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 1 — FIDEL CURRICULUM EDITOR
+   ════════════════════════════════════════════════════════════════ */
+(function initFidelCurriculum() {
+  let _lessons = [];
+  let _editId  = null;
+
+  const DIFF_COLORS = { beginner: '#34c759', intermediate: '#f59e0b', advanced: '#ef4444' };
+
+  function renderCurriculum() {
+    const el = document.getElementById('fidelCurriculumList');
+    const ct = document.getElementById('fidelCurrCount');
+    if (!el) return;
+    if (!_lessons.length) { el.innerHTML = '<p class="empty-msg">No lessons yet. Click + Add Lesson to create one.</p>'; if(ct) ct.textContent = ''; return; }
+    if (ct) ct.textContent = _lessons.length + ' lessons';
+    const sorted = [..._lessons].sort((a, b) => (a.order || 0) - (b.order || 0));
+    el.innerHTML = `<table class="data-table" style="width:100%">
+      <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Difficulty</th><th>Status</th><th style="width:90px"></th></tr></thead>
+      <tbody>${sorted.map(l => {
+        const dc = DIFF_COLORS[l.difficulty] || '#888';
+        const pub = l.published !== false;
+        return `<tr>
+          <td style="color:var(--text-dim);font-size:.8rem">${l.order || '—'}</td>
+          <td><strong>${esc(l.title || '—')}</strong>${l.description ? `<br><span style="font-size:.75rem;color:var(--text-dim)">${esc(l.description.slice(0,60))}${l.description.length > 60 ? '…' : ''}</span>` : ''}</td>
+          <td style="font-size:.8rem">${esc(l.category || '—')}</td>
+          <td><span style="font-size:.75rem;padding:2px 8px;border-radius:20px;background:${dc}22;color:${dc}">${esc(l.difficulty || '—')}</span></td>
+          <td><span class="app-status-pill ${pub ? 'status-active' : 'status-draft'}">${pub ? 'Published' : 'Draft'}</span></td>
+          <td style="display:flex;gap:6px">
+            <button class="btn-sm curr-edit-btn" data-id="${l.id}" style="font-size:.72rem;padding:3px 8px">✏</button>
+            <button class="btn-sm curr-del-btn" data-id="${l.id}" style="font-size:.72rem;padding:3px 8px;color:var(--danger)">🗑</button>
+          </td>
+        </tr>`;
+      }).join('')}</tbody></table>`;
+
+    el.querySelectorAll('.curr-edit-btn').forEach(btn => btn.addEventListener('click', () => openLessonForm(btn.dataset.id)));
+    el.querySelectorAll('.curr-del-btn').forEach(btn => btn.addEventListener('click', () => deleteLesson(btn.dataset.id)));
+  }
+
+  function openLessonForm(editId) {
+    _editId = editId || null;
+    const form = document.getElementById('fidelLessonForm');
+    if (!form) return;
+    if (editId) {
+      const l = _lessons.find(x => x.id === editId);
+      if (!l) return;
+      document.getElementById('fidelLessonTitle').value     = l.title || '';
+      document.getElementById('fidelLessonCategory').value  = l.category || '';
+      document.getElementById('fidelLessonDesc').value      = l.description || '';
+      document.getElementById('fidelLessonDiff').value      = l.difficulty || 'beginner';
+      document.getElementById('fidelLessonOrder').value     = l.order || '';
+      document.getElementById('fidelLessonPublished').checked = l.published !== false;
+      document.getElementById('fidelLessonEditId').value    = editId;
+    } else {
+      document.getElementById('fidelLessonTitle').value     = '';
+      document.getElementById('fidelLessonCategory').value  = '';
+      document.getElementById('fidelLessonDesc').value      = '';
+      document.getElementById('fidelLessonDiff').value      = 'beginner';
+      document.getElementById('fidelLessonOrder').value     = _lessons.length + 1;
+      document.getElementById('fidelLessonPublished').checked = true;
+      document.getElementById('fidelLessonEditId').value    = '';
+    }
+    form.style.display = 'block';
+    document.getElementById('fidelLessonTitle').focus();
+  }
+
+  async function saveLesson() {
+    const title     = document.getElementById('fidelLessonTitle')?.value.trim();
+    const category  = document.getElementById('fidelLessonCategory')?.value.trim();
+    const desc      = document.getElementById('fidelLessonDesc')?.value.trim();
+    const diff      = document.getElementById('fidelLessonDiff')?.value || 'beginner';
+    const order     = parseInt(document.getElementById('fidelLessonOrder')?.value || '0');
+    const published = document.getElementById('fidelLessonPublished')?.checked !== false;
+    const editId    = document.getElementById('fidelLessonEditId')?.value || '';
+    if (!title) { toast('Title is required.', 'warn'); return; }
+    const data = { title, category, description: desc, difficulty: diff, order, published, updatedAt: fb.serverTimestamp() };
+    try {
+      if (editId) {
+        await fb.updateDoc(fb.doc(_db, 'fidel_curriculum', editId), data);
+        toast('Lesson updated ✓');
+      } else {
+        await fb.addDoc(fb.collection(_db, 'fidel_curriculum'), { ...data, createdAt: fb.serverTimestamp() });
+        toast('Lesson added ✓');
+        logActivity('Added FIDEL lesson: ' + title);
+      }
+      document.getElementById('fidelLessonForm').style.display = 'none';
+      await loadCurriculum();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  }
+
+  async function deleteLesson(id) {
+    if (!confirm('Delete this lesson?')) return;
+    try {
+      await fb.deleteDoc(fb.doc(_db, 'fidel_curriculum', id));
+      toast('Lesson deleted', 'info');
+      await loadCurriculum();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  }
+
+  async function loadCurriculum() {
+    const el = document.getElementById('fidelCurriculumList');
+    if (!el) return;
+    el.innerHTML = '<p class="empty-msg">Loading…</p>';
+    try {
+      const snap = await fb.getDocs(fb.query(fb.collection(_db, 'fidel_curriculum'), fb.orderBy('order')));
+      _lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch(e) {
+      // Try without orderBy if index missing
+      try {
+        const snap2 = await fb.getDocs(fb.collection(_db, 'fidel_curriculum'));
+        _lessons = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch(e2) { el.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Error: ${e2.message}</p>`; return; }
+    }
+    renderCurriculum();
+  }
+
+  function wire() {
+    document.getElementById('fidelAddLessonBtn')?.addEventListener('click', () => openLessonForm(null));
+    document.getElementById('fidelCurrRefreshBtn')?.addEventListener('click', loadCurriculum);
+    document.getElementById('fidelLessonSaveBtn')?.addEventListener('click', saveLesson);
+    document.getElementById('fidelLessonCancelBtn')?.addEventListener('click', () => { document.getElementById('fidelLessonForm').style.display = 'none'; });
+  }
+
+  // Hook into loadFidel to also load curriculum
+  const _origLoadFidel = window.loadFidel || loadFidel;
+  window.loadFidel = loadFidel = async function() {
+    await _origLoadFidel();
+    await loadCurriculum();
+    wire();
+  };
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 2 — USER RETENTION METRICS
+   ════════════════════════════════════════════════════════════════ */
+(function initRetentionMetrics() {
+  function daysAgoMs(n) { return Date.now() - n * 86400000; }
+
+  function getLastActiveMs(p) {
+    if (!p.lastActive) return null;
+    if (p.lastActive.seconds) return p.lastActive.seconds * 1000;
+    return typeof p.lastActive === 'number' ? p.lastActive : null;
+  }
+
+  async function loadRetention() {
+    const el7  = document.getElementById('ret7d');
+    const el14 = document.getElementById('ret14d');
+    const el30 = document.getElementById('ret30d');
+    const elMau = document.getElementById('retMauRate');
+    const dailyEl  = document.getElementById('retDailyChart');
+    const cohortEl = document.getElementById('retCohortChart');
+    if (!el7 && !dailyEl) return;
+
+    try {
+      const snap = await fb.getDocs(fb.collection(_db, 'progress'));
+      const learners = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+      const total = learners.length;
+      if (!total) { [el7, el14, el30, elMau].forEach(e => { if(e) e.textContent = '0'; }); return; }
+
+      const now = Date.now();
+      const active7  = learners.filter(p => { const t = getLastActiveMs(p); return t && t >= daysAgoMs(7); }).length;
+      const active14 = learners.filter(p => { const t = getLastActiveMs(p); return t && t >= daysAgoMs(14); }).length;
+      const active30 = learners.filter(p => { const t = getLastActiveMs(p); return t && t >= daysAgoMs(30); }).length;
+      const mauPct   = total ? Math.round((active30 / total) * 100) : 0;
+
+      if (el7)   el7.textContent   = active7;
+      if (el14)  el14.textContent  = active14;
+      if (el30)  el30.textContent  = active30;
+      if (elMau) elMau.textContent = mauPct + '%';
+
+      // Daily active chart — last 14 days
+      if (dailyEl) {
+        const days = [];
+        for (let i = 13; i >= 0; i--) {
+          const dayStart = daysAgoMs(i + 1);
+          const dayEnd   = daysAgoMs(i);
+          const count    = learners.filter(p => { const t = getLastActiveMs(p); return t && t >= dayStart && t < dayEnd; }).length;
+          const d = new Date(dayEnd);
+          const label = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          days.push({ label, count });
+        }
+        const maxDay = Math.max(...days.map(d => d.count), 1);
+        dailyEl.innerHTML = days.map(d => `
+          <div class="an-bar-row">
+            <div class="an-bar-label" style="min-width:68px">${d.label}</div>
+            <div class="an-bar-track"><div class="an-bar-fill" style="width:${Math.max(Math.round(d.count/maxDay*100), d.count > 0 ? 4 : 0)}%;background:#34c759"></div></div>
+            <div class="an-bar-val">${d.count}</div>
+          </div>`).join('');
+      }
+
+      // Cohort retention chart
+      if (cohortEl) {
+        const windows = [
+          { label: '1 day',  days: 1,  count: learners.filter(p => { const t = getLastActiveMs(p); return t && t >= daysAgoMs(1); }).length },
+          { label: '7 days', days: 7,  count: active7 },
+          { label: '14 days',days: 14, count: active14 },
+          { label: '30 days',days: 30, count: active30 },
+        ];
+        cohortEl.innerHTML = windows.map(w => {
+          const pct = total ? Math.round((w.count / total) * 100) : 0;
+          return `<div class="an-bar-row">
+            <div class="an-bar-label">${w.label}</div>
+            <div class="an-bar-track"><div class="an-bar-fill" style="width:${pct}%;background:#a855f7"></div></div>
+            <div class="an-bar-val">${pct}% (${w.count})</div>
+          </div>`;
+        }).join('');
+      }
+    } catch(e) { console.warn('[Retention]', e); }
+  }
+
+  // Patch loadAnalytics to also run retention
+  const _origAn = loadAnalytics;
+  loadAnalytics = async function() {
+    await _origAn();
+    await loadRetention();
+  };
+  document.getElementById('refreshAnalyticsBtn')?.addEventListener('click', loadRetention);
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 3 — ENHANCED MULTI-APP BROADCASTER
+   ════════════════════════════════════════════════════════════════ */
+(function enhanceBroadcaster() {
+  const sendBtn = document.getElementById('broadcastSend');
+  if (!sendBtn) return;
+
+  // Clone to remove existing listener
+  const newBtn = sendBtn.cloneNode(true);
+  sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+
+  newBtn.addEventListener('click', async () => {
+    const title   = document.getElementById('broadcastTitle')?.value.trim();
+    const message = document.getElementById('broadcastMsg')?.value.trim();
+    if (!title || !message) { toast('Title and message are both required.', 'warn'); return; }
+    const dur       = parseInt(document.getElementById('broadcastDur')?.value || '86400');
+    const targets   = {
+      hub:    document.getElementById('bcTargetHub')?.checked,
+      fidel:  document.getElementById('bcTargetFidel')?.checked,
+      eri:    document.getElementById('bcTargetEri')?.checked,
+      riglog: document.getElementById('bcTargetRiglog')?.checked,
+    };
+    if (!Object.values(targets).some(Boolean)) { toast('Select at least one target app.', 'warn'); return; }
+
+    const payload = {
+      title, message,
+      createdAt: fb.serverTimestamp(),
+      expiresAt: dur > 0 ? Date.now() + dur * 1000 : 0,
+      createdBy: window.currentUser?.email || 'admin',
+    };
+
+    newBtn.disabled = true; newBtn.textContent = 'Sending…';
+    try {
+      const writes = [];
+      if (targets.hub)    writes.push(fb.setDoc(fb.doc(_db, 'hub_broadcast', 'active'), payload));
+      if (targets.fidel)  writes.push(fb.setDoc(fb.doc(_db, 'fidel_announcements', 'latest'), payload));
+      if (targets.eri)    writes.push(fb.setDoc(fb.doc(_db, 'eri_announcements', 'latest'), payload));
+      if (targets.riglog) writes.push(fb.setDoc(fb.doc(_db, 'rl_announcements', 'latest'), payload));
+      await Promise.all(writes);
+
+      const appNames = [targets.hub && 'Hub', targets.fidel && 'FIDEL', targets.eri && 'Eritrean Info', targets.riglog && 'Riglog'].filter(Boolean).join(', ');
+      toast(`📡 Broadcast sent to: ${appNames}`, 'success');
+      logActivity('Broadcast to ' + appNames + ': "' + title + '"');
+      document.getElementById('broadcastModal').hidden = true;
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+    finally { newBtn.disabled = false; newBtn.textContent = '📡 Broadcast Now'; }
+  });
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   NEW FEATURE 4 — FIREBASE STORAGE FILE BROWSER
+   ════════════════════════════════════════════════════════════════ */
+(function initStorageBrowser() {
+  let _stMod = null;
+  let _storage = null;
+
+  async function getStorageMod() {
+    if (_stMod) return _stMod;
+    const app = window._fbApp;
+    if (!app) return null;
+    _stMod = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-storage.js`);
+    _storage = _stMod.getStorage(app);
+    return _stMod;
+  }
+
+  function fmtSize(bytes) {
+    if (!bytes) return '—';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  async function browseFolder(path, depth) {
+    const st = _stMod;
+    const folderRef = st.ref(_storage, path);
+    const result = await st.listAll(folderRef);
+    let html = '';
+
+    for (const item of result.items) {
+      let meta = null;
+      try { meta = await st.getMetadata(item); } catch(e) { /* skip */ }
+      const name = item.name;
+      const size = meta ? fmtSize(meta.size) : '—';
+      const type = meta?.contentType || '—';
+      const updated = meta?.updated ? new Date(meta.updated).toLocaleDateString() : '—';
+      const indent = depth * 20;
+      html += `<tr>
+        <td style="padding-left:${indent + 8}px">
+          <span style="color:var(--text-dim);margin-right:6px">${type.startsWith('audio') ? '🎵' : type.startsWith('image') ? '🖼' : '📄'}</span>
+          ${esc(name)}
+        </td>
+        <td style="font-size:.78rem;color:var(--text-dim)">${size}</td>
+        <td style="font-size:.75rem;color:var(--text-mute)">${updated}</td>
+        <td>
+          <button class="btn-sm" data-path="${esc(item.fullPath)}" style="font-size:.7rem;padding:2px 7px;color:var(--danger)" onclick="window._deleteStorageFile(this.dataset.path,this)">🗑</button>
+        </td>
+      </tr>`;
+    }
+
+    for (const prefix of result.prefixes) {
+      const folderName = prefix.name;
+      html += `<tr><td colspan="4" style="padding-left:${depth * 20 + 8}px;font-weight:700;color:var(--accent);font-size:.82rem;padding-top:10px">📁 ${esc(folderName)}/</td></tr>`;
+      html += await browseFolder(prefix.fullPath, depth + 1);
+    }
+
+    return html;
+  }
+
+  async function loadStorageBrowser() {
+    const el = document.getElementById('fbStorageBrowser');
+    const usedEl = document.getElementById('fbStorageUsed');
+    if (!el) return;
+    el.innerHTML = '<p class="empty-msg">Loading Firebase Storage…</p>';
+
+    try {
+      const st = await getStorageMod();
+      if (!st) { el.innerHTML = '<p class="empty-msg" style="color:var(--danger)">Firebase app not ready. Try again in a moment.</p>'; return; }
+
+      const rows = await browseFolder('/', 0);
+      if (!rows) { el.innerHTML = '<p class="empty-msg">Storage appears empty or no access.</p>'; return; }
+      el.innerHTML = `<div style="overflow-x:auto"><table class="data-table" style="width:100%">
+        <thead><tr><th>File</th><th>Size</th><th>Last Modified</th><th style="width:50px"></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+    } catch(e) {
+      el.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Error: ${e.message || 'Could not list files. Check Firebase Storage rules.'}</p>`;
+    }
+  }
+
+  window._deleteStorageFile = async function(path, btn) {
+    if (!confirm('Delete "' + path + '"? This cannot be undone.')) return;
+    try {
+      const st = await getStorageMod();
+      await st.deleteObject(st.ref(_storage, path));
+      toast('File deleted ✓', 'success');
+      loadStorageBrowser();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  };
+
+  document.getElementById('fbStorageRefreshBtn')?.addEventListener('click', loadStorageBrowser);
+
+  // Patch loadStorage to also load the file browser
+  const _origLS = loadStorage;
+  loadStorage = async function() {
+    await _origLS();
+    await loadStorageBrowser();
+  };
 })();

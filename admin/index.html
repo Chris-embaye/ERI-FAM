@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+  <script>document.addEventListener('DOMContentLoaded',function(){var b=document.getElementById('smartAlertBanner');if(b)b.remove();});</script>
   <title>HUB — App Control Center</title>
   <link rel="icon" href="../icons/icon-512.png"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -140,6 +144,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
           <span>Eri Music</span>
         </button>
+        <button class="sb-item" data-page="music">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+          <span>Music Library</span>
+        </button>
         <button class="sb-item" data-page="playlists">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           <span>Playlists</span>
@@ -152,6 +160,10 @@
         <button class="sb-item" data-page="posts">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           <span>Posts <span class="sb-badge" id="postsBadge" hidden>0</span></span>
+        </button>
+        <button class="sb-item" data-page="events">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Events</span>
         </button>
         <button class="sb-item" data-page="feedback">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -181,6 +193,15 @@
         <button class="sb-item" data-page="coupons">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
           <span>Coupons</span>
+        </button>
+      </div>
+
+      <!-- FIDEL -->
+      <div class="sb-cat-group">
+        <div class="sb-cat-label">Fidel</div>
+        <button class="sb-item" data-page="fidel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span>Fidel App <span class="sb-badge" id="fidelLearnerBadge" hidden>0</span></span>
         </button>
       </div>
 
@@ -326,6 +347,7 @@
             <div class="cat-chips">
               <button class="cat-chip" onclick="event.stopPropagation();showPage('employees')">Employees</button>
               <button class="cat-chip" onclick="event.stopPropagation();showPage('users')">Users</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('fidel')">FIDEL</button>
               <button class="cat-chip" onclick="event.stopPropagation();showPage('truck-log')">Truck-Log</button>
             </div>
           </div>
@@ -362,7 +384,8 @@
             <div class="cat-name">Content</div>
             <div class="cat-meta"><span id="statAssets">—</span> assets · <span id="statNotifs">—</span> notifs</div>
             <div class="cat-chips">
-              <button class="cat-chip" onclick="event.stopPropagation();showPage('music')">Music</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('erimusic')">Eri Music</button>
+              <button class="cat-chip" onclick="event.stopPropagation();showPage('music')">Music Library</button>
               <button class="cat-chip" onclick="event.stopPropagation();showPage('posts')">Posts</button>
               <button class="cat-chip" onclick="event.stopPropagation();showPage('ericontent')">Eri Content</button>
             </div>
@@ -403,9 +426,9 @@
         <div class="card">
           <div class="card-hd"><h3>Quick Links</h3></div>
           <div class="quick-links">
-            <a href="https://chris-embaye.github.io/ERI-FAM/" target="_blank" class="quick-link"><span>🎵</span><span>ERI-FAM App</span><span>↗</span></a>
-            <a href="https://chris-embaye.github.io/Eritreaninfo/" target="_blank" class="quick-link"><span>🇪🇷</span><span>Eritrean Info</span><span>↗</span></a>
-            <a href="https://chris-embaye.github.io/tap/" target="_blank" class="quick-link"><span>💰</span><span>Tap Expenses</span><span>↗</span></a>
+            <a href="https://eri-fam.web.app" target="_blank" class="quick-link"><span>🇪🇷</span><span>Eritrean Info</span><span>↗</span></a>
+            <a href="https://eri-tigrinya-school.web.app" target="_blank" class="quick-link"><span>🎓</span><span>FIDEL</span><span>↗</span></a>
+            <a href="https://trucklogapp-1b40e.web.app" target="_blank" class="quick-link"><span>🚛</span><span>Riglog</span><span>↗</span></a>
             <a href="https://console.firebase.google.com/project/eri-fam" target="_blank" class="quick-link"><span>🔥</span><span>Firebase Console</span><span>↗</span></a>
             <a href="https://github.com/Chris-embaye" target="_blank" class="quick-link"><span>⚙</span><span>GitHub</span><span>↗</span></a>
           </div>
@@ -531,6 +554,7 @@
                 </select>
               </div>
             </div>
+            <div id="epContentShortcuts" class="ep-sect" hidden></div>
           </div>
 
           <!-- ── SECTIONS TAB ── -->
@@ -602,7 +626,7 @@
           <h1>🚛 Truck-Log</h1>
           <p class="page-sub">Owner-operator app — users, stats, and controls</p>
         </div>
-        <a id="trucklogOpenBtn" href="../riglog/" target="_blank" class="btn-primary" style="text-decoration:none">Open App ↗</a>
+        <a id="trucklogOpenBtn" href="https://trucklogapp-1b40e.web.app" target="_blank" class="btn-primary" style="text-decoration:none">Open App ↗</a>
       </div>
 
       <!-- Stats row -->
@@ -638,6 +662,126 @@
       </div>
     </div>
 
+    <!-- ══ FIDEL ══ -->
+    <div class="page" id="page-fidel">
+      <div class="page-hd">
+        <div>
+          <h1>🎓 Fidel — Tigrinya School</h1>
+          <p class="page-sub">Learner management, progress tracking &amp; announcements</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn-sm" id="fidelRefreshBtn">↺ Refresh</button>
+          <a href="https://eri-tigrinya-school.web.app" target="_blank" class="btn-primary" style="text-decoration:none">Open App ↗</a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-row" style="margin-bottom:24px">
+        <div class="stat-card" style="--accent:#34c759"><div class="stat-ico">🎓</div><div class="stat-body"><div class="stat-num" id="fidelPageLearners">—</div><div class="stat-lbl">Total Learners</div></div></div>
+        <div class="stat-card" style="--accent:#ff9f0a"><div class="stat-ico">⭐</div><div class="stat-body"><div class="stat-num" id="fidelPageAvgXP">—</div><div class="stat-lbl">Avg XP</div></div></div>
+        <div class="stat-card" style="--accent:#ff375f"><div class="stat-ico">🏆</div><div class="stat-body"><div class="stat-num" id="fidelPageTopXP">—</div><div class="stat-lbl">Top XP</div></div></div>
+        <div class="stat-card" style="--accent:#5e5ce6"><div class="stat-ico">🔥</div><div class="stat-body"><div class="stat-num" id="fidelPageStreaks">—</div><div class="stat-lbl">Active Streaks</div></div></div>
+        <div class="stat-card" style="--accent:#32ade6"><div class="stat-ico">📚</div><div class="stat-body"><div class="stat-num" id="fidelPageLessons">—</div><div class="stat-lbl">Total Lessons Done</div></div></div>
+      </div>
+
+      <!-- Learner search + table -->
+      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
+        <input type="search" id="fidelLearnerSearch" class="form-input" placeholder="Search learners by name…" style="flex:1;min-width:180px"/>
+        <select id="fidelLevelFilter" class="form-input" style="width:140px">
+          <option value="">All Levels</option>
+          <option value="1">Level 1</option>
+          <option value="2">Level 2</option>
+          <option value="3">Level 3</option>
+          <option value="4">Level 4+</option>
+        </select>
+        <button class="btn-sm" id="fidelExportBtn">📥 Export CSV</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table" style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Student ID</th>
+              <th>XP</th>
+              <th>Level</th>
+              <th>Streak</th>
+              <th>Lessons</th>
+              <th>Last Active</th>
+            </tr>
+          </thead>
+          <tbody id="fidelLearnerTable">
+            <tr><td colspan="7" class="empty-msg">Loading learners…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Announcement sender -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-hd"><h3>📡 Send Announcement to All Learners</h3></div>
+        <div style="padding:4px 0">
+          <input type="text" id="fidelPageAnnTitle" class="form-input" placeholder="Title (e.g. New Vocabulary Added!)" maxlength="60" style="margin-bottom:10px"/>
+          <textarea id="fidelPageAnnMsg" class="form-input" rows="3" placeholder="Message text…" maxlength="200" style="resize:none;margin-bottom:10px"></textarea>
+          <div style="display:flex;align-items:center;gap:10px">
+            <select id="fidelPageAnnDur" class="form-input" style="flex:1">
+              <option value="86400">Show for 24 hours</option>
+              <option value="259200">Show for 3 days</option>
+              <option value="604800">Show for 7 days</option>
+              <option value="0">Permanent</option>
+            </select>
+            <button class="btn-primary" id="fidelPageSendAnn" style="white-space:nowrap">Send</button>
+          </div>
+          <div id="fidelPageAnnStatus" style="font-size:.75rem;margin-top:8px;color:var(--success)"></div>
+        </div>
+      </div>
+
+      <!-- Current announcement -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-hd"><h3>Current Announcement</h3><button class="btn-sm" id="fidelClearAnnBtn" style="color:var(--danger)">✕ Clear</button></div>
+        <div id="fidelCurrentAnn" style="font-size:.85rem;color:var(--text-dim)">Loading…</div>
+      </div>
+
+      <!-- Curriculum Editor -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-hd">
+          <h3>📚 Curriculum Editor</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="fidelCurrCount" style="font-size:.75rem;color:var(--text-dim)"></span>
+            <button class="btn-sm" id="fidelCurrRefreshBtn">↺ Refresh</button>
+            <button class="btn-primary" id="fidelAddLessonBtn" style="font-size:.8rem">+ Add Lesson</button>
+          </div>
+        </div>
+        <!-- Add/Edit lesson form (hidden until triggered) -->
+        <div id="fidelLessonForm" style="display:none;background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid var(--border)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div><label class="form-label">Title</label><input type="text" id="fidelLessonTitle" class="form-input" placeholder="e.g. Vowel Order 1" maxlength="60"/></div>
+            <div><label class="form-label">Category</label><input type="text" id="fidelLessonCategory" class="form-input" placeholder="e.g. Vowels"/></div>
+          </div>
+          <div style="margin-bottom:10px"><label class="form-label">Description</label><textarea id="fidelLessonDesc" class="form-input" rows="2" style="resize:none" placeholder="What learners will practice in this lesson…"></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+            <div><label class="form-label">Difficulty</label>
+              <select id="fidelLessonDiff" class="form-input">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div><label class="form-label">Order #</label><input type="number" id="fidelLessonOrder" class="form-input" placeholder="1" min="1"/></div>
+            <div style="display:flex;align-items:flex-end;gap:8px">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem;padding-bottom:6px">
+                <input type="checkbox" id="fidelLessonPublished" checked> Published
+              </label>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-primary" id="fidelLessonSaveBtn">💾 Save Lesson</button>
+            <button class="btn-sm" id="fidelLessonCancelBtn">Cancel</button>
+          </div>
+          <input type="hidden" id="fidelLessonEditId"/>
+        </div>
+        <div id="fidelCurriculumList"><p class="empty-msg">Loading curriculum…</p></div>
+      </div>
+    </div>
+
     <!-- ══ RIGLOG ══ -->
     <div class="page" id="page-riglog">
       <div class="page-hd">
@@ -646,7 +790,7 @@
           <p class="page-sub">Owner-operator trip, expense & fuel tracking</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
-          <a href="../riglog/" target="_blank" class="btn-sm" style="text-decoration:none">Open App ↗</a>
+          <a href="https://trucklogapp-1b40e.web.app" target="_blank" class="btn-sm" style="text-decoration:none">Open App ↗</a>
         </div>
       </div>
 
@@ -669,7 +813,7 @@
             </button>
           </div>
         </div>
-        <iframe id="riglogFrame" src="../riglog/" class="rl-embed-frame"
+        <iframe id="riglogFrame" src="https://trucklogapp-1b40e.web.app" class="rl-embed-frame"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
       </div>
     </div>
@@ -1096,6 +1240,88 @@
           <div class="an-line-wrap"><canvas id="anLineChart" height="90"></canvas></div>
         </div>
       </div>
+
+      <!-- FIDEL / Tigrinya School analytics -->
+      <h3 style="margin:28px 0 12px;font-size:.72rem;font-weight:700;color:var(--text-dim);letter-spacing:.4px;text-transform:uppercase">Fidel — Tigrinya School</h3>
+      <div class="stat-row">
+        <div class="stat-card" style="--accent:#34c759">
+          <div class="stat-ico">🎓</div>
+          <div class="stat-body">
+            <div class="stat-num" id="fidelLearners">—</div>
+            <div class="stat-lbl">Total Learners</div>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#ff9f0a">
+          <div class="stat-ico">⭐</div>
+          <div class="stat-body">
+            <div class="stat-num" id="fidelAvgXP">—</div>
+            <div class="stat-lbl">Avg XP / Learner</div>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#5e5ce6">
+          <div class="stat-ico">🔥</div>
+          <div class="stat-body">
+            <div class="stat-num" id="fidelStreaks">—</div>
+            <div class="stat-lbl">Active Streaks</div>
+          </div>
+        </div>
+        <div class="stat-card" style="--accent:#ff375f">
+          <div class="stat-ico">🏆</div>
+          <div class="stat-body">
+            <div class="stat-num" id="fidelTopXP">—</div>
+            <div class="stat-lbl">Top XP Score</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-grid" style="margin-top:16px">
+        <div class="card">
+          <div class="card-hd"><h3>Top Learners</h3><span class="page-sub" style="font-size:.75rem">by XP</span></div>
+          <div id="fidelTopLearners" class="an-bar-list"><p class="empty-msg">Loading…</p></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>Level Distribution</h3></div>
+          <div id="fidelLevelChart" class="an-bar-list"><p class="empty-msg">Loading…</p></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>XP Distribution</h3><span class="page-sub" style="font-size:.75rem">learners by XP range</span></div>
+          <div id="fidelXpDist" class="an-bar-list"><p class="empty-msg">Loading…</p></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>📡 Send Announcement</h3><span class="page-sub" style="font-size:.75rem">shown to all Fidel learners on next open</span></div>
+          <div style="padding:4px 0">
+            <input type="text" id="fidelAnnTitle" class="form-input" placeholder="Title (e.g. New Lessons Added!)" maxlength="60" style="margin-bottom:10px"/>
+            <textarea id="fidelAnnMsg" class="form-input" rows="3" placeholder="Message text…" maxlength="200" style="resize:none;margin-bottom:10px"></textarea>
+            <div style="display:flex;align-items:center;gap:10px">
+              <select id="fidelAnnDur" class="form-input" style="flex:1">
+                <option value="86400">Show for 24 hours</option>
+                <option value="259200">Show for 3 days</option>
+                <option value="604800">Show for 7 days</option>
+                <option value="0">Permanent</option>
+              </select>
+              <button class="btn-primary" id="sendFidelAnnBtn" style="white-space:nowrap">Send</button>
+            </div>
+            <div id="fidelAnnStatus" style="font-size:.75rem;margin-top:8px;color:var(--success)"></div>
+          </div>
+        </div>
+      </div>
+      <!-- User Retention -->
+      <h3 style="margin:28px 0 12px;font-size:.72rem;font-weight:700;color:var(--text-dim);letter-spacing:.4px;text-transform:uppercase">User Retention — FIDEL</h3>
+      <div class="stat-row" style="margin-bottom:16px">
+        <div class="stat-card" style="--accent:#34c759"><div class="stat-ico">📅</div><div class="stat-body"><div class="stat-num" id="ret7d">—</div><div class="stat-lbl">7-Day Active</div></div></div>
+        <div class="stat-card" style="--accent:#06b6d4"><div class="stat-ico">📅</div><div class="stat-body"><div class="stat-num" id="ret14d">—</div><div class="stat-lbl">14-Day Active</div></div></div>
+        <div class="stat-card" style="--accent:#a855f7"><div class="stat-ico">📅</div><div class="stat-body"><div class="stat-num" id="ret30d">—</div><div class="stat-lbl">30-Day Active</div></div></div>
+        <div class="stat-card" style="--accent:#f59e0b"><div class="stat-ico">📊</div><div class="stat-body"><div class="stat-num" id="retMauRate">—</div><div class="stat-lbl">30d Retention %</div></div></div>
+      </div>
+      <div class="dash-grid" style="margin-bottom:24px">
+        <div class="card">
+          <div class="card-hd"><h3>Daily Active Learners — Last 14 Days</h3></div>
+          <div id="retDailyChart" class="an-bar-list"><p class="empty-msg">Loading…</p></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>Cohort Retention</h3><span class="page-sub" style="font-size:.75rem">% of learners active within window</span></div>
+          <div id="retCohortChart" class="an-bar-list"><p class="empty-msg">Loading…</p></div>
+        </div>
+      </div>
     </div>
 
     <!-- ══ MONETIZE ══ -->
@@ -1212,6 +1438,25 @@
       </div>
       <div id="postsList" class="posts-list">
         <p class="empty-msg">No posts yet.</p>
+      </div>
+    </div>
+
+    <!-- ══ EVENTS ══ -->
+    <div class="page" id="page-events">
+      <div class="page-hd">
+        <div>
+          <h1>Events</h1>
+          <p class="page-sub">Post parties, festivals, and community events visible in FIDEL</p>
+        </div>
+        <button class="btn-primary" id="addEventBtn">+ New Event</button>
+      </div>
+      <div class="promo-stats" id="eventStats" style="display:none">
+        <div class="promo-stat"><div class="promo-stat-num" id="evStatUpcoming">—</div><div class="promo-stat-lbl">Upcoming</div></div>
+        <div class="promo-stat"><div class="promo-stat-num" id="evStatPast">—</div><div class="promo-stat-lbl">Past</div></div>
+        <div class="promo-stat"><div class="promo-stat-num" id="evStatTotal">—</div><div class="promo-stat-lbl">Total</div></div>
+      </div>
+      <div id="eventsAdminGrid" class="promo-grid">
+        <p class="empty-msg" style="grid-column:1/-1">No events yet. Click + New Event to post one.</p>
       </div>
     </div>
 
@@ -1482,6 +1727,46 @@ match /community_posts/{d} {
   </div>
 </div>
 
+<!-- ══ EVENT MODAL ══ -->
+<div class="modal-overlay" id="eventModal" hidden>
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hd">
+      <h3 id="eventModalTitle">New Event</h3>
+      <button class="modal-x" id="eventModalClose">✕</button>
+    </div>
+    <input type="hidden" id="eventModalId"/>
+    <div class="form-row2">
+      <div class="form-group"><label>Title *</label><input type="text" id="evAdTitle" class="form-input" placeholder="Eritrean Independence Party" maxlength="120"/></div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="evAdType" class="form-input">
+          <option value="Festival">🎉 Festival</option>
+          <option value="Party">🎊 Party</option>
+          <option value="Cultural">🌍 Cultural</option>
+          <option value="Sports">⚽ Sports</option>
+          <option value="Religious">🕌 Religious</option>
+          <option value="Arts">🎭 Arts</option>
+          <option value="Community">🤝 Community</option>
+          <option value="National Holiday">🇪🇷 National Holiday</option>
+          <option value="Other">📌 Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row2">
+      <div class="form-group"><label>Date *</label><input type="date" id="evAdDate" class="form-input"/></div>
+      <div class="form-group"><label>Time</label><input type="time" id="evAdTime" class="form-input"/></div>
+    </div>
+    <div class="form-group"><label>Location / Address *</label><input type="text" id="evAdLoc" class="form-input" placeholder="e.g. 123 Main St, Washington DC"/></div>
+    <div class="form-group"><label>Description</label><textarea id="evAdDesc" class="form-textarea" rows="3" placeholder="Tell people what to expect…" maxlength="1000"></textarea></div>
+    <div class="form-group"><label>Poster / Image URL (optional)</label><input type="url" id="evAdImage" class="form-input" placeholder="https://…"/></div>
+    <div id="evAdErr" style="color:var(--danger);font-size:.8rem;min-height:18px;margin-bottom:4px"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="eventModalCancel">Cancel</button>
+      <button class="btn-primary"   id="eventModalSave">Save Event</button>
+    </div>
+  </div>
+</div>
+
 <!-- Add Section (in Editor) -->
 <div class="modal-overlay" id="sectionModal" hidden>
   <div class="modal" style="max-width:400px">
@@ -1726,13 +2011,15 @@ match /community_posts/{d} {
     <!-- ══ ERI CONTENT MANAGER ══ -->
     <div class="page" id="page-ericontent">
       <div class="page-hd">
-        <div><h1>🇪🇷 Eritrean Info — Content</h1><p class="page-sub">Manage News, Blog articles, and Gallery photos shown on the website</p></div>
+        <div><h1>🇪🇷 Eritrean Info — Content</h1><p class="page-sub">Manage News, Blog, Gallery, Famous Eritreans and Music Artists</p></div>
         <button class="btn-primary" id="eriContentAddBtn">+ Add Item</button>
       </div>
       <div class="user-tabs" id="ecTabRow">
         <button class="utab ec-tab active" data-ectab="news">📰 News</button>
         <button class="utab ec-tab" data-ectab="blog">✍️ Blog</button>
         <button class="utab ec-tab" data-ectab="gallery">🖼 Gallery</button>
+        <button class="utab ec-tab" data-ectab="famous">👤 Famous People</button>
+        <button class="utab ec-tab" data-ectab="artists">🎵 Artists</button>
       </div>
 
       <!-- News panel -->
@@ -1788,6 +2075,67 @@ match /community_posts/{d} {
           <div class="modal-actions"><button class="btn-secondary" id="ecGalleryCancelBtn">Cancel</button><button class="btn-primary" id="ecGallerySaveBtn">Add Photo</button></div>
         </div>
         <div id="ecGalleryGrid" class="ec-gallery-grid"><p class="empty-msg">Loading…</p></div>
+      </div>
+
+      <!-- Famous People panel -->
+      <div class="ec-panel" id="ecpanel-famous" hidden>
+        <p class="page-sub" style="margin-bottom:14px">Drag cards to reorder · Click ✏ to edit · Changes save to Firestore and update the live site instantly</p>
+        <div class="card ec-form" id="ecFamousForm" hidden>
+          <h4 class="ec-form-title" id="ecFamousFormTitle">Add Famous Person</h4>
+          <input type="hidden" id="ecFamousId"/>
+          <div class="form-row2">
+            <div class="form-group"><label>Full Name *</label><input type="text" id="ecFamousName" class="form-input" placeholder="Abraham Afewerki"/></div>
+            <div class="form-group"><label>Title / Role *</label><input type="text" id="ecFamousTitle" class="form-input" placeholder='Musician · "Voice of Eritrea"'/></div>
+          </div>
+          <div class="form-row2">
+            <div class="form-group"><label>Years</label><input type="text" id="ecFamousYears" class="form-input" placeholder="1966 – 2006 or Born 1982"/></div>
+            <div class="form-group"><label>Emoji (fallback icon)</label><input type="text" id="ecFamousEmoji" class="form-input" placeholder="🎵" maxlength="4"/></div>
+          </div>
+          <div class="form-group"><label>Photo URL <span style="font-weight:400;color:var(--text-muted)">(paste a direct image link — will replace emoji)</span></label><input type="url" id="ecFamousPhoto" class="form-input" placeholder="https://upload.wikimedia.org/…"/></div>
+          <div id="ecFamousPhotoPreview" style="margin-bottom:12px;display:none"><img id="ecFamousPhotoImg" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--border)"/></div>
+          <div class="form-group"><label>YouTube / Music Link <span style="font-weight:400;color:var(--text-muted)">(shows a ▶ Listen button on the card)</span></label><input type="url" id="ecFamousMusic" class="form-input" placeholder="https://youtube.com/watch?v=…"/></div>
+          <div class="form-group"><label>Biography *</label><textarea id="ecFamousBio" class="form-textarea" rows="4" placeholder="Write a short biography…"></textarea></div>
+          <div class="form-row2">
+            <div class="form-group"><label>Gradient color A</label><input type="color" id="ecFamousColor1" class="form-input" value="#007A3D" style="height:40px"/></div>
+            <div class="form-group"><label>Gradient color B</label><input type="color" id="ecFamousColor2" class="form-input" value="#4189DD" style="height:40px"/></div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-secondary" id="ecFamousCancelBtn">Cancel</button>
+            <button class="btn-primary" id="ecFamousSaveBtn">Save Person</button>
+          </div>
+        </div>
+        <div id="ecFamousList" class="ec-drag-list"><p class="empty-msg">Loading…</p></div>
+      </div>
+
+      <!-- Artists panel -->
+      <div class="ec-panel" id="ecpanel-artists" hidden>
+        <p class="page-sub" style="margin-bottom:14px">Drag cards to reorder · Click ✏ to edit · Changes go live on the website immediately</p>
+        <div class="card ec-form" id="ecArtistForm" hidden>
+          <h4 class="ec-form-title" id="ecArtistFormTitle">Add Artist</h4>
+          <input type="hidden" id="ecArtistId"/>
+          <div class="form-row2">
+            <div class="form-group"><label>Name *</label><input type="text" id="ecArtistName" class="form-input" placeholder="Helen Meles"/></div>
+            <div class="form-group"><label>Role</label><input type="text" id="ecArtistRole" class="form-input" placeholder="Vocalist"/></div>
+          </div>
+          <div class="form-row2">
+            <div class="form-group"><label>Years</label><input type="text" id="ecArtistYears" class="form-input" placeholder="Born 1974"/></div>
+            <div class="form-group"><label>Genre</label><input type="text" id="ecArtistGenre" class="form-input" placeholder="Tigrinya Ballads / Pop"/></div>
+          </div>
+          <div class="form-group"><label>Photo URL <span style="font-weight:400;color:var(--text-muted)">(direct image link)</span></label><input type="url" id="ecArtistPhoto" class="form-input" placeholder="https://…"/></div>
+          <div id="ecArtistPhotoPreview" style="margin-bottom:12px;display:none"><img id="ecArtistPhotoImg" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--border)"/></div>
+          <div class="form-group"><label>YouTube / Music Link</label><input type="url" id="ecArtistMusic" class="form-input" placeholder="https://youtube.com/watch?v=…"/></div>
+          <div class="form-group"><label>Emoji (fallback)</label><input type="text" id="ecArtistEmoji" class="form-input" placeholder="🎤" maxlength="4"/></div>
+          <div class="form-group"><label>Description *</label><textarea id="ecArtistDesc" class="form-textarea" rows="3" placeholder="Brief description…"></textarea></div>
+          <div class="form-row2">
+            <div class="form-group"><label>Gradient A</label><input type="color" id="ecArtistColor1" class="form-input" value="#007A3D" style="height:40px"/></div>
+            <div class="form-group"><label>Gradient B</label><input type="color" id="ecArtistColor2" class="form-input" value="#4189DD" style="height:40px"/></div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-secondary" id="ecArtistCancelBtn">Cancel</button>
+            <button class="btn-primary" id="ecArtistSaveBtn">Save Artist</button>
+          </div>
+        </div>
+        <div id="ecArtistList" class="ec-drag-list"><p class="empty-msg">Loading…</p></div>
       </div>
     </div>
 
@@ -1848,6 +2196,18 @@ match /community_posts/{d} {
         <button class="btn-sm" id="refreshStorageBtn">⟳ Refresh</button>
       </div>
       <div id="storageStatRow" class="stat-row" style="flex-wrap:wrap;margin-bottom:24px"></div>
+      <!-- Firebase Storage File Browser -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-hd">
+          <h3>☁️ Firebase Storage Files</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="fbStorageUsed" style="font-size:.75rem;color:var(--text-dim)"></span>
+            <button class="btn-sm" id="fbStorageRefreshBtn">↺ Refresh</button>
+          </div>
+        </div>
+        <div id="fbStorageBrowser"><p class="empty-msg" style="color:var(--text-dim)">Click Refresh to browse Firebase Storage files.</p></div>
+      </div>
+
       <div class="dash-grid">
         <div class="card">
           <div class="card-hd"><h3>📦 Firestore Collections</h3></div>
@@ -2167,6 +2527,13 @@ match /community_posts/{d} {
         <option value="604800">7 days</option>
         <option value="0">Permanent</option>
       </select>
+      <label class="form-label" style="margin-top:14px">Send To</label>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;padding:8px 0 4px">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.85rem"><input type="checkbox" id="bcTargetHub" checked class="form-cb"> <span>🌐 Hub (all users)</span></label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.85rem"><input type="checkbox" id="bcTargetFidel" checked class="form-cb"> <span>🎓 FIDEL learners</span></label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.85rem"><input type="checkbox" id="bcTargetEri" class="form-cb"> <span>🇪🇷 Eritrean Info</span></label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.85rem"><input type="checkbox" id="bcTargetRiglog" class="form-cb"> <span>🚛 Riglog drivers</span></label>
+      </div>
       <div class="broadcast-preview" id="broadcastPreview">
         <div style="font-size:.68rem;opacity:.7;margin-bottom:4px">PREVIEW</div>
         <strong id="bpTitle">Banner Title</strong> — <span id="bpMsg">Your message here</span>
@@ -2201,14 +2568,6 @@ match /community_posts/{d} {
   </div>
 </div>
 
-<!-- T23: Smart Alert Banner -->
-<div id="smartAlertBanner" class="smart-alert-banner" hidden>
-  <span id="smartAlertIcon">⚠️</span>
-  <span id="smartAlertText">Alert</span>
-  <button id="smartAlertAction" class="smart-alert-action" hidden>View</button>
-  <button id="smartAlertDismiss" class="smart-alert-dismiss">✕</button>
-</div>
-
 <!-- T29: Speed Dial FAB -->
 <div id="speedDial" class="speed-dial" hidden>
   <div id="speedDialItems" class="speed-dial-items">
@@ -2229,9 +2588,31 @@ match /community_posts/{d} {
   <span class="sh-sep">·</span>
   <span id="shUserCount">— users</span>
   <span class="sh-sep">·</span>
-  <span>HUB v3.0</span>
+  <span>HUB v4.0</span>
 </div>
 
+<!-- Offline indicator -->
+<div id="adminOfflineBar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#ea580c;color:#fff;text-align:center;font-size:.75rem;font-weight:700;padding:8px;letter-spacing:.04em">
+  📡 OFFLINE — changes will sync when reconnected
+</div>
+<script>
+  (function(){
+    const bar = document.getElementById('adminOfflineBar');
+    function update(){
+      bar.style.display = navigator.onLine ? 'none' : 'block';
+      if(navigator.onLine){
+        const t = document.createElement('div');
+        t.textContent = '✓ Back online — syncing…';
+        t.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#16a34a;color:#fff;text-align:center;font-size:.75rem;font-weight:700;padding:8px';
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2500);
+      }
+    }
+    if(!navigator.onLine) bar.style.display = 'block';
+    window.addEventListener('online',  update);
+    window.addEventListener('offline', update);
+  })();
+</script>
 <script src="./firebase-config.js"></script>
 <script type="module" src="admin.js"></script>
 </body>

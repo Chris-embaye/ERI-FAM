@@ -46,18 +46,6 @@
   <!-- Google Translate hidden element -->
   <div id="google_translate_element" style="position:absolute;top:-9999px;left:-9999px;overflow:hidden;height:0"></div>
 
-  <!-- PWA INSTALL BANNER -->
-  <div id="installBanner" class="install-banner" style="display:none">
-    <div class="install-banner-inner">
-      <span class="install-icon">🇪🇷</span>
-      <div class="install-text">
-        <strong>Install Eritrean Info App</strong>
-        <span>Add to your device — works offline too!</span>
-      </div>
-      <button id="installBtn" class="install-confirm-btn">Install</button>
-      <button id="installDismiss" class="install-dismiss-btn">✕</button>
-    </div>
-  </div>
 
 
   <!-- NAVIGATION -->
@@ -133,7 +121,6 @@
         <a href="about"    class="nav-dd-item">ℹ️<span>About Us</span></a>
         <a href="#news"         class="nav-dd-item">📰<span>News</span></a>
         <a href="#regions"      class="nav-dd-item">🗾<span>Regions</span></a>
-        <a href="#recipes"      class="nav-dd-item">🍽️<span>Recipes</span></a>
         <a href="#artists"      class="nav-dd-item">🎵<span>Artists</span></a>
         <a href="#cultural-calendar" class="nav-dd-item">📅<span>Calendar</span></a>
         <a href="#holidays"     class="nav-dd-item">🗓️<span>Holidays</span></a>
@@ -1347,18 +1334,6 @@
     </div>
   </section>
 
-  <!-- RECIPES -->
-  <section id="recipes">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-tag">Recipes</span>
-        <h2>Eritrean Recipes</h2>
-        <p>Traditional dishes from the highlands, coast, and lowlands — step by step</p>
-      </div>
-      <div class="recipe-grid" id="recipeGrid"></div>
-    </div>
-  </section>
-
   <!-- ECONOMY -->
   <section id="economy">
     <div class="container">
@@ -1410,89 +1385,7 @@
         <h2>Famous Eritreans</h2>
         <p>Athletes, artists, intellectuals and heroes who put Eritrea on the world stage</p>
       </div>
-      <div class="famous-grid">
-
-        <div class="famous-card">
-          <div class="famous-avatar" style="background:linear-gradient(135deg,#007A3D,#4189DD)">🎵</div>
-          <div class="famous-info">
-            <div class="famous-name">Abraham Afewerki</div>
-            <div class="famous-title">Musician · "Voice of Eritrea"</div>
-            <div class="famous-years">1966 – 2006</div>
-            <p>One of the most beloved Eritrean artists of all time, Abraham Afewerki blended traditional Tigrinya music with modern sounds. His songs — including <em>Hamid</em> and <em>Hagerey</em> — remain anthems of Eritrean identity worldwide. He performed internationally and left a lasting musical legacy that transcends generations.</p>
-          </div>
-        </div>
-
-        <div class="famous-card">
-          <div class="famous-avatar" style="background:linear-gradient(135deg,#CE1126,#f59e0b)">🏃</div>
-          <div class="famous-info">
-            <div class="famous-name">Zersenay Tadese</div>
-            <div class="famous-title">Athlete · World Half-Marathon Champion</div>
-            <div class="famous-years">Born 1982</div>
-            <p>One of Africa's greatest long-distance runners, Zersenay Tadese won multiple World Half Marathon Championship titles and held the world record for the half marathon (58:23). He competed at the Beijing and London Olympics, placing Eritrea firmly on the map of global athletics.</p>
-          </div>
-        </div>
-
-        <div class="famous-card">
-          <div class="famous-avatar" style="background:linear-gradient(135deg,#4189DD,#007A3D)">🚴</div>
-          <div class="famous-info">
-            <div class="famous-name">Daniel Teklehaimanot</div>
-            <div class="famous-title">Cyclist · First African in Tour de France Polka Dot Jersey</div>
-            <div class="famous-years">Born 1988</div>
-            <p>In 2015, Daniel Teklehaimanot became the first African rider to wear the iconic <strong>polka-dot jersey</strong> (King of the Mountains) at the Tour de France — a historic milestone for African cycling. He competed for MTN-Qhubeka and inspired a generation of African cyclists.</p>
-          </div>
-        </div>
-
-        <div class="famous-card">
-          <div class="famous-avatar" style="background:linear-gradient(135deg,#7c3aed,#007A3D)">🎶</div>
-          <div class="famous-info">
-            <div class="famous-name">Yemane Barya</div>
-            <div class="famous-title">Musician & Poet · "King of Tigrinya Music"</div>
-            <div class="famous-years">1954 – 1997</div>
-            <p>Known as the "King" (ንጉስ) of Tigrinya music, Yemane Barya was a revolutionary poet, singer and fighter. He composed timeless songs celebrating Eritrean identity, the liberation struggle, and the beauty of his homeland. His music remains a cornerstone of Eritrean cultural heritage.</p>
-          </div>
-        </div>
-
-        <div class="famous-card">
-          <div class="famous-avatar" style="background:linear-gradient(135deg,#CE1126,#4189DD)">✍️</div>
-          <div class="famous-info">
-            <div class="famous-name">Dawit Isaak</div>
-            <div class="famous-title">Journalist · Press Freedom Icon</div>
-            <div class="famous-years">Born 1964 · Imprisoned 2001</div>
-            <p>A Swedish-Eritrean journalist and co-founder of the independent newspaper <em>Setit</em>, Dawit Isaak has been held without trial in Eritrea since September 2001. His case has become a global symbol of press freedom. He has received numerous human rights awards including the UNESCO/Guillermo Cano Press Freedom Prize.</p>
-          </div>
-        </div>
-
-        <div class="famous-card">
-          <div class="famous-avatar" style="background:linear-gradient(135deg,#f59e0b,#CE1126)">🎤</div>
-          <div class="famous-info">
-            <div class="famous-name">Helen Meles</div>
-            <div class="famous-title">Singer · Eritrea's Golden Voice</div>
-            <div class="famous-years">Born 1974</div>
-            <p>Considered one of Eritrea's greatest female vocalists, Helen Meles has a powerful voice that spans traditional Tigrinya music and modern ballads. Her songs — including <em>Lbi Haway</em> and <em>Gereger</em> — have made her a beloved icon across the Eritrean diaspora worldwide.</p>
-          </div>
-        </div>
-
-        <div class="famous-card">
-          <div class="famous-avatar" style="background:linear-gradient(135deg,#007A3D,#f59e0b)">🏆</div>
-          <div class="famous-info">
-            <div class="famous-name">Ghirmay Ghebreslassie</div>
-            <div class="famous-title">Marathon Runner · Olympic & World Champion</div>
-            <div class="famous-years">Born 1995</div>
-            <p>At just 20 years old, Ghirmay Ghebreslassie won the <strong>2015 World Marathon Majors</strong> and the <strong>2016 Rio Olympics marathon</strong> — becoming one of the youngest marathon champions in Olympic history. His victory was a proud moment for Eritrea and all of Africa.</p>
-          </div>
-        </div>
-
-        <div class="famous-card">
-          <div class="famous-avatar" style="background:linear-gradient(135deg,#4189DD,#CE1126)">🎤</div>
-          <div class="famous-info">
-            <div class="famous-name">Dehab Faytinga</div>
-            <div class="famous-title">Singer · Cultural Ambassador</div>
-            <div class="famous-years">Born 1965</div>
-            <p>A legendary Tigrinya singer who blends traditional Eritrean rhythms with pan-African influences. Dehab Faytinga performed at major international festivals and collaborated with global artists. She is celebrated for keeping Eritrean musical traditions alive while bridging cultures.</p>
-          </div>
-        </div>
-
-      </div>
+      <div class="famous-grid" id="famousGrid"></div>
     </div>
   </section>
 
@@ -2368,14 +2261,14 @@
         <span class="mpf-mini-artist" id="mpfMiniArtist">—</span>
       </div>
       <div class="mpf-mini-viz" id="mpfMiniViz"><span></span><span></span><span></span></div>
-      <button class="mpf-mini-ctrl" id="mpfMiniPrev" title="Previous">⏮</button>
-      <button class="mpf-mini-ctrl mpf-mini-play" id="mpfMiniPlay" title="Play/Pause">▶</button>
-      <button class="mpf-mini-ctrl" id="mpfMiniNext" title="Next">⏭</button>
-      <button class="mpf-mini-expand" id="mpfMiniExpand" title="Open player">↑</button>
+      <button class="mpf-mini-ctrl" id="mpfMiniPrev">⏮</button>
+      <button class="mpf-mini-ctrl mpf-mini-play" id="mpfMiniPlay">▶</button>
+      <button class="mpf-mini-ctrl" id="mpfMiniNext">⏭</button>
+      <button class="mpf-mini-expand" id="mpfMiniExpand">↑</button>
     </div>
 
     <!-- Tab trigger button -->
-    <button id="musicPhoneTab" class="music-phone-tab" title="Open ERI-FAM Music App">
+    <button id="musicPhoneTab" class="music-phone-tab" title="ERI-FAM Music">
       <span class="mpt-icon">🎵</span>
       <span class="mpt-label">Music</span>
     </button>
@@ -2389,93 +2282,169 @@
           <!-- Status bar -->
           <div class="mpf-statusbar">
             <span class="mpf-time" id="mpfTime">9:41</span>
-            <span class="mpf-status-icons">📶 🔋</span>
+            <span class="mpf-status-icons">
+              <svg viewBox="0 0 24 24" width="11" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+              <svg viewBox="0 0 24 24" width="11" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+            </span>
           </div>
 
-          <!-- Header -->
-          <div class="mpf-header">
-            <span class="mpf-close-btn" id="mpfClose" role="button" tabindex="0" title="Minimise">−</span>
-            <span class="mpf-app-title">ERI-FAM Music</span>
-            <span class="mpf-logo">🇪🇷</span>
-          </div>
+          <!-- ══ PLAYER VIEW ══ -->
+          <div class="mpf-view" id="mpfViewPlayer">
 
-          <!-- Now Playing -->
-          <div class="mpf-now-playing" id="mpfNowPlaying">
-            <!-- Disc with pulsing ring -->
-            <div class="mpf-disc-wrap">
-              <div class="mpf-disc-ring" id="mpfDiscRing"></div>
-              <div class="mpf-disc" id="mpfDisc"><span id="mpfDiscEmoji">🎵</span></div>
+            <div class="mpf-header">
+              <button class="mpf-hdr-btn" id="mpfClose">
+                <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="mpf-app-title">Now playing</span>
+              <button class="mpf-hdr-btn">
+                <svg viewBox="0 0 24 24" width="15" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+              </button>
             </div>
 
-            <!-- Track info + like -->
-            <div class="mpf-track-info-row">
-              <div class="mpf-track-info">
-                <div class="mpf-track-title" id="mpfTrackTitle">Select a song</div>
-                <div class="mpf-track-artist" id="mpfTrackArtist">ERI-FAM Music</div>
+            <div class="mpf-now-playing" id="mpfNowPlaying">
+
+              <!-- Art flanked by elapsed / remaining time -->
+              <div class="mpf-art-row">
+                <span class="mpf-art-time" id="mpfCurrent">0:00</span>
+                <div class="mpf-art-wrap">
+                  <div class="mpf-disc" id="mpfDisc"><span id="mpfDiscEmoji">🎵</span></div>
+                </div>
+                <span class="mpf-art-time" id="mpfDuration">0:00</span>
               </div>
-              <button class="mpf-like-btn" id="mpfLikeBtn" title="Like this track">♡</button>
-            </div>
 
-            <!-- Progress bar -->
-            <div class="mpf-progress-wrap">
-              <div class="mpf-progress-bar" id="mpfProgressBar">
-                <div class="mpf-progress-fill" id="mpfProgressFill"></div>
-                <div class="mpf-progress-thumb" id="mpfProgressThumb"></div>
+              <!-- SVG arc progress (acts as progress bar — id kept for seek logic) -->
+              <div class="mpf-arc-wrap" id="mpfProgressBar">
+                <svg id="mpfArcSvg" viewBox="0 0 240 70" fill="none" style="width:100%;display:block">
+                  <path d="M 20,4 A 113,113 0 0,1 220,4"
+                        stroke="rgba(255,255,255,0.09)" stroke-width="3.5" stroke-linecap="round"/>
+                  <path id="mpfArcFill" d="M 20,4 A 113,113 0 0,1 220,4"
+                        stroke="#4A7DFF" stroke-width="3.5" stroke-linecap="round"
+                        stroke-dasharray="0 999"/>
+                  <circle id="mpfArcThumb" cx="20" cy="4" r="5.5" fill="#fff"
+                          filter="drop-shadow(0 0 4px rgba(74,125,255,.8))" opacity="0"/>
+                </svg>
               </div>
-              <div class="mpf-time-row">
-                <span id="mpfCurrent">0:00</span>
-                <span id="mpfDuration">0:00</span>
+
+              <!-- Track info + playlist toggle -->
+              <div class="mpf-track-info-row">
+                <button class="mpf-like-btn" id="mpfLikeBtn">♡</button>
+                <div class="mpf-track-info">
+                  <div class="mpf-track-title" id="mpfTrackTitle">Select a song</div>
+                  <div class="mpf-track-artist" id="mpfTrackArtist">ERI-FAM Music</div>
+                </div>
+                <button class="mpf-hdr-btn" id="mpfShowPlaylist" title="Playlist">
+                  <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                </button>
+              </div>
+
+              <!-- Controls: repeat | prev | play | next | shuffle -->
+              <div class="mpf-controls-row">
+                <button class="mpf-mode-btn" id="mpfRepeat" title="Repeat">
+                  <svg viewBox="0 0 24 24" width="19" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                </button>
+                <button class="mpf-ctrl-btn" id="mpfPrev">
+                  <svg viewBox="0 0 24 24" width="19" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+                </button>
+                <button class="mpf-ctrl-btn mpf-play-btn" id="mpfPlay">
+                  <svg id="mpfPlaySvg" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <button class="mpf-ctrl-btn" id="mpfNext">
+                  <svg viewBox="0 0 24 24" width="19" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                </button>
+                <button class="mpf-mode-btn" id="mpfShuffle" title="Shuffle">
+                  <svg viewBox="0 0 24 24" width="19" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                </button>
+              </div>
+
+              <!-- Volume -->
+              <div class="mpf-volume-row">
+                <svg viewBox="0 0 24 24" width="13" fill="currentColor" opacity=".45"><path d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.06A4.48 4.48 0 0 0 18.5 12zM5 9v6h4l5 5V4L9 9H5z"/></svg>
+                <input type="range" id="mpfVolume" class="mpf-volume-slider" min="0" max="100" value="80"/>
+                <svg viewBox="0 0 24 24" width="15" fill="currentColor" id="mpfVolIcon" opacity=".7"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              </div>
+
+              <!-- Visualizer -->
+              <div class="mpf-viz" id="mpfViz">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div><!-- /player view -->
+
+          <!-- ══ PLAYLIST VIEW ══ -->
+          <div class="mpf-view mpf-view--hidden" id="mpfViewPlaylist">
+
+            <div class="mpf-header">
+              <button class="mpf-hdr-btn" id="mpfPlaylistBack">
+                <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="mpf-app-title">Playlist</span>
+              <div style="display:flex;gap:2px">
+                <button class="mpf-hdr-btn" id="mpfSearchToggle">
+                  <svg viewBox="0 0 24 24" width="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+                <button class="mpf-hdr-btn">
+                  <svg viewBox="0 0 24 24" width="14" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                </button>
               </div>
             </div>
 
-            <!-- Controls: shuffle | prev | play | next | repeat -->
-            <div class="mpf-controls-row">
-              <button class="mpf-mode-btn" id="mpfShuffle" title="Shuffle">⇄</button>
-              <div class="mpf-controls">
-                <button class="mpf-ctrl-btn" id="mpfPrev" title="Previous">⏮</button>
-                <button class="mpf-ctrl-btn mpf-play-btn" id="mpfPlay" title="Play/Pause">▶</button>
-                <button class="mpf-ctrl-btn" id="mpfNext" title="Next">⏭</button>
+            <!-- Playlist meta card -->
+            <div class="mpf-plist-meta">
+              <div class="mpf-plist-art" id="mpfPlistArt">🎵</div>
+              <div class="mpf-plist-details">
+                <div class="mpf-plist-name">ERI-FAM Music</div>
+                <div class="mpf-plist-sub">Eritrean Music</div>
+                <div class="mpf-plist-count" id="mpfTrackCount">Loading…</div>
               </div>
-              <button class="mpf-mode-btn" id="mpfRepeat" title="Repeat">↺</button>
             </div>
 
-            <!-- Volume -->
-            <div class="mpf-volume-row">
-              <span class="mpf-vol-icon" id="mpfVolIcon">🔈</span>
-              <input type="range" id="mpfVolume" class="mpf-volume-slider" min="0" max="100" value="80"/>
-              <span class="mpf-vol-icon">🔊</span>
+            <!-- Shuffle all + filter -->
+            <div class="mpf-plist-actions">
+              <button class="mpf-shuffle-all" id="mpfShuffleAllBtn">
+                <svg viewBox="0 0 24 24" width="13" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                Shuffle All
+              </button>
+              <div class="mpf-filter-row" id="mpfFilterRow">
+                <button class="mpf-filter-btn active" data-filter="all">All</button>
+                <button class="mpf-filter-btn" data-filter="liked">♥ Liked</button>
+              </div>
             </div>
 
-            <!-- Visualizer -->
-            <div class="mpf-viz" id="mpfViz">
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            <!-- Search (hidden by default) -->
+            <div id="mpfSearchWrap" style="display:none;padding:0 12px 5px">
+              <input type="search" id="mpfSearch" class="mpf-search" placeholder="Search songs or artists…" autocomplete="off"/>
             </div>
-          </div>
 
-          <!-- Playlist header: search + filter -->
-          <div class="mpf-playlist-header">
-            <div class="mpf-plist-top">
-              <span class="mpf-plist-label">🎶 Playlist</span>
-              <span id="mpfTrackCount" class="mpf-track-count">Loading…</span>
+            <!-- Track list -->
+            <div class="mpf-playlist" id="mpfPlaylist">
+              <div class="mpf-loading">Tap to open &amp; load music…</div>
             </div>
-            <div class="mpf-search-wrap">
-              <input type="search" id="mpfSearch" class="mpf-search" placeholder="🔍 Search songs or artists…" autocomplete="off"/>
-            </div>
-            <div class="mpf-filter-row" id="mpfFilterRow">
-              <button class="mpf-filter-btn active" data-filter="all">All</button>
-              <button class="mpf-filter-btn" data-filter="liked">♥ Liked</button>
-            </div>
-          </div>
 
-          <!-- Playlist -->
-          <div class="mpf-playlist" id="mpfPlaylist">
-            <div class="mpf-loading">Tap to open &amp; load music…</div>
-          </div>
-        </div>
+            <!-- Mini player bar (bottom of playlist view) -->
+            <div class="mpf-mini-bar" id="mpfMiniBar">
+              <div class="mpf-mini-bar-art" id="mpfMiniBarArt">🎵</div>
+              <div class="mpf-mini-bar-body">
+                <div class="mpf-mini-bar-title" id="mpfMiniBarTitle">Select a song</div>
+                <div class="mpf-mini-bar-prog"><div class="mpf-mini-bar-fill" id="mpfMiniBarFill"></div></div>
+              </div>
+              <button class="mpf-mini-bar-btn" id="mpfMiniBarPrev">
+                <svg viewBox="0 0 24 24" width="13" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+              </button>
+              <button class="mpf-mini-bar-btn mpf-mini-bar-play" id="mpfMiniBarPlay">
+                <svg id="mpfMiniBarSvg" viewBox="0 0 24 24" width="13" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+              <button class="mpf-mini-bar-btn" id="mpfMiniBarNext">
+                <svg viewBox="0 0 24 24" width="13" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+              </button>
+            </div>
+
+          </div><!-- /playlist view -->
+
+        </div><!-- /screen -->
         <div class="mpf-home-bar"></div>
-      </div>
-    </div>
-  </div>
+      </div><!-- /shell -->
+    </div><!-- /frame -->
+  </div><!-- /widget -->
   <audio id="mpfAudio" preload="metadata"></audio>
   <!-- ═══ END MUSIC PHONE WIDGET ═══ -->
 
@@ -2541,7 +2510,6 @@
         <span class="gso-quick-label">Quick jump:</span>
         <button class="gso-chip" data-section="history">📜 History</button>
         <button class="gso-chip" data-section="culture">🎭 Culture</button>
-        <button class="gso-chip" data-section="recipes">🍽️ Recipes</button>
         <button class="gso-chip" data-section="famous">⭐ Famous</button>
         <button class="gso-chip" data-section="translator">🌐 Translate</button>
         <button class="gso-chip" data-section="quiz">🏆 Quiz</button>
