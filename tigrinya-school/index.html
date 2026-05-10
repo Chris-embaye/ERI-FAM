@@ -3145,12 +3145,6 @@
       <div id="wotdEmoji" class="wotd-emoji">👋</div>
     </div>
 
-    <!-- Past words -->
-    <div id="wotdHistory" style="margin:0 0 12px;display:none">
-      <div style="font-size:.7rem;font-weight:700;color:var(--text-dim);letter-spacing:.06em;margin-bottom:6px;padding:0 2px">PAST 7 DAYS</div>
-      <div id="wotdHistoryList" style="display:flex;flex-direction:column;gap:6px"></div>
-    </div>
-
     <div class="tabs" id="learnTabs">
       <button class="tab-btn active" data-tab="alphabet">Alphabet</button>
       <button class="tab-btn" data-tab="vocab">Vocabulary</button>
@@ -11566,29 +11560,6 @@ document.getElementById('profileReportBtn')?.addEventListener('click', () => {
   if (el('wotdEmoji')) el('wotdEmoji').textContent = w.emoji || '⭐';
   window._wotd = w;
 
-  // Build past-7-days history
-  const histEl = el('wotdHistory');
-  const listEl = el('wotdHistoryList');
-  if (histEl && listEl) {
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const rows = [];
-    for (let n = 1; n <= 7; n++) {
-      const pastIdx = (today - n) % DICT.length;
-      const pw = DICT[pastIdx < 0 ? DICT.length + pastIdx : pastIdx];
-      if (!pw) continue;
-      const d = new Date((today - n) * 86400000);
-      const label = n === 1 ? 'Yesterday' : days[d.getDay()];
-      rows.push(`<div onclick="if(typeof speak==='function')speak('${pw.rom.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;cursor:pointer">
-        <span style="font-size:1.3rem">${pw.emoji||'⭐'}</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:.95rem">${pw.tig} <span style="font-weight:400;color:var(--text-dim);font-size:.8rem">${pw.rom}</span></div>
-          <div style="font-size:.78rem;color:var(--text-dim)">${pw.eng}</div>
-        </div>
-        <span style="font-size:.7rem;color:var(--text-dim);white-space:nowrap">${label}</span>
-      </div>`);
-    }
-    if (rows.length) { listEl.innerHTML = rows.join(''); histEl.style.display = ''; }
-  }
 })();
 
 function wotdSpeak() {
