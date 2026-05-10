@@ -8998,7 +8998,7 @@ function startMatch() {
     <div class="match-card" id="mc${i}" data-idx="${i}">
       <div class="match-card-front">?</div>
       <div class="match-card-back${c.type === 'tig' ? ' tig' : ''}">
-        <div class="mc-emoji">${c.emoji}</div>
+        ${c.type === 'tig' ? `<div class="mc-emoji">${c.emoji}</div>` : ''}
         <div class="mc-text">${c.text}</div>
         ${c.type === 'tig' && c.hint ? `<div class="mc-hint">${c.hint}</div>` : ''}
       </div>
