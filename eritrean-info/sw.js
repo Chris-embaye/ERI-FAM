@@ -3,7 +3,7 @@
    Caches all app assets for offline use
    ============================================ */
 
-const CACHE_NAME    = 'eritrean-info-v75';
+const CACHE_NAME    = 'eritrean-info-v80';
 const OFFLINE_URL   = './index.html';
 
 const PRECACHE_ASSETS = [
@@ -24,7 +24,11 @@ const PRECACHE_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
+      return Promise.all(
+        PRECACHE_ASSETS.map(url =>
+          cache.add(url).catch(err => console.warn('[SW] precache skip:', url, err))
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -75,7 +79,8 @@ self.addEventListener('fetch', (event) => {
         if (cached) return cached;
         return fetch(event.request).then(res => {
           if (res && res.ok) {
-            caches.open(CACHE_NAME).then(c => c.put(event.request, res.clone()));
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
           }
           return res;
         }).catch(() => new Response('', { status: 503 }));
