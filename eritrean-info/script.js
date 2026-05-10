@@ -702,6 +702,7 @@ function showFidelToast(msg) {
     { cat:'Family',    w:'ሓፍቲ',      r:'Hafti',       m:'Sister',                       ex:'ሓፍተይ ፈቓር — My sister is kind' },
     { cat:'Family',    w:'ስድራቤት',    r:'Sidra-bet',   m:'Family',                       ex:'ስድራቤትና ሓቢርና — Our family together' },
     { cat:'Family',    w:'ሓዳር',      r:'Hadar',       m:'Marriage / Home',              ex:'ሓዳር ሰናይ — A good marriage' },
+    { cat:'Family',    w:'ገዛ',       r:'Geza',        m:'House / Home',                 ex:'ገዛና ሓቢርና — Our house together' },
     // Numbers
     { cat:'Numbers',   w:'ሓደ',       r:'Hade',        m:'One (1)',                      ex:'ሓደ ሰብ — One person' },
     { cat:'Numbers',   w:'ክልተ',      r:'Kilte',       m:'Two (2)',                      ex:'ክልተ ቀለምቲ — Two colors' },
