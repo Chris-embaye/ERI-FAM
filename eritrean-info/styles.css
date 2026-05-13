@@ -224,6 +224,16 @@ html.dark .nav-dd-item:hover, html.dark .nav-dd-item.active {
   background: rgba(0,122,61,0.15);
   color: #4ade80;
 }
+.nav-dd-tools {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4px 24px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.nav-dd-tools:empty { display: none; }
 .nav-dd-footer {
   max-width: 1200px;
   margin: 0 auto;
@@ -1029,20 +1039,23 @@ html:not(.dark) .nrb-section { color: rgba(0,0,0,0.85); }
 
 /* ══ HERO CENTER PANEL ════════════════════════════════════════ */
 .hero-center-panel {
-  flex: 0 0 220px;
+  flex: 0 0 300px;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   align-self: flex-start;
   padding-top: 8px;
   order: 3;
+}
+.hcp-independence {
+  grid-column: 1 / -1;
 }
 .hcp-card {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 .hcp-label {
   display: block;
@@ -2473,13 +2486,14 @@ footer {
 }
 
 /* ============================================
-   NATIONAL ANTHEM PLAYER  (top-left)
+   NATIONAL ANTHEM PLAYER  (bottom-left)
    ============================================ */
 .anthem-player {
   position: fixed;
-  top: 68px;
-  left: 0;
-  width: 272px;
+  bottom: 16px;
+  left: 16px;
+  top: auto;
+  width: 252px;
   z-index: 8500;
   font-family: var(--font-sans);
   user-select: none;

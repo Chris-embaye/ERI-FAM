@@ -2099,12 +2099,12 @@ function initAutoRefresh() {
 // ── T19: PRINT MODE ──────────────────────────────────────────────────────
 (function T19_Print() {
   function init() {
-    const navRight = document.querySelector('.nav-right');
+    const navRight = document.getElementById('navToolsRow') || document.querySelector('.nav-right');
     if (!navRight) return;
     const btn = document.createElement('button');
-    btn.className = 'nav-print-btn'; btn.title = 'Print page (Alt+P)'; btn.textContent = '🖨';
+    btn.className = 'nav-print-btn'; btn.title = 'Print page (Alt+P)'; btn.textContent = '🖨 Print';
     btn.addEventListener('click', () => window.print());
-    navRight.prepend(btn);
+    navRight.appendChild(btn);
     document.addEventListener('keydown', e => { if (e.altKey && e.key === 'p') { e.preventDefault(); window.print(); } });
   }
   document.addEventListener('DOMContentLoaded', init);
@@ -2123,7 +2123,7 @@ function initAutoRefresh() {
   }
 
   function init() {
-    const navRight = document.querySelector('.nav-right');
+    const navRight = document.getElementById('navToolsRow') || document.querySelector('.nav-right');
     if (!navRight) return;
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;gap:3px;align-items:center;';
@@ -2133,7 +2133,7 @@ function initAutoRefresh() {
       btn.addEventListener('click', () => apply(i));
       wrap.appendChild(btn);
     });
-    navRight.prepend(wrap);
+    navRight.appendChild(wrap);
     apply(parseInt(localStorage.getItem(LS_KEY) || '1'));
   }
 
@@ -2726,7 +2726,7 @@ function checkAchievement(id) {
   }
 
   function init() {
-    const navRight = document.querySelector('.nav-right');
+    const navRight = document.getElementById('navToolsRow') || document.querySelector('.nav-right');
     if (!navRight) return;
     const btn = document.createElement('button');
     btn.id = 'ambientToggleBtn'; btn.className = 'ambient-btn'; btn.title = 'Ambient sounds (Alt+S)';
@@ -3117,7 +3117,7 @@ function checkAchievement(id) {
   }
 
   function init() {
-    const navRight = document.querySelector('.nav-right');
+    const navRight = document.getElementById('navToolsRow') || document.querySelector('.nav-right');
     if (!navRight) return;
     const btn = document.createElement('button');
     btn.className = 'nav-print-btn'; btn.title = 'Download my learning kit'; btn.textContent = '📥 Kit';
@@ -3129,7 +3129,7 @@ function checkAchievement(id) {
       a.click();
       showToast('📥 Learning kit downloaded!', 'info');
     });
-    navRight.prepend(btn);
+    navRight.appendChild(btn);
   }
 
   document.addEventListener('DOMContentLoaded', init);
@@ -3155,7 +3155,7 @@ function checkAchievement(id) {
   }
 
   function init() {
-    const navRight = document.querySelector('.nav-right');
+    const navRight = document.getElementById('navToolsRow') || document.querySelector('.nav-right');
     if (!navRight) return;
 
     const fileInput = document.createElement('input');
@@ -3189,7 +3189,7 @@ function checkAchievement(id) {
     });
 
     btn.addEventListener('click', () => fileInput.click());
-    navRight.prepend(btn);
+    navRight.appendChild(btn);
   }
 
   document.addEventListener('DOMContentLoaded', init);

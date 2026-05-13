@@ -68,8 +68,8 @@
       </a>
       <div class="nav-right">
         <button class="nav-search-btn" id="globalSearchBtn" title="Search everything" aria-label="Search">🔍</button>
-        <button class="nav-icon-btn" id="inPageSearchBtn" title="Search within page (Ctrl+F)" aria-label="In-page search">🔎</button>
-        <button class="nav-icon-btn" id="readingModeBtn" title="Reading mode" aria-label="Reading mode">Aa</button>
+        <button class="nav-icon-btn" id="inPageSearchBtn" title="Search within page (Ctrl+F)" aria-label="In-page search" style="display:none">🔎</button>
+        <button class="nav-icon-btn" id="readingModeBtn" title="Reading mode" aria-label="Reading mode" style="display:none">Aa</button>
         <button class="dark-toggle" id="darkToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
         <div class="lang-picker-wrap" id="langPickerWrap">
           <button class="lang-picker-btn" id="langPickerBtn" title="Choose language">🌐 <span id="currentLangLabel">EN</span></button>
@@ -137,6 +137,7 @@
         <a href="#events"       class="nav-dd-item">📅<span>Events</span></a>
         <a href="#directory"    class="nav-dd-item">📋<span>Directory</span></a>
       </div>
+      <div class="nav-dd-tools" id="navToolsRow"></div>
       <div class="nav-dd-footer">
         <button class="nav-dd-app-btn" id="navDownloadBtn">⬇️ Get App — Works Offline</button>
       </div>
@@ -254,7 +255,8 @@
         <div class="hero-flag-accent"></div>
         <p class="hero-clock" id="heroClock">🕐 Asmara · --:-- EAT</p>
         <p class="hero-eyebrow">The Heart of the Red Sea</p>
-        <p class="hero-subtitle">ሃገረ ኤርትራ &nbsp;|&nbsp; <span translate="no" class="notranslate">إريتريا</span></p>
+        <p class="hero-subtitle">ሃገረ ኤርትራ</p>
+        <p class="hero-subtitle hero-subtitle-ar" translate="no"><span class="notranslate">إريتريا</span></p>
         <button class="hero-greet" id="heroGreetBtn" aria-label="Hear Tigrinya greeting">🔊 ሰላም!</button>
         <p class="hero-tagline">Pearl of the Red Sea</p>
         <p class="hero-stamp">Est. 1993 &nbsp;·&nbsp; Horn of Africa &nbsp;·&nbsp; Red Sea</p>
@@ -573,7 +575,7 @@
             <text x="185" y="88" font-size="8" fill="rgba(100,195,255,0.55)" font-family="Georgia,serif" font-style="italic" font-weight="400" letter-spacing="1.5" transform="rotate(-30,185,88)">Red Sea</text>
           </g>
         </svg>
-        <h1 data-text="ERI·TREA">ERI<span class="h1-dot">·</span>TREA</h1>
+        <h1 data-text="ERITREA">ERITREA</h1>
       </div>
 
       <!-- ── TR-CLUSTER as flex item ───────────────────────── -->
