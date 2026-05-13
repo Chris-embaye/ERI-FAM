@@ -2082,7 +2082,7 @@ function initAutoRefresh() {
 
     const toggleBtn = document.createElement('button');
     toggleBtn.id = 'themeToggle'; toggleBtn.title = 'Change theme'; toggleBtn.textContent = '🎨';
-    toggleBtn.style.cssText = 'position:fixed;bottom:264px;right:18px;z-index:201;width:36px;height:36px;background:var(--bg,#fff);border:1px solid var(--border,#e0e0e0);border-radius:50%;cursor:pointer;font-size:.95rem;box-shadow:0 2px 8px rgba(0,0,0,.1);';
+    toggleBtn.style.cssText = 'position:fixed;bottom:208px;right:16px;z-index:201;width:42px;height:42px;background:var(--bg,#fff);border:1px solid var(--border,#e0e0e0);border-radius:50%;cursor:pointer;font-size:.95rem;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;';
     document.body.appendChild(toggleBtn);
     toggleBtn.addEventListener('click', () => { picker.hidden = !picker.hidden; });
     if (closeBtn) closeBtn.addEventListener('click', () => { picker.hidden = true; });

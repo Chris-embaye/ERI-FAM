@@ -1115,11 +1115,11 @@ button#themeToggle { position:fixed; bottom:264px; right:18px; z-index:200; widt
 .fc-stats { text-align:center; font-size:.78rem; color:var(--text-muted,#888); }
 
 /* T25: Achievement Badges --------------------------------------------- */
-.badge-drawer-btn { position:fixed; bottom:108px; right:16px; z-index:200; width:42px; height:42px;
+.badge-drawer-btn { position:fixed; bottom:152px; right:16px; z-index:200; width:42px; height:42px;
   background:var(--bg,#fff); border:1px solid var(--border,#e0e0e0); border-radius:50%;
   cursor:pointer; font-size:1.1rem; box-shadow:0 3px 12px rgba(0,0,0,.12); transition:transform .2s; }
 .badge-drawer-btn:hover { transform:scale(1.1); }
-.badge-drawer { position:fixed; bottom:160px; right:16px; z-index:300; width:280px;
+.badge-drawer { position:fixed; bottom:204px; right:16px; z-index:300; width:280px;
   background:var(--bg,#fff); border:1px solid var(--border,#e0e0e0); border-radius:16px;
   box-shadow:0 8px 32px rgba(0,0,0,.15); overflow:hidden; }
 .badge-drawer-hd { display:flex; align-items:center; justify-content:space-between;
