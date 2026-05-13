@@ -1,0 +1,130 @@
+name: iOS — Build & Upload to App Store
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'fidel-ios/**'
+      - '.github/workflows/ios-deploy.yml'
+
+jobs:
+  build-and-upload:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate app icon
+        run: |
+          python3 << 'PYEOF'
+          import struct, zlib, os
+
+          def png_chunk(name, data):
+              c = name + data
+              return struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
+
+          def make_png(size, r, g, b):
+              sig = b'\x89PNG\r\n\x1a\n'
+              ihdr = png_chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 2, 0, 0, 0))
+              raw  = b''.join(b'\x00' + bytes([r, g, b] * size) for _ in range(size))
+              idat = png_chunk(b'IDAT', zlib.compress(raw, 1))
+              iend = png_chunk(b'IEND', b'')
+              return sig + ihdr + idat + iend
+
+          path = 'fidel-ios/Fidel/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png'
+          os.makedirs(os.path.dirname(path), exist_ok=True)
+          with open(path, 'wb') as f:
+              f.write(make_png(1024, 37, 99, 235))   # #2563EB blue
+          print('Icon generated ✓')
+          PYEOF
+
+      - name: Generate Xcode project
+        run: |
+          cd fidel-ios
+          xcodegen generate
+
+      - name: Import Distribution Certificate
+        env:
+          CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_DIST_CERT_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DIST_CERT_PASSWORD }}
+        run: |
+          echo "$CERTIFICATE_P12_BASE64" | base64 --decode > cert.p12
+          security create-keychain -p "build123" build.keychain
+          security import cert.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security list-keychains -s build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "build123" build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "build123" build.keychain
+
+      - name: Install Provisioning Profile
+        env:
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode \
+            > ~/Library/MobileDevice/Provisioning\ Profiles/fidel.mobileprovision
+
+      - name: Build Archive
+        run: |
+          cd fidel-ios
+          xcodebuild archive \
+            -project Fidel.xcodeproj \
+            -scheme Fidel \
+            -configuration Release \
+            -archivePath ../Fidel.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="Fidel App Store" \
+            DEVELOPMENT_TEAM=49D2THWCHV \
+            -allowProvisioningUpdates
+
+      - name: Export IPA
+        run: |
+          cat > ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>49D2THWCHV</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.chrisembaye.fidel</key>
+              <string>Fidel App Store</string>
+            </dict>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath Fidel.xcarchive \
+            -exportPath FidelExport \
+            -exportOptionsPlist ExportOptions.plist
+
+      - name: Upload to App Store Connect
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          mkdir -p ~/.private_keys
+          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
+            > ~/.private_keys/AuthKey_${ASC_API_KEY_ID}.p8
+          xcrun altool --upload-app \
+            --type ios \
+            --file FidelExport/Fidel.ipa \
+            --apiKey "$ASC_API_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
+          echo "Upload complete ✓"
