@@ -3057,5 +3057,69 @@
   <!-- T19: Print button injected by JS -->
   <!-- T20: Font size buttons injected by JS -->
   <!-- T40: Export Kit button injected by JS -->
+
+<script>
+(function initAnthemPlayer() {
+  const audio      = document.getElementById('anthemAudio');
+  const playBtn    = document.getElementById('anthemPlay');
+  const barPlay    = document.getElementById('anthemBarPlay');
+  const barToggle  = document.getElementById('anthemBarToggle');
+  const panel      = document.getElementById('anthemPanel');
+  const fill       = document.getElementById('anthemFill');
+  const curEl      = document.getElementById('anthemCur');
+  const durEl      = document.getElementById('anthemDur');
+  const track      = document.getElementById('anthemTrack');
+  if (!audio || !playBtn) return;
+
+  function fmt(s) {
+    const m = Math.floor(s / 60), ss = Math.floor(s % 60);
+    return m + ':' + String(ss).padStart(2, '0');
+  }
+
+  function setPlaying(on) {
+    const icon = on ? '&#9646;&#9646;' : '&#9654;';
+    playBtn.innerHTML = icon;
+    barPlay.innerHTML = icon;
+  }
+
+  function togglePlay() {
+    if (audio.paused) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }
+
+  playBtn.addEventListener('click', togglePlay);
+  barPlay.addEventListener('click', togglePlay);
+
+  barToggle.addEventListener('click', () => {
+    const open = panel.style.display !== 'none' && panel.style.display !== '';
+    panel.style.display = open ? 'none' : 'block';
+    barToggle.innerHTML = open ? '&#9660;' : '&#9650;';
+  });
+
+  audio.addEventListener('play',  () => setPlaying(true));
+  audio.addEventListener('pause', () => setPlaying(false));
+  audio.addEventListener('ended', () => { setPlaying(false); audio.currentTime = 0; });
+
+  audio.addEventListener('loadedmetadata', () => {
+    durEl.textContent = fmt(audio.duration);
+  });
+
+  audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    const pct = audio.currentTime / audio.duration;
+    fill.style.width = (pct * 100) + '%';
+    curEl.textContent = fmt(audio.currentTime);
+  });
+
+  track.addEventListener('click', e => {
+    if (!audio.duration) return;
+    const rect = track.getBoundingClientRect();
+    audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+  });
+})();
+</script>
 </body>
 </html>
