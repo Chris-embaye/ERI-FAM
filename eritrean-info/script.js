@@ -2914,9 +2914,21 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
     applyDiscTheme(globalIdx);
     localStorage.setItem(LAST_KEY, JSON.stringify({ globalIdx }));
 
-    if (!t.url) { setPlayState(false); return; }
+    if (!t.url) {
+      setPlayState(false);
+      if (typeof showToast === 'function') showToast('No audio file for this track — skipping', 'info');
+      setTimeout(playNext, 800);
+      return;
+    }
     mpfAudio.src = t.url;
-    mpfAudio.play().catch(e => console.warn('[Music]', e));
+    mpfAudio.load();
+    mpfAudio.play().catch(e => {
+      console.warn('[Music]', e);
+      if (e.name === 'NotAllowedError') return; // browser blocked autoplay — user can press play
+      setPlayState(false);
+      if (typeof showToast === 'function') showToast('Track unavailable — skipping to next', 'info');
+      setTimeout(playNext, 1000);
+    });
   }
 
   function playNext() {
@@ -3020,6 +3032,15 @@ document.getElementById('nlSubmit')?.addEventListener('click', async () => {
   // ─ Audio events
   mpfAudio.addEventListener('play',  () => setPlayState(true));
   mpfAudio.addEventListener('pause', () => setPlayState(false));
+  mpfAudio.addEventListener('error', () => {
+    const code = mpfAudio.error?.code;
+    // code 1 = aborted (user action), don't skip
+    if (code === MediaError.MEDIA_ERR_ABORTED) return;
+    console.warn('[Music] audio error code', code, mpfAudio.src);
+    setPlayState(false);
+    if (typeof showToast === 'function') showToast('Track could not load — skipping', 'info');
+    setTimeout(playNext, 1000);
+  });
   mpfAudio.addEventListener('ended', () => {
     if (repeat === 'one') { mpfAudio.currentTime = 0; mpfAudio.play(); return; }
     if (repeat === 'all' || currentIdx < playOrder.length - 1) { playNext(); return; }
