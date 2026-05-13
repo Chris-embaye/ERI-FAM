@@ -50,5 +50,9 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+        UIRequiresFullScreen: false
+        UIApplicationSupportsIndirectInputEvents: true
+        UIBackgroundModes:
+          - audio
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false

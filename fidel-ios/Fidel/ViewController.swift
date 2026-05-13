@@ -10,12 +10,14 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
+        config.allowsAirPlayForMediaPlayback = true
+        config.allowsPictureInPictureMediaPlayback = true
 
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = false
-        webView.scrollView.contentInsetAdjustmentBehavior = .never
+        webView.scrollView.contentInsetAdjustmentBehavior = .automatic
         view = webView
     }
 
