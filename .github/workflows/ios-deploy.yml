@@ -122,9 +122,11 @@ jobs:
           mkdir -p ~/.private_keys
           echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
             > ~/.private_keys/AuthKey_${ASC_API_KEY_ID}.p8
+          IPA=$(find FidelExport -name "*.ipa" | head -1)
+          echo "Found IPA: $IPA"
           xcrun altool --upload-app \
             --type ios \
-            --file FidelExport/Fidel.ipa \
+            --file "$IPA" \
             --apiKey "$ASC_API_KEY_ID" \
             --apiIssuer "$ASC_ISSUER_ID"
           echo "Upload complete ✓"
