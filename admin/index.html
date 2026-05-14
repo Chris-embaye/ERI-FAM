@@ -92,16 +92,22 @@
       </button>
     </div>
 
-    <nav class="sb-nav">
+    <div class="sb-filter-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="sbFilter" class="sb-filter" placeholder="Filter menu…" autocomplete="off"/>
+      <kbd class="sb-filter-hint">/ </kbd>
+    </div>
+
+    <nav class="sb-nav" id="sbNav">
 
       <!-- Overview -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">Overview</div>
-        <button class="sb-item active" data-page="dashboard">
+        <div class="sb-cat-label sb-cat-toggle" data-cat="overview">Overview <span class="sb-cat-arrow">›</span></div>
+        <button class="sb-item active" data-page="dashboard" data-shortcut="1">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
           <span>Dashboard</span>
         </button>
-        <button class="sb-item" data-page="analytics">
+        <button class="sb-item" data-page="analytics" data-shortcut="5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           <span>Analytics</span>
         </button>
@@ -109,12 +115,12 @@
 
       <!-- Apps & Content -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">Apps &amp; Content</div>
-        <button class="sb-item" data-page="apps">
+        <div class="sb-cat-label sb-cat-toggle" data-cat="apps">Apps &amp; Content <span class="sb-cat-arrow">›</span></div>
+        <button class="sb-item" data-page="apps" data-shortcut="A">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="6" height="6" rx="1"/><rect x="9" y="3" width="6" height="6" rx="1"/><rect x="16" y="3" width="6" height="6" rx="1"/><rect x="2" y="10" width="6" height="6" rx="1"/><rect x="9" y="10" width="6" height="6" rx="1"/><rect x="16" y="10" width="6" height="6" rx="1"/><rect x="2" y="17" width="6" height="6" rx="1"/><rect x="9" y="17" width="6" height="6" rx="1"/></svg>
           <span>App Manager</span>
         </button>
-        <button class="sb-item" data-page="ericontent">
+        <button class="sb-item" data-page="ericontent" data-shortcut="E">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           <span>Eri Content</span>
         </button>
@@ -126,12 +132,12 @@
 
       <!-- Users -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">Users</div>
-        <button class="sb-item" data-page="users">
+        <div class="sb-cat-label sb-cat-toggle" data-cat="users">Users <span class="sb-cat-arrow">›</span></div>
+        <button class="sb-item" data-page="users" data-shortcut="2">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span>Users <span class="sb-badge" id="pendingBadge" hidden>0</span></span>
         </button>
-        <button class="sb-item" data-page="employees">
+        <button class="sb-item" data-page="employees" data-shortcut="P">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
           <span>Employees</span>
         </button>
@@ -139,12 +145,12 @@
 
       <!-- Music -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">Music</div>
-        <button class="sb-item" data-page="erimusic">
+        <div class="sb-cat-label sb-cat-toggle" data-cat="music">Music <span class="sb-cat-arrow">›</span></div>
+        <button class="sb-item" data-page="erimusic" data-shortcut="3">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
           <span>Eri Music</span>
         </button>
-        <button class="sb-item" data-page="music">
+        <button class="sb-item" data-page="music" data-shortcut="M">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
           <span>Music Library</span>
         </button>
@@ -156,16 +162,16 @@
 
       <!-- Community -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">Community</div>
-        <button class="sb-item" data-page="posts">
+        <div class="sb-cat-label sb-cat-toggle" data-cat="community">Community <span class="sb-cat-arrow">›</span></div>
+        <button class="sb-item" data-page="posts" data-shortcut="4">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           <span>Posts <span class="sb-badge" id="postsBadge" hidden>0</span></span>
         </button>
-        <button class="sb-item" data-page="events">
+        <button class="sb-item" data-page="events" data-shortcut="V">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span>Events</span>
         </button>
-        <button class="sb-item" data-page="feedback">
+        <button class="sb-item" data-page="feedback" data-shortcut="F">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
           <span>Feedback <span class="sb-badge" id="feedbackBadge" hidden>0</span></span>
         </button>
@@ -173,7 +179,7 @@
 
       <!-- Engage -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">Engage</div>
+        <div class="sb-cat-label sb-cat-toggle" data-cat="engage">Engage <span class="sb-cat-arrow">›</span></div>
         <button class="sb-item" data-page="notify">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span>Notifications</span>
@@ -198,19 +204,19 @@
 
       <!-- FIDEL -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">Fidel</div>
-        <button class="sb-item" data-page="fidel">
+        <div class="sb-cat-label sb-cat-toggle" data-cat="fidel">Fidel <span class="sb-cat-arrow">›</span></div>
+        <button class="sb-item" data-page="fidel" data-shortcut="K">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
           <span>Fidel App <span class="sb-badge" id="fidelLearnerBadge" hidden>0</span></span>
         </button>
       </div>
 
-      <!-- RigLog -->
+      <!-- TruckLog -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">RigLog</div>
-        <button class="sb-item" data-page="riglog">
+        <div class="sb-cat-label sb-cat-toggle" data-cat="trucklog">TruckLog <span class="sb-cat-arrow">›</span></div>
+        <button class="sb-item" data-page="riglog" data-shortcut="T">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          <span>RigLog <span class="sb-badge" id="trucklogUserBadge" hidden>0</span></span>
+          <span>TruckLog <span class="sb-badge" id="trucklogUserBadge" hidden>0</span></span>
         </button>
         <button class="sb-item" data-page="truck-log">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -220,7 +226,7 @@
 
       <!-- System -->
       <div class="sb-cat-group">
-        <div class="sb-cat-label">System</div>
+        <div class="sb-cat-label sb-cat-toggle" data-cat="system">System <span class="sb-cat-arrow">›</span></div>
         <button class="sb-item" data-page="versions">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
           <span>App Versions</span>
@@ -249,7 +255,7 @@
 
     </nav>
 
-    <div class="sb-recents" id="sbRecents" style="display:none">
+    <div class="sb-recents" id="sbRecents">
       <div class="sb-recents-label">Recent</div>
       <div id="sbRecentsList"></div>
     </div>
@@ -267,6 +273,9 @@
       </div>
       <button class="sb-darkmode" id="darkModeBtn" title="Toggle dark/light mode">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="sb-shortcuts-btn" id="kbModalOpen" title="Keyboard shortcuts (?)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
       </button>
       <button class="sb-signout" id="signOutBtn" title="Sign Out">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -428,7 +437,7 @@
           <div class="quick-links">
             <a href="https://eri-fam.web.app" target="_blank" class="quick-link"><span>🇪🇷</span><span>Eritrean Info</span><span>↗</span></a>
             <a href="https://eri-tigrinya-school.web.app" target="_blank" class="quick-link"><span>🎓</span><span>FIDEL</span><span>↗</span></a>
-            <a href="https://trucklogapp-1b40e.web.app" target="_blank" class="quick-link"><span>🚛</span><span>Riglog</span><span>↗</span></a>
+            <a href="https://trucklogapp-1b40e.web.app" target="_blank" class="quick-link"><span>🚛</span><span>TruckLog</span><span>↗</span></a>
             <a href="https://console.firebase.google.com/project/eri-fam" target="_blank" class="quick-link"><span>🔥</span><span>Firebase Console</span><span>↗</span></a>
             <a href="https://github.com/Chris-embaye" target="_blank" class="quick-link"><span>⚙</span><span>GitHub</span><span>↗</span></a>
           </div>
@@ -2637,5 +2646,220 @@ match /community_posts/{d} {
 </script>
 <script src="./firebase-config.js"></script>
 <script type="module" src="admin.js"></script>
+
+<!-- ── FAB ─────────────────────────────────────────────────── -->
+<button id="fabBtn" title="Quick actions">+</button>
+<div id="fabMenu">
+  <div class="fab-action" onclick="showPage('erimusic')">
+    <span class="fab-action-label">Add Music</span>
+    <span class="fab-action-icon">🎵</span>
+  </div>
+  <div class="fab-action" onclick="showPage('posts')">
+    <span class="fab-action-label">New Post</span>
+    <span class="fab-action-icon">✍️</span>
+  </div>
+  <div class="fab-action" onclick="showPage('notify')">
+    <span class="fab-action-label">Send Notification</span>
+    <span class="fab-action-icon">🔔</span>
+  </div>
+  <div class="fab-action" onclick="showPage('users')">
+    <span class="fab-action-label">Manage Users</span>
+    <span class="fab-action-icon">👥</span>
+  </div>
+</div>
+
+<!-- ── UNDO TOAST ────────────────────────────────────────────── -->
+<div id="undoToast">
+  <span class="toast-msg">Item deleted</span>
+  <button class="toast-undo">Undo</button>
+</div>
+
+<!-- ── KEYBOARD SHORTCUTS MODAL ─────────────────────────────── -->
+<div id="kbModal">
+  <div class="kb-box">
+    <div class="kb-title">
+      Keyboard Shortcuts
+      <button class="kb-close" id="kbModalClose">✕</button>
+    </div>
+    <div class="kb-section">
+      <div class="kb-section-label">Navigation</div>
+      <div class="kb-rows">
+        <div class="kb-row"><span class="kb-row-desc">Open command palette</span><div class="kb-keys"><kbd class="kb-key">Ctrl</kbd><kbd class="kb-key">K</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Dashboard</span><div class="kb-keys"><kbd class="kb-key">1</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Users</span><div class="kb-keys"><kbd class="kb-key">2</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Eri Music</span><div class="kb-keys"><kbd class="kb-key">3</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Posts</span><div class="kb-keys"><kbd class="kb-key">4</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Analytics</span><div class="kb-keys"><kbd class="kb-key">5</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Show this panel</span><div class="kb-keys"><kbd class="kb-key">?</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Close / dismiss</span><div class="kb-keys"><kbd class="kb-key">Esc</kbd></div></div>
+      </div>
+    </div>
+    <div class="kb-section">
+      <div class="kb-section-label">Editing (any table / list)</div>
+      <div class="kb-rows">
+        <div class="kb-row"><span class="kb-row-desc">Edit selected item</span><div class="kb-keys"><kbd class="kb-key">E</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Delete selected</span><div class="kb-keys"><kbd class="kb-key">Del</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Duplicate selected</span><div class="kb-keys"><kbd class="kb-key">Ctrl</kbd><kbd class="kb-key">D</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Select all</span><div class="kb-keys"><kbd class="kb-key">Ctrl</kbd><kbd class="kb-key">A</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Save / confirm</span><div class="kb-keys"><kbd class="kb-key">Enter</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Undo delete</span><div class="kb-keys"><kbd class="kb-key">Ctrl</kbd><kbd class="kb-key">Z</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Export current view</span><div class="kb-keys"><kbd class="kb-key">Ctrl</kbd><kbd class="kb-key">Shift</kbd><kbd class="kb-key">E</kbd></div></div>
+      </div>
+    </div>
+    <div class="kb-section">
+      <div class="kb-section-label">Sidebar</div>
+      <div class="kb-rows">
+        <div class="kb-row"><span class="kb-row-desc">Filter menu</span><div class="kb-keys"><kbd class="kb-key">/</kbd></div></div>
+        <div class="kb-row"><span class="kb-row-desc">Collapse sidebar</span><div class="kb-keys"><kbd class="kb-key">Ctrl</kbd><kbd class="kb-key">[</kbd></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── NAV ENHANCEMENT SCRIPT ───────────────────────────────── -->
+<script>
+(function() {
+  // 1. Sidebar filter — type to filter any nav item
+  const sbFilter = document.getElementById('sbFilter');
+  if (sbFilter) {
+    // Focus on "/" keypress (not in input/textarea)
+    document.addEventListener('keydown', function(e) {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        sbFilter.focus();
+        sbFilter.select();
+      }
+      if (e.key === 'Escape' && document.activeElement === sbFilter) {
+        sbFilter.value = '';
+        sbFilter.dispatchEvent(new Event('input'));
+        sbFilter.blur();
+      }
+    });
+    sbFilter.addEventListener('input', function() {
+      const q = this.value.toLowerCase().trim();
+      document.querySelectorAll('#sbNav .sb-item').forEach(btn => {
+        const txt = btn.textContent.toLowerCase();
+        btn.style.display = (!q || txt.includes(q)) ? '' : 'none';
+      });
+      document.querySelectorAll('#sbNav .sb-cat-group').forEach(group => {
+        const any = [...group.querySelectorAll('.sb-item')].some(b => b.style.display !== 'none');
+        group.style.display = any ? '' : 'none';
+      });
+    });
+  }
+
+  // 2. Collapsible category groups
+  document.querySelectorAll('.sb-cat-toggle').forEach(label => {
+    label.addEventListener('click', function() {
+      this.closest('.sb-cat-group').classList.toggle('sb-collapsed');
+    });
+  });
+
+  // 3. Recent pages tracking
+  const sbRecents = document.getElementById('sbRecents');
+  const sbRecentsList = document.getElementById('sbRecentsList');
+  let recentPages = [];
+  try { recentPages = JSON.parse(localStorage.getItem('hubRecentPages') || '[]'); } catch(e) {}
+
+  function renderRecents() {
+    if (!sbRecentsList || !sbRecents) return;
+    if (recentPages.length < 2) { sbRecents.style.display = 'none'; return; }
+    sbRecents.style.display = '';
+    sbRecentsList.innerHTML = recentPages.slice(0, 4).map(r =>
+      `<button class="sb-item" style="font-size:.75rem;padding:5px 12px" onclick="showPage('${r.page}')">${r.label}</button>`
+    ).join('');
+  }
+  renderRecents();
+
+  function trackPage(page) {
+    const btn = document.querySelector(`#sbNav .sb-item[data-page="${page}"]`);
+    if (!btn) return;
+    const label = btn.querySelector('span')?.childNodes[0]?.textContent?.trim() || page;
+    recentPages = recentPages.filter(r => r.page !== page);
+    recentPages.unshift({ page, label });
+    if (recentPages.length > 4) recentPages.pop();
+    try { localStorage.setItem('hubRecentPages', JSON.stringify(recentPages)); } catch(e) {}
+    renderRecents();
+  }
+
+  // Hook showPage
+  const _orig = window.showPage;
+  if (_orig) {
+    window.showPage = function(page) { _orig(page); trackPage(page); };
+  } else {
+    // Retry after module loads
+    window.addEventListener('load', () => {
+      if (window.showPage && window.showPage !== arguments.callee) {
+        const _o = window.showPage;
+        window.showPage = function(p) { _o(p); trackPage(p); };
+      }
+    });
+  }
+
+  // 4. FAB
+  const fabBtn = document.getElementById('fabBtn');
+  const fabMenu = document.getElementById('fabMenu');
+  if (fabBtn && fabMenu) {
+    fabBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      this.classList.toggle('open');
+      fabMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', function(e) {
+      if (!fabBtn.contains(e.target) && !fabMenu.contains(e.target)) {
+        fabBtn.classList.remove('open');
+        fabMenu.classList.remove('open');
+      }
+    });
+  }
+
+  // 5. Undo toast — exposed globally
+  window.showUndoToast = function(msg, onUndo, duration) {
+    const toast = document.getElementById('undoToast');
+    if (!toast) return;
+    toast.querySelector('.toast-msg').textContent = msg;
+    const oldBtn = toast.querySelector('.toast-undo');
+    const btn = oldBtn.cloneNode(true);
+    oldBtn.replaceWith(btn);
+    if (onUndo) btn.addEventListener('click', () => { hideUndoToast(); onUndo(); });
+    else btn.style.display = 'none';
+    toast.classList.add('show');
+    clearTimeout(window._undoTimer);
+    window._undoTimer = setTimeout(hideUndoToast, duration || 5000);
+  };
+  function hideUndoToast() {
+    document.getElementById('undoToast')?.classList.remove('show');
+  }
+
+  // 6. Keyboard shortcuts modal
+  const kbModal = document.getElementById('kbModal');
+  const kbOpen = document.getElementById('kbModalOpen');
+  const kbClose = document.getElementById('kbModalClose');
+  if (kbOpen) kbOpen.addEventListener('click', () => kbModal?.classList.toggle('open'));
+  if (kbClose) kbClose.addEventListener('click', () => kbModal?.classList.remove('open'));
+  if (kbModal) kbModal.addEventListener('click', e => { if (e.target === kbModal) kbModal.classList.remove('open'); });
+
+  document.addEventListener('keydown', function(e) {
+    const inField = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA';
+    if (e.key === '?' && !inField) { kbModal?.classList.toggle('open'); return; }
+    if (e.key === 'Escape') { kbModal?.classList.remove('open'); hideUndoToast(); return; }
+    // Number shortcuts 1-5
+    if (!inField && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const map = { '1':'dashboard','2':'users','3':'erimusic','4':'posts','5':'analytics' };
+      if (map[e.key] && window.showPage) { window.showPage(map[e.key]); }
+    }
+    // Ctrl+[ collapse sidebar
+    if (e.key === '[' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      document.getElementById('sidebarToggle')?.click();
+    }
+    // Ctrl+Z undo
+    if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !inField) {
+      e.preventDefault();
+      document.querySelector('#undoToast .toast-undo')?.click();
+    }
+  });
+})();
+</script>
 </body>
 </html>
