@@ -978,22 +978,44 @@
 
       <!-- Upload form -->
       <div class="eri-music-upload-card">
-        <h3 style="margin:0 0 14px;font-size:.95rem;font-weight:700">Add New Song</h3>
-        <div class="eri-music-form">
-          <input type="text"  id="eriMusicTitle"  class="form-input" placeholder="Song title *" style="flex:1;min-width:140px"/>
-          <input type="text"  id="eriMusicArtist" class="form-input" placeholder="Artist name *" style="flex:1;min-width:140px"/>
-          <label class="eri-music-file-btn" for="eriMusicFile">
-            🎵 Choose Audio File
-            <input type="file" id="eriMusicFile" accept="audio/*" hidden/>
-          </label>
-          <span id="eriMusicFileName" class="eri-music-fname">No file chosen</span>
-          <button class="btn-primary" id="eriMusicUploadBtn" disabled>Upload</button>
+
+        <!-- Mode toggle header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 style="margin:0;font-size:.95rem;font-weight:700">Add New Song</h3>
+          <div style="display:flex;gap:4px">
+            <button id="eriModeSingle" style="font-size:.78rem;padding:4px 12px;border-radius:6px;background:var(--accent,#4A7DFF);color:#fff;border:none;cursor:pointer;font-weight:600">Single</button>
+            <button id="eriModeFolder" style="font-size:.78rem;padding:4px 12px;border-radius:6px;background:transparent;color:var(--text-dim,#888);border:1px solid var(--border,#333);cursor:pointer">📁 Folder</button>
+          </div>
         </div>
-        <div id="eriMusicProgress" class="eri-music-prog" hidden>
-          <div class="up-bar-wrap"><div class="up-bar" id="eriMusicBar"></div></div>
-          <p id="eriMusicStatus" style="font-size:.8rem;color:var(--text-dim);margin:6px 0 0">Uploading…</p>
+
+        <!-- ── SINGLE mode ── -->
+        <div id="eriSingleMode">
+          <div class="eri-music-form">
+            <input type="text"  id="eriMusicTitle"  class="form-input" placeholder="Song title *" style="flex:1;min-width:140px"/>
+            <input type="text"  id="eriMusicArtist" class="form-input" placeholder="Artist name *" style="flex:1;min-width:140px"/>
+            <input type="text"  id="eriMusicYoutubeUrl" class="form-input" placeholder="YouTube URL (youtube.com/watch?v=...)" style="flex:2;min-width:200px"/>
+            <button class="btn-primary" id="eriMusicUploadBtn" disabled>Add Song</button>
+          </div>
+          <p id="eriMusicMsg" class="eri-music-msg" hidden></p>
         </div>
-        <p id="eriMusicMsg" class="eri-music-msg" hidden></p>
+
+        <!-- ── FOLDER mode ── -->
+        <div id="eriFolderMode" hidden>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <button class="btn-secondary" id="eriFolderPickBtn">📁 Choose Folder</button>
+            <input type="file" id="eriFolderInput" webkitdirectory multiple accept="audio/*" hidden/>
+            <span id="eriFolderName" style="font-size:.82rem;color:var(--text-dim,#888)">No folder chosen</span>
+          </div>
+          <p style="font-size:.8rem;color:var(--text-dim,#888);margin:0 0 10px;line-height:1.5">
+            Pick a folder of audio files — each file appears as a row. Paste the YouTube URL for each song, then click <strong>Add All Songs</strong>.
+          </p>
+          <div id="eriFolderRows" style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;padding-right:4px"></div>
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn-primary" id="eriFolderSubmit" hidden>Add All Songs</button>
+            <p id="eriFolderMsg" style="margin:0;font-size:.85rem" hidden></p>
+          </div>
+        </div>
+
       </div>
 
       <!-- Track list -->

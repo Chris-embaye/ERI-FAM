@@ -80,6 +80,7 @@ service cloud.firestore {
     // ── music ───────────────────────────────────────────────────────
     match /tracks/{docId}     { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
     match /eri_music/{docId}  { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
+    match /eri_tracks/{docId} { allow read: if true;     allow write: if isOwner() || isAuth(); }
 
     // ── community ───────────────────────────────────────────────────
     match /community_posts/{docId} {

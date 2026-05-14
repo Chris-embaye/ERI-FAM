@@ -16,7 +16,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8021114161012516" crossorigin="anonymous"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -4394,6 +4393,7 @@
     <div style="font-size:.7rem;color:var(--text-sub);margin-bottom:10px;line-height:1.5">Tip: upload to <a href="https://imgur.com" target="_blank" style="color:var(--green)">Imgur.com</a> for free, then paste the link.</div>
     <div class="sc-err" id="ssetupErr" style="margin-bottom:8px"></div>
     <button class="ssetup-btn" id="ssetupSave">Join Community →</button>
+    <button id="ssetupSkip" onclick="document.getElementById('ssetupOverlay').classList.add('hidden')" style="margin-top:10px;width:100%;padding:11px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.35);color:#3B82F6;cursor:pointer;font-size:.87rem;font-weight:600;border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);letter-spacing:.01em;transition:background .15s">Maybe Later</button>
   </div>
 </div>
 
@@ -5236,7 +5236,6 @@ function updateStreak() {
   prog.lastActive = today;
   saveProg();
   checkBadges();
-  if (prog.streak >= 2) requestNotifPermission();
 }
 
 function awardXP(amount) {

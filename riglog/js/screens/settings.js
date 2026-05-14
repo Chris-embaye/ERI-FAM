@@ -22,7 +22,7 @@ function downloadBackup(user) {
   const blob = new Blob([JSON.stringify(collectExportData(user), null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = Object.assign(document.createElement('a'), {
-    href: url, download: `riglog-backup-${new Date().toISOString().slice(0,10)}.json`,
+    href: url, download: `truck-log-backup-${new Date().toISOString().slice(0,10)}.json`,
   });
   a.click();
   URL.revokeObjectURL(url);
@@ -31,11 +31,11 @@ function downloadBackup(user) {
 async function shareBackup(user) {
   const file = new File(
     [JSON.stringify(collectExportData(user), null, 2)],
-    `riglog-backup-${new Date().toISOString().slice(0,10)}.json`,
+    `truck-log-backup-${new Date().toISOString().slice(0,10)}.json`,
     { type: 'application/json' }
   );
   if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: 'RigLog Backup' }); return; }
+    try { await navigator.share({ files: [file], title: 'Truck-Log Backup' }); return; }
     catch (e) { if (e.name === 'AbortError') return; }
   }
   downloadBackup(user);
@@ -97,7 +97,7 @@ export function renderSettings() {
         </button>
         <div>
           <h1 class="text-xl font-black">Settings</h1>
-          <p class="text-xs" style="color:rgba(100,200,255,0.5)">RigLog — trucklogapp.com</p>
+          <p class="text-xs" style="color:rgba(100,200,255,0.5)">Truck-Log — trucklogapp.com</p>
         </div>
         <button type="submit" form="settings-form" class="save-fab">Save</button>
       </div>
@@ -551,7 +551,7 @@ export function renderSettings() {
           <div class="text-center mb-5">
             <div class="text-4xl mb-2">💾</div>
             <p class="font-black text-lg">Back up before signing out?</p>
-            <p class="text-sm mt-1.5 px-2" style="color:rgba(148,163,184,0.8)">A local backup gives you an extra copy of your test data.</p>
+            <p class="text-sm mt-1.5 px-2" style="color:rgba(148,163,184,0.8)">A local backup gives you an extra copy of your data.</p>
           </div>
           <div class="space-y-2.5">
             <button id="so-download" class="settings-action-btn w-full">↓ Download Backup</button>

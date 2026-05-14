@@ -1,6 +1,6 @@
 {
-  "name": "RigLog",
-  "short_name": "RigLog",
+  "name": "Truck-Log",
+  "short_name": "Truck-Log",
   "id": "/",
   "description": "Truck driver toolkit — log trips, track expenses, and manage your business on the go.",
   "start_url": "./",

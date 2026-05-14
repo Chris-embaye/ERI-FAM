@@ -3737,31 +3737,150 @@ if (localStorage.getItem('erifam_master') === '1') {
 
 let _eriTracks = [];
 
-// File input + upload button wiring
+// Extract YouTube video ID from any YouTube URL format
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+// YouTube URL input + add button wiring
 (function initEriMusicUI() {
-  const fileInput = document.getElementById('eriMusicFile');
-  const fnameEl   = document.getElementById('eriMusicFileName');
   const uploadBtn = document.getElementById('eriMusicUploadBtn');
-  if (!fileInput) return;
+  if (!uploadBtn) return;
 
-  fileInput.addEventListener('change', () => {
-    const f = fileInput.files[0];
-    fnameEl.textContent = f ? f.name : 'No file chosen';
-    _validateEriUploadBtn();
-  });
-
-  ['eriMusicTitle', 'eriMusicArtist'].forEach(id => {
+  ['eriMusicTitle', 'eriMusicArtist', 'eriMusicYoutubeUrl'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', _validateEriUploadBtn);
   });
 
   function _validateEriUploadBtn() {
     const title  = document.getElementById('eriMusicTitle')?.value.trim();
     const artist = document.getElementById('eriMusicArtist')?.value.trim();
-    const file   = document.getElementById('eriMusicFile')?.files[0];
-    uploadBtn.disabled = !(title && artist && file);
+    const url    = document.getElementById('eriMusicYoutubeUrl')?.value.trim();
+    uploadBtn.disabled = !(title && artist && extractYouTubeId(url));
   }
 
   uploadBtn.addEventListener('click', handleEriMusicUpload);
+})();
+
+// ── MODE TOGGLE (Single ↔ Folder) ──────────────────────────
+(function initEriModeToggle() {
+  const singleBtn  = document.getElementById('eriModeSingle');
+  const folderBtn  = document.getElementById('eriModeFolder');
+  const singleMode = document.getElementById('eriSingleMode');
+  const folderMode = document.getElementById('eriFolderMode');
+  if (!singleBtn) return;
+
+  function setMode(mode) {
+    const isSingle = mode === 'single';
+    singleMode.hidden = !isSingle;
+    folderMode.hidden = isSingle;
+    singleBtn.style.background    = isSingle ? 'var(--accent,#4A7DFF)' : 'transparent';
+    singleBtn.style.color         = isSingle ? '#fff' : 'var(--text-dim,#888)';
+    singleBtn.style.border        = isSingle ? 'none' : '1px solid var(--border,#333)';
+    folderBtn.style.background    = !isSingle ? 'var(--accent,#4A7DFF)' : 'transparent';
+    folderBtn.style.color         = !isSingle ? '#fff' : 'var(--text-dim,#888)';
+    folderBtn.style.border        = !isSingle ? 'none' : '1px solid var(--border,#333)';
+  }
+
+  singleBtn.addEventListener('click', () => setMode('single'));
+  folderBtn.addEventListener('click',  () => setMode('folder'));
+})();
+
+// ── FOLDER MODE logic ────────────────────────────────────────
+(function initEriFolderMode() {
+  const pickBtn   = document.getElementById('eriFolderPickBtn');
+  const fileInput = document.getElementById('eriFolderInput');
+  const nameEl    = document.getElementById('eriFolderName');
+  const rowsEl    = document.getElementById('eriFolderRows');
+  const submitBtn = document.getElementById('eriFolderSubmit');
+  const msgEl     = document.getElementById('eriFolderMsg');
+  if (!pickBtn) return;
+
+  pickBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', () => {
+    const AUDIO_RE = /\.(mp3|m4a|wav|flac|ogg|aac|opus|wma|aiff)$/i;
+    const files = [...fileInput.files].filter(f => f.type.startsWith('audio/') || AUDIO_RE.test(f.name));
+    if (!files.length) {
+      nameEl.textContent = 'No audio files found in that folder';
+      rowsEl.innerHTML   = '';
+      submitBtn.hidden   = true;
+      return;
+    }
+
+    nameEl.textContent = `${files.length} audio file${files.length !== 1 ? 's' : ''} found`;
+
+    rowsEl.innerHTML = files.map((f, i) => {
+      const rawName  = f.name.replace(AUDIO_RE, '');
+      const cleanTitle = rawName.replace(/[_-]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      return `
+        <div class="eri-folder-row" style="background:var(--card-bg,#1a1a1a);border:1px solid var(--border,#333);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:.75rem;color:var(--text-dim,#888);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(f.name)}">${esc(f.name)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <input type="text" class="form-input eri-fr-title"  placeholder="Title *"        value="${esc(cleanTitle)}"  style="flex:1;min-width:120px;font-size:.83rem"/>
+            <input type="text" class="form-input eri-fr-artist" placeholder="Artist"                                    style="flex:1;min-width:120px;font-size:.83rem"/>
+            <input type="text" class="form-input eri-fr-yturl"  placeholder="YouTube URL *"                             style="flex:2;min-width:180px;font-size:.83rem"/>
+          </div>
+        </div>`;
+    }).join('');
+
+    submitBtn.hidden = false;
+    msgEl.hidden     = true;
+  });
+
+  submitBtn.addEventListener('click', async () => {
+    const rows = rowsEl.querySelectorAll('.eri-folder-row');
+    const valid = [];
+    const invalid = [];
+
+    rows.forEach(row => {
+      const title     = row.querySelector('.eri-fr-title').value.trim();
+      const artist    = row.querySelector('.eri-fr-artist').value.trim() || 'Eritrean Artist';
+      const ytUrl     = row.querySelector('.eri-fr-yturl').value.trim();
+      const youtubeId = extractYouTubeId(ytUrl);
+      if (title && youtubeId) valid.push({ title, artist, youtubeId });
+      else invalid.push(row);
+    });
+
+    // Highlight missing rows
+    rows.forEach(r => r.style.borderColor = '');
+    invalid.forEach(r => r.style.borderColor = '#f87171');
+
+    if (!valid.length) {
+      msgEl.textContent = '⚠ No valid songs — fill in Title and YouTube URL for each song.';
+      msgEl.style.color = '#f87171';
+      msgEl.hidden      = false;
+      return;
+    }
+
+    submitBtn.disabled = true;
+    msgEl.textContent  = `Saving ${valid.length} song${valid.length !== 1 ? 's' : ''}…`;
+    msgEl.style.color  = 'var(--text-dim,#888)';
+    msgEl.hidden       = false;
+
+    try {
+      await Promise.all(valid.map(s => fb.addDoc(fb.collection(_db, 'eri_tracks'), {
+        ...s, addedAt: fb.serverTimestamp(), addedBy: currentUser?.uid || ''
+      })));
+
+      const skipped = rows.length - valid.length;
+      msgEl.textContent = `✅ ${valid.length} song${valid.length !== 1 ? 's' : ''} added!` +
+        (skipped ? ` (${skipped} skipped — missing title or YouTube URL)` : '');
+      msgEl.style.color = '#22c55e';
+      rowsEl.innerHTML  = '';
+      submitBtn.hidden   = true;
+      fileInput.value    = '';
+      nameEl.textContent = 'No folder chosen';
+      loadEriMusic();
+      logActivity?.(`Eri Music: folder-added ${valid.length} songs`);
+    } catch(e) {
+      msgEl.textContent = '❌ Failed: ' + e.message;
+      msgEl.style.color = '#f87171';
+      console.error('[EriMusic Folder]', e);
+    }
+    submitBtn.disabled = false;
+  });
 })();
 
 async function loadEriMusic() {
@@ -3793,11 +3912,13 @@ function cleanEriTitle(raw) {
 function renderEriTracks() {
   const list = document.getElementById('eriMusicList');
   if (!_eriTracks.length) {
-    list.innerHTML = '<p class="empty-msg">No songs yet — upload the first one above.</p>';
+    list.innerHTML = '<p class="empty-msg">No songs yet — add the first one above.</p>';
     return;
   }
   list.innerHTML = _eriTracks.map((t, i) => {
-    const dur = t.duration ? fmtDuration(t.duration) : '—';
+    const badge = t.youtubeId
+      ? `<a href="https://youtu.be/${t.youtubeId}" target="_blank" rel="noopener" style="font-size:.75rem;color:#4A7DFF;text-decoration:none;white-space:nowrap">▶ YouTube</a>`
+      : `<span style="font-size:.75rem;color:#f87171">⚠ No link</span>`;
     return `
       <div class="music-track-row eri-track-row">
         <div class="music-track-cover">🎵</div>
@@ -3805,7 +3926,7 @@ function renderEriTracks() {
           <div class="music-track-title">${esc(cleanEriTitle(t.title))}</div>
           <div class="music-track-meta">${esc(t.artist || 'Eritrean Artist')}</div>
         </div>
-        <div class="music-track-dur">${dur}</div>
+        <div class="music-track-dur">${badge}</div>
         <div class="music-track-actions">
           <button class="music-act-del" onclick="deleteEriTrack('${t.id}')">🗑 Remove</button>
         </div>
@@ -3829,58 +3950,40 @@ async function deleteEriTrack(id) {
 window.deleteEriTrack = deleteEriTrack;
 
 async function handleEriMusicUpload() {
-  const title  = document.getElementById('eriMusicTitle').value.trim();
-  const artist = document.getElementById('eriMusicArtist').value.trim();
-  const file   = document.getElementById('eriMusicFile').files[0];
-  if (!title || !artist || !file) return;
+  const title     = document.getElementById('eriMusicTitle').value.trim();
+  const artist    = document.getElementById('eriMusicArtist').value.trim();
+  const rawUrl    = document.getElementById('eriMusicYoutubeUrl').value.trim();
+  const youtubeId = extractYouTubeId(rawUrl);
+  if (!title || !artist || !youtubeId) return;
 
-  const btn     = document.getElementById('eriMusicUploadBtn');
-  const prog    = document.getElementById('eriMusicProgress');
-  const bar     = document.getElementById('eriMusicBar');
-  const statusEl = document.getElementById('eriMusicStatus');
-  const msgEl   = document.getElementById('eriMusicMsg');
+  const btn   = document.getElementById('eriMusicUploadBtn');
+  const msgEl = document.getElementById('eriMusicMsg');
 
-  btn.disabled = true;
-  prog.hidden  = false;
-  msgEl.hidden = true;
-  bar.style.width = '0%';
-  statusEl.textContent = 'Getting duration…';
+  btn.disabled  = true;
+  msgEl.hidden  = true;
 
   try {
-    const duration = await getAudioDuration(file);
-    statusEl.textContent = 'Uploading audio…';
-    const url = await uploadToCloudinary(file, pct => {
-      bar.style.width = Math.round(pct * 100) + '%';
-    });
-    bar.style.width = '95%';
-    statusEl.textContent = 'Saving to database…';
     await fb.addDoc(fb.collection(_db, 'eri_tracks'), {
-      title, artist, url, duration,
+      title, artist, youtubeId,
       addedAt: fb.serverTimestamp(),
-      uploadedBy: currentUser?.uid || ''
+      addedBy: currentUser?.uid || ''
     });
-    bar.style.width = '100%';
-    statusEl.textContent = 'Done!';
 
-    // Reset form
-    document.getElementById('eriMusicTitle').value  = '';
-    document.getElementById('eriMusicArtist').value = '';
-    document.getElementById('eriMusicFile').value   = '';
-    document.getElementById('eriMusicFileName').textContent = 'No file chosen';
+    document.getElementById('eriMusicTitle').value      = '';
+    document.getElementById('eriMusicArtist').value     = '';
+    document.getElementById('eriMusicYoutubeUrl').value = '';
 
     msgEl.textContent = `✅ "${title}" added to Eritrean Info music widget!`;
     msgEl.style.color = '#22c55e';
-    msgEl.hidden = false;
-    setTimeout(() => { prog.hidden = true; bar.style.width = '0%'; btn.disabled = true; }, 1500);
+    msgEl.hidden      = false;
+    btn.disabled      = false;
     loadEriMusic();
-    logActivity?.(`Eri Music: uploaded "${title}" by ${artist}`);
+    logActivity?.(`Eri Music: added "${title}" by ${artist} (YouTube: ${youtubeId})`);
   } catch(e) {
-    bar.style.width = '0%';
-    prog.hidden = true;
-    msgEl.textContent = '❌ Upload failed: ' + e.message;
+    msgEl.textContent = '❌ Failed: ' + e.message;
     msgEl.style.color = '#f87171';
-    msgEl.hidden = false;
-    btn.disabled = false;
+    msgEl.hidden      = false;
+    btn.disabled      = false;
     console.error('[EriMusic]', e);
   }
 }

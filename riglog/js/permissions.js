@@ -26,7 +26,7 @@ export async function requestLocation(opts = {}) {
 
 export function locationDeniedMsg() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if (isIOS) return 'Location blocked — go to Settings → Privacy → Location Services → Safari (or RigLog) → Allow';
+  if (isIOS) return 'Location blocked — go to Settings → Privacy → Location Services → Safari (or Truck-Log) → Allow';
   return 'Location blocked — tap the 🔒 in the address bar → Site settings → Allow location';
 }
 
@@ -39,6 +39,6 @@ export async function checkCameraPermission() {
 
 export function cameraDeniedMsg() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if (isIOS) return 'Camera blocked — go to Settings → Privacy → Camera → Safari (or RigLog) → Allow';
+  if (isIOS) return 'Camera blocked — go to Settings → Privacy → Camera → Safari (or Truck-Log) → Allow';
   return 'Camera blocked — tap the 🔒 in the address bar → Site settings → Allow camera';
 }
