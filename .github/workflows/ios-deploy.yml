@@ -26,29 +26,14 @@ jobs:
       - name: Install xcodegen
         run: brew install xcodegen
 
-      - name: Generate app icon
+      - name: Verify app icon
         run: |
-          python3 << 'PYEOF'
-          import struct, zlib, os
-
-          def png_chunk(name, data):
-              c = name + data
-              return struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
-
-          def make_png(size, r, g, b):
-              sig = b'\x89PNG\r\n\x1a\n'
-              ihdr = png_chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 2, 0, 0, 0))
-              raw  = b''.join(b'\x00' + bytes([r, g, b] * size) for _ in range(size))
-              idat = png_chunk(b'IDAT', zlib.compress(raw, 1))
-              iend = png_chunk(b'IEND', b'')
-              return sig + ihdr + idat + iend
-
-          path = 'fidel-ios/Fidel/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png'
-          os.makedirs(os.path.dirname(path), exist_ok=True)
-          with open(path, 'wb') as f:
-              f.write(make_png(1024, 37, 99, 235))   # #2563EB blue
-          print('Icon generated ✓')
-          PYEOF
+          ICON=fidel-ios/Fidel/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+          if [ -f "$ICON" ]; then
+            echo "Icon exists: $(wc -c < $ICON) bytes ✓"
+          else
+            echo "ERROR: AppIcon-1024.png missing from repo" && exit 1
+          fi
 
       - name: Generate Xcode project
         run: |
