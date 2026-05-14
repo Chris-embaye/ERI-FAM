@@ -55,39 +55,12 @@ export function renderTax() {
   const loggedDeductible   = expenses.filter(e => DEDUCTIBLE.has(e.category)).reduce((s, e) => s + Number(e.amount || 0), 0);
   const totalActualExpenses = loggedDeductible + fixedDeductibleYTD;
 
-  // ── Per Diem deduction ──────────────────────────────────────────────────────
-  const perDiemRate      = Number(s.perDiemRate) || 80;
-  const perDiemDays      = trips.reduce((sum, t) => sum + (Number(t.perDiemDays) || 0), 0);
-  // IRS allows 80% of per diem for OTR transportation workers (Pub 463)
-  const perDiemDeduction = perDiemDays * perDiemRate * 0.80;
-
   // ── Deduction method selection ──────────────────────────────────────────────
   const mileageDeduction = ytdMiles * MILEAGE_RATE;
-  // Per diem applies to both methods — it's separate from mileage/actual expense choice
-  const mileagePlusOther  = mileageDeduction + eldYTD + insuranceYTD + otherFixedYTD + perDiemDeduction;
-  const totalActualExpensesWithPerDiem = totalActualExpenses + perDiemDeduction;
-  const useStdMileage     = mileagePlusOther >= totalActualExpensesWithPerDiem;
-  const chosenDeduction   = useStdMileage ? mileagePlusOther : totalActualExpensesWithPerDiem;
-
-  // ── IFTA state miles breakdown (current quarter) ────────────────────────────
-  function parseStateMiles(str) {
-    if (!str) return {};
-    const result = {};
-    str.split(',').forEach(part => {
-      const m = part.trim().match(/^([A-Z]{2})\s+(\d+)/i);
-      if (m) result[m[1].toUpperCase()] = (result[m[1].toUpperCase()] || 0) + parseInt(m[2]);
-    });
-    return result;
-  }
-  const qStart = m < 3 ? `${year}-01-01` : m < 5 ? `${year}-04-01` : m < 8 ? `${year}-07-01` : `${year}-10-01`;
-  const qLabel = m < 3 ? 'Q1' : m < 5 ? 'Q2' : m < 8 ? 'Q3' : 'Q4';
-  const iftaMap = {};
-  trips.filter(t => t.date >= qStart && t.stateMiles).forEach(t => {
-    Object.entries(parseStateMiles(t.stateMiles)).forEach(([state, mi]) => {
-      iftaMap[state] = (iftaMap[state] || 0) + mi;
-    });
-  });
-  const iftaEntries = Object.entries(iftaMap).sort((a, b) => b[1] - a[1]);
+  // Standard mileage covers fuel/maintenance — add other deductibles on top when using mileage method
+  const mileagePlusOther  = mileageDeduction + eldYTD + insuranceYTD + otherFixedYTD;
+  const useStdMileage     = mileagePlusOther >= totalActualExpenses;
+  const chosenDeduction   = useStdMileage ? mileagePlusOther : totalActualExpenses;
 
   // ── Tax math ────────────────────────────────────────────────────────────────
   const netSE   = Math.max(0, ytdNetRevenue - chosenDeduction);
@@ -123,13 +96,10 @@ export function renderTax() {
         <button onclick="navigate('more')" class="text-gray-400">
           <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <div class="flex-1">
+        <div>
           <h1 class="text-2xl font-black">Tax Summary</h1>
           <p class="text-xs text-gray-500">YTD ${year} · Estimates only — consult a CPA</p>
         </div>
-        <button id="taxExportCsvBtn" class="text-xs font-bold text-orange-500 border border-orange-800 rounded-lg px-3 py-1.5 shrink-0">
-          ⬇ CSV
-        </button>
       </div>
 
       <div class="flex-1 overflow-y-auto p-4 space-y-4">
@@ -205,7 +175,7 @@ export function renderTax() {
             ` : ''}
 
             <div class="tax-line">
-              <span class="text-gray-300">${useStdMileage ? 'Mileage + Fixed + Per Diem' : 'Actual Expenses + Per Diem'}</span>
+              <span class="text-gray-300">${useStdMileage ? 'Standard Mileage + Fixed Deductions' : 'Total Actual Expenses'}</span>
               <span class="font-black text-red-400">−${fmtMoney(chosenDeduction)}</span>
             </div>
 
@@ -269,47 +239,6 @@ export function renderTax() {
           </div>
         </div>
 
-        <!-- Deduction strategy tips -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Deduction Strategy</p>
-          <div class="space-y-3 text-sm">
-            <div class="flex items-start gap-2">
-              <span class="mt-0.5 text-green-400">✓</span>
-              <p class="text-gray-300">${useStdMileage
-                ? `Using mileage method (${fmtMoney(mileagePlusOther)}) — beats actual expenses (${fmtMoney(totalActualExpensesWithPerDiem)}). Saves you ${fmtMoney(mileagePlusOther - totalActualExpensesWithPerDiem)} more.`
-                : `Using actual expenses (${fmtMoney(totalActualExpensesWithPerDiem)}) — beats mileage deduction (${fmtMoney(mileagePlusOther)}). Saves you ${fmtMoney(totalActualExpensesWithPerDiem - mileagePlusOther)} more.`
-              }</p>
-            </div>
-            ${dispatchPct > 0 ? `
-            <div class="flex items-start gap-2">
-              <span class="text-blue-400 mt-0.5">💡</span>
-              <p class="text-gray-300"><span class="font-bold text-white">Dispatch fees</span> reduce your gross income but are NOT themselves a separate deduction — they reduce how much you received, so taxes are calculated on what you actually kept.</p>
-            </div>
-            ` : ''}
-            ${truckPaymentMonthly > 0 ? `
-            <div class="flex items-start gap-2">
-              <span class="text-yellow-400 mt-0.5">⚠</span>
-              <p class="text-gray-300"><span class="font-bold text-white">Truck payment:</span> Only the interest portion is deductible (not principal). Ask your lender for an amortization schedule to find the interest amount.</p>
-            </div>
-            ` : ''}
-            ${perDiemDays > 0 ? `
-            <div class="flex items-start gap-2">
-              <span class="text-green-400 mt-0.5">✓</span>
-              <p class="text-gray-300"><span class="font-bold text-white">Per Diem:</span> ${perDiemDays} nights × $${perDiemRate}/day × 80% = <span class="font-bold text-green-400">${fmtMoney(perDiemDeduction)}</span> deduction. Logged from your trip entries.</p>
-            </div>
-            ` : `
-            <div class="flex items-start gap-2">
-              <span class="text-blue-400 mt-0.5">💡</span>
-              <p class="text-gray-300"><span class="font-bold text-white">Per Diem:</span> Log "Per Diem Days" on each trip to claim $${perDiemRate}/day (80% deductible). With 200 nights/year that's <span class="font-bold text-green-400">${fmtMoney(200 * perDiemRate * 0.80)}</span> in deductions.</p>
-            </div>
-            `}
-            <div class="flex items-start gap-2">
-              <span class="text-yellow-400 mt-0.5">⚠</span>
-              <p class="text-gray-300">Pay <span class="font-bold text-white">~${fmtMoney(quarterlyOwed)}</span> quarterly to avoid IRS underpayment penalties. Next due: <span class="font-bold text-orange-500">${QUARTERS[currentQ - 1].due}</span>.</p>
-            </div>
-          </div>
-        </div>
-
         <!-- Monthly cost overview -->
         ${(eldMonthly + truckPaymentMonthly + insuranceMonthly + otherFixedMonthly) > 0 ? `
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
@@ -366,30 +295,6 @@ export function renderTax() {
         </div>
         ` : ''}
 
-        <!-- IFTA State Miles -->
-        ${iftaEntries.length > 0 ? `
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <div class="flex justify-between items-center mb-3">
-            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">IFTA Miles — ${qLabel} ${year}</p>
-            <span class="text-xs text-gray-600">${iftaEntries.reduce((s,[,v])=>s+v,0).toLocaleString()} mi total</span>
-          </div>
-          <div class="space-y-1.5">
-            ${iftaEntries.map(([state, mi]) => `
-            <div class="flex justify-between text-sm">
-              <span class="font-bold text-gray-300">${state}</span>
-              <span class="text-gray-400">${mi.toLocaleString()} mi</span>
-            </div>`).join('')}
-          </div>
-          <p class="text-xs text-gray-700 mt-3">From trips with state miles entered. Add state miles to trips for complete IFTA reporting.</p>
-        </div>
-        ` : `
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">IFTA Quarterly Mileage</p>
-          <p class="text-xs text-gray-600">Add "State Miles" (e.g. GA 200, FL 150) when logging trips to track miles per state for IFTA fuel tax reports.</p>
-          <button onclick="navigate('trips')" class="text-xs text-orange-600 font-bold mt-2">Log a trip with state miles →</button>
-        </div>
-        `}
-
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
           <p class="text-xs text-gray-600">Estimates use IRS ${year} rates. Consult a licensed CPA for accurate filing.</p>
         </div>
@@ -400,25 +305,5 @@ export function renderTax() {
     </div>
   `;
 
-  function mount() {
-    document.getElementById('taxExportCsvBtn')?.addEventListener('click', () => {
-      const allTrips    = getTrips().filter(t => t.date >= yearStart);
-      const allExpenses = getExpenses().filter(e => e.date >= yearStart);
-
-      const rows = [
-        ['Type','Date','Description','Amount','Miles','Origin','Destination'],
-        ...allTrips.map(t => ['Trip', t.date, `${t.origin||''} → ${t.destination||''}`, t.revenue||0, t.miles||0, t.origin||'', t.destination||'']),
-        ...allExpenses.map(e => ['Expense', e.date, e.category + (e.description ? ' - ' + e.description : ''), -(e.amount||0), '', '', '']),
-      ];
-
-      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url; a.download = `rig-log-${year}.csv`; a.click();
-      URL.revokeObjectURL(url);
-    });
-  }
-
-  return { html, mount };
+  return { html, mount: null };
 }

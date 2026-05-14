@@ -1,39 +1,34 @@
-// All localStorage operations for Truck-Log
-
 let _uid = null;
 
-export function setCurrentUID(uid) {
-  _uid = uid;
-}
+export function setCurrentUID(uid) { _uid = uid; }
 
 function getDB() {
-  try {
-    if (!window.firebase?.apps?.length) return null;
-    return window.firebase.firestore ? window.firebase.firestore() : null;
-  } catch { return null; }
+  try { return window.firebase?.firestore?.() ?? null; } catch { return null; }
 }
+
+const ALL_SYNC_KEYS = [
+  'expenses', 'trips', 'dvirs', 'detention', 'fuel', 'maintenance', 'settings',
+];
 
 async function pushKey(key, val) {
   if (!_uid) return;
   const db = getDB();
   if (!db) return;
   try {
-    // Strip base64 receipt photos — they're too large for Firestore's 1MB doc limit
-    const clean = key === 'expenses'
-      ? val.map(({ receiptPhoto, ...rest }) => rest)
-      : val;
-    const payload = key === 'settings'
-      ? { settings: clean, at: Date.now() }
-      : { items: clean, at: Date.now() };
-    await db.collection('rl_users').doc(_uid).collection('data').doc(key).set(payload);
+    const doc = { updatedAt: new Date().toISOString() };
+    if (key === 'settings') {
+      doc[key] = val;
+    } else {
+      doc.items = Array.isArray(val) ? val : [];
+    }
+    await db.collection('rl_users').doc(_uid).collection('data').doc(key).set(doc);
   } catch (e) {
-    console.warn('[rl] push failed', key, e.message);
+    console.warn('[rl] pushKey failed', key, e.message);
   }
 }
 
 export async function syncUp() {
-  const SYNC_KEYS = ['expenses', 'trips', 'dvirs', 'detention', 'fuel', 'maintenance', 'settings'];
-  await Promise.all(SYNC_KEYS.map(k => pushKey(k, load(k))));
+  await Promise.all(ALL_SYNC_KEYS.map(k => pushKey(k, load(k))));
 }
 
 export async function clearCloudData() {
@@ -43,6 +38,7 @@ export async function clearCloudData() {
   try {
     const snap = await db.collection('rl_users').doc(_uid).collection('data').get();
     await Promise.all(snap.docs.map(d => d.ref.delete()));
+    await db.collection('rl_users').doc(_uid).delete().catch(() => {});
   } catch (e) {
     console.warn('[rl] clearCloudData failed', e.message);
   }
@@ -52,71 +48,140 @@ export async function syncDown(uid) {
   const db = getDB();
   if (!uid || !db) return;
 
-  const SYNC_KEYS = ['expenses', 'trips', 'dvirs', 'detention', 'fuel', 'maintenance', 'settings'];
-  const hasLocal = SYNC_KEYS.some(k => localStorage.getItem(KEYS[k]) !== null);
+  const hasLocal = ALL_SYNC_KEYS.some(k => localStorage.getItem(KEYS[k]) !== null);
 
   if (hasLocal) {
-    // Already have data — push up to Firestore in background so cloud stays current
-    SYNC_KEYS.forEach(k => pushKey(k, load(k)));
+    ALL_SYNC_KEYS.forEach(k => pushKey(k, load(k)));
+    const mode = localStorage.getItem('rl_mode');
+    if (mode) db.collection('rl_users').doc(uid).set({ mode }, { merge: true }).catch(() => {});
     return;
   }
 
-  // New / wiped device — pull from Firestore before first render
   try {
     const snap = await db.collection('rl_users').doc(uid).collection('data').get();
     snap.forEach(doc => {
       const key  = doc.id;
       const data = doc.data();
       if (!(key in KEYS)) return;
-      if (key === 'settings' && data.settings) {
-        localStorage.setItem(KEYS.settings, JSON.stringify(data.settings));
-      } else if (key !== 'settings' && Array.isArray(data.items) && data.items.length > 0) {
+      if (key === 'settings') {
+        if (data[key]) localStorage.setItem(KEYS[key], JSON.stringify(data[key]));
+      } else if (Array.isArray(data.items) && data.items.length > 0) {
         localStorage.setItem(KEYS[key], JSON.stringify(data.items));
       }
     });
+    const userDoc = await db.collection('rl_users').doc(uid).get();
+    if (userDoc.exists && userDoc.data()?.mode) {
+      localStorage.setItem('rl_mode', userDoc.data().mode);
+    }
   } catch (e) {
     console.warn('[rl] sync down failed', e.message);
   }
 }
 
+export function invalidateCache() {
+  Object.keys(_cache).forEach(k => delete _cache[k]);
+}
+
+export async function restoreFromCloud(uid) {
+  const db = getDB();
+  if (!uid || !db) return false;
+  try {
+    const snap = await db.collection('rl_users').doc(uid).collection('data').get();
+    if (snap.empty) return false;
+    snap.forEach(doc => {
+      const key  = doc.id;
+      const data = doc.data();
+      if (!(key in KEYS)) return;
+      if (key === 'settings') {
+        if (data[key]) localStorage.setItem(KEYS[key], JSON.stringify(data[key]));
+      } else if (Array.isArray(data.items) && data.items.length > 0) {
+        localStorage.setItem(KEYS[key], JSON.stringify(data.items));
+      }
+    });
+    const userDoc = await db.collection('rl_users').doc(uid).get();
+    if (userDoc.exists && userDoc.data()?.mode) {
+      localStorage.setItem('rl_mode', userDoc.data().mode);
+    }
+    invalidateCache();
+    return true;
+  } catch (e) {
+    console.warn('[rl] restoreFromCloud failed', e.message);
+    return false;
+  }
+}
+
+// App mode
+export function getAppMode()   { return localStorage.getItem('rl_mode') || null; }
+export function clearAppMode() { localStorage.removeItem('rl_mode'); }
+export function setAppMode(m) {
+  localStorage.setItem('rl_mode', m);
+  if (_uid) {
+    const db = getDB();
+    if (db) db.collection('rl_users').doc(_uid).set({ mode: m }, { merge: true }).catch(() => {});
+  }
+}
+
 const KEYS = {
-  expenses: 'rl_expenses',
-  trips: 'rl_trips',
-  dvirs: 'rl_dvirs',
-  detention: 'rl_detention',
-  fuel: 'rl_fuel',
-  maintenance: 'rl_maintenance',
-  settings: 'rl_settings',
+  expenses:        'rl_expenses',
+  trips:           'rl_trips',
+  dvirs:           'rl_dvirs',
+  detention:       'rl_detention',
+  fuel:            'rl_fuel',
+  maintenance:     'rl_maintenance',
+  settings:        'rl_settings',
   activeDetention: 'rl_active_detention',
 };
 
 const DEFAULTS = {
   settings: {
     truckId: 'My Truck',
+    truckMake: '',
+    truckModel: '',
+    truckYear: '',
+    truckPlate: '',
+    driverType: 'OTR',
     homeBase: '',
-    detentionRate: 60,
-    detentionGrace: 2,
-    targetCPM: 0.50,
+    targetWeeklyRevenue: 0,
     targetRPM: 2.00,
+    targetCPM: 0.50,
     dispatchPct: 0,
     eldMonthly: 0,
     truckPaymentMonthly: 0,
     insuranceMonthly: 0,
     otherFixedMonthly: 0,
+    detentionRate: 60,
+    detentionGrace: 2,
+    targetMPG: 6.5,
+    fuelType: 'diesel',
     perDiemRate: 80,
+    currentOdometer: 0,
+    compactMode: false,
+    companyPayType:        'cpm',
+    cpmRate:               0.58,
+    payPercent:            50,
+    carrierName:           '',
+    weeklyMilesGuarantee:  0,
+    healthInsDeductWeekly: 0,
+    k401DeductWeekly:      0,
+    otherDeductWeekly:     0,
   },
 };
 
+const _cache = {};
+
 function load(key) {
+  if (_cache[key] !== undefined) return _cache[key];
   try {
     const raw = localStorage.getItem(KEYS[key]);
-    return raw ? JSON.parse(raw) : (DEFAULTS[key] ?? []);
+    _cache[key] = raw ? JSON.parse(raw) : (DEFAULTS[key] ?? []);
   } catch {
-    return DEFAULTS[key] ?? [];
+    _cache[key] = DEFAULTS[key] ?? [];
   }
+  return _cache[key];
 }
 
 function save(key, val) {
+  _cache[key] = val;
   localStorage.setItem(KEYS[key], JSON.stringify(val));
   if (key !== 'activeDetention') pushKey(key, val);
 }
@@ -263,30 +328,11 @@ export function addMaintenanceLog(data) {
 }
 
 export function deleteMaintenanceLog(id) {
-  save('maintenance', getMaintenanceLogs().filter(l => l.id !== id));
+  save('maintenance', getMaintenanceLogs().filter(m => m.id !== id));
 }
 
 export function updateMaintenanceLog(id, data) {
-  save('maintenance', getMaintenanceLogs().map(l => l.id === id ? { ...l, ...data } : l));
-}
-
-// ── Trip Templates (recurring trips) ─────────────────────────────────────────
-const TMPL_KEY = 'rl_trip_templates';
-
-export function getTripTemplates() {
-  try { return JSON.parse(localStorage.getItem(TMPL_KEY) || '[]'); } catch { return []; }
-}
-
-export function saveTripTemplate(trip) {
-  const list = getTripTemplates().filter(t => !(t.origin === trip.origin && t.destination === trip.destination));
-  const tmpl = { origin: trip.origin, destination: trip.destination, miles: trip.miles, revenue: trip.revenue, savedAt: Date.now() };
-  list.unshift(tmpl);
-  localStorage.setItem(TMPL_KEY, JSON.stringify(list.slice(0, 10)));
-}
-
-export function deleteTripTemplate(origin, destination) {
-  const list = getTripTemplates().filter(t => !(t.origin === origin && t.destination === destination));
-  localStorage.setItem(TMPL_KEY, JSON.stringify(list));
+  save('maintenance', getMaintenanceLogs().map(m => m.id === id ? { ...m, ...data } : m));
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
@@ -294,4 +340,15 @@ export const getSettings = () => load('settings');
 
 export function saveSettings(data) {
   save('settings', { ...getSettings(), ...data });
+}
+
+export function calcTripPay(trip, settings) {
+  const s = settings;
+  if (s.driverType !== 'Company') return null;
+  const miles = Number(trip.miles || 0);
+  const revenue = Number(trip.revenue || 0);
+  if (s.companyPayType === 'percent') {
+    return revenue * (Number(s.payPercent || 50) / 100);
+  }
+  return miles * Number(s.cpmRate || 0.58);
 }

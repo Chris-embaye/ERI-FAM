@@ -1,50 +1,28 @@
-import { getSettings, saveSettings, clearCloudData, syncUp, getTrips, getExpenses } from '../store.js';
-import { getCurrentUser, signOut, saveProfile } from '../auth.js';
+import { getSettings, saveSettings, clearCloudData, syncUp, restoreFromCloud } from '../store.js';
+import { getCurrentUser, signOut, saveProfile, deleteAccount, sendPasswordReset } from '../auth.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+import { ACCENT_PRESETS, BG_PRESETS, applyTheme, loadTheme, saveTheme } from '../theme.js';
+
+const ALL_LOCAL_KEYS = [
+  'rl_expenses','rl_trips','rl_dvirs','rl_detention',
+  'rl_fuel','rl_maintenance','rl_settings','rl_active_detention','rl_mode',
+];
 
 function collectExportData(user) {
   const data = {};
-  ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_settings'].forEach(k => {
+  ALL_LOCAL_KEYS.forEach(k => {
     try { data[k] = JSON.parse(localStorage.getItem(k) || 'null'); } catch {}
   });
   if (user) data._account = { uid: user.uid, email: user.email, name: user.displayName };
+  data._exportedAt = new Date().toISOString();
   return data;
-}
-
-function downloadCSV(rows, filename) {
-  const csv  = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url  = URL.createObjectURL(blob);
-  Object.assign(document.createElement('a'), { href: url, download: filename }).click();
-  URL.revokeObjectURL(url);
-}
-
-function exportTripsCSV() {
-  const rows = [
-    ['Date','Origin','Destination','Miles','Gross Revenue','Per Diem Days','State Miles','Load #','Duration (hrs)','Notes'],
-    ...getTrips().map(t => [
-      t.date, t.origin || '', t.destination || '',
-      t.miles || 0, t.revenue || 0,
-      t.perDiemDays ?? '', t.stateMiles || '',
-      t.loadNum || '', t.durationHours || '', t.notes || '',
-    ]),
-  ];
-  downloadCSV(rows, `rig-log-trips-${new Date().toISOString().slice(0, 10)}.csv`);
-}
-
-function exportExpensesCSV() {
-  const rows = [
-    ['Date','Category','Description','Amount'],
-    ...getExpenses().map(e => [e.date, e.category || '', e.description || '', e.amount || 0]),
-  ];
-  downloadCSV(rows, `rig-log-expenses-${new Date().toISOString().slice(0, 10)}.csv`);
 }
 
 function downloadBackup(user) {
   const blob = new Blob([JSON.stringify(collectExportData(user), null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = Object.assign(document.createElement('a'), {
-    href: url, download: `rig-log-backup-${new Date().toISOString().slice(0,10)}.json`,
+    href: url, download: `riglog-backup-${new Date().toISOString().slice(0,10)}.json`,
   });
   a.click();
   URL.revokeObjectURL(url);
@@ -53,20 +31,48 @@ function downloadBackup(user) {
 async function shareBackup(user) {
   const file = new File(
     [JSON.stringify(collectExportData(user), null, 2)],
-    `rig-log-backup-${new Date().toISOString().slice(0,10)}.json`,
+    `riglog-backup-${new Date().toISOString().slice(0,10)}.json`,
     { type: 'application/json' }
   );
   if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: 'Rig Log Backup' }); return; }
+    try { await navigator.share({ files: [file], title: 'RigLog Backup' }); return; }
     catch (e) { if (e.name === 'AbortError') return; }
   }
   downloadBackup(user);
   toast('Backup downloaded ✓');
 }
 
+function section(title, accent, body) {
+  return `
+    <div class="glass-card">
+      <p class="settings-section-label" style="color:${accent}">${title}</p>
+      ${body}
+    </div>`;
+}
+
+function field(label, hint, inputHtml) {
+  return `
+    <div class="settings-field">
+      <label class="settings-label">${label}</label>
+      ${inputHtml}
+      ${hint ? `<p class="settings-hint">${hint}</p>` : ''}
+    </div>`;
+}
+
+function inp(name, type, value, extra = '') {
+  return `<input type="${type}" name="${name}" class="form-input" value="${value ?? ''}" ${extra}>`;
+}
+
+function selField(name, value, options) {
+  return `<select name="${name}" class="form-input">
+    ${options.map(([v, l]) => `<option value="${v}"${v === String(value) ? ' selected' : ''}>${l}</option>`).join('')}
+  </select>`;
+}
+
 export function renderSettings() {
-  const s    = getSettings();
-  const user = getCurrentUser();
+  const s     = getSettings();
+  const theme = loadTheme();
+  const user  = getCurrentUser();
 
   const avatarLetter = user?.displayName
     ? user.displayName.trim()[0].toUpperCase()
@@ -77,219 +83,314 @@ export function renderSettings() {
     + (Number(s.insuranceMonthly) || 0)
     + (Number(s.otherFixedMonthly) || 0);
 
+  const weeklyBreakeven = monthlyFixed > 0
+    ? Math.round(monthlyFixed / 4.33)
+    : null;
+
   const html = `
-    <div class="flex flex-col h-full bg-black text-white">
-      <div class="px-4 pt-5 pb-4 border-b border-gray-800 flex items-center gap-3 shrink-0">
-        <button onclick="navigate('more')" class="text-gray-400">
+    <div class="flex flex-col h-full text-white" style="background:rgb(4,10,18)">
+
+      <!-- Header -->
+      <div class="settings-header shrink-0">
+        <button onclick="navigate('more')" class="settings-back-btn">
           <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <div>
-          <h1 class="text-2xl font-black">Settings</h1>
-          <p class="text-xs text-gray-500">App configuration</p>
+          <h1 class="text-xl font-black">Settings</h1>
+          <p class="text-xs" style="color:rgba(100,200,255,0.5)">RigLog — trucklogapp.com</p>
         </div>
+        <button type="submit" form="settings-form" class="save-fab">Save</button>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div class="flex-1 overflow-y-auto p-4 space-y-3" style="padding-bottom:32px">
 
-        <!-- Account -->
+        <!-- Account card -->
         ${user ? `
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Account</p>
+        <div class="glass-card">
+          <p class="settings-section-label" style="color:#06b6d4">Account</p>
           <div class="flex items-center gap-3 mb-4">
-            <div class="w-12 h-12 rounded-full bg-orange-600 flex items-center justify-center text-black font-black text-xl shrink-0 overflow-hidden">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center font-black text-2xl shrink-0 overflow-hidden"
+                 style="background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff">
               ${user.photoURL
-                ? `<img src="${user.photoURL}" class="w-12 h-12 rounded-full object-cover" alt="">`
+                ? `<img src="${user.photoURL}" class="w-14 h-14 rounded-full object-cover" alt="">`
                 : avatarLetter}
             </div>
             <div class="min-w-0">
-              <p class="font-black truncate">${user.displayName || 'Driver'}</p>
-              <p class="text-xs text-gray-500 truncate">${user.email}</p>
+              <p class="font-black text-lg truncate">${user.displayName || 'Driver'}</p>
+              <p class="text-xs truncate" style="color:rgba(148,163,184,0.8)">${user.email}</p>
             </div>
           </div>
           <div class="space-y-2">
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Display Name</label>
-              <input type="text" id="profile-name" class="form-input" value="${user.displayName || ''}" placeholder="Your name">
+            ${field('Display Name', null, `<input type="text" id="profile-name" class="form-input" value="${user.displayName || ''}" placeholder="Your name">`)}
+            <div class="flex gap-2">
+              <button id="save-profile-btn" class="flex-1 settings-action-btn">Update Name</button>
+              <button id="reset-pw-btn" class="flex-1 settings-ghost-btn">Reset Password</button>
             </div>
-            <button id="save-profile-btn" class="w-full bg-gray-800 text-white font-bold py-2.5 rounded-lg text-sm">Update Name</button>
-            <button id="reset-pw-btn" class="w-full bg-gray-800/50 border border-gray-700 text-gray-400 font-bold py-2.5 rounded-lg text-sm">Send Password Reset Email</button>
           </div>
         </div>
         ` : ''}
 
-        <form id="settings-form" class="space-y-4">
+        <form id="settings-form" class="space-y-3">
 
-          <!-- Truck -->
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Truck</p>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Truck Name / Unit ID</label>
-              <input type="text" name="truckId" class="form-input" value="${s.truckId || ''}" placeholder="My Truck">
+          <!-- ── Driver & Truck ── -->
+          ${section('🚛  Driver & Truck', '#06b6d4', `
+            <div class="grid grid-cols-2 gap-3">
+              ${field('Truck Name / Unit ID', null, inp('truckId', 'text', s.truckId, 'placeholder="My Truck"'))}
+              ${field('Driver Type', null, selField('driverType', s.driverType || 'OTR', [
+                ['OTR','OTR (Long Haul)'],['Regional','Regional'],['Local','Local / City'],['Lease','Lease Op'],['Company','Company Driver']
+              ]))}
+              ${field('Truck Make', null, inp('truckMake', 'text', s.truckMake, 'placeholder="Freightliner"'))}
+              ${field('Truck Model', null, inp('truckModel', 'text', s.truckModel, 'placeholder="Cascadia"'))}
+              ${field('Year', null, inp('truckYear', 'number', s.truckYear, 'placeholder="2022" min="1990" max="2030"'))}
+              ${field('License Plate', null, inp('truckPlate', 'text', s.truckPlate, 'placeholder="ABC 1234"'))}
+              ${field('Current Odometer (mi)', null, inp('currentOdometer', 'number', s.currentOdometer || '', 'placeholder="487500" min="0" step="1"'))}
             </div>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Home Base (City, State)</label>
-              <input type="text" name="homeBase" class="form-input" value="${s.homeBase || ''}" placeholder="e.g. Atlanta, GA">
-              <p class="text-xs text-gray-600 mt-1">Days away from home qualify for per diem deductions.</p>
-            </div>
-          </div>
+            ${field('Home Base', 'Days away from home base qualify for per diem deductions.',
+              inp('homeBase', 'text', s.homeBase, 'placeholder="Atlanta, GA"'))}
+          `)}
 
-          <!-- Dispatch -->
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-            <div class="flex justify-between items-center">
-              <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Dispatch / Carrier</p>
-              ${Number(s.dispatchPct) > 0
-                ? `<span class="text-xs text-orange-500 font-bold">${s.dispatchPct}% off gross</span>`
-                : `<span class="text-xs text-gray-700">Owner-op (no cut)</span>`}
+          <!-- ── Revenue Targets ── -->
+          ${section('🎯  Revenue Targets', '#22d3ee', `
+            ${field('Weekly Revenue Goal ($)',
+              s.targetWeeklyRevenue > 0 ? `You need <strong style="color:#06b6d4">${Math.ceil(s.targetWeeklyRevenue / 7 / 2)}</strong> miles/day at $2/mi to hit this.` : 'Set a weekly goal to see your progress on the dashboard.',
+              inp('targetWeeklyRevenue', 'number', s.targetWeeklyRevenue || '', 'step="100" min="0" placeholder="e.g. 6000"'))}
+            <div class="grid grid-cols-2 gap-3">
+              ${field('Target Revenue/Mile ($)', 'Trips below this show red.',
+                inp('targetRPM', 'number', s.targetRPM, 'step="0.01" min="0" placeholder="2.00"'))}
+              ${field('Target Cost/Mile ($)', 'Used in profit margin calc.',
+                inp('targetCPM', 'number', s.targetCPM, 'step="0.01" min="0" placeholder="0.50"'))}
             </div>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Dispatcher / Carrier Fee (%)</label>
-              <input type="number" name="dispatchPct" step="0.5" min="0" max="50" class="form-input"
-                value="${s.dispatchPct || 0}" placeholder="0">
-              <p class="text-xs text-gray-600 mt-1">
-                ${Number(s.dispatchPct) > 0
-                  ? `On a $1,000 load you keep <span class="text-white font-bold">$${(1000 * (1 - Number(s.dispatchPct)/100)).toFixed(0)}</span>.`
-                  : 'Enter 0 if you book all loads yourself.'}
-              </p>
-            </div>
-          </div>
+          `)}
 
-          <!-- Monthly Fixed Costs -->
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-            <div class="flex justify-between items-center">
-              <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Monthly Fixed Costs</p>
-              ${monthlyFixed > 0 ? `<span class="text-xs text-red-400 font-bold">$${monthlyFixed.toLocaleString()}/mo</span>` : ''}
-            </div>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">ELD Subscription ($/month)</label>
-              <input type="number" name="eldMonthly" step="1" min="0" class="form-input" value="${s.eldMonthly || ''}" placeholder="e.g. 45">
-              <p class="text-xs text-gray-600 mt-1">Samsara, Motive, KeepTruckin, etc. — fully deductible.</p>
-            </div>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Truck Payment / Lease ($/month)</label>
-              <input type="number" name="truckPaymentMonthly" step="1" min="0" class="form-input" value="${s.truckPaymentMonthly || ''}" placeholder="e.g. 2800">
-              <p class="text-xs text-gray-600 mt-1">Interest portion is deductible; principal is not.</p>
-            </div>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Insurance ($/month)</label>
-              <input type="number" name="insuranceMonthly" step="1" min="0" class="form-input" value="${s.insuranceMonthly || ''}" placeholder="e.g. 800">
-              <p class="text-xs text-gray-600 mt-1">Cargo, liability, physical damage — all deductible.</p>
-            </div>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Other Fixed Monthly ($/month)</label>
-              <input type="number" name="otherFixedMonthly" step="1" min="0" class="form-input" value="${s.otherFixedMonthly || ''}" placeholder="e.g. 200">
-              <p class="text-xs text-gray-600 mt-1">Permits, memberships, phone, etc.</p>
+          <!-- ── Dispatch / Carrier ── -->
+          ${section('📋  Dispatch / Carrier', '#0ea5e9', `
+            ${field('Dispatcher / Carrier Fee (%)',
+              Number(s.dispatchPct) > 0
+                ? `On a $1,000 load you keep <strong style="color:#fff">$${(1000*(1-Number(s.dispatchPct)/100)).toFixed(0)}</strong>.`
+                : 'Enter 0 if you book all loads yourself.',
+              inp('dispatchPct', 'number', s.dispatchPct || 0, 'step="0.5" min="0" max="50" placeholder="0"'))}
+          `)}
+
+          <!-- ── Company Pay ── -->
+          ${s.driverType === 'Company' ? section('💼  Company Pay', '#22d3ee', `
+  <div class="grid grid-cols-2 gap-3">
+    ${field('Pay Structure', null, selField('companyPayType', s.companyPayType || 'cpm', [
+      ['cpm',     'CPM — Cents Per Mile'],
+      ['percent', 'Percentage of Load'],
+    ]))}
+    ${s.companyPayType === 'percent'
+      ? field('Your % of Load',
+          Number(s.payPercent) > 0 ? `On a $1,500 load you earn <strong style="color:#fff">$${(1500*Number(s.payPercent)/100).toFixed(0)}</strong>.` : 'Typical: 25–30% regional, up to 50% some carriers.',
+          inp('payPercent', 'number', s.payPercent || 50, 'step="0.5" min="0" max="100" placeholder="50"'))
+      : field('CPM Rate ($/mi)',
+          Number(s.cpmRate) > 0 ? `At ${(Number(s.cpmRate||0)*100).toFixed(1)}¢/mi — 2,500 mi/wk = <strong style="color:#fff">$${(Number(s.cpmRate||0)*2500).toFixed(0)}/wk</strong>.` : 'Industry avg: $0.55–$0.70/mi (2025).',
+          inp('cpmRate', 'number', s.cpmRate || 0.58, 'step="0.01" min="0" placeholder="0.58"'))
+    }
+  </div>
+  ${field('Carrier / Company Name', null, inp('carrierName', 'text', s.carrierName || '', 'placeholder="Werner, Swift, Knight…"'))}
+  ${field('Weekly Miles Guarantee', 'Minimum miles your carrier guarantees per week (0 = none).',
+    inp('weeklyMilesGuarantee', 'number', s.weeklyMilesGuarantee || '', 'step="50" min="0" placeholder="2500"'))}
+  <p class="settings-hint" style="color:rgba(100,200,255,0.5);margin-top:4px">— Deductions (Weekly) —</p>
+  <div class="grid grid-cols-2 gap-3">
+    ${field('Health Insurance ($/wk)', null, inp('healthInsDeductWeekly', 'number', s.healthInsDeductWeekly || '', 'step="1" min="0" placeholder="0"'))}
+    ${field('401(k) / Retirement ($/wk)', null, inp('k401DeductWeekly', 'number', s.k401DeductWeekly || '', 'step="1" min="0" placeholder="0"'))}
+  </div>
+  ${field('Other Deductions ($/wk)', 'Garnishment, ELD, uniform, etc.',
+    inp('otherDeductWeekly', 'number', s.otherDeductWeekly || '', 'step="1" min="0" placeholder="0"'))}
+`) : ''}
+
+          <!-- ── Monthly Fixed Costs ── -->
+          ${section('💸  Monthly Fixed Costs', '#f59e0b', `
+            <div class="grid grid-cols-2 gap-3">
+              ${field('ELD Subscription ($/mo)', 'Samsara, Motive, etc. — deductible.',
+                inp('eldMonthly', 'number', s.eldMonthly || '', 'step="1" min="0" placeholder="45"'))}
+              ${field('Truck Payment ($/mo)', 'Interest portion is deductible.',
+                inp('truckPaymentMonthly', 'number', s.truckPaymentMonthly || '', 'step="1" min="0" placeholder="2800"'))}
+              ${field('Insurance ($/mo)', 'Cargo, liability, physical — all deductible.',
+                inp('insuranceMonthly', 'number', s.insuranceMonthly || '', 'step="1" min="0" placeholder="800"'))}
+              ${field('Other Fixed ($/mo)', 'Permits, memberships, phone, etc.',
+                inp('otherFixedMonthly', 'number', s.otherFixedMonthly || '', 'step="1" min="0" placeholder="200"'))}
             </div>
             ${monthlyFixed > 0 ? `
-            <div class="bg-gray-800 rounded-xl p-3 space-y-1.5 text-xs">
-              <div class="flex justify-between"><span class="text-gray-500">Per month</span><span class="font-bold">$${monthlyFixed.toLocaleString()}</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Per year</span><span class="font-bold text-red-400">$${(monthlyFixed * 12).toLocaleString()}</span></div>
+            <div class="cost-summary-grid">
+              <div class="cost-summary-item">
+                <span class="cost-summary-label">Per month</span>
+                <span class="cost-summary-val">$${monthlyFixed.toLocaleString()}</span>
+              </div>
+              <div class="cost-summary-item">
+                <span class="cost-summary-label">Per year</span>
+                <span class="cost-summary-val" style="color:#f87171">$${(monthlyFixed * 12).toLocaleString()}</span>
+              </div>
+              <div class="cost-summary-item">
+                <span class="cost-summary-label">Weekly break-even</span>
+                <span class="cost-summary-val" style="color:#fbbf24">$${weeklyBreakeven?.toLocaleString() ?? '—'}</span>
+              </div>
             </div>` : ''}
-          </div>
+          `)}
 
-          <!-- Tax Preferences -->
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Tax Preferences</p>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Per Diem Rate ($/day)</label>
-              <input type="number" name="perDiemRate" step="1" min="0" class="form-input" value="${s.perDiemRate || 80}" placeholder="80">
-              <p class="text-xs text-gray-600 mt-1">IRS 2025: $80/day for overnight trips away from your home base. Deducted from taxable income.</p>
+          <!-- ── Detention ── -->
+          ${section('⏱  Detention', '#8b5cf6', `
+            <div class="grid grid-cols-2 gap-3">
+              ${field('Rate ($/hour)', 'Charged after grace period ends.',
+                inp('detentionRate', 'number', s.detentionRate || 60, 'step="5" min="0" placeholder="60"'))}
+              ${field('Grace Period (hours)', 'Free wait time (typically 2h).',
+                inp('detentionGrace', 'number', s.detentionGrace || 2, 'step="0.5" min="0" placeholder="2"'))}
             </div>
-          </div>
+          `)}
 
-          <!-- Detention -->
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Detention</p>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Detention Rate ($/hour)</label>
-              <input type="number" name="detentionRate" step="1" min="0" class="form-input" value="${s.detentionRate || 60}" placeholder="60">
-              <p class="text-xs text-gray-600 mt-1">Hourly rate charged after the grace period expires.</p>
+          <!-- ── Fuel ── -->
+          ${section('⛽  Fuel Preferences', '#10b981', `
+            <div class="grid grid-cols-2 gap-3">
+              ${field('Target MPG', 'Average fuel economy for your truck.',
+                inp('targetMPG', 'number', s.targetMPG || 6.5, 'step="0.1" min="1" placeholder="6.5"'))}
+              ${field('Fuel Type', null, selField('fuelType', s.fuelType || 'diesel', [
+                ['diesel','Diesel'],['def','Diesel + DEF'],['gas','Gasoline'],['ng','Natural Gas'],['electric','Electric']
+              ]))}
             </div>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Grace Period (hours)</label>
-              <input type="number" name="detentionGrace" step="0.5" min="0" class="form-input" value="${s.detentionGrace || 2}" placeholder="2">
-              <p class="text-xs text-gray-600 mt-1">Free wait time before detention charges begin (typically 2h).</p>
-            </div>
-          </div>
+          `)}
 
-          <!-- Profitability Targets -->
-          <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Profitability Targets</p>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Target Revenue / Mile ($)</label>
-              <input type="number" name="targetRPM" step="0.01" min="0" class="form-input" value="${s.targetRPM || 2.00}" placeholder="2.00">
-              <p class="text-xs text-gray-600 mt-1">Goal rate per mile — trips below this show as red on your list.</p>
-            </div>
-            <div>
-              <label class="text-xs text-gray-400 block mb-1">Target Cost / Mile ($)</label>
-              <input type="number" name="targetCPM" step="0.01" min="0" class="form-input" value="${s.targetCPM || 0.50}" placeholder="0.50">
-              <p class="text-xs text-gray-600 mt-1">Operational cost per mile for profitability analysis.</p>
-            </div>
-          </div>
+          <!-- ── Tax ── -->
+          ${section('🧾  Tax Preferences', '#06b6d4', `
+            ${field('Per Diem Rate ($/day)',
+              'IRS 2025: $80/day for overnight trips away from home base.',
+              inp('perDiemRate', 'number', s.perDiemRate || 80, 'step="1" min="0" placeholder="80"'))}
+          `)}
 
-          <button type="submit" class="btn-primary">Save Settings</button>
+          <!-- ── Appearance ── -->
+          ${section('🎨  Appearance', '#a78bfa', `
+            <label class="toggle-row">
+              <span class="toggle-label">
+                <span class="font-semibold">Compact Mode</span>
+                <span class="settings-hint" style="margin:0">Smaller cards, tighter spacing</span>
+              </span>
+              <input type="checkbox" name="compactMode" id="compactModeToggle" class="toggle-checkbox" ${s.compactMode ? 'checked' : ''}>
+              <span class="toggle-track"></span>
+            </label>
+
+            <!-- Accent color -->
+            <div style="margin-top:16px">
+              <label class="settings-label">Accent Color</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                ${ACCENT_PRESETS.map(p => `
+                  <button type="button" class="color-swatch${theme.accentColor===p.id?' selected':''}" data-accent="${p.id}" title="${p.label}"
+                          style="background:${p.hex};${theme.accentColor===p.id?'outline:3px solid rgba(255,255,255,0.6);outline-offset:2px':''}"></button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Background theme -->
+            <div style="margin-top:12px">
+              <label class="settings-label">Background</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                ${BG_PRESETS.map(p => `
+                  <button type="button" class="bg-swatch${theme.bgTheme===p.id?' selected':''}" data-bg="${p.id}"
+                          style="background:${theme.bgTheme===p.id?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.04)'};border:1px solid ${theme.bgTheme===p.id?'rgba(255,255,255,0.3)':'rgba(255,255,255,0.08)'};color:${theme.bgTheme===p.id?'#fff':'rgba(148,163,184,0.7)'}">
+                    ${p.label}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          `)}
+
+          <button type="submit" class="save-btn-full">Save All Settings</button>
         </form>
 
-        <!-- Data & Sync -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-          <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Data &amp; Sync</p>
-          <button id="sync-now-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
-            ☁ Sync Now to Cloud
-          </button>
-          <button id="export-trips-csv-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
-            ↓ Export Trips CSV
-          </button>
-          <button id="export-expenses-csv-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
-            ↓ Export Expenses CSV
-          </button>
-          <button id="export-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
-            ↓ Download Full Backup (JSON)
-          </button>
-          <button id="share-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
-            ↗ Send to Email / Share
-          </button>
-          <button id="force-update-btn" class="w-full bg-gray-800 text-gray-300 font-bold py-2.5 rounded-lg text-sm">
-            ↺ Force Update App
-          </button>
-          <button id="clear-btn" class="w-full bg-red-900/20 text-red-400 font-bold py-2.5 rounded-lg text-sm border border-red-900/30">
-            Clear All Data (Local + Cloud)
+        <!-- ── Data ── -->
+        <div class="glass-card space-y-2">
+          <p class="settings-section-label" style="color:#64748b">Data &amp; Backup</p>
+          ${user ? `
+          <button id="cloud-backup-btn" class="settings-action-btn w-full">☁ Backup to Cloud</button>
+          <button id="cloud-restore-btn" class="settings-ghost-btn w-full">↓ Restore from Cloud</button>
+          <div style="border-top:1px solid rgba(255,255,255,0.06);margin:4px 0"></div>
+          ` : ''}
+          <button id="export-btn" class="settings-action-btn w-full">↓ Download Backup (JSON)</button>
+          <button id="share-btn" class="settings-action-btn w-full">↗ Send to Phone / Share</button>
+          <button id="force-update-btn" class="settings-ghost-btn w-full">↺ Force Update App</button>
+          <p style="font-size:0.65rem;color:rgba(100,116,139,0.55);text-align:center;padding-top:2px">
+            Cloud backup stores all your data in your account. Restore pulls it back on any device.
+          </p>
+        </div>
+
+        <!-- ── DATA ── -->
+        <div class="glass-card space-y-2">
+          <p class="settings-section-label">Data</p>
+          <button id="clear-btn" class="w-full font-bold py-2.5 rounded-xl text-sm" style="background:rgba(220,38,38,0.12);color:#f87171;border:1px solid rgba(220,38,38,0.2)">
+            Clear All Local Data
           </button>
         </div>
 
-        <!-- Sign out -->
+        <!-- Sign out + Delete account -->
         ${user ? `
-        <button id="signout-btn" class="w-full bg-gray-900 border border-gray-800 text-gray-400 font-bold py-3 rounded-xl text-sm">
-          Sign Out
-        </button>` : ''}
+        <button id="signout-btn" class="settings-signout-btn w-full">Sign Out</button>
+        <button id="delete-account-btn" class="w-full font-bold py-2.5 rounded-xl text-sm mt-1"
+                style="background:rgba(220,38,38,0.08);color:rgba(248,113,113,0.7);border:1px solid rgba(220,38,38,0.15)">
+          Delete Account
+        </button>
+        ` : ''}
 
-        <div style="height:20px"></div>
+        <div style="height:24px"></div>
       </div>
     </div>`;
 
   function mount(container) {
 
-    // ── Settings form ──────────────────────────────────────────────────────────
+    // Theme swatches — apply immediately on tap
+    container.querySelectorAll('.color-swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = loadTheme();
+        saveTheme(btn.dataset.accent, t.bgTheme);
+        applyTheme(btn.dataset.accent, t.bgTheme);
+        window.refresh();
+      });
+    });
+    container.querySelectorAll('.bg-swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = loadTheme();
+        saveTheme(t.accentColor, btn.dataset.bg);
+        applyTheme(t.accentColor, btn.dataset.bg);
+        window.refresh();
+      });
+    });
+
     container.querySelector('#settings-form').addEventListener('submit', e => {
       e.preventDefault();
       const fd = new FormData(e.target);
       saveSettings({
-        truckId:             fd.get('truckId').trim() || 'My Truck',
-        homeBase:            fd.get('homeBase').trim(),
-        detentionRate:       parseFloat(fd.get('detentionRate'))       || 60,
-        detentionGrace:      parseFloat(fd.get('detentionGrace'))      || 2,
-        targetCPM:           parseFloat(fd.get('targetCPM'))           || 0.50,
+        truckId:             fd.get('truckId')?.trim() || 'My Truck',
+        truckMake:           fd.get('truckMake')?.trim() || '',
+        truckModel:          fd.get('truckModel')?.trim() || '',
+        truckYear:           fd.get('truckYear')?.trim() || '',
+        truckPlate:          fd.get('truckPlate')?.trim() || '',
+        driverType:          fd.get('driverType') || 'OTR',
+        homeBase:            fd.get('homeBase')?.trim() || '',
+        targetWeeklyRevenue: parseFloat(fd.get('targetWeeklyRevenue')) || 0,
         targetRPM:           parseFloat(fd.get('targetRPM'))           || 2.00,
+        targetCPM:           parseFloat(fd.get('targetCPM'))           || 0.50,
         dispatchPct:         parseFloat(fd.get('dispatchPct'))         || 0,
         eldMonthly:          parseFloat(fd.get('eldMonthly'))          || 0,
         truckPaymentMonthly: parseFloat(fd.get('truckPaymentMonthly')) || 0,
         insuranceMonthly:    parseFloat(fd.get('insuranceMonthly'))    || 0,
         otherFixedMonthly:   parseFloat(fd.get('otherFixedMonthly'))   || 0,
+        detentionRate:       parseFloat(fd.get('detentionRate'))       || 60,
+        detentionGrace:      parseFloat(fd.get('detentionGrace'))      || 2,
+        targetMPG:           parseFloat(fd.get('targetMPG'))           || 6.5,
+        fuelType:            fd.get('fuelType') || 'diesel',
         perDiemRate:         parseFloat(fd.get('perDiemRate'))         || 80,
+        currentOdometer:     parseFloat(fd.get('currentOdometer')) || 0,
+        compactMode:         fd.get('compactMode') === 'on',
+        companyPayType:        fd.get('companyPayType') || 'cpm',
+        cpmRate:               parseFloat(fd.get('cpmRate'))               || 0.58,
+        payPercent:            parseFloat(fd.get('payPercent'))             || 50,
+        carrierName:           fd.get('carrierName')?.trim() || '',
+        weeklyMilesGuarantee:  parseFloat(fd.get('weeklyMilesGuarantee'))   || 0,
+        healthInsDeductWeekly: parseFloat(fd.get('healthInsDeductWeekly'))  || 0,
+        k401DeductWeekly:      parseFloat(fd.get('k401DeductWeekly'))       || 0,
+        otherDeductWeekly:     parseFloat(fd.get('otherDeductWeekly'))      || 0,
       });
       toast('Settings saved ✓');
       window.refresh();
     });
 
-    // ── Profile ────────────────────────────────────────────────────────────────
     container.querySelector('#save-profile-btn')?.addEventListener('click', async () => {
       const name = container.querySelector('#profile-name').value.trim();
       if (!name) return;
@@ -299,58 +400,72 @@ export function renderSettings() {
         await user.updateProfile({ displayName: name });
         if (user.uid) await saveProfile(user.uid, { name, email: user.email });
         toast('Name updated ✓');
-      } catch {
-        toast('Error updating name', 'error');
-      }
+      } catch { toast('Error updating name', 'error'); }
       btn.textContent = 'Update Name'; btn.disabled = false;
     });
 
     container.querySelector('#reset-pw-btn')?.addEventListener('click', async () => {
-      if (!user?.email || !window.firebase?.auth) return;
+      if (!user?.email) return;
       const btn = container.querySelector('#reset-pw-btn');
       btn.textContent = 'Sending…'; btn.disabled = true;
       try {
-        await firebase.auth().sendPasswordResetEmail(user.email);
-        toast('Reset email sent — check your inbox ✓');
-      } catch {
-        toast('Error sending reset email', 'error');
-      }
-      btn.textContent = 'Send Password Reset Email'; btn.disabled = false;
+        await sendPasswordReset(user.email);
+        toast('Reset email sent ✓');
+      } catch { toast('Error sending reset email', 'error'); }
+      btn.textContent = 'Reset Password'; btn.disabled = false;
     });
 
-    // ── Data & Sync ────────────────────────────────────────────────────────────
-    container.querySelector('#sync-now-btn')?.addEventListener('click', async () => {
-      const btn = container.querySelector('#sync-now-btn');
-      btn.textContent = 'Syncing…'; btn.disabled = true;
-      try {
-        await syncUp();
-        toast('Synced to cloud ✓');
-      } catch {
-        toast('Sync failed — check your connection', 'error');
-      }
-      btn.textContent = '☁ Sync Now to Cloud'; btn.disabled = false;
-    });
-
-    container.querySelector('#export-trips-csv-btn')?.addEventListener('click', () => {
-      exportTripsCSV();
-      toast('Trips CSV downloaded ✓');
-    });
-
-    container.querySelector('#export-expenses-csv-btn')?.addEventListener('click', () => {
-      exportExpensesCSV();
-      toast('Expenses CSV downloaded ✓');
-    });
-
-    container.querySelector('#export-btn').addEventListener('click', () => {
-      downloadBackup(user);
-      toast('Backup downloaded ✓');
-    });
-
+    container.querySelector('#export-btn').addEventListener('click', () => { downloadBackup(user); toast('Backup downloaded ✓'); });
     container.querySelector('#share-btn').addEventListener('click', () => shareBackup(user));
 
+    // Cloud backup
+    container.querySelector('#cloud-backup-btn')?.addEventListener('click', async () => {
+      if (!user) return;
+      const btn = container.querySelector('#cloud-backup-btn');
+      btn.textContent = 'Backing up…'; btn.disabled = true;
+      try {
+        await syncUp();
+        toast('Data backed up to cloud ✓');
+      } catch { toast('Backup failed — check your connection', 'error'); }
+      btn.textContent = '☁ Backup to Cloud'; btn.disabled = false;
+    });
+
+    // Cloud restore
+    container.querySelector('#cloud-restore-btn')?.addEventListener('click', () => {
+      if (!user) return;
+      openModal(`
+        <div class="p-5">
+          <div class="text-center mb-4">
+            <div style="font-size:2.5rem;margin-bottom:8px">☁</div>
+            <p class="font-black text-lg">Restore from Cloud?</p>
+            <p class="text-sm mt-2 px-2" style="color:rgba(148,163,184,0.8)">
+              This will overwrite all data on this device with your latest cloud backup.
+              Any changes made on this device since your last backup will be lost.
+            </p>
+          </div>
+          <div class="space-y-2.5">
+            <button id="confirm-restore-btn" class="settings-action-btn w-full">Restore from Cloud</button>
+            <button onclick="closeModal()" class="btn-ghost w-full">Cancel</button>
+          </div>
+        </div>
+      `, el => {
+        el.querySelector('#confirm-restore-btn').addEventListener('click', async () => {
+          const btn = el.querySelector('#confirm-restore-btn');
+          btn.textContent = 'Restoring…'; btn.disabled = true;
+          const ok = await restoreFromCloud(user.uid);
+          if (ok) {
+            closeModal();
+            toast('Data restored ✓ — reloading…');
+            setTimeout(() => window.location.reload(), 1200);
+          } else {
+            toast('No cloud backup found', 'error');
+            btn.textContent = 'Restore from Cloud'; btn.disabled = false;
+          }
+        });
+      });
+    });
+
     container.querySelector('#force-update-btn').addEventListener('click', async () => {
-      const btn = container.querySelector('#force-update-btn');
-      btn.textContent = 'Clearing cache…'; btn.disabled = true;
       try {
         if ('serviceWorker' in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations();
@@ -364,55 +479,95 @@ export function renderSettings() {
 
     container.querySelector('#clear-btn').addEventListener('click', () => {
       confirmSheet(
-        'Clear all data?',
-        'Deletes all trips, expenses, fuel, and DVIRs from this device and the cloud. Cannot be undone.',
-        'Clear Everything',
+        'Clear all local data?',
+        'Removes all locally stored trips, expenses, fuel, DVIRs, and maintenance. Cloud data is preserved.',
+        'Clear Local Data',
         async () => {
-          ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_settings','rl_active_detention'].forEach(k =>
-            localStorage.removeItem(k)
-          );
-          await clearCloudData();
+          ['rl_expenses','rl_trips','rl_dvirs','rl_detention','rl_fuel','rl_maintenance','rl_settings','rl_active_detention']
+            .forEach(k => localStorage.removeItem(k));
+          toast('Local data cleared ✓');
           window.navigate('dashboard');
         }
       );
     });
 
-    // ── Sign out — backup reminder sheet ──────────────────────────────────────
+
+    container.querySelector('#delete-account-btn')?.addEventListener('click', () => {
+      openModal(`
+        <div class="p-5">
+          <div class="text-center mb-4">
+            <div style="font-size:2.8rem;margin-bottom:8px">⚠️</div>
+            <p class="font-black text-xl" style="color:#f87171">Delete Account</p>
+            <p class="text-sm mt-2 px-2" style="color:rgba(148,163,184,0.8)">
+              Permanently deletes your account and <strong style="color:#fff">all your data</strong> —
+              trips, expenses, fuel logs, DVIRs, settings, everything.
+              <br><br>
+              <strong style="color:#f87171">This cannot be undone.</strong>
+            </p>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <p style="font-size:0.72rem;text-align:center;color:rgba(100,116,139,0.8);margin-bottom:6px">Type <strong style="color:#f87171">DELETE</strong> to confirm</p>
+              <input id="delete-confirm-input" class="form-input" placeholder="Type DELETE here" style="text-align:center;font-size:1rem;letter-spacing:2px">
+            </div>
+            <button id="confirm-delete-btn" class="w-full font-bold py-3 rounded-xl text-sm"
+                    style="background:rgba(220,38,38,0.15);color:#f87171;border:1px solid rgba(220,38,38,0.4)">
+              Permanently Delete My Account
+            </button>
+            <button onclick="closeModal()" class="btn-ghost w-full">Cancel — Keep My Account</button>
+          </div>
+        </div>
+      `, el => {
+        el.querySelector('#confirm-delete-btn').addEventListener('click', async () => {
+          const typed = el.querySelector('#delete-confirm-input').value.trim();
+          if (typed !== 'DELETE') { toast('Type DELETE (all caps) to confirm', 'error'); return; }
+          const btn = el.querySelector('#confirm-delete-btn');
+          btn.textContent = 'Deleting…'; btn.disabled = true;
+          try {
+            // Wipe local data first
+            ALL_LOCAL_KEYS.forEach(k => localStorage.removeItem(k));
+            // Delete cloud data
+            await clearCloudData();
+            // Delete Firebase auth account
+            await deleteAccount();
+            closeModal();
+            window.location.reload();
+          } catch (e) {
+            if (e.code === 'auth/requires-recent-login') {
+              closeModal();
+              toast('Sign out, sign back in, then try again', 'error');
+            } else {
+              toast('Delete failed — sign out and sign back in first', 'error');
+              btn.textContent = 'Permanently Delete My Account'; btn.disabled = false;
+            }
+          }
+        });
+      });
+    });
+
     container.querySelector('#signout-btn')?.addEventListener('click', () => {
       openModal(`
         <div class="p-5">
           <div class="text-center mb-5">
             <div class="text-4xl mb-2">💾</div>
             <p class="font-black text-lg">Back up before signing out?</p>
-            <p class="text-gray-400 text-sm mt-1.5 px-2">Your data syncs to the cloud automatically, but a local backup gives you an extra copy.</p>
+            <p class="text-sm mt-1.5 px-2" style="color:rgba(148,163,184,0.8)">A local backup gives you an extra copy of your test data.</p>
           </div>
           <div class="space-y-2.5">
-            <button id="so-download" class="w-full bg-gray-800 border border-gray-700 text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2.5">
-              <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download Backup File
-            </button>
-            <button id="so-share" class="w-full bg-gray-800 border border-gray-700 text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2.5">
-              <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-              Send to Email / Share
-            </button>
-            <div class="border-t border-gray-800 pt-2.5">
-              <button id="so-signout" class="w-full bg-orange-600/20 border border-orange-600/40 text-orange-400 font-bold py-3 rounded-xl text-sm">
+            <button id="so-download" class="settings-action-btn w-full">↓ Download Backup</button>
+            <button id="so-share" class="settings-action-btn w-full">↗ Share Backup</button>
+            <div class="border-t pt-2.5" style="border-color:rgba(255,255,255,0.07)">
+              <button id="so-signout" class="w-full font-bold py-3 rounded-xl text-sm" style="background:rgba(8,145,178,0.15);color:#0891b2;border:1px solid rgba(8,145,178,0.3)">
                 Sign Out Without Backup
               </button>
-              <button onclick="closeModal()" class="btn-ghost mt-1">Cancel — Stay Signed In</button>
+              <button onclick="closeModal()" class="btn-ghost mt-1">Cancel</button>
             </div>
           </div>
         </div>
       `, el => {
-        el.querySelector('#so-download').addEventListener('click', () => {
-          downloadBackup(user);
-          toast('Backup downloaded ✓');
-        });
+        el.querySelector('#so-download').addEventListener('click', () => { downloadBackup(user); toast('Backup downloaded ✓'); });
         el.querySelector('#so-share').addEventListener('click', () => shareBackup(user));
-        el.querySelector('#so-signout').addEventListener('click', async () => {
-          closeModal();
-          await signOut();
-        });
+        el.querySelector('#so-signout').addEventListener('click', async () => { closeModal(); await signOut(); });
       });
     });
   }

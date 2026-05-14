@@ -1,20 +1,26 @@
 import { initAuth, onAuthReady, getCurrentUser } from './auth.js';
-import { renderSignIn }   from './screens/signin.js';
-import { renderDashboard } from './screens/dashboard.js';
-import { renderExpenses }  from './screens/expenses.js';
-import { renderTrips }     from './screens/trips.js';
-import { renderFuel }      from './screens/fuel.js';
-import { renderMore }      from './screens/more.js';
+import { getAppMode, setAppMode }               from './store.js';
+import { applyTheme, loadTheme }                from './theme.js';
+import { renderSignIn }                          from './screens/signin.js';
+
+// Trucking screens
+import { renderDashboard }   from './screens/dashboard.js';
+import { renderExpenses }    from './screens/expenses.js';
+import { renderTrips }       from './screens/trips.js';
+import { renderFuel }        from './screens/fuel.js';
+import { renderMore }        from './screens/more.js';
+import { renderCalculator }  from './screens/calculator.js';
 import { renderDVIR }        from './screens/dvir.js';
 import { renderDetention }   from './screens/detention.js';
 import { renderSettings }    from './screens/settings.js';
 import { renderTax }         from './screens/tax.js';
 import { renderMaintenance } from './screens/maintenance.js';
-import { renderLoadCalc }    from './screens/loadcalc.js';
-import { renderReports }     from './screens/reports.js';
+import { renderIFTA }        from './screens/ifta.js';
+import { renderPay }         from './screens/pay.js';
 
 const SCREENS = {
   dashboard:   renderDashboard,
+  calculator:  renderCalculator,
   expenses:    renderExpenses,
   trips:       renderTrips,
   fuel:        renderFuel,
@@ -24,11 +30,12 @@ const SCREENS = {
   settings:    renderSettings,
   tax:         renderTax,
   maintenance: renderMaintenance,
-  loadcalc:    renderLoadCalc,
-  reports:     renderReports,
+  ifta:        renderIFTA,
+  pay:         renderPay,
 };
 
-const MORE_SCREENS = new Set(['dvir', 'detention', 'settings', 'tax', 'maintenance', 'loadcalc', 'reports']);
+// Screens that live under the "More" tab for nav-highlight purposes
+const MORE_SCREENS = new Set(['dvir','detention','settings','tax','maintenance','ifta','pay']);
 
 const bottomNav = document.getElementById('bottom-nav');
 let screenCleanup = null;
@@ -41,10 +48,19 @@ export function navigate(screen) {
   }
 }
 
+function updateNav(screen) {
+  const navScreen = MORE_SCREENS.has(screen) ? 'more' : screen;
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    const active = btn.dataset.screen === navScreen;
+    btn.classList.toggle('text-orange-600', active);
+    btn.classList.toggle('text-gray-500', !active);
+  });
+}
+
 function render() {
   if (screenCleanup) { screenCleanup(); screenCleanup = null; }
 
-  const user = getCurrentUser();
+  const user      = getCurrentUser();
   const container = document.getElementById('screen');
 
   if (!user) {
@@ -55,21 +71,20 @@ function render() {
     return;
   }
 
+  // Always trucking mode — auto-set if somehow unset
+  if (!getAppMode()) setAppMode('trucking');
+
   bottomNav.classList.remove('hidden');
+  document.documentElement.style.setProperty('--mode-color', '#ea580c');
 
-  const screen = window.location.hash.slice(1) || 'dashboard';
+  const screen   = window.location.hash.slice(1) || 'dashboard';
   const renderFn = SCREENS[screen] || renderDashboard;
-  const { html, mount } = renderFn();
 
+  const { html, mount } = renderFn();
   container.innerHTML = html;
   if (mount) screenCleanup = mount(container, navigate) || null;
 
-  const navScreen = MORE_SCREENS.has(screen) ? 'more' : screen;
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    const active = btn.dataset.screen === navScreen;
-    btn.classList.toggle('text-orange-600', active);
-    btn.classList.toggle('text-gray-500', !active);
-  });
+  updateNav(screen);
 }
 
 // ── Nav ───────────────────────────────────────────────────────────────────────
@@ -87,24 +102,19 @@ window.refresh  = render;
 // ── Service Worker + auto-update ──────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
-    // When a new SW is found, activate it immediately once installed
     reg.addEventListener('updatefound', () => {
       const newWorker = reg.installing;
       newWorker?.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          // New version is ready — skip waiting so it takes over now
           newWorker.postMessage('SKIP_WAITING');
         }
       });
     });
-
-    // Check for updates every time the page gains focus (returning to the tab/app)
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') reg.update().catch(() => {});
     });
   }).catch(() => {});
 
-  // When the active SW changes (new one took over), reload to get fresh files
   let reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!reloading) { reloading = true; window.location.reload(); }
@@ -112,6 +122,8 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+const _t = loadTheme(); applyTheme(_t.accentColor, _t.bgTheme);
+
 document.getElementById('screen').innerHTML = `
   <div class="flex items-center justify-center h-full">
     <div class="text-center space-y-4">
@@ -121,6 +133,5 @@ document.getElementById('screen').innerHTML = `
   </div>`;
 
 window.addEventListener('hashchange', render);
-
 onAuthReady(() => render());
 initAuth();

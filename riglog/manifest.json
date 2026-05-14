@@ -1,14 +1,14 @@
 {
-  "name": "Truck-Log",
-  "short_name": "Truck-Log",
-  "id": "/riglog/",
-  "description": "Owner-operator trucking toolkit — expenses, trips, fuel, detention timer & DVIR",
+  "name": "RigLog",
+  "short_name": "RigLog",
+  "id": "/",
+  "description": "Truck driver toolkit — log trips, track expenses, and manage your business on the go.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "background_color": "#000000",
-  "theme_color": "#000000",
+  "theme_color": "#ea580c",
   "orientation": "portrait",
   "lang": "en-US",
   "dir": "ltr",
@@ -56,8 +56,8 @@
     }
   ],
   "scope_extensions": [
-    { "origin": "https://eri-fam.firebaseapp.com" },
-    { "origin": "https://eri-fam.web.app" }
+    { "origin": "https://trucklogapp-1b40e.firebaseapp.com" },
+    { "origin": "https://trucklogapp-1b40e.web.app" }
   ],
   "widgets": [
     {

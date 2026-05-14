@@ -1,39 +1,86 @@
-import { getTrips, addTrip, deleteTrip, updateTrip, getSettings, fmtMoney, fmtDate, today, getTripTemplates, saveTripTemplate, deleteTripTemplate } from '../store.js';
+import { getTrips, addTrip, deleteTrip, updateTrip, getSettings, fmtMoney, fmtDate, today, calcTripPay } from '../store.js';
 import { openModal, closeModal, confirmSheet, toast } from '../modal.js';
+import { requestLocation, locationDeniedMsg } from '../permissions.js';
+import { resizeImage, scanReceipt } from '../receipt-scanner.js';
 
 let _filter = 'month';
 
 // ── Geolocation helpers ───────────────────────────────────────────────────────
 
 async function getCityFromCoords(lat, lon) {
-  const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+  const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) return '';
   const data = await res.json();
   const a    = data.address || {};
   const city = a.city || a.town || a.village || a.county || '';
-  const state = a.state_code || (a.state ? a.state.substring(0, 2).toUpperCase() : '');
-  return state ? `${city}, ${state}` : city;
+  const st   = a.state_code || (a.state ? a.state.slice(0, 2).toUpperCase() : '');
+  return st ? `${city}, ${st}` : city;
 }
 
-function getCurrentCity() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) { reject(new Error('Geolocation not supported')); return; }
-    navigator.geolocation.getCurrentPosition(
-      async pos => {
-        try {
-          const city = await getCityFromCoords(pos.coords.latitude, pos.coords.longitude);
-          resolve(city || 'Unknown location');
-        } catch { reject(new Error('Could not get city name')); }
-      },
-      err => reject(err),
-      { timeout: 10000, enableHighAccuracy: false }
-    );
-  });
+// ── Scan results card ─────────────────────────────────────────────────────────
+
+function renderTripScanResults(r) {
+  if (!r._found) return `
+    <p class="text-xs" style="color:rgba(148,163,184,0.5)">
+      Couldn't read the document — fill the fields below manually.
+    </p>`;
+  const fmtD = v => new Date(v + 'T12:00').toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  const rows = [
+    { label: 'Origin',      display: r.origin },
+    { label: 'Destination', display: r.destination },
+    { label: 'Revenue',     display: r.revenue != null ? '$' + r.revenue.toFixed(2)       : null },
+    { label: 'Miles',       display: r.miles   != null ? r.miles.toLocaleString() + ' mi' : null },
+    { label: 'Load #',      display: r.loadNum },
+    { label: 'Date',        display: r.date ? fmtD(r.date) : null },
+  ];
+  return `
+    <p class="text-xs font-bold mb-2" style="color:#4ade80">
+      ✓ ${r._found} field${r._found !== 1 ? 's' : ''} read from document
+    </p>
+    <div>
+      ${rows.map(row => `
+        <div class="flex justify-between text-xs py-1.5" style="border-bottom:1px solid rgba(255,255,255,0.06)">
+          <span style="color:rgba(148,163,184,0.7)">${row.label}</span>
+          <span style="font-weight:${row.display ? 700 : 400};color:${row.display ? '#4ade80' : 'rgba(100,116,139,0.5)'}">
+            ${row.display || '—'}
+          </span>
+        </div>
+      `).join('')}
+    </div>`;
 }
 
 // ── Form builder ──────────────────────────────────────────────────────────────
 
+function stateMilesHtml(existingRows = []) {
+  const rows = existingRows.length > 0 ? existingRows : [];
+  return `
+    <div id="state-miles-rows" class="space-y-2">
+      ${rows.map((r, i) => stateRow(r.state, r.miles, i)).join('')}
+    </div>
+    <button type="button" id="add-state-row" class="loc-btn mt-2 w-full justify-center">
+      + Add State
+    </button>`;
+}
+
+let _rowCount = 0;
+function stateRow(state = '', miles = '', idx = null) {
+  const id = idx ?? _rowCount++;
+  return `
+    <div class="state-miles-row flex gap-2 items-center" data-row="${id}">
+      <input type="text" class="form-input state-input" placeholder="OH" maxlength="3"
+        value="${state}" style="width:64px;text-align:center;font-weight:700;text-transform:uppercase">
+      <input type="number" class="form-input miles-input flex-1" placeholder="Miles" min="0" step="1"
+        value="${miles}">
+      <button type="button" class="del-state-row text-gray-500 p-1.5" style="flex-shrink:0">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+}
+
 function tripForm(existing = null) {
+  _rowCount = 0;
   const t = existing || {};
+  const hasStateMiles = t.stateMiles?.length > 0;
   return `
     <div class="p-5">
       <div class="flex justify-between items-center mb-5">
@@ -41,6 +88,37 @@ function tripForm(existing = null) {
         <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
       </div>
       <form id="trip-form" class="space-y-4">
+
+        <!-- Rate Con / BOL scanner -->
+        <div>
+          <label class="text-xs text-gray-400 block mb-1.5">Rate Con / BOL <span style="color:rgba(100,116,139,0.5)">(optional)</span></label>
+          <div id="trip-scan-preview-wrap" class="${t.receiptPhoto ? '' : 'hidden'} mb-2 relative rounded-xl overflow-hidden"
+               style="background:#0d1117">
+            <img id="trip-scan-preview" src="${t.receiptPhoto || ''}"
+                 class="w-full" style="max-height:200px;object-fit:contain" alt="Document">
+            <button type="button" id="trip-receipt-clear"
+              class="absolute top-2 right-2 bg-black/80 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-base leading-none">&times;</button>
+            <div id="trip-scan-overlay" class="hidden absolute inset-0 flex flex-col items-center justify-center"
+                 style="background:rgba(0,0,0,0.82)">
+              <div class="text-3xl animate-pulse">📡</div>
+              <p class="text-sm font-bold mt-2" style="color:#67e8f9">Scanning document…</p>
+              <p class="text-xs mt-1" style="color:rgba(103,232,249,0.5)">This takes a few seconds</p>
+            </div>
+          </div>
+          <label id="trip-scan-label" class="receipt-cap-label">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <rect x="5" y="2" width="14" height="20" rx="2"/>
+              <line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/>
+            </svg>
+            Scan Rate Con / BOL
+          </label>
+          <input type="file" id="trip-doc-input" accept="image/*"
+                 style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none">
+          <input type="hidden" id="trip-doc-data" name="receiptPhoto" value="${t.receiptPhoto || ''}">
+          <div id="trip-scan-results" class="hidden mt-2 rounded-xl p-3"
+               style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2)"></div>
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <div class="flex justify-between items-center mb-1">
@@ -89,25 +167,31 @@ function tripForm(existing = null) {
           <input type="text" name="loadNum" placeholder="Optional load or BOL number"
             class="form-input" value="${t.loadNum || ''}">
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs text-gray-400 block mb-1">Per Diem Days</label>
-            <input type="number" name="perDiemDays" step="1" min="0" max="30" placeholder="1"
-              class="form-input" value="${t.perDiemDays ?? 1}">
-            <p class="text-xs text-gray-700 mt-0.5">Nights away from home</p>
-          </div>
-          <div>
-            <label class="text-xs text-gray-400 block mb-1">State Miles (IFTA)</label>
-            <input type="text" name="stateMiles" placeholder="GA 200, FL 100"
-              class="form-input" value="${t.stateMiles || ''}">
-            <p class="text-xs text-gray-700 mt-0.5">State code + miles, optional</p>
-          </div>
-        </div>
         <div>
           <label class="text-xs text-gray-400 block mb-1">Notes</label>
           <textarea name="notes" rows="2" placeholder="Optional notes..."
             class="form-input resize-none">${t.notes || ''}</textarea>
         </div>
+
+        <!-- IFTA State Miles (collapsible) -->
+        <div>
+          <button type="button" id="ifta-toggle"
+            style="display:flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:700;color:${hasStateMiles ? '#0891b2' : 'rgba(100,116,139,0.7)'};width:100%;padding:8px 0">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            State Miles (IFTA) ${hasStateMiles ? `· ${t.stateMiles.length} states` : '· optional'}
+            <svg id="ifta-chevron" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+              style="margin-left:auto;transition:transform 0.2s;transform:${hasStateMiles ? 'rotate(90deg)' : 'rotate(0deg)'}">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+          <div id="ifta-body" style="display:${hasStateMiles ? 'block' : 'none'};padding:4px 0 8px">
+            <p style="font-size:0.7rem;color:rgba(100,116,139,0.7);margin-bottom:8px;line-height:1.4">
+              Enter miles driven in each state/province. Used to auto-generate your quarterly IFTA report.
+            </p>
+            ${stateMilesHtml(t.stateMiles || [])}
+          </div>
+        </div>
+
         <button type="submit" class="btn-primary">${existing ? 'Save Changes' : 'Save Trip'}</button>
         <button type="button" onclick="closeModal()" class="btn-ghost">Cancel</button>
       </form>
@@ -118,7 +202,9 @@ function tripForm(existing = null) {
 
 export function renderTrips() {
   const allTrips = getTrips();
-  const { targetRPM = 2.00 } = getSettings();
+  const s = getSettings();
+  const { targetRPM = 2.00 } = s;
+  const isCompany = s.driverType === 'Company';
 
   const now            = new Date();
   const thisMonthStart = now.toISOString().slice(0, 7) + '-01';
@@ -153,25 +239,6 @@ export function renderTrips() {
         <button class="filter-pill ${_filter === 'all'   ? 'active' : ''}" data-filter="all">All Time</button>
       </div>
 
-      <!-- Quick-log templates -->
-      ${getTripTemplates().length > 0 ? `
-      <div class="px-4 pt-2 pb-1 shrink-0">
-        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Quick Log</p>
-        <div class="flex gap-2 overflow-x-auto pb-1">
-          ${getTripTemplates().map(t => `
-            <div class="flex items-center gap-1 bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 shrink-0">
-              <button class="quick-log-tmpl text-left" data-origin="${t.origin}" data-dest="${t.destination}">
-                <p class="text-xs font-black text-orange-500">${t.origin} → ${t.destination}</p>
-                <p class="text-xs text-gray-600">${fmtMoney(t.revenue||0)} · ${(t.miles||0).toLocaleString()} mi</p>
-              </button>
-              <button class="edit-tmpl-btn text-gray-700 hover:text-orange-500 p-0.5" data-origin="${t.origin}" data-dest="${t.destination}" data-miles="${t.miles||0}" data-revenue="${t.revenue||0}" title="Edit template">
-                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-              <button class="del-tmpl-btn text-gray-700 hover:text-red-500 p-0.5" data-origin="${t.origin}" data-dest="${t.destination}">✕</button>
-            </div>`).join('')}
-        </div>
-      </div>` : ''}
-
       <div class="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
         ${displayTrips.length === 0 ? `
           <div class="flex flex-col items-center justify-center py-16 text-center">
@@ -183,9 +250,10 @@ export function renderTrips() {
           const miles   = Number(t.miles)   || 0;
           const rev     = Number(t.revenue) || 0;
           const rPerM   = miles > 0 ? rev / miles : 0;
+          const tripPay = calcTripPay(t, s);
 
-          const borderColor  = rPerM >= targetRPM ? 'border-green-600' : rPerM >= targetRPM * 0.7 ? 'border-orange-600' : 'border-red-600';
-          const revenueColor = rPerM >= targetRPM ? 'text-green-400'   : rPerM >= targetRPM * 0.7 ? 'text-orange-500'   : 'text-red-400';
+          const borderColor  = isCompany ? 'border-green-600' : (rPerM >= targetRPM ? 'border-green-600' : rPerM >= targetRPM * 0.7 ? 'border-orange-600' : 'border-red-600');
+          const revenueColor = isCompany ? 'text-green-400'   : (rPerM >= targetRPM ? 'text-green-400'   : rPerM >= targetRPM * 0.7 ? 'text-orange-500'   : 'text-red-400');
 
           return `
           <div class="bg-gray-900 border border-gray-800 border-l-4 ${borderColor} rounded-xl p-4" data-id="${t.id}">
@@ -199,15 +267,17 @@ export function renderTrips() {
               </div>
               <div class="text-right shrink-0 ml-3">
                 <p class="font-black text-lg ${revenueColor}">${fmtMoney(rev)}</p>
-                ${rPerM > 0 ? `<p class="text-xs text-gray-500">${fmtMoney(rPerM, 2)}/mi</p>` : ''}
+                ${isCompany && tripPay !== null
+                  ? `<p class="text-xs text-green-500">Your cut: ${fmtMoney(tripPay)}</p>`
+                  : (rPerM > 0 ? `<p class="text-xs text-gray-500">${fmtMoney(rPerM, 2)}/mi</p>` : '')}
               </div>
             </div>
             <div class="flex justify-between items-center mt-2">
-              <span class="text-xs text-gray-500">${miles.toLocaleString()} miles</span>
+              <div class="flex items-center gap-2 text-xs text-gray-500">
+                <span>${miles.toLocaleString()} miles</span>
+                ${t.receiptPhoto ? `<img src="${t.receiptPhoto}" class="receipt-thumb" alt="Rate Con" onclick="window._viewTripDoc('${t.id}')">` : ''}
+              </div>
               <div class="flex gap-1">
-                <button class="save-tmpl-btn text-gray-600 hover:text-orange-500 p-1" data-id="${t.id}" title="Save as template">
-                  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                </button>
                 <button class="edit-trip-btn text-gray-500 hover:text-white p-1" data-id="${t.id}">
                   <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
@@ -223,23 +293,158 @@ export function renderTrips() {
       </div>
     </div>`;
 
+  function wireStateMiles(el) {
+    const toggle   = el.querySelector('#ifta-toggle');
+    const body     = el.querySelector('#ifta-body');
+    const chevron  = el.querySelector('#ifta-chevron');
+    const addBtn   = el.querySelector('#add-state-row');
+
+    toggle.addEventListener('click', () => {
+      const open = body.style.display === 'block';
+      body.style.display  = open ? 'none' : 'block';
+      chevron.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+      if (!open && addBtn && el.querySelector('#state-miles-rows').children.length === 0) addBtn.click();
+    });
+
+    addBtn.addEventListener('click', () => {
+      const rows = el.querySelector('#state-miles-rows');
+      rows.insertAdjacentHTML('beforeend', stateRow());
+      wireDelButtons(el);
+    });
+
+    wireDelButtons(el);
+
+    // Auto-uppercase state input
+    el.addEventListener('input', ev => {
+      if (ev.target.classList.contains('state-input')) {
+        const cur = ev.target.selectionStart;
+        ev.target.value = ev.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+        ev.target.setSelectionRange(cur, cur);
+      }
+    });
+  }
+
+  function wireDelButtons(el) {
+    el.querySelectorAll('.del-state-row').forEach(btn => {
+      btn.onclick = () => btn.closest('.state-miles-row').remove();
+    });
+  }
+
+  function collectStateMiles(el) {
+    const result = [];
+    el.querySelectorAll('.state-miles-row').forEach(row => {
+      const state = row.querySelector('.state-input').value.trim().toUpperCase();
+      const miles = parseFloat(row.querySelector('.miles-input').value);
+      if (state && miles > 0) result.push({ state, miles });
+    });
+    return result;
+  }
+
+  const LOC_ICON = `<svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.1 4.9C15.2 1 8.8 1 4.9 4.9S1 15.2 4.9 19.1l7.1 7.1 7.1-7.1c3.9-3.9 3.9-10.3 0-14.2z"/></svg>`;
+
   function wireLocationBtn(el) {
     const btn    = el.querySelector('#use-location-btn');
     const origin = el.querySelector('#trip-origin');
     if (!btn) return;
 
     btn.addEventListener('click', async () => {
-      btn.textContent = 'Locating…';
-      btn.disabled = true;
-      try {
-        const city = await getCurrentCity();
-        origin.value = city;
-        btn.textContent = '✓ Located';
-      } catch (err) {
-        btn.textContent = 'My Location';
-        btn.disabled = false;
-        toast(err.code === 1 ? 'Location permission denied' : 'Could not get location — enter manually', 'error');
+      btn.innerHTML = `${LOC_ICON} Locating…`;
+      btn.disabled  = true;
+
+      // Short hint so the user knows to accept the OS dialog
+      const hint = setTimeout(() => toast('Allow location when your browser asks', 'info'), 1500);
+
+      const result = await requestLocation({ timeout: 15000 });
+      clearTimeout(hint);
+
+      if (result.error === 'denied' || result.error === 'unsupported') {
+        btn.innerHTML = `${LOC_ICON} My Location`;
+        btn.disabled  = false;
+        if (result.error === 'unsupported') {
+          toast('Location not supported on this device', 'error');
+        } else {
+          toast(locationDeniedMsg(), 'error');
+        }
+        return;
       }
+      if (result.error) {
+        btn.innerHTML = `${LOC_ICON} My Location`;
+        btn.disabled  = false;
+        toast('Could not get location — check GPS signal and try again', 'error');
+        return;
+      }
+
+      try {
+        const city  = await getCityFromCoords(result.coords.latitude, result.coords.longitude);
+        origin.value = city || `${result.coords.latitude.toFixed(4)}, ${result.coords.longitude.toFixed(4)}`;
+        btn.innerHTML = `${LOC_ICON} ✓ Located`;
+        btn.disabled  = false;
+      } catch {
+        origin.value = `${result.coords.latitude.toFixed(4)}, ${result.coords.longitude.toFixed(4)}`;
+        btn.innerHTML = `${LOC_ICON} ✓ Located`;
+        btn.disabled  = false;
+      }
+    });
+  }
+
+  function wireTripScanner(el) {
+    const fileInput   = el.querySelector('#trip-doc-input');
+    const previewWrap = el.querySelector('#trip-scan-preview-wrap');
+    const previewImg  = el.querySelector('#trip-scan-preview');
+    const docData     = el.querySelector('#trip-doc-data');
+    const overlay     = el.querySelector('#trip-scan-overlay');
+    const results     = el.querySelector('#trip-scan-results');
+    const scanLabel   = el.querySelector('#trip-scan-label');
+    const clearBtn    = el.querySelector('#trip-receipt-clear');
+    const originEl    = el.querySelector('#trip-origin');
+    const destEl      = el.querySelector('[name="destination"]');
+    const milesEl     = el.querySelector('[name="miles"]');
+    const revenueEl   = el.querySelector('[name="revenue"]');
+    const loadNumEl   = el.querySelector('[name="loadNum"]');
+    const dateEl      = el.querySelector('[name="date"]');
+
+    const DOC_SVG    = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/></svg>`;
+    const RETAKE_SVG = `${DOC_SVG} Retake / Replace`;
+    const SCAN_SVG   = `${DOC_SVG} Scan Rate Con / BOL`;
+
+    if (!fileInput) return;
+
+    // Explicit click — keeps user-gesture chain synchronous on iOS PWA
+    scanLabel.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const base64 = await resizeImage(file);
+      docData.value   = base64;
+      previewImg.src  = base64;
+      previewWrap.classList.remove('hidden');
+      scanLabel.innerHTML = RETAKE_SVG;
+      overlay.classList.remove('hidden');
+      results.classList.add('hidden');
+
+      const r = await scanReceipt(base64, 'trip');
+      overlay.classList.add('hidden');
+
+      if (r.origin      && originEl  && !originEl.value)  originEl.value  = r.origin;
+      if (r.destination && destEl    && !destEl.value)     destEl.value    = r.destination;
+      if (r.miles       && milesEl   && !milesEl.value)    milesEl.value   = r.miles;
+      if (r.revenue     && revenueEl && !revenueEl.value)  revenueEl.value = r.revenue.toFixed(2);
+      if (r.loadNum     && loadNumEl && !loadNumEl.value)  loadNumEl.value = r.loadNum;
+      if (r.date        && dateEl)                         dateEl.value    = r.date;
+
+      results.innerHTML = renderTripScanResults(r);
+      results.classList.remove('hidden');
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      docData.value   = '';
+      previewImg.src  = '';
+      previewWrap.classList.add('hidden');
+      fileInput.value = '';
+      results.classList.add('hidden');
+      scanLabel.innerHTML = SCAN_SVG;
     });
   }
 
@@ -251,9 +456,25 @@ export function renderTrips() {
       });
     });
 
+    window._viewTripDoc = (id) => {
+      const trip = getTrips().find(t => t.id === id);
+      if (!trip?.receiptPhoto) return;
+      openModal(`
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-3">
+            <p class="font-black">Rate Con — ${trip.origin} → ${trip.destination}</p>
+            <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
+          </div>
+          <img src="${trip.receiptPhoto}" class="w-full rounded-xl" alt="Rate Con">
+          <p class="text-xs text-gray-500 mt-2 text-center">${fmtDate(trip.date)}</p>
+        </div>`, () => {});
+    };
+
     container.querySelector('#add-trip-btn').addEventListener('click', () => {
       openModal(tripForm(), el => {
+        wireTripScanner(el);
         wireLocationBtn(el);
+        wireStateMiles(el);
         el.querySelector('#trip-form').addEventListener('submit', ev => {
           ev.preventDefault();
           const fd = new FormData(ev.target);
@@ -263,11 +484,11 @@ export function renderTrips() {
             miles:         parseFloat(fd.get('miles')),
             revenue:       parseFloat(fd.get('revenue')),
             durationHours: fd.get('durationHours') ? parseFloat(fd.get('durationHours')) : null,
-            perDiemDays:   fd.get('perDiemDays') ? parseInt(fd.get('perDiemDays')) : 1,
-            stateMiles:    fd.get('stateMiles').trim(),
             date:          fd.get('date'),
             loadNum:       fd.get('loadNum').trim(),
             notes:         fd.get('notes').trim(),
+            stateMiles:    collectStateMiles(el),
+            receiptPhoto:  fd.get('receiptPhoto') || null,
           });
           closeModal();
           toast('Trip saved ✓');
@@ -281,7 +502,9 @@ export function renderTrips() {
         const existing = getTrips().find(t => t.id === btn.dataset.id);
         if (!existing) return;
         openModal(tripForm(existing), el => {
+          wireTripScanner(el);
           wireLocationBtn(el);
+          wireStateMiles(el);
           el.querySelector('#trip-form').addEventListener('submit', ev => {
             ev.preventDefault();
             const fd = new FormData(ev.target);
@@ -291,11 +514,11 @@ export function renderTrips() {
               miles:         parseFloat(fd.get('miles')),
               revenue:       parseFloat(fd.get('revenue')),
               durationHours: fd.get('durationHours') ? parseFloat(fd.get('durationHours')) : null,
-              perDiemDays:   fd.get('perDiemDays') ? parseInt(fd.get('perDiemDays')) : 1,
-              stateMiles:    fd.get('stateMiles').trim(),
               date:          fd.get('date'),
               loadNum:       fd.get('loadNum').trim(),
               notes:         fd.get('notes').trim(),
+              stateMiles:    collectStateMiles(el),
+              receiptPhoto:  fd.get('receiptPhoto') || null,
             });
             closeModal();
             toast('Trip updated ✓');
@@ -312,77 +535,6 @@ export function renderTrips() {
           toast('Trip deleted', 'info');
           window.refresh();
         });
-      });
-    });
-
-    // Save trip as recurring template
-    container.querySelectorAll('.save-tmpl-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const trip = getTrips().find(t => t.id === btn.dataset.id);
-        if (!trip) return;
-        saveTripTemplate(trip);
-        toast(`Template saved: ${trip.origin} → ${trip.destination} ✓`);
-        window.refresh();
-      });
-    });
-
-    // Quick-log from template
-    container.querySelectorAll('.quick-log-tmpl').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tmpl = getTripTemplates().find(t => t.origin === btn.dataset.origin && t.destination === btn.dataset.dest);
-        if (!tmpl) return;
-        addTrip({ origin: tmpl.origin, destination: tmpl.destination, miles: tmpl.miles, revenue: tmpl.revenue });
-        toast(`Quick-logged: ${tmpl.origin} → ${tmpl.destination} ✓`);
-        window.refresh();
-      });
-    });
-
-    // Edit template
-    container.querySelectorAll('.edit-tmpl-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const origin  = btn.dataset.origin;
-        const dest    = btn.dataset.dest;
-        const miles   = btn.dataset.miles;
-        const revenue = btn.dataset.revenue;
-        openModal(`
-          <div class="p-5">
-            <div class="flex justify-between items-center mb-5">
-              <h2 class="text-lg font-black">${origin} → ${dest}</h2>
-              <button onclick="closeModal()" class="text-gray-400 text-2xl leading-none">&times;</button>
-            </div>
-            <form id="edit-tmpl-form" class="space-y-4">
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="text-xs text-gray-400 block mb-1">Miles</label>
-                  <input type="number" name="miles" step="1" min="0" class="form-input" value="${miles}" required>
-                </div>
-                <div>
-                  <label class="text-xs text-gray-400 block mb-1">Revenue ($)</label>
-                  <input type="number" name="revenue" step="0.01" min="0" class="form-input" value="${revenue}" required>
-                </div>
-              </div>
-              <button type="submit" class="btn-primary">Update Template</button>
-            </form>
-          </div>
-        `, el => {
-          el.querySelector('#edit-tmpl-form').addEventListener('submit', ev => {
-            ev.preventDefault();
-            const fd = new FormData(ev.target);
-            saveTripTemplate({ origin, destination: dest, miles: parseFloat(fd.get('miles')), revenue: parseFloat(fd.get('revenue')) });
-            closeModal();
-            toast('Template updated ✓');
-            window.refresh();
-          });
-        });
-      });
-    });
-
-    // Delete template
-    container.querySelectorAll('.del-tmpl-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        deleteTripTemplate(btn.dataset.origin, btn.dataset.dest);
-        toast('Template removed', 'info');
-        window.refresh();
       });
     });
   }

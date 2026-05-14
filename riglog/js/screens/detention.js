@@ -171,26 +171,13 @@ export function renderDetention() {
     </div>`;
 
   function mount(container, navigate) {
-    let timerInterval  = null;
-    let graceNotified  = false;
+    let timerInterval = null;
 
     if (active) {
       function updateTimer() {
         const elapsedMs  = Date.now() - new Date(active.startedAt).getTime();
         const detMs      = Math.max(0, elapsedMs - graceMs);
         const graceLeft  = Math.max(0, graceMs - elapsedMs);
-
-        // Fire one notification the moment grace period expires
-        if (graceLeft === 0 && !graceNotified) {
-          graceNotified = true;
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Detention — Grace Period Expired', {
-              body: `You can now bill ${active.facility} detention at $${rate}/hr`,
-              icon: './icon-512.png',
-              tag:  'rl-detention-grace',
-            });
-          }
-        }
 
         const elEl  = container.querySelector('#timer-elapsed');
         const grEl  = container.querySelector('#timer-grace');
@@ -242,10 +229,6 @@ export function renderDetention() {
             const fd = new FormData(ev.target);
             setActiveDetention({ facility: fd.get('facility').trim(), startedAt: new Date().toISOString() });
             closeModal();
-            // Request notification permission so grace-period alert can fire
-            if ('Notification' in window && Notification.permission === 'default') {
-              Notification.requestPermission();
-            }
             navigate('detention');
           });
         });

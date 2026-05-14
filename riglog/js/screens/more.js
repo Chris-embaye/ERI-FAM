@@ -1,172 +1,128 @@
-import { getDVIRs, getDetentionSessions, getActiveDetention, getSettings, getTrips, getExpenses, getMaintenanceLogs } from '../store.js';
+import { getDVIRs, getDetentionSessions, getActiveDetention, getSettings, getMaintenanceLogs } from '../store.js';
+
+const chevron = `<svg width="16" height="16" fill="none" stroke="rgba(100,116,139,0.7)" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
+
+function moreCard(iconSvg, iconBg, title, sub, badge, onClick) {
+  return `
+    <button onclick="${onClick}" class="glass-card w-full text-left" style="padding:14px 16px;margin-bottom:10px">
+      <div class="flex items-center gap-3">
+        <div style="background:${iconBg};border-radius:14px;padding:10px;flex-shrink:0">${iconSvg}</div>
+        <div class="flex-1 min-w-0">
+          <p style="font-weight:800;font-size:0.9rem;color:#e0f2fe">${title}</p>
+          <p style="font-size:0.72rem;color:rgba(100,116,139,0.85);margin-top:2px;line-height:1.3">${sub}</p>
+        </div>
+        ${badge ? `<div style="font-size:0.75rem;font-weight:800;color:#67e8f9">${badge}</div>` : ''}
+        ${chevron}
+      </div>
+    </button>`;
+}
 
 export function renderMore() {
   const dvirs    = getDVIRs();
   const sessions = getDetentionSessions();
   const active   = getActiveDetention();
   const settings = getSettings();
+  const maint    = getMaintenanceLogs();
 
-  const maintLogs    = getMaintenanceLogs();
-  const estOdo       = getTrips().reduce((s, t) => s + Number(t.miles || 0), 0);
-  const overdueCount = maintLogs.filter(l => l.nextDueMiles && estOdo > 0 && (Number(l.nextDueMiles) - estOdo) <= 0).length;
-  const upcomingCount= maintLogs.filter(l => l.nextDueMiles && estOdo > 0 && (Number(l.nextDueMiles) - estOdo) > 0 && (Number(l.nextDueMiles) - estOdo) < 5000).length;
-
-  const lastDVIR     = dvirs[0];
-  const lastDVIRDate = lastDVIR
-    ? new Date(lastDVIR.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const lastDVIRDate = dvirs[0]
+    ? new Date(dvirs[0].date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null;
 
-  const totalDetentionClaims = sessions.reduce((s, d) => s + Number(d.value || 0), 0);
+  const totalDetention = sessions.reduce((s, d) => s + Number(d.value || 0), 0);
 
-  // YTD quick stats for tax card
-  const year      = new Date().getFullYear();
-  const yearStart = `${year}-01-01`;
-  const ytdRev = getTrips().filter(t => t.date >= yearStart).reduce((s, t) => s + Number(t.revenue || 0), 0);
+  const year = new Date().getFullYear();
+
+  // Maintenance alert count
+  const odo = Number(settings.currentOdometer) || 0;
+  const maintAlerts = maint.filter(m => {
+    const INTERVALS = { oil:25000, pm:30000, tires:50000, brakes:60000, airfilt:50000, fuelfilt:30000, trans:100000, coolant:100000 };
+    const interval = m.customInterval || INTERVALS[m.serviceType];
+    if (!interval || !m.odometer || !odo) return false;
+    return (Number(m.odometer) + interval - odo) <= 3000;
+  }).length;
 
   const html = `
-    <div class="flex flex-col h-full bg-black text-white">
-      <div class="px-4 pt-5 pb-4 border-b border-gray-800 shrink-0">
-        <h1 class="text-2xl font-black">More</h1>
-        <p class="text-xs text-gray-500">Tools &amp; settings</p>
+    <div class="flex flex-col h-full text-white" style="background:transparent">
+      <!-- Header -->
+      <div class="dash-header shrink-0">
+        <div>
+          <h1 style="font-size:1.4rem;font-weight:900;color:#e0f2fe;letter-spacing:-0.3px">More</h1>
+          <p style="font-size:0.7rem;color:rgba(100,116,139,0.8);margin-top:1px">Tools &amp; settings</p>
+        </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-4 space-y-3">
+      <div class="flex-1 overflow-y-auto" style="padding:14px 14px 80px">
 
-        <!-- Monthly Reports -->
-        <button onclick="navigate('reports')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
-          <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-              <div class="rounded-xl p-2.5" style="background:rgba(10,132,255,.15)">
-                <svg width="22" height="22" fill="none" stroke="#0A84FF" viewBox="0 0 24 24" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  <line x1="8" y1="14" x2="8" y2="14" stroke-width="2.5" stroke-linecap="round"/>
-                  <line x1="12" y1="14" x2="16" y2="14" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="8" y1="18" x2="8" y2="18" stroke-width="2.5" stroke-linecap="round"/>
-                  <line x1="12" y1="18" x2="16" y2="18" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </div>
-              <div>
-                <p class="font-black">Monthly Reports</p>
-                <p class="text-xs text-gray-500 mt-0.5">Revenue · expenses · profit by month</p>
-              </div>
-            </div>
-            <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-        </button>
+        <!-- Tool cards -->
+        ${moreCard(
+          `<svg width="22" height="22" fill="none" stroke="#4ade80" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>`,
+          'rgba(74,222,128,0.12)',
+          'Pay Ledger',
+          settings.driverType === 'Company'
+            ? (settings.companyPayType === 'cpm'
+                ? `${(Number(settings.cpmRate||0)*100).toFixed(1)}¢/mi · weekly pay statement`
+                : `${settings.payPercent}% of load · weekly pay statement`)
+            : 'Company drivers — weekly pay tracker',
+          '',
+          "navigate('pay')"
+        )}
+        ${moreCard(
+          `<svg width="22" height="22" fill="none" stroke="#67e8f9" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+          'rgba(8,145,178,0.15)',
+          'Detention Timer',
+          active ? 'Session active — tap to manage' : sessions.length > 0 ? `${sessions.length} sessions logged` : 'No sessions yet',
+          active ? '<span style="color:#67e8f9;animation:pulse-cyan 2s infinite">● LIVE</span>' : totalDetention > 0 ? `$${Math.round(totalDetention)}` : '',
+          "navigate('detention')"
+        )}
+        ${moreCard(
+          `<svg width="22" height="22" fill="none" stroke="#60a5fa" viewBox="0 0 24 24" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>`,
+          'rgba(59,130,246,0.15)',
+          'Vehicle Inspection (DVIR)',
+          lastDVIRDate ? `Last: ${lastDVIRDate} · 37 check items` : '37 inspection items · no entries yet',
+          dvirs.length > 0 ? `${dvirs.length}` : '',
+          "navigate('dvir')"
+        )}
+        ${moreCard(
+          `<svg width="22" height="22" fill="none" stroke="#fb923c" viewBox="0 0 24 24" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+          'rgba(251,146,60,0.12)',
+          'Maintenance Log',
+          maint.length > 0 ? `${maint.length} service records` : 'Track oil changes, tires, PM intervals',
+          maintAlerts > 0 ? `<span style="color:#fbbf24">⚠ ${maintAlerts} due</span>` : '',
+          "navigate('maintenance')"
+        )}
+        ${moreCard(
+          `<svg width="22" height="22" fill="none" stroke="#a78bfa" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
+          'rgba(139,92,246,0.12)',
+          'IFTA Report',
+          'Miles by state/province · quarterly filing',
+          '',
+          "navigate('ifta')"
+        )}
+        ${moreCard(
+          `<svg width="22" height="22" fill="none" stroke="#4ade80" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 10h2l2-4 2 8 2-4h2"/></svg>`,
+          'rgba(21,128,61,0.15)',
+          'Tax Summary',
+          `YTD ${year} · estimates &amp; quarterly payments`,
+          '',
+          "navigate('tax')"
+        )}
+        ${moreCard(
+          `<svg width="22" height="22" fill="none" stroke="#94a3b8" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+          'rgba(100,116,139,0.15)',
+          'Settings',
+          `${settings.truckId || 'My Truck'} · $${settings.detentionRate || 60}/hr detention`,
+          '',
+          "navigate('settings')"
+        )}
 
-        <!-- Detention -->
-        <button onclick="navigate('detention')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
-          <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-              <div class="bg-orange-600/20 rounded-xl p-2.5">
-                <svg width="22" height="22" fill="none" stroke="#EA580C" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              </div>
-              <div>
-                <p class="font-black">Detention Timer</p>
-                <p class="text-xs text-gray-500 mt-0.5">${active ? '🟢 Session active — tap to manage' : sessions.length > 0 ? `${sessions.length} sessions logged` : 'No sessions yet'}</p>
-              </div>
-            </div>
-            <div class="text-right">
-              ${active ? `<span class="text-orange-600 font-bold text-xs">ACTIVE</span>` : totalDetentionClaims > 0 ? `<span class="text-green-400 font-bold text-sm">$${totalDetentionClaims.toFixed(0)}</span>` : ''}
-              <svg class="text-gray-600 mt-1 ml-auto" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-          </div>
-        </button>
-
-        <!-- DVIR -->
-        <button onclick="navigate('dvir')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
-          <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-              <div class="bg-blue-600/20 rounded-xl p-2.5">
-                <svg width="22" height="22" fill="none" stroke="#3b82f6" viewBox="0 0 24 24" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
-              </div>
-              <div>
-                <p class="font-black">Vehicle Inspection (DVIR)</p>
-                <p class="text-xs text-gray-500 mt-0.5">${lastDVIR ? `Last: ${lastDVIRDate} · 37 check items` : '37 inspection items'}</p>
-              </div>
-            </div>
-            <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-        </button>
-
-        <!-- Tax Summary -->
-        <button onclick="navigate('tax')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
-          <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-              <div class="bg-green-600/20 rounded-xl p-2.5">
-                <svg width="22" height="22" fill="none" stroke="#22c55e" viewBox="0 0 24 24" stroke-width="2">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-                  <path d="M7 10h2l2-4 2 8 2-4h2"/>
-                </svg>
-              </div>
-              <div>
-                <p class="font-black">Tax Summary</p>
-                <p class="text-xs text-gray-500 mt-0.5">${ytdRev > 0 ? `YTD ${year} · $${Math.round(ytdRev).toLocaleString()} revenue` : `YTD ${year} estimates & quarterly payments`}</p>
-              </div>
-            </div>
-            <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-        </button>
-
-        <!-- Maintenance -->
-        <button onclick="navigate('maintenance')" class="w-full bg-gray-900 border ${overdueCount > 0 ? 'border-red-900' : 'border-gray-800'} rounded-xl p-4 text-left">
-          <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-              <div class="bg-orange-600/20 rounded-xl p-2.5">
-                <svg width="22" height="22" fill="none" stroke="#EA580C" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              </div>
-              <div>
-                <p class="font-black">Maintenance Log</p>
-                <p class="text-xs mt-0.5 ${overdueCount > 0 ? 'text-red-400 font-bold' : 'text-gray-500'}">
-                  ${overdueCount > 0 ? `⚠ ${overdueCount} overdue` : upcomingCount > 0 ? `${upcomingCount} due soon` : maintLogs.length > 0 ? `${maintLogs.length} service records` : 'Track oil changes, DOT, tires'}
-                </p>
-              </div>
-            </div>
-            <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-        </button>
-
-        <!-- Load Calculator -->
-        <button onclick="navigate('loadcalc')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
-          <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-              <div class="bg-green-600/20 rounded-xl p-2.5">
-                <svg width="22" height="22" fill="none" stroke="#22c55e" viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              </div>
-              <div>
-                <p class="font-black">Load Calculator</p>
-                <p class="text-xs text-gray-500 mt-0.5">Is this load worth it? Rate, fuel, net profit</p>
-              </div>
-            </div>
-            <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-        </button>
-
-        <!-- Settings -->
-        <button onclick="navigate('settings')" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
-          <div class="flex justify-between items-start">
-            <div class="flex items-center gap-3">
-              <div class="bg-gray-700/50 rounded-xl p-2.5">
-                <svg width="22" height="22" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              </div>
-              <div>
-                <p class="font-black">Settings</p>
-                <p class="text-xs text-gray-500 mt-0.5">${settings.truckId} · $${settings.detentionRate}/hr detention</p>
-              </div>
-            </div>
-            <svg class="text-gray-600 mt-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-        </button>
-
-        <!-- About -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
-          <p class="font-bold text-sm text-gray-300">Rig Log</p>
-          <p class="text-xs text-gray-600 mt-0.5">Owner-operator toolkit · v4.0</p>
-          <p class="text-xs text-gray-700 mt-2">Data synced to your account — accessible on all your devices.</p>
+        <!-- Version -->
+        <div class="glass-card" style="padding:14px 16px;text-align:center">
+          <p style="font-weight:800;font-size:0.85rem;color:rgba(148,163,184,0.8)">RigLog</p>
+          <p style="font-size:0.7rem;color:rgba(100,116,139,0.7);margin-top:3px">v3.2 · owner-operator toolkit</p>
         </div>
 
       </div>
     </div>`;
 
-  return { html, mount: null };
+  return { html };
 }

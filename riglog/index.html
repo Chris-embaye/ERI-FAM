@@ -2,25 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#000000">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#ea580c">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="Truck-Log">
-  <title>Truck-Log</title>
+  <meta name="apple-mobile-web-app-title" content="RigLog">
+  <title>RigLog — Truck Driver Toolkit</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-512.png">
   <link rel="icon" href="icon-512.png">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Tesseract OCR for receipt scanning (loaded async, ~3MB first use) -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
-  <script>
-    tailwind.config = {
-      theme: { extend: { colors: { orange: { 600: '#EA580C', 700: '#C2410C' } } } }
-    }
-  </script>
   <!-- Firebase compat SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -36,38 +29,44 @@
     });
   </script>
 </head>
-<body class="bg-black text-white overflow-hidden select-none">
+<body class="text-white overflow-hidden">
 
-  <div id="app" class="flex flex-col max-w-md mx-auto bg-black" style="height:100dvh">
-    <main id="screen" class="flex-1 overflow-y-auto overscroll-contain"></main>
-
-    <nav id="bottom-nav" class="border-t border-gray-800 bg-black flex justify-around shrink-0 pb-safe">
-      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-orange-600" data-screen="dashboard">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span class="text-xs">Dashboard</span>
-      </button>
-      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-gray-500" data-screen="expenses">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        <span class="text-xs">Expenses</span>
-      </button>
-      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-gray-500" data-screen="trips">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
-        <span class="text-xs">Trips</span>
-      </button>
-      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-gray-500" data-screen="fuel">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>
-        <span class="text-xs">Fuel</span>
-      </button>
-      <button class="nav-btn flex flex-col items-center gap-0.5 py-2 px-3 text-gray-500" data-screen="more">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
-        <span class="text-xs">More</span>
-      </button>
-    </nav>
+  <!-- Ambient floating glow orbs — behind everything -->
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
   </div>
 
-  <!-- Offline indicator -->
-  <div id="offline-bar" class="hidden fixed top-0 left-0 right-0 z-[9999] bg-orange-600 text-white text-center text-xs font-bold py-2 tracking-wide" style="letter-spacing:.04em">
-    📡 OFFLINE — data saved locally, syncs when reconnected
+  <div id="app" class="flex flex-col max-w-md mx-auto" style="height:100dvh;background:transparent;position:relative;z-index:1">
+    <main id="screen" class="flex-1 overflow-y-auto overscroll-contain"></main>
+
+    <nav id="bottom-nav" class="rl-nav shrink-0">
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-1.5 text-orange-600" data-screen="dashboard">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span style="font-size:10px">Home</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-1.5 text-gray-500" data-screen="calculator">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/></svg>
+        <span style="font-size:10px">Calc</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-1.5 text-gray-500" data-screen="expenses">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span style="font-size:10px">Expenses</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-1.5 text-gray-500" data-screen="trips">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        <span style="font-size:10px">Trips</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-1.5 text-gray-500" data-screen="fuel">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>
+        <span style="font-size:10px">Fuel</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-1.5 text-gray-500" data-screen="more">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+        <span style="font-size:10px">More</span>
+      </button>
+    </nav>
   </div>
 
   <!-- Bottom-sheet modal -->
@@ -75,24 +74,7 @@
     <div id="modal-content" class="bg-gray-900 rounded-t-2xl w-full max-w-md overflow-y-auto" style="max-height:92dvh"></div>
   </div>
 
-  <script>
-    (function() {
-      const bar = document.getElementById('offline-bar');
-      function update() {
-        bar.classList.toggle('hidden', navigator.onLine);
-        if (navigator.onLine) {
-          const t = document.createElement('div');
-          t.textContent = '✓ Back online — syncing…';
-          t.className = 'fixed top-0 left-0 right-0 z-[9999] bg-green-600 text-white text-center text-xs font-bold py-2';
-          document.body.appendChild(t);
-          setTimeout(() => t.remove(), 2500);
-        }
-      }
-      if (!navigator.onLine) bar.classList.remove('hidden');
-      window.addEventListener('online',  update);
-      window.addEventListener('offline', update);
-    })();
-  </script>
   <script type="module" src="js/app.js"></script>
+
 </body>
 </html>
