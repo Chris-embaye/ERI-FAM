@@ -38,8 +38,8 @@
       ]
     },
     {
-      "target": "riglog",
-      "public": "riglog",
+      "target": "trucklog",
+      "public": "trucklog",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "headers": [
         {

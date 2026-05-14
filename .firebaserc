@@ -13,15 +13,12 @@
         ],
         "tigrinya-school": [
           "eri-tigrinya-school"
-        ],
-        "riglog": [
-          "eri-riglog"
         ]
       }
     },
     "trucklogapp-1b40e": {
       "hosting": {
-        "riglog": [
+        "trucklog": [
           "trucklogapp-1b40e"
         ]
       }
