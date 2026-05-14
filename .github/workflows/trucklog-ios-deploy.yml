@@ -1,0 +1,124 @@
+name: TruckLog iOS — Build & Upload to TestFlight
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'trucklog-ios/**'
+      - '.github/workflows/trucklog-ios-deploy.yml'
+
+jobs:
+  build-and-upload:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: |
+          LATEST=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          echo "Using Xcode: $LATEST"
+          sudo xcode-select -s "$LATEST"
+          xcodebuild -version
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Verify app icon
+        run: |
+          ICON=trucklog-ios/TruckLog/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+          if [ -f "$ICON" ]; then
+            echo "Icon exists: $(wc -c < $ICON) bytes ✓"
+          else
+            echo "ERROR: AppIcon-1024.png missing from repo" && exit 1
+          fi
+
+      - name: Generate Xcode project
+        run: |
+          cd trucklog-ios
+          xcodegen generate
+
+      - name: Import Distribution Certificate
+        env:
+          CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_DIST_CERT_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DIST_CERT_PASSWORD }}
+        run: |
+          echo "$CERTIFICATE_P12_BASE64" | base64 --decode > cert.p12
+          security create-keychain -p "build123" build.keychain
+          security import cert.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security list-keychains -s build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "build123" build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "build123" build.keychain
+
+      - name: Install Provisioning Profile
+        env:
+          TRUCKLOG_PROVISIONING_PROFILE_BASE64: ${{ secrets.TRUCKLOG_PROVISIONING_PROFILE }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$TRUCKLOG_PROVISIONING_PROFILE_BASE64" | base64 --decode \
+            > ~/Library/MobileDevice/Provisioning\ Profiles/trucklog.mobileprovision
+
+      - name: Build Archive
+        run: |
+          cd trucklog-ios
+          xcodebuild archive \
+            -project TruckLog.xcodeproj \
+            -scheme TruckLog \
+            -configuration Release \
+            -archivePath ../TruckLog.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="TruckLog App Store" \
+            DEVELOPMENT_TEAM=49D2THWCHV \
+            -allowProvisioningUpdates
+
+      - name: Export IPA
+        run: |
+          cat > ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>49D2THWCHV</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.chrisdrive.trucklog</key>
+              <string>TruckLog App Store</string>
+            </dict>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath TruckLog.xcarchive \
+            -exportPath TruckLogExport \
+            -exportOptionsPlist ExportOptions.plist
+
+      - name: Upload to App Store Connect (TestFlight)
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          mkdir -p ~/.private_keys
+          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
+            > ~/.private_keys/AuthKey_${ASC_API_KEY_ID}.p8
+          IPA=$(find TruckLogExport -name "*.ipa" | head -1)
+          echo "Found IPA: $IPA"
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA" \
+            --apiKey "$ASC_API_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
+          echo "Upload complete ✓"
