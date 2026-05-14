@@ -54,3 +54,4 @@ targets:
         UIApplicationSupportsIndirectInputEvents: true
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
+        ITSAppUsesNonExemptEncryption: false
