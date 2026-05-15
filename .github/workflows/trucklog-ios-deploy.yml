@@ -78,15 +78,19 @@ jobs:
       - name: Export & Upload to App Store Connect
         env:
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
+          KEY_PATH=~/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
-            > ~/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
+          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode > "$KEY_PATH"
 
           xcodebuild -exportArchive \
             -archivePath TruckLog.xcarchive \
             -exportPath TruckLogExport \
             -exportOptionsPlist trucklog-ios/ExportOptions.plist \
+            -authenticationKeyPath "$KEY_PATH" \
+            -authenticationKeyID "$ASC_API_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             -allowProvisioningUpdates
           echo "Upload complete ✓"
