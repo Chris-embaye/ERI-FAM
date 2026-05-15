@@ -78,45 +78,15 @@ jobs:
       - name: Export & Upload to App Store Connect
         env:
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
             > ~/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
 
-          cat > ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>destination</key>
-            <string>upload</string>
-            <key>teamID</key>
-            <string>49D2THWCHV</string>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.chrisdrive.trucklog</key>
-              <string>TruckLog App Store</string>
-            </dict>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>compileBitcode</key>
-            <false/>
-            <key>apiKeyID</key>
-            <string>${ASC_API_KEY_ID}</string>
-            <key>apiKeyIssuerID</key>
-            <string>${ASC_ISSUER_ID}</string>
-          </dict>
-          </plist>
-          EOF
-
           xcodebuild -exportArchive \
             -archivePath TruckLog.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
+            -exportPath TruckLogExport \
+            -exportOptionsPlist trucklog-ios/ExportOptions.plist \
             -allowProvisioningUpdates
           echo "Upload complete ✓"
