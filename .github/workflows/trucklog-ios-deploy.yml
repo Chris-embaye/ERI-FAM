@@ -81,9 +81,9 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
-          mkdir -p ~/.private_keys
+          mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
-            > ~/.private_keys/AuthKey_${ASC_API_KEY_ID}.p8
+            > ~/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
 
           cat > ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
