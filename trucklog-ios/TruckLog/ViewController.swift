@@ -6,6 +6,9 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     private var webView: WKWebView!
     private let appURL = URL(string: "https://trucklogapp.com")!
 
+    // Safari user agent so Google/Firebase OAuth isn't blocked by disallowed_useragent
+    private let safariAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+
     override func loadView() {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
@@ -16,6 +19,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.uiDelegate = self
+        webView.customUserAgent = safariAgent
         webView.allowsBackForwardNavigationGestures = false
         webView.scrollView.contentInsetAdjustmentBehavior = .automatic
         view = webView
@@ -28,18 +32,6 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
 
     private func loadApp() {
         webView.load(URLRequest(url: appURL))
-    }
-
-    // Send Google OAuth to Safari — WKWebView is blocked by Google
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        if let host = navigationAction.request.url?.host,
-           host.contains("accounts.google.com") || host.contains("appleid.apple.com") {
-            UIApplication.shared.open(navigationAction.request.url!)
-            decisionHandler(.cancel)
-            return
-        }
-        decisionHandler(.allow)
     }
 
     // Open target="_blank" links in the same webview
