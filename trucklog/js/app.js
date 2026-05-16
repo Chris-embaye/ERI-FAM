@@ -132,6 +132,26 @@ async function maybeRequestPermissions() {
   requestLocation({ timeout: 5000 });
 }
 
+// ── Version check — bypasses SW + HTTP cache, forces reload on new deploy ────
+(async () => {
+  try {
+    const res = await fetch('./version.json', { cache: 'no-store' });
+    if (!res.ok) return;
+    const { v } = await res.json();
+    const stored = localStorage.getItem('rl_ver');
+    if (stored && stored !== v) {
+      localStorage.setItem('rl_ver', v);
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      window.location.reload();
+      return;
+    }
+    localStorage.setItem('rl_ver', v);
+  } catch {}
+})();
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 const _t = loadTheme(); applyTheme(_t.accentColor, _t.bgTheme);
 

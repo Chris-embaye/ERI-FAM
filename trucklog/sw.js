@@ -1,4 +1,4 @@
-const CACHE = 'truck-log-v23';
+const CACHE = 'truck-log-v24';
 const ASSETS = [
   './', './index.html', './styles.css', './manifest.json',
   './js/app.js', './js/store.js', './js/modal.js', './js/auth.js', './js/theme.js',
@@ -39,6 +39,12 @@ self.addEventListener('fetch', e => {
     url.hostname.includes('firebase.com') ||
     url.hostname.includes('gstatic.com')
   ) return;
+
+  // version.json — always bypass cache entirely
+  if (url.pathname.endsWith('/version.json')) {
+    e.respondWith(fetch(e.request, { cache: 'no-store' }));
+    return;
+  }
 
   // Network-first for app's own files so updates land immediately
   if (url.origin === self.location.origin) {
