@@ -9,26 +9,20 @@ function setError(container, msg) {
 
 export function renderSignIn() {
   const html = `
-    <div class="flex flex-col h-full text-white overflow-y-auto" style="background:transparent">
+    <div class="flex flex-col h-full bg-black text-white overflow-y-auto">
+      <div class="flex-1 flex flex-col justify-center px-6 py-10 max-w-sm mx-auto w-full">
 
-      <!-- Full-width hero icon -->
-      <div style="width:100%;aspect-ratio:1/1;max-height:42dvh;position:relative;overflow:hidden;flex-shrink:0">
-        <img src="icon-512.png" style="width:100%;height:100%;object-fit:cover;display:block" alt="Truck-Log">
-        <!-- fade out the bottom edge into the page background -->
-        <div style="position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to bottom,transparent,rgb(4,10,18))"></div>
-        <!-- Title sitting on top of the fade -->
-        <div style="position:absolute;bottom:16px;left:0;right:0;text-align:center">
-          <h1 class="font-black tracking-tight" style="font-size:2.2rem;text-shadow:0 0 24px rgba(103,232,249,0.5)">Truck-Log</h1>
-          <p style="font-size:0.8rem;color:rgba(148,163,184,0.6);margin-top:2px">Owner-operator toolkit</p>
+        <!-- Logo -->
+        <div class="text-center mb-8">
+          <div class="text-5xl mb-3">🚛</div>
+          <h1 class="text-3xl font-black tracking-tight">Truck-Log</h1>
+          <p class="text-gray-500 text-sm mt-1">Owner-operator toolkit</p>
         </div>
-      </div>
-
-      <div class="flex-1 flex flex-col justify-start px-6 pt-4 pb-6 max-w-sm mx-auto w-full">
 
         <!-- Tabs (hidden when forgot-pw is active) -->
-        <div id="auth-tabs" class="flex rounded-xl p-1 mb-6" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08)">
-          <button id="tab-signin" class="flex-1 py-2 rounded-lg text-sm font-bold transition" style="background:linear-gradient(135deg,var(--accent-light),var(--accent));color:#fff">Sign In</button>
-          <button id="tab-signup" class="flex-1 py-2 rounded-lg text-sm font-bold transition" style="color:rgba(148,163,184,0.7)">Create Account</button>
+        <div id="auth-tabs" class="flex bg-gray-900 rounded-xl p-1 mb-6 border border-gray-800">
+          <button id="tab-signin" class="flex-1 py-2 rounded-lg text-sm font-bold transition" style="background:var(--accent);color:#fff">Sign In</button>
+          <button id="tab-signup" class="flex-1 py-2 rounded-lg text-sm font-bold text-gray-400 transition">Create Account</button>
         </div>
 
         <!-- Error / success banner -->
@@ -42,9 +36,9 @@ export function renderSignIn() {
           <input type="password" name="password" placeholder="Password"
             class="form-input w-full" autocomplete="current-password" required>
           <button type="submit" id="auth-submit" data-label="Sign In"
-            class="btn-primary mt-1" style="padding:1rem;border-radius:16px;font-size:1rem;letter-spacing:0.3px">Sign In</button>
+            class="btn-primary mt-1">Sign In</button>
           <button type="button" id="forgot-btn"
-            class="w-full text-center text-sm font-bold py-2 transition" style="color:var(--accent-light)">
+            class="w-full text-center text-sm font-bold text-orange-500 py-2 transition">
             Forgot password?
           </button>
         </form>
@@ -62,7 +56,7 @@ export function renderSignIn() {
           <input type="password" name="confirm" placeholder="Confirm password"
             class="form-input w-full" autocomplete="new-password" required>
           <button type="submit" id="auth-submit-signup" data-label="Create Account"
-            class="btn-primary mt-1" style="padding:1rem;border-radius:16px;font-size:1rem">Create Account</button>
+            class="btn-primary mt-1">Create Account</button>
         </form>
 
         <!-- ── Forgot Password panel ── -->
@@ -114,10 +108,8 @@ export function renderSignIn() {
     const divider     = container.querySelector('#auth-divider');
     const googleBtn   = container.querySelector('#google-btn');
 
-    const TAB_ACTIVE   = 'flex-1 py-2 rounded-lg text-sm font-bold transition';
-    const TAB_INACTIVE = 'flex-1 py-2 rounded-lg text-sm font-bold transition';
-    const setTabActive   = el => { el.className = TAB_ACTIVE;   el.style.cssText = 'background:linear-gradient(135deg,var(--accent-light),var(--accent));color:#fff'; };
-    const setTabInactive = el => { el.className = TAB_INACTIVE; el.style.cssText = 'color:rgba(148,163,184,0.7)'; };
+    const setTabActive   = el => { el.style.background = 'var(--accent)'; el.style.color = '#fff'; };
+    const setTabInactive = el => { el.style.background = '';              el.style.color = '';     el.className = el.className.replace('text-white','') + ' text-gray-400'; };
 
     function showSignIn() {
       setTabActive(tabSignIn); setTabInactive(tabSignUp);
