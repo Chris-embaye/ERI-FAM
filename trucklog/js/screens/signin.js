@@ -10,16 +10,20 @@ function setError(container, msg) {
 export function renderSignIn() {
   const html = `
     <div class="flex flex-col h-full text-white overflow-y-auto" style="background:transparent">
-      <div class="flex-1 flex flex-col justify-center px-6 py-10 max-w-sm mx-auto w-full">
 
-        <!-- Logo -->
-        <div class="text-center mb-8">
-          <div class="mx-auto mb-4" style="width:80px;height:80px;border-radius:22px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,0.1),0 0 32px rgba(8,145,178,0.45),0 8px 24px rgba(0,0,0,0.5)">
-            <img src="icon-512.png" style="width:100%;height:100%;object-fit:cover" alt="Truck-Log">
-          </div>
-          <h1 class="font-black tracking-tight" style="font-size:2rem;text-shadow:0 0 20px rgba(103,232,249,0.4)">Truck-Log</h1>
-          <p class="text-sm mt-1" style="color:rgba(148,163,184,0.6)">Owner-operator toolkit</p>
+      <!-- Full-width hero icon -->
+      <div style="width:100%;aspect-ratio:1/1;max-height:42dvh;position:relative;overflow:hidden;flex-shrink:0">
+        <img src="icon-512.png" style="width:100%;height:100%;object-fit:cover;display:block" alt="Truck-Log">
+        <!-- fade out the bottom edge into the page background -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to bottom,transparent,rgb(4,10,18))"></div>
+        <!-- Title sitting on top of the fade -->
+        <div style="position:absolute;bottom:16px;left:0;right:0;text-align:center">
+          <h1 class="font-black tracking-tight" style="font-size:2.2rem;text-shadow:0 0 24px rgba(103,232,249,0.5)">Truck-Log</h1>
+          <p style="font-size:0.8rem;color:rgba(148,163,184,0.6);margin-top:2px">Owner-operator toolkit</p>
         </div>
+      </div>
+
+      <div class="flex-1 flex flex-col justify-start px-6 pt-4 pb-6 max-w-sm mx-auto w-full">
 
         <!-- Tabs (hidden when forgot-pw is active) -->
         <div id="auth-tabs" class="flex rounded-xl p-1 mb-6" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08)">
