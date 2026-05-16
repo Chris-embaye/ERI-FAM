@@ -37,6 +37,17 @@ export async function checkCameraPermission() {
   return state; // 'granted' | 'denied' | 'prompt'
 }
 
+export async function requestCameraPermission() {
+  if (!navigator.mediaDevices?.getUserMedia) return 'unsupported';
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream.getTracks().forEach(t => t.stop());
+    return 'granted';
+  } catch (err) {
+    return err.name === 'NotAllowedError' ? 'denied' : 'error';
+  }
+}
+
 export function cameraDeniedMsg() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   if (isIOS) return 'Camera blocked — go to Settings → Privacy → Camera → Safari (or Truck-Log) → Allow';

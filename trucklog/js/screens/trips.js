@@ -105,15 +105,15 @@ function tripForm(existing = null) {
               <p class="text-xs mt-1" style="color:rgba(103,232,249,0.5)">This takes a few seconds</p>
             </div>
           </div>
-          <label id="trip-scan-label" class="receipt-cap-label">
+          <label id="trip-scan-label" for="trip-doc-input" class="receipt-cap-label">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <rect x="5" y="2" width="14" height="20" rx="2"/>
               <line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/>
             </svg>
             Scan Rate Con / BOL
           </label>
-          <input type="file" id="trip-doc-input" accept="image/*"
-                 style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none">
+          <input type="file" id="trip-doc-input" accept="image/*,application/pdf"
+                 style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden">
           <input type="hidden" id="trip-doc-data" name="receiptPhoto" value="${t.receiptPhoto || ''}">
           <div id="trip-scan-results" class="hidden mt-2 rounded-xl p-3"
                style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2)"></div>
@@ -408,9 +408,6 @@ export function renderTrips() {
     const SCAN_SVG   = `${DOC_SVG} Scan Rate Con / BOL`;
 
     if (!fileInput) return;
-
-    // Explicit click — keeps user-gesture chain synchronous on iOS PWA
-    scanLabel.addEventListener('click', () => fileInput.click());
 
     fileInput.addEventListener('change', async () => {
       const file = fileInput.files[0];

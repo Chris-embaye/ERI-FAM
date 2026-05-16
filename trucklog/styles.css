@@ -117,14 +117,14 @@ select option { background-color: rgb(7,19,33); color: #e0f2fe; }
   pointer-events: none;
 }
 
-/* ── Navigation — floating island ────────────────────────────── */
+/* ── Navigation — pinned bottom bar ──────────────────────────── */
 .rl-nav {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  margin: 0 12px max(env(safe-area-inset-bottom, 10px), 10px);
-  border-radius: 24px;
-  padding: 6px 4px;
+  margin: 0;
+  border-radius: 20px 20px 0 0;
+  padding: 6px 4px max(env(safe-area-inset-bottom, 12px), 12px);
   position: relative;
 
   /* layered glass background */

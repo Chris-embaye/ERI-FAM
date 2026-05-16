@@ -211,26 +211,48 @@ function parseExpenseReceipt(text) {
 
 // ── Trip / Rate-Con document parser ──────────────────────────────────────────
 
+const US_STATES = new Set([
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY','DC',
+]);
+
+function extractCityState(text, afterKeyword) {
+  // Match "City, ST" or "City ST" patterns near the keyword region
+  const rx = /([A-Za-z][a-zA-Z\s]{2,25})[,\s]+([A-Z]{2})\b/g;
+  let m;
+  while ((m = rx.exec(afterKeyword)) !== null) {
+    const st = m[2].toUpperCase();
+    if (US_STATES.has(st)) {
+      const city = m[1].trim().replace(/\s+/g, ' ');
+      if (city.length >= 3 && !/^\d/.test(city)) return `${city}, ${st}`;
+    }
+  }
+  return null;
+}
+
 function parseTripDocument(text) {
   const result = {};
 
-  // Revenue — "Rate: $1,800.00", "Pay $1800", linehaul, flat rate
+  // Revenue — handles "$1,800", "$1800", "$1,800.00", "Rate: 1800"
   const rateRxs = [
-    /(?:rate|pay|revenue|linehaul|line\s*haul|gross|total\s*pay|flat\s*rate|offer(?:ed)?)[\s:$]*([1-9][0-9]{2,5}[.,][0-9]{2})/i,
+    /(?:rate|pay|revenue|linehaul|line\s*haul|gross|total\s*pay|flat\s*rate|offer(?:ed)?|all\s*in|load\s*pay)[\s:$]*\$?\s*([1-9][0-9]{2,5}(?:[.,][0-9]{2})?)/i,
     /\$\s*([1-9][0-9]{2,5}[.,][0-9]{2})\b/,
+    /\$\s*([1-9][0-9]{3,5})\b/,
   ];
   for (const rx of rateRxs) {
     const m = text.match(rx);
     if (m) {
-      const v = parseFloat(m[1].replace(',', ''));
-      if (v >= 50 && v <= 99999) { result.revenue = v; break; }
+      const v = parseFloat(m[1].replace(/,/g, ''));
+      if (v >= 100 && v <= 99999) { result.revenue = v; break; }
     }
   }
 
-  // Miles — "450 miles", "Total Miles: 312", "loaded 287 mi"
+  // Miles — "450 miles", "Total Miles: 312", "loaded 287 mi", "Approx. 450 mi"
   const mRxs = [
-    /(?:total\s*miles?|loaded\s*miles?|distance|mileage)[\s:]*([0-9]{2,4})\b/i,
-    /\b([0-9]{2,4})\s*(?:loaded\s*)?miles?\b/i,
+    /(?:total\s*miles?|loaded\s*miles?|approx\.?\s*miles?|distance|mileage|est\.?\s*miles?)[\s:~]*([0-9]{2,4})\b/i,
+    /\b([0-9]{2,4})\s*(?:loaded\s*)?mi(?:les?)?\b/i,
   ];
   for (const rx of mRxs) {
     const m = text.match(rx);
@@ -241,22 +263,45 @@ function parseTripDocument(text) {
   }
 
   // Load / BOL / Order number
-  const bolRx = /(?:bol|bill\s*of\s*lading|load\s*(?:id|#|no\.?)?|order\s*#?|reference\s*#?|ref\s*#?|pro\s*#?|confirmation\s*#?)[\s:#]*([A-Z0-9][A-Z0-9\-]{2,18})/i;
+  const bolRx = /(?:bol|bill\s*of\s*lading|load\s*(?:id|#|no\.?|num)?|order\s*#?|reference\s*#?|ref\s*#?|pro\s*#?|confirmation\s*#?|shipment\s*#?)[\s:#]*([A-Z0-9][A-Z0-9\-]{2,18})/i;
   const bm = text.match(bolRx);
   if (bm) result.loadNum = bm[1].trim().toUpperCase();
 
   // Date
   result.date = extractDate(text);
 
-  // Origin — keywords then nearest City, ST pattern
-  const origRx = /(?:pick\s*up|pickup|origin|ship(?:ping)?\s*from|from|shipper|p\/u\b)[\s\S]{0,120}?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)[,\s]+([A-Z]{2})\b/i;
-  const om = text.match(origRx);
-  if (om) result.origin = `${om[1].trim()}, ${om[2].toUpperCase()}`;
+  // Origin — extract the section after pickup keywords, then find City, ST
+  const origKwRx = /(?:pick\s*up|pickup|origin|ship(?:ping)?\s*from|shipper|p\/u\b|pu\b|loading|load\s*at)/i;
+  const origKwM = origKwRx.exec(text);
+  if (origKwM) {
+    const region = text.slice(origKwM.index, origKwM.index + 300);
+    result.origin = extractCityState(text, region);
+  }
 
-  // Destination
-  const destRx = /(?:deliver(?:y)?|destination|consignee|ship(?:ping)?\s*to|to\b|d\/o\b|drop\s*off)[\s\S]{0,120}?([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)[,\s]+([A-Z]{2})\b/i;
-  const dm = text.match(destRx);
-  if (dm) result.destination = `${dm[1].trim()}, ${dm[2].toUpperCase()}`;
+  // Destination — extract section after delivery keywords
+  const destKwRx = /(?:deliver(?:y|ing)?\s*(?:to)?|destination|consignee|ship(?:ping)?\s*to|d\/o\b|drop\s*off|unload(?:ing)?|delivery\s*at)/i;
+  const destKwM = destKwRx.exec(text);
+  if (destKwM) {
+    const region = text.slice(destKwM.index, destKwM.index + 300);
+    result.destination = extractCityState(text, region);
+  }
+
+  // Fallback: if we have no origin/destination, find all City, ST pairs in order
+  if (!result.origin || !result.destination) {
+    const allCities = [];
+    const cityRx = /([A-Za-z][a-zA-Z\s]{2,20})[,\s]+([A-Z]{2})\b/g;
+    let cm;
+    while ((cm = cityRx.exec(text)) !== null) {
+      const st = cm[2].toUpperCase();
+      const city = cm[1].trim().replace(/\s+/g, ' ');
+      if (US_STATES.has(st) && city.length >= 3 && !/^\d/.test(city) && !/(?:date|ref|bol|load|ship|order|invoice|page)/i.test(city)) {
+        allCities.push(`${city}, ${st}`);
+      }
+    }
+    const unique = [...new Set(allCities)];
+    if (!result.origin      && unique.length >= 1) result.origin      = unique[0];
+    if (!result.destination && unique.length >= 2) result.destination = unique[unique.length - 1];
+  }
 
   result._found = ['revenue','miles','loadNum','origin','destination','date'].filter(k => result[k] != null).length;
   return result;

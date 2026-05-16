@@ -16,7 +16,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chrisdrive.trucklog
         MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "6"
+        CURRENT_PROJECT_VERSION: "7"
         DEVELOPMENT_TEAM: 49D2THWCHV
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -30,7 +30,7 @@ targets:
       properties:
         CFBundleName: TruckLog
         CFBundleDisplayName: TruckLog
-        CFBundleVersion: "6"
+        CFBundleVersion: "7"
         CFBundleShortVersionString: "1.0.0"
         LSRequiresIPhoneOS: true
         UILaunchScreen:
@@ -52,6 +52,9 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         UIRequiresFullScreen: false
         UIApplicationSupportsIndirectInputEvents: true
+        NSCameraUsageDescription: "Used to scan rate confirmations and receipts"
+        NSPhotoLibraryUsageDescription: "Used to select rate confirmations and receipts"
+        NSLocationWhenInUseUsageDescription: "Used to auto-fill your current location as trip origin"
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
         ITSAppUsesNonExemptEncryption: false

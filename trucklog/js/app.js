@@ -2,6 +2,7 @@ import { initAuth, onAuthReady, getCurrentUser } from './auth.js';
 import { getAppMode, setAppMode }               from './store.js';
 import { applyTheme, loadTheme }                from './theme.js';
 import { renderSignIn }                          from './screens/signin.js';
+import { requestCameraPermission, requestLocation } from './permissions.js';
 
 // Trucking screens
 import { renderDashboard }   from './screens/dashboard.js';
@@ -121,6 +122,16 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// ── First-launch permission request ──────────────────────────────────────────
+async function maybeRequestPermissions() {
+  if (localStorage.getItem('rl_perms_v1')) return;
+  localStorage.setItem('rl_perms_v1', '1');
+  // Request camera — iOS will show its permission dialog
+  await requestCameraPermission();
+  // Request location — iOS will show its permission dialog
+  requestLocation({ timeout: 5000 });
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 const _t = loadTheme(); applyTheme(_t.accentColor, _t.bgTheme);
 
@@ -133,5 +144,8 @@ document.getElementById('screen').innerHTML = `
   </div>`;
 
 window.addEventListener('hashchange', render);
-onAuthReady(() => render());
+onAuthReady(() => {
+  render();
+  if (getCurrentUser()) maybeRequestPermissions();
+});
 initAuth();
