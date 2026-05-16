@@ -15,6 +15,9 @@
 button, a, [onclick] { touch-action: manipulation; }
 html, body { height: 100%; background: var(--bg-base); }
 
+/* Prevent iOS from zooming on input focus (requires font-size >= 16px) */
+input, textarea, select { font-size: 16px !important; }
+
 
 /* ── Ambient background orbs — static, no filter:blur ────────── */
 .ambient-bg {

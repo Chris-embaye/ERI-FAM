@@ -14,8 +14,11 @@ const CAT_ICONS  = {
 
 function renderExpenseScanResults(r) {
   if (!r._found) return `
+    <p class="text-xs font-bold mb-1" style="color:#f87171">⚠ Could not read receipt</p>
     <p class="text-xs" style="color:rgba(148,163,184,0.5)">
-      Couldn't read the receipt clearly — fill the fields below manually.
+      ${r._lowQuality
+        ? 'Image is too blurry or not a receipt. Take a clear, flat photo.'
+        : 'No fields recognized — fill the form manually.'}
     </p>`;
   const fmtDate2 = v => new Date(v + 'T12:00').toLocaleDateString('en-US', { month:'short', day:'numeric' });
   const rows = [
@@ -192,7 +195,7 @@ export function renderExpenses() {
 
   const html = `
     <div class="flex flex-col h-full bg-black text-white">
-      <div class="px-4 pt-5 pb-4 border-b border-gray-800 flex justify-between items-center shrink-0">
+      <div class="px-4 pt-2 pb-3 border-b border-gray-800 flex justify-between items-center shrink-0">
         <div>
           <h1 class="text-2xl font-black">Expenses</h1>
           <p class="text-xs text-gray-500">This month: ${fmtMoney(monthTotal, 2)}</p>

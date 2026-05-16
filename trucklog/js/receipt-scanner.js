@@ -40,8 +40,14 @@ function loadTesseract() {
 async function runOCR(dataUrl) {
   try {
     await loadTesseract();
-    const { data: { text } } = await Tesseract.recognize(dataUrl, 'eng');
-    return text || null;
+    const { data } = await Tesseract.recognize(dataUrl, 'eng');
+    if (!data.text) return null;
+    // Reject low-confidence results (blurry photos, non-documents, random images)
+    if (data.confidence < 40) return null;
+    // Must have at least 8 words recognized with reasonable confidence
+    const goodWords = (data.words || []).filter(w => w.confidence > 50);
+    if (goodWords.length < 8) return null;
+    return data.text;
   } catch { return null; }
 }
 
@@ -218,15 +224,39 @@ const US_STATES = new Set([
   'VA','WA','WV','WI','WY','DC',
 ]);
 
-function extractCityState(text, afterKeyword) {
-  // Match "City, ST" or "City ST" patterns near the keyword region
-  const rx = /([A-Za-z][a-zA-Z\s]{2,25})[,\s]+([A-Z]{2})\b/g;
-  let m;
-  while ((m = rx.exec(afterKeyword)) !== null) {
-    const st = m[2].toUpperCase();
-    if (US_STATES.has(st)) {
+// Words that indicate a company/broker name line — not a city line
+const COMPANY_WORDS = /\b(?:inc\.?|llc\.?|corp\.?|ltd\.?|co\.|freight|transport(?:ation)?|logistics|trucking|carrier|broker|brokerage|shipping|express|lines|systems|services|solutions|group|agency|dispatch|load(?:ing)?|unload(?:ing)?|warehousing)\b/i;
+// Words that indicate a street address line
+const STREET_WORDS  = /\b(?:st\.?|ave\.?|blvd\.?|dr\.?|rd\.?|ln\.?|way|hwy|highway|suite|ste\.?|floor|unit|dock)\b/i;
+
+function isCityStateLine(line) {
+  // Must match "Word(s), XX" where XX is a valid US state
+  const m = line.match(/^([A-Za-z][a-zA-Z\s\-']{1,25})[,\s]+([A-Z]{2})(?:\s+\d{5}(?:-\d{4})?)?$/);
+  if (!m) return null;
+  const st = m[2].toUpperCase();
+  if (!US_STATES.has(st)) return null;
+  const city = m[1].trim().replace(/\s+/g, ' ');
+  if (city.length < 2) return null;
+  return `${city}, ${st}`;
+}
+
+function extractCityFromSection(sectionText) {
+  const lines = sectionText.split('\n').map(l => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    // Skip company names, street addresses, phone numbers, zip-only lines
+    if (COMPANY_WORDS.test(line))          continue;
+    if (STREET_WORDS.test(line))           continue;
+    if (/^\d+\s+[A-Za-z]/.test(line))     continue; // "123 Main St"
+    if (/^\(?\d{3}\)?[\s\-]\d{3}/.test(line)) continue; // phone
+    if (/^\d{5}(-\d{4})?$/.test(line))    continue; // zip only
+    // Check if this line IS a City, ST line
+    const hit = isCityStateLine(line);
+    if (hit) return hit;
+    // Also scan within the line for embedded "City, ST" at end
+    const m = line.match(/([A-Za-z][a-zA-Z\s\-']{2,20}),\s*([A-Z]{2})\b/);
+    if (m && US_STATES.has(m[2]) && !COMPANY_WORDS.test(m[1]) && !STREET_WORDS.test(m[1])) {
       const city = m[1].trim().replace(/\s+/g, ' ');
-      if (city.length >= 3 && !/^\d/.test(city)) return `${city}, ${st}`;
+      if (city.length >= 2 && !/^\d/.test(city)) return `${city}, ${m[2]}`;
     }
   }
   return null;
@@ -234,10 +264,15 @@ function extractCityState(text, afterKeyword) {
 
 function parseTripDocument(text) {
   const result = {};
+  const lines  = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-  // Revenue — handles "$1,800", "$1800", "$1,800.00", "Rate: 1800"
+  // Quick sanity check — must have enough real text to be a document
+  const realWords = lines.filter(l => /[a-zA-Z]{3,}/.test(l)).length;
+  if (realWords < 4) return { _found: 0 };
+
+  // ── Revenue ───────────────────────────────────────────────────────────────
   const rateRxs = [
-    /(?:rate|pay|revenue|linehaul|line\s*haul|gross|total\s*pay|flat\s*rate|offer(?:ed)?|all\s*in|load\s*pay)[\s:$]*\$?\s*([1-9][0-9]{2,5}(?:[.,][0-9]{2})?)/i,
+    /(?:rate|pay|revenue|linehaul|line\s*haul|gross|total\s*pay|flat\s*rate|offer(?:ed)?|all[\s-]in|load\s*pay|fuel\s*surcharge\s*incl)[\s:$]*\$?\s*([1-9][0-9]{2,5}(?:[.,][0-9]{2})?)/i,
     /\$\s*([1-9][0-9]{2,5}[.,][0-9]{2})\b/,
     /\$\s*([1-9][0-9]{3,5})\b/,
   ];
@@ -245,13 +280,13 @@ function parseTripDocument(text) {
     const m = text.match(rx);
     if (m) {
       const v = parseFloat(m[1].replace(/,/g, ''));
-      if (v >= 100 && v <= 99999) { result.revenue = v; break; }
+      if (v >= 150 && v <= 99999) { result.revenue = v; break; }
     }
   }
 
-  // Miles — "450 miles", "Total Miles: 312", "loaded 287 mi", "Approx. 450 mi"
+  // ── Miles ─────────────────────────────────────────────────────────────────
   const mRxs = [
-    /(?:total\s*miles?|loaded\s*miles?|approx\.?\s*miles?|distance|mileage|est\.?\s*miles?)[\s:~]*([0-9]{2,4})\b/i,
+    /(?:total\s*miles?|loaded\s*miles?|approx\.?\s*miles?|estimated\s*miles?|distance|mileage|est\.?\s*mi)[\s:~]*([0-9]{2,4})\b/i,
     /\b([0-9]{2,4})\s*(?:loaded\s*)?mi(?:les?)?\b/i,
   ];
   for (const rx of mRxs) {
@@ -262,43 +297,45 @@ function parseTripDocument(text) {
     }
   }
 
-  // Load / BOL / Order number
-  const bolRx = /(?:bol|bill\s*of\s*lading|load\s*(?:id|#|no\.?|num)?|order\s*#?|reference\s*#?|ref\s*#?|pro\s*#?|confirmation\s*#?|shipment\s*#?)[\s:#]*([A-Z0-9][A-Z0-9\-]{2,18})/i;
+  // ── Load / BOL number ─────────────────────────────────────────────────────
+  const bolRx = /(?:bol|bill\s*of\s*lading|load\s*(?:id|#|no\.?|num(?:ber)?)?|order\s*#?|reference\s*#?|ref\s*#?|pro\s*#?|confirmation\s*#?|shipment\s*(?:id|#)?)[\s:#]*([A-Z0-9][A-Z0-9\-]{2,18})/i;
   const bm = text.match(bolRx);
   if (bm) result.loadNum = bm[1].trim().toUpperCase();
 
-  // Date
+  // ── Date ──────────────────────────────────────────────────────────────────
   result.date = extractDate(text);
 
-  // Origin — extract the section after pickup keywords, then find City, ST
-  const origKwRx = /(?:pick\s*up|pickup|origin|ship(?:ping)?\s*from|shipper|p\/u\b|pu\b|loading|load\s*at)/i;
-  const origKwM = origKwRx.exec(text);
-  if (origKwM) {
-    const region = text.slice(origKwM.index, origKwM.index + 300);
-    result.origin = extractCityState(text, region);
+  // ── Origin ────────────────────────────────────────────────────────────────
+  // Find the pickup section, then extract the city/state from within it
+  // (skipping company names, street addresses, broker names)
+  const origKwRx = /(?:pick\s*up|pickup|origin|ship(?:ment)?\s*from|shipper|p\/u\b|pu\b|load(?:ing)?\s*(?:at|location)|from\s*location)/i;
+  const origM = origKwRx.exec(text);
+  if (origM) {
+    const section = text.slice(origM.index, origM.index + 400);
+    result.origin = extractCityFromSection(section);
   }
 
-  // Destination — extract section after delivery keywords
-  const destKwRx = /(?:deliver(?:y|ing)?\s*(?:to)?|destination|consignee|ship(?:ping)?\s*to|d\/o\b|drop\s*off|unload(?:ing)?|delivery\s*at)/i;
-  const destKwM = destKwRx.exec(text);
-  if (destKwM) {
-    const region = text.slice(destKwM.index, destKwM.index + 300);
-    result.destination = extractCityState(text, region);
+  // ── Destination ───────────────────────────────────────────────────────────
+  const destKwRx = /(?:deliver(?:y|ing)?\s*(?:to|at|location)?|destination|consignee|ship(?:ment)?\s*to|d\/o\b|drop\s*(?:off|location)|unload(?:ing)?|deliver\s*by)/i;
+  const destM = destKwRx.exec(text);
+  if (destM) {
+    const section = text.slice(destM.index, destM.index + 400);
+    result.destination = extractCityFromSection(section);
   }
 
-  // Fallback: if we have no origin/destination, find all City, ST pairs in order
+  // ── Fallback: scan ALL lines for City, ST and use first/last ─────────────
   if (!result.origin || !result.destination) {
-    const allCities = [];
-    const cityRx = /([A-Za-z][a-zA-Z\s]{2,20})[,\s]+([A-Z]{2})\b/g;
-    let cm;
-    while ((cm = cityRx.exec(text)) !== null) {
-      const st = cm[2].toUpperCase();
-      const city = cm[1].trim().replace(/\s+/g, ' ');
-      if (US_STATES.has(st) && city.length >= 3 && !/^\d/.test(city) && !/(?:date|ref|bol|load|ship|order|invoice|page)/i.test(city)) {
-        allCities.push(`${city}, ${st}`);
+    const cities = [];
+    for (const line of lines) {
+      if (COMPANY_WORDS.test(line) || STREET_WORDS.test(line)) continue;
+      if (/^\d+\s/.test(line)) continue;
+      const m = line.match(/([A-Za-z][a-zA-Z\s\-']{2,20}),\s*([A-Z]{2})\b/);
+      if (m && US_STATES.has(m[2])) {
+        const city = m[1].trim().replace(/\s+/g, ' ');
+        if (city.length >= 2) cities.push(`${city}, ${m[2]}`);
       }
     }
-    const unique = [...new Set(allCities)];
+    const unique = [...new Set(cities)];
     if (!result.origin      && unique.length >= 1) result.origin      = unique[0];
     if (!result.destination && unique.length >= 2) result.destination = unique[unique.length - 1];
   }
@@ -311,7 +348,7 @@ function parseTripDocument(text) {
 
 export async function scanReceipt(dataUrl, mode) {
   const text = await runOCR(dataUrl);
-  if (!text) return { _found: 0, _raw: null };
+  if (!text) return { _found: 0, _raw: null, _lowQuality: true };
   const parsed = mode === 'fuel' ? parseFuelReceipt(text)
                : mode === 'trip' ? parseTripDocument(text)
                : parseExpenseReceipt(text);

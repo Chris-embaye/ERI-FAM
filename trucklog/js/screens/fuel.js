@@ -141,7 +141,7 @@ export function renderFuel() {
 
   const html = `
     <div class="flex flex-col h-full bg-black text-white">
-      <div class="px-4 pt-5 pb-4 border-b border-gray-800 flex justify-between items-center shrink-0">
+      <div class="px-4 pt-2 pb-3 border-b border-gray-800 flex justify-between items-center shrink-0">
         <div>
           <h1 class="text-2xl font-black">Fuel</h1>
           <p class="text-xs text-gray-500">This month: ${fmtMoney(monthTotal, 2)} · ${monthGallons.toFixed(0)} gal</p>
