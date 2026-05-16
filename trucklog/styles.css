@@ -43,6 +43,12 @@ input, textarea, select { font-size: 16px !important; }
 
 .pb-safe { padding-bottom: max(env(safe-area-inset-bottom,0px), 8px); }
 
+@keyframes authSlideUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.auth-animate { animation: authSlideUp 0.32s ease-out both; }
+
 /* ── Inputs ───────────────────────────────────────────────────── */
 input, textarea, select {
   background-color: rgba(7,19,33,0.8) !important;

@@ -10,7 +10,7 @@ function setError(container, msg) {
 export function renderSignIn() {
   const html = `
     <div class="flex flex-col h-full bg-black text-white overflow-hidden">
-      <div class="flex-1 flex flex-col justify-center px-6 py-10 max-w-sm mx-auto w-full">
+      <div class="flex-1 flex flex-col justify-center px-6 py-10 max-w-sm mx-auto w-full auth-animate">
 
         <!-- Logo -->
         <div class="text-center mb-8">
@@ -19,10 +19,12 @@ export function renderSignIn() {
           <p class="text-gray-500 text-sm mt-1">Owner-operator toolkit</p>
         </div>
 
-        <!-- Tabs (hidden when forgot-pw is active) -->
-        <div id="auth-tabs" class="flex bg-gray-900 rounded-xl p-1 mb-6 border border-gray-800">
-          <button id="tab-signin" class="flex-1 py-2 rounded-lg text-sm font-bold transition" style="background:var(--accent);color:#fff">Sign In</button>
-          <button id="tab-signup" class="flex-1 py-2 rounded-lg text-sm font-bold text-gray-400 transition">Create Account</button>
+        <!-- Tabs — underline style -->
+        <div id="auth-tabs" class="flex mb-6" style="border-bottom:1px solid rgba(55,65,81,0.6)">
+          <button id="tab-signin" class="flex-1 pb-3 text-sm font-bold transition"
+            style="color:#fff;border-bottom:2px solid #f97316;margin-bottom:-1px">Sign In</button>
+          <button id="tab-signup" class="flex-1 pb-3 text-sm font-bold transition"
+            style="color:rgba(156,163,175,0.45);border-bottom:2px solid transparent;margin-bottom:-1px">Create Account</button>
         </div>
 
         <!-- Error / success banner -->
@@ -31,12 +33,14 @@ export function renderSignIn() {
 
         <!-- ── Sign-in form ── -->
         <form id="signin-form" class="space-y-3">
-          <input type="email" name="email" placeholder="Email address"
-            class="form-input w-full" autocomplete="email" required>
-          <input type="password" name="password" placeholder="Password"
-            class="form-input w-full" autocomplete="current-password" required>
+          <div class="rounded-2xl p-4 space-y-3" style="background:rgba(17,24,39,0.7);border:1px solid rgba(55,65,81,0.5)">
+            <input type="email" name="email" placeholder="Email address"
+              class="form-input w-full" autocomplete="email" required>
+            <input type="password" name="password" placeholder="Password"
+              class="form-input w-full" autocomplete="current-password" required>
+          </div>
           <button type="submit" id="auth-submit" data-label="Sign In"
-            class="btn-primary mt-1">Sign In</button>
+            class="btn-primary mt-1" style="background:linear-gradient(135deg,#f97316,#f59e0b);box-shadow:0 4px 18px rgba(249,115,22,0.4)">Sign In</button>
           <button type="button" id="forgot-btn"
             class="w-full text-center text-sm font-bold text-orange-500 py-2 transition">
             Forgot password?
@@ -45,18 +49,20 @@ export function renderSignIn() {
 
         <!-- ── Sign-up form ── -->
         <form id="signup-form" class="space-y-3 hidden">
-          <input type="text" name="displayName" placeholder="Your name"
-            class="form-input w-full" autocomplete="name" required>
-          <input type="text" name="truckId" placeholder="Truck name / unit # (optional)"
-            class="form-input w-full">
-          <input type="email" name="email" placeholder="Email address"
-            class="form-input w-full" autocomplete="email" required>
-          <input type="password" name="password" placeholder="Password (min 6 chars)"
-            class="form-input w-full" autocomplete="new-password" minlength="6" required>
-          <input type="password" name="confirm" placeholder="Confirm password"
-            class="form-input w-full" autocomplete="new-password" required>
+          <div class="rounded-2xl p-4 space-y-3" style="background:rgba(17,24,39,0.7);border:1px solid rgba(55,65,81,0.5)">
+            <input type="text" name="displayName" placeholder="Your name"
+              class="form-input w-full" autocomplete="name" required>
+            <input type="text" name="truckId" placeholder="Truck name / unit # (optional)"
+              class="form-input w-full">
+            <input type="email" name="email" placeholder="Email address"
+              class="form-input w-full" autocomplete="email" required>
+            <input type="password" name="password" placeholder="Password (min 6 chars)"
+              class="form-input w-full" autocomplete="new-password" minlength="6" required>
+            <input type="password" name="confirm" placeholder="Confirm password"
+              class="form-input w-full" autocomplete="new-password" required>
+          </div>
           <button type="submit" id="auth-submit-signup" data-label="Create Account"
-            class="btn-primary mt-1">Create Account</button>
+            class="btn-primary mt-1" style="background:linear-gradient(135deg,#f97316,#f59e0b);box-shadow:0 4px 18px rgba(249,115,22,0.4)">Create Account</button>
         </form>
 
         <!-- ── Forgot Password panel ── -->
@@ -108,8 +114,8 @@ export function renderSignIn() {
     const divider     = container.querySelector('#auth-divider');
     const googleBtn   = container.querySelector('#google-btn');
 
-    const setTabActive   = el => { el.style.background = 'var(--accent)'; el.style.color = '#fff'; };
-    const setTabInactive = el => { el.style.background = '';              el.style.color = '';     el.className = el.className.replace('text-white','') + ' text-gray-400'; };
+    const setTabActive   = el => { el.style.color = '#fff';                        el.style.borderBottom = '2px solid #f97316'; };
+    const setTabInactive = el => { el.style.color = 'rgba(156,163,175,0.45)';     el.style.borderBottom = '2px solid transparent'; };
 
     function showSignIn() {
       setTabActive(tabSignIn); setTabInactive(tabSignUp);
