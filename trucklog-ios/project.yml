@@ -30,7 +30,7 @@ targets:
       properties:
         CFBundleName: TruckLog
         CFBundleDisplayName: TruckLog
-        CFBundleVersion: "9"
+        CFBundleVersion: "10"
         CFBundleShortVersionString: "1.0.0"
         LSRequiresIPhoneOS: true
         UILaunchScreen:

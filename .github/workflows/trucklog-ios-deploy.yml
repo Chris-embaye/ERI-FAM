@@ -79,6 +79,7 @@ jobs:
             -project TruckLog.xcodeproj \
             -scheme TruckLog \
             -configuration Release \
+            -destination "generic/platform=iOS" \
             -archivePath ../TruckLog.xcarchive \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
