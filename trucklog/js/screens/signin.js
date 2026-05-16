@@ -9,7 +9,7 @@ function setError(container, msg) {
 
 export function renderSignIn() {
   const html = `
-    <div class="flex flex-col h-full bg-black text-white overflow-y-auto">
+    <div class="flex flex-col h-full bg-black text-white overflow-hidden">
       <div class="flex-1 flex flex-col justify-center px-6 py-10 max-w-sm mx-auto w-full">
 
         <!-- Logo -->
