@@ -61,6 +61,17 @@ jobs:
           echo "$TRUCKLOG_PROVISIONING_PROFILE_BASE64" | base64 --decode \
             > ~/Library/MobileDevice/Provisioning\ Profiles/trucklog.mobileprovision
 
+      - name: Set up App Store Connect API key
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          mkdir -p ~/private_keys
+          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
+            > ~/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
+          echo "API key written to ~/private_keys/AuthKey_${ASC_API_KEY_ID}.p8 ✓"
+
       - name: Build Archive
         run: |
           cd trucklog-ios
@@ -75,30 +86,18 @@ jobs:
             DEVELOPMENT_TEAM=49D2THWCHV \
             -allowProvisioningUpdates
 
-      - name: Export IPA
+      - name: Export & Upload to App Store Connect
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
+          set -e
           xcodebuild -exportArchive \
             -archivePath TruckLog.xcarchive \
             -exportPath TruckLogExport \
             -exportOptionsPlist trucklog-ios/ExportOptions.plist \
+            -authenticationKeyPath ~/private_keys/AuthKey_${ASC_API_KEY_ID}.p8 \
+            -authenticationKeyID "${ASC_API_KEY_ID}" \
+            -authenticationKeyIssuerID "${ASC_ISSUER_ID}" \
             -allowProvisioningUpdates
-
-      - name: Upload to App Store Connect
-        env:
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8 }}
-        run: |
-          mkdir -p ~/private_keys
-          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
-            > ~/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
-
-          IPA=$(find TruckLogExport -name "*.ipa" | head -1)
-          echo "Uploading: $IPA"
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA" \
-            --apiKey "$ASC_API_KEY_ID" \
-            --apiIssuer "$ASC_ISSUER_ID" \
-            --verbose
-          echo "Upload complete ✓"
+          echo "Upload to App Store Connect complete ✓"
