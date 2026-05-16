@@ -30,6 +30,18 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         webView.load(URLRequest(url: appURL))
     }
 
+    // Send Google OAuth to Safari — WKWebView is blocked by Google
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if let host = navigationAction.request.url?.host,
+           host.contains("accounts.google.com") || host.contains("appleid.apple.com") {
+            UIApplication.shared.open(navigationAction.request.url!)
+            decisionHandler(.cancel)
+            return
+        }
+        decisionHandler(.allow)
+    }
+
     // Open target="_blank" links in the same webview
     func webView(
         _ webView: WKWebView,
