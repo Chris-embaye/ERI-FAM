@@ -75,7 +75,11 @@ jobs:
       - name: Strip alpha from app icon
         run: |
           ICON=trucklog-ios/TruckLog/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
-          sips --setProperty format png --setProperty hasAlpha false "$ICON" --out "$ICON"
+          TMP=/tmp/icon_flat.jpg
+          # JPEG has no alpha channel — round-trip forces RGB
+          sips -s format jpeg "$ICON" --out "$TMP"
+          sips -s format png  "$TMP"  --out "$ICON"
+          rm "$TMP"
           echo "Alpha stripped ✓"
 
       - name: Build Archive
