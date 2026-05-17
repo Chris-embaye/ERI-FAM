@@ -72,6 +72,12 @@ jobs:
             > ~/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
           echo "API key written to ~/private_keys/AuthKey_${ASC_API_KEY_ID}.p8 ✓"
 
+      - name: Strip alpha from app icon
+        run: |
+          ICON=trucklog-ios/TruckLog/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+          sips --setProperty format png --setProperty hasAlpha false "$ICON" --out "$ICON"
+          echo "Alpha stripped ✓"
+
       - name: Build Archive
         run: |
           cd trucklog-ios
