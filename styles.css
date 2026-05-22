@@ -105,15 +105,28 @@ svg { display: block; }
 }
 .search-bar.open { transform: translateY(0); }
 .search-wrap {
-  display: flex; align-items: center; gap: 10px;
-  background: rgba(255,255,255,0.1); border-radius: 12px; padding: 0 14px;
+  display: flex; align-items: center;
+  position: relative; width: 100%;
 }
-.search-ico { width: 15px; height: 15px; color: var(--text-dim); flex-shrink: 0; }
+.search-ico {
+  position: absolute; left: 16px;
+  width: 16px; height: 16px;
+  color: rgba(255,255,255,0.4); flex-shrink: 0; pointer-events: none;
+}
 #searchInput {
-  flex: 1; background: none; border: none; color: var(--text);
-  font-size: 0.9rem; padding: 10px 0; outline: none;
+  width: 100%; padding: 13px 16px 13px 44px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 28px;
+  color: var(--text); font-size: 0.95rem; outline: none;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
-#searchInput::placeholder { color: var(--text-dim); }
+#searchInput::placeholder { color: rgba(255,255,255,0.35); }
+#searchInput:focus {
+  background: rgba(255,255,255,0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255,59,48,0.15);
+}
 .search-close-btn { color: var(--accent); font-size: 0.9rem; font-weight: 600; padding: 4px; }
 
 /* ── MAIN CONTENT ───────────────────────────────────────── */
@@ -284,8 +297,8 @@ body.select-mode .track-card:active { transform: none; opacity: 1; }
 .tc-eq-bars span:nth-child(2) { animation-delay: 0.15s; }
 .tc-eq-bars span:nth-child(3) { animation-delay: 0.3s; }
 .tc-info { padding: 9px 10px 11px; }
-.tc-title { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
-.tc-artist { font-size: 0.71rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-title { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+.tc-artist { font-size: 0.8rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tc-date   { font-size: 0.65rem; color: var(--text-mute, #666); margin-top: 3px; opacity: 0.75; }
 .tc-more {
   position: absolute; top: 5px; right: 5px;
@@ -3521,12 +3534,12 @@ body {
   transform: translateZ(0);
 }
 
-/* Glass architecture — applied to sidebar, header, global player, bottom nav */
-.glass-panel, .app-sidebar, .app-header, .global-player, .mobile-bottom-nav {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur-radius));
-  -webkit-backdrop-filter: blur(var(--blur-radius));
-  border: 1px solid var(--glass-border);
+/* Glass architecture — applied to sidebar, header, global player, bottom nav, full player */
+.glass-panel, .app-sidebar, .app-header, .global-player, .mobile-bottom-nav, .full-player {
+  background: rgba(15, 15, 15, 0.7);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
