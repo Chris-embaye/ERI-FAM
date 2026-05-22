@@ -12,15 +12,15 @@ workflows:
       cancel_previous_builds: true
 
     environment:
+      groups:
+        - app_store          # pulls in APP_STORE_CONNECT_* variables
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.chrisembaye.fidel
       vars:
         BUNDLE_ID: com.chrisembaye.fidel
         XCODE_SCHEME: Fidel
-        APP_STORE_APPLE_ID: "6741720810"   # ← replace with your Fidel App ID from App Store Connect
       xcode: latest
-      cocoapods: default
 
     scripts:
       - name: Install XcodeGen
@@ -31,12 +31,12 @@ workflows:
           cd fidel-ios
           xcodegen generate
 
-      - name: Set build number from CI run
+      - name: Set build number
         script: |
           cd fidel-ios
-          LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo "4")
-          NEXT=$((LATEST + 1))
-          agvtool new-version -all "$NEXT"
+          BUILD=$(($GITHUB_RUN_NUMBER + 5))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Fidel/Info.plist || true
+          agvtool new-version -all "$BUILD" || true
 
       - name: Archive
         script: |
@@ -48,7 +48,7 @@ workflows:
             -archivePath build/Fidel.xcarchive \
             -allowProvisioningUpdates
 
-      - name: Export IPA
+      - name: Export & upload IPA
         script: |
           cd fidel-ios
           xcodebuild -exportArchive \
@@ -67,7 +67,7 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: false
-        submit_to_app_store: false   # set true when ready for review submission
+        submit_to_app_store: false
       email:
         recipients:
           - mebrahatom12@gmail.com
