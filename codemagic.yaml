@@ -1,0 +1,76 @@
+workflows:
+  fidel-ios-appstore:
+    name: Fidel — App Store Upload
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+      cancel_previous_builds: true
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.chrisembaye.fidel
+      vars:
+        BUNDLE_ID: com.chrisembaye.fidel
+        XCODE_SCHEME: Fidel
+        APP_STORE_APPLE_ID: "6741720810"   # ← replace with your Fidel App ID from App Store Connect
+      xcode: latest
+      cocoapods: default
+
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen
+
+      - name: Generate Xcode project
+        script: |
+          cd fidel-ios
+          xcodegen generate
+
+      - name: Set build number from CI run
+        script: |
+          cd fidel-ios
+          LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo "4")
+          NEXT=$((LATEST + 1))
+          agvtool new-version -all "$NEXT"
+
+      - name: Archive
+        script: |
+          cd fidel-ios
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/Fidel.xcarchive \
+            -allowProvisioningUpdates
+
+      - name: Export IPA
+        script: |
+          cd fidel-ios
+          xcodebuild -exportArchive \
+            -archivePath build/Fidel.xcarchive \
+            -exportPath  build/FidelExport \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates
+
+    artifacts:
+      - fidel-ios/build/FidelExport/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: false
+        submit_to_app_store: false   # set true when ready for review submission
+      email:
+        recipients:
+          - mebrahatom12@gmail.com
+        notify:
+          success: true
+          failure: true
