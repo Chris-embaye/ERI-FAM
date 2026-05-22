@@ -1,0 +1,107 @@
+name: Fidel iOS — Build & Upload to App Store
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'fidel-ios/**'
+  workflow_dispatch:   # also lets you trigger it manually from GitHub UI
+
+jobs:
+  build-and-upload:
+    runs-on: macos-latest
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Install XcodeGen ───────────────────────────────────
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # ── 3. Import signing certificate into a temp keychain ────
+      - name: Import certificate
+        env:
+          CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12 }}
+          CERT_PASSWORD:   ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+        run: |
+          echo "$CERT_P12_BASE64" | base64 --decode > /tmp/dist.p12
+          security create-keychain -p "ci" ci.keychain
+          security default-keychain -s ci.keychain
+          security unlock-keychain -p "ci" ci.keychain
+          security import /tmp/dist.p12 -k ci.keychain \
+            -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: -s -k "ci" ci.keychain
+
+      # ── 4. Install provisioning profile ───────────────────────
+      - name: Install provisioning profile
+        env:
+          PROFILE_BASE64: ${{ secrets.FIDEL_PROVISION_PROFILE }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROFILE_BASE64" | base64 --decode \
+            > ~/Library/MobileDevice/Provisioning\ Profiles/fidel-appstore.mobileprovision
+
+      # ── 5. Set up App Store Connect API key ───────────────────
+      - name: Set up ASC API key
+        env:
+          ASC_KEY_ID:      ${{ secrets.ASC_KEY_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_PRIVATE_KEY" \
+            > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+      # ── 6. Generate Xcode project ─────────────────────────────
+      - name: XcodeGen
+        working-directory: fidel-ios
+        run: xcodegen generate
+
+      # ── 7. Archive ────────────────────────────────────────────
+      - name: Archive
+        working-directory: fidel-ios
+        run: |
+          xcodebuild archive \
+            -scheme Fidel \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/Fidel.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="Fidel App Store"
+
+      # ── 8. Strip alpha from app icon (App Store requirement) ──
+      - name: Strip alpha from app icon
+        run: |
+          ICON="fidel-ios/build/Fidel.xcarchive/Products/Applications/Fidel.app/AppIcon60x60@2x.png"
+          if [ -f "$ICON" ]; then
+            sips -s format jpeg "$ICON" --out /tmp/icon_flat.jpg
+            sips -s format png  /tmp/icon_flat.jpg --out "$ICON"
+          fi
+
+      # ── 9. Export IPA + upload directly to App Store Connect ──
+      - name: Export & Upload
+        working-directory: fidel-ios
+        env:
+          ASC_KEY_ID:     ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID:  ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/Fidel.xcarchive \
+            -exportPath  build/FidelExport \
+            -exportOptionsPlist ExportOptions.plist \
+            -authenticationKeyPath \
+              ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID     "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      # ── 10. Upload build artifact (IPA) for reference ─────────
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fidel-${{ github.run_number }}.ipa
+          path: fidel-ios/build/FidelExport/Fidel.ipa
+          retention-days: 14
