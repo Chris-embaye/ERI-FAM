@@ -550,6 +550,8 @@ function updateProgress() {
 
   document.getElementById('miniProgFill').style.width = pct + '%';
   document.getElementById('fpProgFill').style.width   = pct + '%';
+  const gpBar = document.getElementById('gpProgressBar');
+  if (gpBar) gpBar.style.width = pct + '%';
   document.getElementById('fpProgThumb').style.left   = pct + '%';
   document.getElementById('fpCurTime').textContent    = fmtTime(cur);
   document.getElementById('fpDuration').textContent   = fmtTime(dur);
@@ -574,6 +576,8 @@ function updatePlayIcons() {
   const playSvg  = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
   document.getElementById('playBtn').innerHTML  = S.playing ? pauseSvg : playSvg;
   document.getElementById('miniPlay').innerHTML = S.playing ? pauseSvg : playSvg;
+  const gpBtn = document.getElementById('gpTogglePlayBtn');
+  if (gpBtn) gpBtn.innerHTML = S.playing ? pauseSvg : playSvg;
   // Refresh any visible list-row play buttons for the current track
   document.querySelectorAll('.tr-play-btn').forEach(btn => {
     if (!S.currentTrack) return;
@@ -598,6 +602,15 @@ function updatePlayerUI() {
     document.getElementById('miniArt').innerHTML = `<img src="${t.artwork}" alt="" />`;
   } else {
     document.getElementById('miniArt').innerHTML = `<span class="mini-art-ph">🎵</span>`;
+  }
+  // Global player bar
+  const gpEl = document.getElementById('globalPlayer');
+  if (gpEl) {
+    document.getElementById('gpTitle').textContent  = t.title;
+    document.getElementById('gpArtist').textContent = t.artist;
+    const gpThumb = document.getElementById('gpThumb');
+    if (gpThumb) gpThumb.src = t.artwork || 'icons/icon-512.png';
+    gpEl.classList.remove('hidden');
   }
   // Full player
   document.getElementById('fpTitle').textContent  = t.title;
@@ -1072,6 +1085,15 @@ document.getElementById('miniPlay').addEventListener('click', async e => {
 });
 document.getElementById('miniPrev').addEventListener('click', e => { e.stopPropagation(); prevTrack(); });
 document.getElementById('miniNext').addEventListener('click', e => { e.stopPropagation(); nextTrack(); });
+
+// ── Global Player Bar ───────────────────────────────────────────
+document.getElementById('gpTogglePlayBtn')?.addEventListener('click', async e => { e.stopPropagation(); await togglePlay(); });
+document.getElementById('gpPrevBtn')?.addEventListener('click', e => { e.stopPropagation(); prevTrack(); });
+document.getElementById('gpNextBtn')?.addEventListener('click', e => { e.stopPropagation(); nextTrack(); });
+// Tapping the bar (not a button) opens the full player
+document.getElementById('globalPlayer')?.addEventListener('click', e => {
+  if (!e.target.closest('.gp-btn')) openPanel('fullPlayer');
+});
 
 // ── Full Player ────────────────────────────────────────────────
 document.getElementById('fpClose').addEventListener('click', () => closePanel('fullPlayer'));

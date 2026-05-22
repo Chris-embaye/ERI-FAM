@@ -3534,8 +3534,8 @@ body {
   transform: translateZ(0);
 }
 
-/* Glass architecture — applied to sidebar, header, global player, bottom nav, full player */
-.glass-panel, .app-sidebar, .app-header, .global-player, .mobile-bottom-nav, .full-player {
+/* Glass architecture — applied to sidebar, header, global player, bottom nav */
+.glass-panel, .app-sidebar, .app-header, .global-player, .mobile-bottom-nav {
   background: rgba(15, 15, 15, 0.7);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
