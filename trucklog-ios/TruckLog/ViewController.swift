@@ -1,9 +1,15 @@
 import UIKit
 import WebKit
+import Network
 
 class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
 
     private var webView: WKWebView!
+    private var progressView: UIProgressView!
+    private var progressObservation: NSKeyValueObservation?
+    private var pathMonitor: NWPathMonitor?
+    private var isShowingOffline = false
+
     private let appURL = URL(string: "https://trucklogapp.com")!
 
     // Safari user agent so Google/Firebase OAuth isn't blocked by disallowed_useragent
@@ -20,13 +26,16 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.customUserAgent = safariAgent
-        webView.allowsBackForwardNavigationGestures = false
+        webView.allowsBackForwardNavigationGestures = true   // Tweak 4: swipe back
         webView.scrollView.contentInsetAdjustmentBehavior = .automatic
         view = webView
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupProgressBar()    // Tweak 2
+        setupRefreshControl() // Tweak 1
+        startNetworkMonitor() // Tweak 3
         loadApp()
     }
 
@@ -34,7 +43,68 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         webView.load(URLRequest(url: appURL))
     }
 
-    // Open target="_blank" links in the same webview
+    // MARK: - Tweak 1: Pull-to-refresh
+
+    private func setupRefreshControl() {
+        let refresh = UIRefreshControl()
+        refresh.tintColor = UIColor(red: 0.92, green: 0.35, blue: 0.05, alpha: 1) // #ea580c orange
+        refresh.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
+        webView.scrollView.addSubview(refresh)
+    }
+
+    @objc private func handleRefresh(_ sender: UIRefreshControl) {
+        loadApp()
+        // End refreshing after a short delay so the spinner feels responsive
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            sender.endRefreshing()
+        }
+    }
+
+    // MARK: - Tweak 2: Native loading progress bar
+
+    private func setupProgressBar() {
+        progressView = UIProgressView(progressViewStyle: .bar)
+        progressView.translatesAutoresizingMaskIntoConstraints = false
+        progressView.progressTintColor = UIColor(red: 0.92, green: 0.35, blue: 0.05, alpha: 1)
+        progressView.trackTintColor = .clear
+        view.addSubview(progressView)
+
+        NSLayoutConstraint.activate([
+            progressView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            progressView.heightAnchor.constraint(equalToConstant: 3),
+        ])
+
+        progressObservation = webView.observe(\.estimatedProgress, options: .new) { [weak self] _, change in
+            guard let self, let progress = change.newValue else { return }
+            DispatchQueue.main.async {
+                let p = Float(progress)
+                self.progressView.setProgress(p, animated: true)
+                self.progressView.isHidden = p >= 1.0
+                if p < 1.0 { self.progressView.isHidden = false }
+            }
+        }
+    }
+
+    // MARK: - Tweak 3: Auto-reconnect via NWPathMonitor
+
+    private func startNetworkMonitor() {
+        pathMonitor = NWPathMonitor()
+        pathMonitor?.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            if path.status == .satisfied && self.isShowingOffline {
+                DispatchQueue.main.async {
+                    self.isShowingOffline = false
+                    self.loadApp()
+                }
+            }
+        }
+        pathMonitor?.start(queue: DispatchQueue(label: "NetworkMonitor"))
+    }
+
+    // MARK: - Open target="_blank" links in the same webview
+
     func webView(
         _ webView: WKWebView,
         createWebViewWith configuration: WKWebViewConfiguration,
@@ -47,8 +117,14 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         return nil
     }
 
-    // Offline / error fallback
+    // MARK: - Offline / error fallback + Tweak 5: haptic feedback
+
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        isShowingOffline = true
+
+        // Tweak 5: haptic error bump
+        UINotificationFeedbackGenerator().notificationOccurred(.error)
+
         let html = """
         <html>
         <head><meta name='viewport' content='width=device-width,initial-scale=1'></head>
@@ -71,6 +147,12 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         webView.loadHTMLString(html, baseURL: nil)
     }
 
-    // Status bar style
+    // MARK: - Status bar style
+
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
+
+    deinit {
+        progressObservation?.invalidate()
+        pathMonitor?.cancel()
+    }
 }
