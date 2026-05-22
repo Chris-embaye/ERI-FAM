@@ -9317,8 +9317,9 @@ function startMatch() {
     ...chosen.map((d, i) => ({ pairId: i, type: 'eng', text: d.eng.split('/')[0].trim(), emoji: d.emoji })),
   ]);
 
-  const _tigCols = _matchCards.map((c, i) => ({...c, origIdx: i})).filter(c => c.type === 'tig');
-  const _engCols = _matchCards.map((c, i) => ({...c, origIdx: i})).filter(c => c.type === 'eng');
+  const _isTigLeft = (window._quizDir || 'tig-to-eng') === 'tig-to-eng';
+  const _leftCol  = _matchCards.map((c, i) => ({...c, origIdx: i})).filter(c => c.type === (_isTigLeft ? 'tig' : 'eng'));
+  const _rightCol = _matchCards.map((c, i) => ({...c, origIdx: i})).filter(c => c.type === (_isTigLeft ? 'eng' : 'tig'));
   const _renderMC = c => `
     <div class="match-card ${c.type}" id="mc${c.origIdx}" data-idx="${c.origIdx}">
       ${c.type === 'tig' ? `<div class="mc-emoji">${c.emoji}</div>` : ''}
@@ -9326,8 +9327,8 @@ function startMatch() {
       ${c.type === 'tig' && c.hint ? `<div class="mc-hint">${c.hint}</div>` : ''}
     </div>`;
   document.getElementById('matchGrid').innerHTML =
-    `<div class="match-col">${_tigCols.map(_renderMC).join('')}</div>` +
-    `<div class="match-col">${_engCols.map(_renderMC).join('')}</div>`;
+    `<div class="match-col">${_leftCol.map(_renderMC).join('')}</div>` +
+    `<div class="match-col">${_rightCol.map(_renderMC).join('')}</div>`;
 
   document.querySelectorAll('#matchGrid .match-card').forEach(el =>
     el.addEventListener('click', () => _matchTap(parseInt(el.dataset.idx)))
@@ -9336,6 +9337,21 @@ function startMatch() {
 }
 
 document.getElementById('matchNewBtn')?.addEventListener('click', startMatch);
+
+function executeMatchFound(a, b) {
+  [a, b].forEach(i => {
+    const el = document.getElementById('mc' + i);
+    el.classList.remove('selected');
+    el.classList.add('matched');
+    _matchMatched.add(i);
+  });
+  _matchFlipped = []; _matchLocked = false; _updateMatch();
+  const ca = _matchCards[a], cb = _matchCards[b];
+  const tc = ca.type === 'tig' ? ca : cb;
+  showWordToast((tc.emoji ? tc.emoji + ' ' : '') + tc.text + (tc.hint ? ' · ' + tc.hint : ''));
+  markWordLearned((window._fidelTargetLang || 'ti') + ':' + tc.text + ':' + (tc.hint || ''));
+  if (_matchMatched.size === 16) setTimeout(() => document.getElementById('matchWin').classList.add('show'), 300);
+}
 
 function _matchTap(idx) {
   if (_matchLocked || _matchMatched.has(idx) || _matchFlipped.includes(idx)) return;
@@ -9349,22 +9365,10 @@ function _matchTap(idx) {
   const [a, b] = _matchFlipped;
   const ca = _matchCards[a], cb = _matchCards[b];
   if (ca.pairId === cb.pairId && ca.type !== cb.type) {
-    setTimeout(() => {
-      [a,b].forEach(i => {
-        const el = document.getElementById('mc'+i);
-        el.classList.remove('selected');
-        el.classList.add('matched');
-        _matchMatched.add(i);
-      });
-      _matchFlipped = []; _matchLocked = false; _updateMatch();
-      const tc = ca.type === 'tig' ? ca : cb;
-      showWordToast((tc.emoji ? tc.emoji + ' ' : '') + tc.text + (tc.hint ? ' · ' + tc.hint : ''));
-      markWordLearned((window._fidelTargetLang||'ti') + ':' + tc.text + ':' + (tc.hint||''));
-      if (_matchMatched.size === 16) setTimeout(() => document.getElementById('matchWin').classList.add('show'), 300);
-    }, 400);
+    setTimeout(() => executeMatchFound(a, b), 400);
   } else {
     setTimeout(() => {
-      [a,b].forEach(i => document.getElementById('mc'+i).classList.remove('selected'));
+      [a, b].forEach(i => document.getElementById('mc' + i).classList.remove('selected'));
       _matchFlipped = []; _matchLocked = false;
     }, 700);
   }
