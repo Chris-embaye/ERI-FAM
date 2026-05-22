@@ -2961,9 +2961,9 @@
     .dict-learned-stamp{position:absolute;top:6px;right:6px;background:var(--green);color:#fff;font-size:.55rem;font-weight:900;padding:2px 6px;border-radius:999px;letter-spacing:.03em;}
     .dict-card{position:relative;}
     /* ── DICT QUIZ OVERLAY ── */
-    .dq-overlay{position:fixed;inset:0;background:var(--bg);z-index:700;display:flex;flex-direction:column;overflow:hidden;}
+    .dq-overlay{position:fixed;inset:0;background:var(--bg);z-index:1100;display:flex;flex-direction:column;overflow:hidden;}
     .dq-header{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
-    .dq-back{background:none;border:none;font-size:1.1rem;color:var(--text-sub);cursor:pointer;padding:4px 8px;}
+    .dq-back{background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.9rem;font-weight:600;color:var(--text);cursor:pointer;padding:6px 14px;display:flex;align-items:center;gap:6px;}
     .dq-title{font-weight:900;font-size:1rem;flex:1;}
     .dq-score-pill{font-size:.72rem;font-weight:800;background:var(--green-light);color:var(--green);border-radius:999px;padding:3px 10px;}
     .dq-progress-bar{height:4px;background:var(--border);}
@@ -3754,7 +3754,7 @@
   <!-- ══ DICT QUIZ OVERLAY ══ -->
   <div id="dictQuizOverlay" class="dq-overlay" style="display:none">
     <div class="dq-header">
-      <button class="dq-back" id="dqBack">✕</button>
+      <button class="dq-back" id="dqBack">← Back</button>
       <div class="dq-title" id="dqTitle">Dictionary Quiz</div>
       <div class="dq-score-pill" id="dqScorePill">0/0</div>
     </div>
@@ -12646,7 +12646,7 @@ renderDict = function() {
     progFill.style.width  = (_dqIdx / _dqTotal * 100) + '%';
 
     // 3 wrong answers from same dict
-    const pool  = shuffleArr(aDict.filter(x => getLangKey(x) !== getLangKey(d)));
+    const pool  = shuffleArr(aDict.filter(x => getLangKey(x) !== getLangKey(d) && (getLangSecondary(x) || x.eng)));
     const wrongs = pool.slice(0, 3).map(x => getLangSecondary(x) || x.eng || '');
     const choices = shuffleArr([correctEng, ...wrongs]);
 
