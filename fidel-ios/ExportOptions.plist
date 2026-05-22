@@ -5,11 +5,7 @@
   <key>method</key><string>app-store-connect</string>
   <key>destination</key><string>upload</string>
   <key>teamID</key><string>49D2THWCHV</string>
-  <key>signingStyle</key><string>manual</string>
-  <key>provisioningProfiles</key>
-  <dict>
-    <key>com.chrisembaye.fidel</key><string>Fidel App Store</string>
-  </dict>
+  <key>signingStyle</key><string>automatic</string>
   <key>uploadBitcode</key><false/>
   <key>compileBitcode</key><false/>
   <key>uploadSymbols</key><true/>
