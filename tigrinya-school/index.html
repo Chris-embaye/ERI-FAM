@@ -1326,10 +1326,12 @@
     /* White text on dark-gradient cards (Fix 2: contrast accessibility) */
     #gcWordsearch .game-card-name, #gcMatch .game-card-name,
     #gcQuiz .game-card-name, #gcScramble .game-card-name,
-    #gcSentence .game-card-name, #gcType .game-card-name { color: #FFFFFF; }
+    #gcSentence .game-card-name, #gcType .game-card-name,
+    #gcListen .game-card-name, #gcReview .game-card-name { color: #FFFFFF; }
     #gcWordsearch .game-card-desc, #gcMatch .game-card-desc,
     #gcQuiz .game-card-desc, #gcScramble .game-card-desc,
-    #gcSentence .game-card-desc, #gcType .game-card-desc { color: rgba(255,255,255,0.72); }
+    #gcSentence .game-card-desc, #gcType .game-card-desc,
+    #gcListen .game-card-desc, #gcReview .game-card-desc { color: rgba(255,255,255,0.72); }
     /* Gradient screen titles */
     .grad-title {
       background: linear-gradient(130deg, #3B82F6 15%, #5EEAD4 85%);
@@ -2131,6 +2133,8 @@
     #gcMatch .gc-best      { color:#a855f7; background:rgba(168,85,247,0.18); }
     #gcQuiz .gc-best       { color:#f97316; background:rgba(249,115,22,0.18); }
     #gcScramble .gc-best   { color:#3B82F6; background:rgba(59,130,246,0.18); }
+    #gcListen .gc-best     { color:#06b6d4; background:rgba(6,182,212,0.18); }
+    #gcReview .gc-best     { color:#f59e0b; background:rgba(245,158,11,0.18); }
 
     /* ── STREAK BADGE ── */
     .streak-badge { display:flex; align-items:center; gap:3px; background:rgba(249,115,22,0.16); border:1.5px solid rgba(249,115,22,0.34); border-radius:999px; padding:3px 9px 3px 7px; font-size:0.68rem; font-weight:800; color:#f97316; cursor:default; }
@@ -2859,6 +2863,10 @@
     .type-feedback.err { background:rgba(239,68,68,.10);color:#ef4444; }
     #gcType { background:linear-gradient(145deg,#0a1a10,#0d2018); border-color:#22c55e; }
     #gcType .game-card-icon { filter:drop-shadow(0 0 10px rgba(34,197,94,.7)); }
+    #gcListen { background:linear-gradient(145deg,#0a2e30,#1e293b); border-color:#06b6d4; }
+    #gcListen .game-card-icon { filter:drop-shadow(0 0 10px rgba(6,182,212,.7)); }
+    #gcReview { background:linear-gradient(145deg,#2a1a00,#1e293b); border-color:#f59e0b; }
+    #gcReview .game-card-icon { filter:drop-shadow(0 0 10px rgba(245,158,11,.7)); }
 
     /* ── CULTURAL NOTES ── */
     .dict-note-btn { background:rgba(59,130,246,.12);border:none;border-radius:10px;font-size:0.65rem;font-weight:800;color:var(--green);padding:2px 7px;cursor:pointer;flex-shrink:0;white-space:nowrap; }
