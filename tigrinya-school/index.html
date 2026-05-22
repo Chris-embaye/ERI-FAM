@@ -1298,13 +1298,25 @@
       content: "➔"; position: absolute; bottom: 10px; right: 12px;
       font-size: 0.7rem; opacity: 0.3; color: var(--text); pointer-events: none;
     }
-    #gcWordsearch::after, #gcMatch::after, #gcQuiz::after,
-    #gcScramble::after, #gcSentence::after, #gcType::after { color: rgba(255,255,255,0.5); }
-    /* Per-game gradients */
-    #gcWordsearch { background: linear-gradient(145deg,#0c2a45,#1e293b); border-color: #0ea5e9; }
-    #gcMatch      { background: linear-gradient(145deg,#271040,#1e293b); border-color: #a855f7; }
-    #gcQuiz       { background: linear-gradient(145deg,#3d1a04,#1e293b); border-color: #f97316; }
-    #gcScramble   { background: linear-gradient(145deg,#052e1a,#1e293b); border-color: #3B82F6; }
+    [data-sky="night"] #gcWordsearch::after, [data-sky="night"] #gcMatch::after,
+    [data-sky="night"] #gcQuiz::after, [data-sky="night"] #gcScramble::after,
+    [data-sky="night"] #gcSentence::after, [data-sky="night"] #gcType::after,
+    [data-sky="night"] #gcListen::after, [data-sky="night"] #gcReview::after { color: rgba(255,255,255,0.5); }
+    /* Per-game accent borders */
+    #gcWordsearch { border-color: #0ea5e9; }
+    #gcMatch      { border-color: #a855f7; }
+    #gcQuiz       { border-color: #f97316; }
+    #gcScramble   { border-color: #3B82F6; }
+    /* Day-mode light gradients */
+    [data-sky="day"] #gcWordsearch { background: linear-gradient(145deg,#f0f9ff,#bae6fd); }
+    [data-sky="day"] #gcMatch      { background: linear-gradient(145deg,#faf5ff,#e9d5ff); }
+    [data-sky="day"] #gcQuiz       { background: linear-gradient(145deg,#fff7ed,#fed7aa); }
+    [data-sky="day"] #gcScramble   { background: linear-gradient(145deg,#eff6ff,#bfdbfe); }
+    /* Night-mode dark gradients */
+    [data-sky="night"] #gcWordsearch { background: linear-gradient(145deg,#0c2a45,#1e293b); }
+    [data-sky="night"] #gcMatch      { background: linear-gradient(145deg,#271040,#1e293b); }
+    [data-sky="night"] #gcQuiz       { background: linear-gradient(145deg,#3d1a04,#1e293b); }
+    [data-sky="night"] #gcScramble   { background: linear-gradient(145deg,#052e1a,#1e293b); }
     /* Per-game icon glow */
     #gcWordsearch .game-card-icon { filter: drop-shadow(0 0 10px rgba(14,165,233,0.70)); }
     #gcMatch      .game-card-icon { filter: drop-shadow(0 0 10px rgba(168,85,247,0.70)); }
@@ -1323,15 +1335,15 @@
     .game-card.tapping .game-card-icon { animation: iconBounce 0.44s cubic-bezier(0.34,1.56,0.64,1); }
     .game-card-name { font-size: 0.88rem; font-weight: 800; margin-bottom: 4px; }
     .game-card-desc { font-size: 0.68rem; color: var(--text-sub); line-height: 1.4; }
-    /* White text on dark-gradient cards (Fix 2: contrast accessibility) */
-    #gcWordsearch .game-card-name, #gcMatch .game-card-name,
-    #gcQuiz .game-card-name, #gcScramble .game-card-name,
-    #gcSentence .game-card-name, #gcType .game-card-name,
-    #gcListen .game-card-name, #gcReview .game-card-name { color: #FFFFFF; }
-    #gcWordsearch .game-card-desc, #gcMatch .game-card-desc,
-    #gcQuiz .game-card-desc, #gcScramble .game-card-desc,
-    #gcSentence .game-card-desc, #gcType .game-card-desc,
-    #gcListen .game-card-desc, #gcReview .game-card-desc { color: rgba(255,255,255,0.72); }
+    /* White text on dark-gradient cards — night only */
+    [data-sky="night"] #gcWordsearch .game-card-name, [data-sky="night"] #gcMatch .game-card-name,
+    [data-sky="night"] #gcQuiz .game-card-name, [data-sky="night"] #gcScramble .game-card-name,
+    [data-sky="night"] #gcSentence .game-card-name, [data-sky="night"] #gcType .game-card-name,
+    [data-sky="night"] #gcListen .game-card-name, [data-sky="night"] #gcReview .game-card-name { color: #FFFFFF; }
+    [data-sky="night"] #gcWordsearch .game-card-desc, [data-sky="night"] #gcMatch .game-card-desc,
+    [data-sky="night"] #gcQuiz .game-card-desc, [data-sky="night"] #gcScramble .game-card-desc,
+    [data-sky="night"] #gcSentence .game-card-desc, [data-sky="night"] #gcType .game-card-desc,
+    [data-sky="night"] #gcListen .game-card-desc, [data-sky="night"] #gcReview .game-card-desc { color: rgba(255,255,255,0.72); }
     /* Gradient screen titles */
     .grad-title {
       background: linear-gradient(130deg, #3B82F6 15%, #5EEAD4 85%);
@@ -2617,8 +2629,10 @@
     .sb-translation { text-align:center; font-size:0.78rem; color:var(--text-dim); padding:0 16px 8px; font-style:italic; }
     .sb-check-btn { margin:0 16px 10px; width:calc(100% - 32px); padding:13px; background:var(--green); color:white; border-radius:12px; font-weight:800; font-size:0.9rem; border:none; cursor:pointer; }
     .sb-progress { text-align:center; font-size:0.72rem; color:var(--text-dim); padding:6px 0; font-weight:700; }
-    #gcSentence { background:linear-gradient(145deg,#1a2040,#1e293b); border-color:#818cf8; }
+    #gcSentence { border-color:#818cf8; }
     #gcSentence .game-card-icon { filter:drop-shadow(0 0 10px rgba(129,140,248,0.70)); }
+    [data-sky="day"] #gcSentence { background:linear-gradient(145deg,#eef2ff,#c7d2fe); }
+    [data-sky="night"] #gcSentence { background:linear-gradient(145deg,#1a2040,#1e293b); }
     .gc-best-sentence { color:#818cf8; background:rgba(129,140,248,0.18); }
 
     /* ── 10. PLACEMENT TEST ── */
@@ -2861,12 +2875,18 @@
     .type-feedback { min-height:36px;text-align:center;font-size:.88rem;font-weight:700;border-radius:10px;padding:8px 12px;transition:all .2s; }
     .type-feedback.ok  { background:rgba(34,197,94,.12);color:#22c55e; }
     .type-feedback.err { background:rgba(239,68,68,.10);color:#ef4444; }
-    #gcType { background:linear-gradient(145deg,#0a1a10,#0d2018); border-color:#22c55e; }
+    #gcType { border-color:#22c55e; }
     #gcType .game-card-icon { filter:drop-shadow(0 0 10px rgba(34,197,94,.7)); }
-    #gcListen { background:linear-gradient(145deg,#0a2e30,#1e293b); border-color:#06b6d4; }
+    #gcListen { border-color:#06b6d4; }
     #gcListen .game-card-icon { filter:drop-shadow(0 0 10px rgba(6,182,212,.7)); }
-    #gcReview { background:linear-gradient(145deg,#2a1a00,#1e293b); border-color:#f59e0b; }
+    #gcReview { border-color:#f59e0b; }
     #gcReview .game-card-icon { filter:drop-shadow(0 0 10px rgba(245,158,11,.7)); }
+    [data-sky="day"] #gcType   { background:linear-gradient(145deg,#f0fdf4,#bbf7d0); }
+    [data-sky="day"] #gcListen { background:linear-gradient(145deg,#ecfeff,#a5f3fc); }
+    [data-sky="day"] #gcReview { background:linear-gradient(145deg,#fffbeb,#fde68a); }
+    [data-sky="night"] #gcType   { background:linear-gradient(145deg,#0a1a10,#0d2018); }
+    [data-sky="night"] #gcListen { background:linear-gradient(145deg,#0a2e30,#1e293b); }
+    [data-sky="night"] #gcReview { background:linear-gradient(145deg,#2a1a00,#1e293b); }
 
     /* ── CULTURAL NOTES ── */
     .dict-note-btn { background:rgba(59,130,246,.12);border:none;border-radius:10px;font-size:0.65rem;font-weight:800;color:var(--green);padding:2px 7px;cursor:pointer;flex-shrink:0;white-space:nowrap; }
