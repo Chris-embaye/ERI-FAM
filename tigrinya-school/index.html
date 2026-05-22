@@ -136,6 +136,16 @@
       transition: background 0.15s;
     }
     .hub-back:hover { background: rgba(0,0,0,.16); }
+    .hub-dir-pill {
+      font-size: 0.68rem; font-weight: 800; letter-spacing: -0.1px;
+      background: rgba(59,130,246,0.12); border: 1.5px solid rgba(59,130,246,0.28);
+      color: var(--green); border-radius: 20px; padding: 5px 11px;
+      cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap;
+    }
+    .hub-dir-pill:hover { background: rgba(59,130,246,0.20); }
+    .hub-dir-pill.eng { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.28); color: #D97706; }
+    [data-sky="night"] .hub-dir-pill { background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.40); color: #60a5fa; }
+    [data-sky="night"] .hub-dir-pill.eng { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.40); color: #fbbf24; }
     [data-sky="night"] .theme-btn { background: rgba(255,255,255,.2); }
     [data-sky="night"] .theme-btn:hover { background: rgba(255,255,255,.3); }
     [data-sky="night"] .hub-back { background: rgba(255,255,255,.2); color: white; }
@@ -462,6 +472,7 @@
       cursor: pointer; transition: all 0.15s; line-height: 1.3;
     }
     .quiz-choice:hover:not(.correct):not(.wrong):not(.disabled) { border-color: var(--green); color: var(--green); }
+    .quiz-choice.selected { border-color: var(--green); background: var(--green-light); }
     .quiz-choice.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; pointer-events: none; }
     .quiz-choice.wrong { background: #fee2e2; border-color: #dc2626; color: #991b1b; pointer-events: none; }
     .quiz-choice.disabled { pointer-events: none; opacity: .55; }
@@ -1281,7 +1292,14 @@
       background: var(--card); border-radius: var(--radius); padding: 20px 14px 16px;
       text-align: center; cursor: pointer; box-shadow: var(--shadow);
       border: 2px solid var(--border); transition: transform .15s, box-shadow .15s;
+      position: relative;
     }
+    .game-card::after {
+      content: "➔"; position: absolute; bottom: 10px; right: 12px;
+      font-size: 0.7rem; opacity: 0.3; color: var(--text); pointer-events: none;
+    }
+    #gcWordsearch::after, #gcMatch::after, #gcQuiz::after,
+    #gcScramble::after, #gcSentence::after, #gcType::after { color: rgba(255,255,255,0.5); }
     /* Per-game gradients */
     #gcWordsearch { background: linear-gradient(145deg,#0c2a45,#1e293b); border-color: #0ea5e9; }
     #gcMatch      { background: linear-gradient(145deg,#271040,#1e293b); border-color: #a855f7; }
@@ -1305,6 +1323,13 @@
     .game-card.tapping .game-card-icon { animation: iconBounce 0.44s cubic-bezier(0.34,1.56,0.64,1); }
     .game-card-name { font-size: 0.88rem; font-weight: 800; margin-bottom: 4px; }
     .game-card-desc { font-size: 0.68rem; color: var(--text-sub); line-height: 1.4; }
+    /* White text on dark-gradient cards (Fix 2: contrast accessibility) */
+    #gcWordsearch .game-card-name, #gcMatch .game-card-name,
+    #gcQuiz .game-card-name, #gcScramble .game-card-name,
+    #gcSentence .game-card-name, #gcType .game-card-name { color: #FFFFFF; }
+    #gcWordsearch .game-card-desc, #gcMatch .game-card-desc,
+    #gcQuiz .game-card-desc, #gcScramble .game-card-desc,
+    #gcSentence .game-card-desc, #gcType .game-card-desc { color: rgba(255,255,255,0.72); }
     /* Gradient screen titles */
     .grad-title {
       background: linear-gradient(130deg, #3B82F6 15%, #5EEAD4 85%);
@@ -1318,30 +1343,30 @@
     .match-stats { display: flex; align-items: center; gap: 16px; padding: 4px 16px 10px; }
     .match-stat { font-size: 0.78rem; font-weight: 700; color: var(--text-sub); }
     .match-stat span { color: var(--green); }
-    .match-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 12px 14px; }
+    .match-grid { display: flex; gap: 10px; padding: 0 12px 14px; }
+    .match-col { flex: 1; display: flex; flex-direction: column; gap: 8px; }
     .match-card {
-      aspect-ratio: .75; border-radius: 10px; cursor: pointer;
-      position: relative; transform-style: preserve-3d; transition: transform .35s; user-select: none;
+      min-height: 72px; border-radius: 10px; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 6px 4px; text-align: center; line-height: 1.3;
+      border: 2px solid transparent; user-select: none;
       -webkit-tap-highlight-color: transparent;
+      transition: transform .15s, opacity .35s, border-color .15s, box-shadow .15s;
     }
-    .match-card.flipped { transform: rotateY(180deg); }
-    .match-card-front, .match-card-back {
-      position: absolute; inset: 0; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: 5px;
-    }
-    .match-card-front { background: var(--green); color: white; font-size: 1.5rem; font-weight: 900; }
-    .match-card-back {
-      background: var(--card); border: 2px solid var(--border);
-      transform: rotateY(180deg);
-      text-align: center; line-height: 1.3; color: var(--text);
-      flex-direction: column; gap: 2px;
-    }
-    .mc-emoji { font-size: 1.5rem; line-height: 1; }
+    .match-card.tig { background: #E0E7FF; border-color: #C7D2FE; }
+    .match-card.tig .mc-text { font-family: 'Noto Serif Ethiopic', serif; font-size: 1.15rem; font-weight: 700; color: #1E40AF; }
+    .match-card.tig .mc-hint { color: #4338CA; }
+    .match-card.eng { background: #FEF3C7; border-color: #FDE68A; }
+    .match-card.eng .mc-text { font-size: 0.72rem; font-weight: 700; color: #92400E; }
+    .match-card.selected { border-color: var(--green); transform: scale(1.06); box-shadow: 0 0 0 3px rgba(59,130,246,.28); }
+    .match-card.matched { opacity: 0; pointer-events: none; }
+    [data-sky="night"] .match-card.tig { background: rgba(99,102,241,.20); border-color: rgba(99,102,241,.35); }
+    [data-sky="night"] .match-card.tig .mc-text { color: #a5b4fc; }
+    [data-sky="night"] .match-card.eng { background: rgba(245,158,11,.15); border-color: rgba(245,158,11,.30); }
+    [data-sky="night"] .match-card.eng .mc-text { color: #fcd34d; }
+    .mc-emoji { font-size: 1.3rem; line-height: 1; margin-bottom: 2px; }
     .mc-text  { font-size: 0.78rem; font-weight: 700; }
     .mc-hint  { font-size: 0.58rem; color: var(--text-dim); font-style: italic; }
-    .match-card-back.tig .mc-text { font-family: 'Noto Serif Ethiopic', serif; font-size: 1.25rem; color: var(--green); }
-    .match-card.matched .match-card-back { background: var(--green-light); border-color: var(--green); }
     .match-new-btn {
       padding: 5px 13px; border-radius: 16px; border: 1.5px solid var(--green);
       background: none; color: var(--green); font-size: 0.76rem; font-weight: 700;
@@ -1363,6 +1388,7 @@
       padding: 12px 14px; font-size: 0.83rem; font-weight: 600; text-align: left; cursor: pointer;
       transition: all .12s;
     }
+    .quiz-opt.selected { border-color: #3B82F6; background: rgba(59,130,246,0.08); }
     .quiz-opt.correct { background: var(--green-light); border-color: var(--green); color: var(--green); }
     .quiz-opt.wrong   { background: #fee2e2; border-color: var(--red); color: var(--red); }
     .quiz-opt:disabled { cursor: default; }
@@ -2266,14 +2292,13 @@
     .sc-tile[draggable] { cursor: grab; }
     .sc-tile.dragging   { opacity: 0.45; transform: scale(1.10); }
 
-    /* 12. MATCH SPRING FLIP */
-    .match-card { transition: transform 0.44s cubic-bezier(0.34,1.56,0.64,1) !important; }
+    /* 12. MATCH PAIR GLOW */
     @keyframes matchGlow {
-      0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.85); }
-      50%  { box-shadow: 0 0 0 16px rgba(59,130,246,0); }
-      100% { box-shadow: none; }
+      0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.85); opacity: 1; }
+      60%  { box-shadow: 0 0 0 16px rgba(59,130,246,0); opacity: 0.4; }
+      100% { box-shadow: none; opacity: 0; }
     }
-    .match-card.matched { animation: matchGlow 0.65s ease-out forwards; }
+    .match-card.matched { animation: matchGlow 0.55s ease-out forwards; }
 
     /* ═══════════════════════════════════════════
        PROFILE TWEAK PACK — 10 TWEAKS
@@ -2805,10 +2830,13 @@
     /* ── LISTENING QUIZ ── */
     .listen-hero { text-align:center;padding:20px 0 10px; }
     .listen-prompt { font-size:0.84rem;color:var(--text-sub);margin-bottom:20px; }
-    .listen-play-btn { display:flex;align-items:center;justify-content:center;margin:0 auto 8px;width:80px;height:80px;border-radius:50%;background:var(--green);color:white;font-size:2.2rem;border:none;cursor:pointer;transition:transform .15s;box-shadow:0 6px 24px rgba(59,130,246,.45); }
-    .listen-play-btn:active { transform:scale(.88); }
-    @keyframes listenPulse { 0%,100%{box-shadow:0 6px 24px rgba(59,130,246,.4)} 50%{box-shadow:0 6px 36px rgba(59,130,246,.7)} }
+    .listen-play-btn { display:flex;align-items:center;justify-content:center;margin:0 auto 8px;width:80px;height:80px;border-radius:50%;background:#1A2B3C;color:white;font-size:2.2rem;border:none;cursor:pointer;transition:transform .15s,opacity .15s;box-shadow:0 6px 24px rgba(0,0,0,.35); }
+    .listen-play-btn:active:not(:disabled) { transform:scale(.88); }
+    .listen-play-btn:disabled { cursor:default;opacity:.85; }
+    @keyframes listenPulse { 0%,100%{box-shadow:0 6px 24px rgba(0,0,0,.30)} 50%{box-shadow:0 6px 36px rgba(59,130,246,.55)} }
     .listen-play-btn.playing { animation:listenPulse .9s ease-in-out infinite; }
+    .lq-spinner { display:inline-block;width:28px;height:28px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:lqSpin .7s linear infinite; }
+    @keyframes lqSpin { to { transform:rotate(360deg); } }
     .listen-play-hint { font-size:0.65rem;color:var(--text-dim);margin-bottom:20px; }
     .listen-opts { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px; }
     .listen-opt { background:var(--card);border:2px solid var(--border);border-radius:var(--radius-sm);padding:14px 10px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:center; }
@@ -3040,6 +3068,7 @@
         <div class="hub-greeting" id="hubGreeting" style="font-size:0.62rem;opacity:.8;margin-top:1px">Learn · Translate · Community</div>
       </div>
     </div>
+    <button class="hub-dir-pill" id="hubDirPill">ፊደል ➔ English</button>
     <div class="hub-hdr-right">
       <div class="streak-badge" id="streakBadge" style="display:none">🔥 <span id="streakCount">0</span></div>
       <button class="hub-search-btn" id="globalSearchBtn" title="Search">🔍</button>
@@ -3233,8 +3262,8 @@
         <div class="quiz-progress-wrap"><div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div></div>
         <div class="quiz-counter" id="quizCounter">Question 1 of 10</div>
         <div class="quiz-card">
-          <div class="quiz-word" id="quizWord"></div>
-          <div class="quiz-rom" id="quizRom"></div>
+          <div class="quiz-word" id="learnQuizWord"></div>
+          <div class="quiz-rom" id="learnQuizRom"></div>
           <div class="quiz-prompt">What does this mean in English?</div>
         </div>
         <div class="quiz-timer-wrap"><div class="quiz-timer-fill" id="quizTimerFill"></div></div>
@@ -3790,12 +3819,12 @@
       <div id="typePlay">
         <div class="listen-progress" id="typeProgress">Word 1 of 10</div>
         <div style="text-align:center;padding:28px 16px 20px;background:var(--card);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:16px">
-          <div style="font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px">Translate this word:</div>
+          <div style="font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px">Translate this target expression:</div>
           <div id="typeEngWord" style="font-size:1.6rem;font-weight:900;color:var(--text)"></div>
           <div id="typeEngHint" style="font-size:.72rem;color:var(--text-dim);margin-top:4px;font-style:italic"></div>
         </div>
         <input id="typeInput" class="type-input" type="text" placeholder="Type here…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-        <button class="type-submit-btn" id="typeSubmitBtn">Check ✓</button>
+        <button class="type-submit-btn" id="typeSubmitBtn">Verify Answer Match ✓</button>
         <div id="typeFeedback" class="type-feedback"></div>
       </div>
       <div id="typeResult" style="display:none">
@@ -3816,7 +3845,7 @@
         <div class="listen-progress" id="listenProgress">Word 1 of 10</div>
         <div class="listen-hero">
           <div class="listen-prompt">Tap play and choose the correct meaning</div>
-          <button class="listen-play-btn" id="listenPlayBtn">▶</button>
+          <button class="listen-play-btn" id="listenPlayBtn">🔊</button>
           <div class="listen-play-hint">Tap again to replay</div>
         </div>
         <div class="listen-opts" id="listenOpts"></div>
@@ -5452,6 +5481,7 @@ function showConfetti() { /* disabled */ }
 const NAV_CLRS = { learn:'rgba(59,130,246,0.45)', translate:'rgba(96,165,250,0.45)', dictionary:'rgba(245,158,11,0.45)', puzzle:'rgba(167,139,250,0.45)', community:'rgba(59,130,246,0.45)', library:'rgba(244,114,182,0.45)', money:'rgba(52,211,153,0.45)' };
 let newsLoaded = false;
 function showView(id) {
+  window.scrollTo({ top: 0, behavior: 'instant' });
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.hnav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + id)?.classList.add('active');
@@ -5772,8 +5802,8 @@ function renderQuizQ() {
   const wrongs = shuffleArr(all.filter(w => w.eng !== q.eng)).slice(0, 3);
   const choices = shuffleArr([{ eng: q.eng, correct: true }, ...wrongs.map(w => ({ eng: w.eng, correct: false }))]);
 
-  document.getElementById('quizWord').textContent = q.tig;
-  document.getElementById('quizRom').textContent = q.rom;
+  document.getElementById('learnQuizWord').textContent = q.tig || '—';
+  document.getElementById('learnQuizRom').textContent = q.rom || '';
   document.getElementById('quizProgressFill').style.width = (quizIdx / QUIZ_LEN * 100) + '%';
   document.getElementById('quizCounter').textContent = 'Question ' + (quizIdx + 1) + ' of ' + QUIZ_LEN + ' · ' + quizScore + ' correct';
   document.getElementById('quizFeedback').textContent = '';
@@ -5789,6 +5819,7 @@ function renderQuizQ() {
 
 function handleQuizAnswer(btn) {
   if (quizAnswered) return;
+  btn.classList.add('selected');
   quizAnswered = true;
   clearQuizTimer();
   const ok = btn.dataset.correct === 'true';
@@ -6361,6 +6392,11 @@ async function sGetPollVotes(pollPostIds) {
   return votes;
 }
 
+// Normalize pollOptions regardless of whether Firestore stored it as array or map-object
+function _normPollOpts(v) {
+  return Array.isArray(v) ? v : Object.values(v || {});
+}
+
 // ── render a post card ────────────────────────────────────────
 function sRenderPost(post, likedSet, pollVotes) {
   const isMe = syncUser && post.authorId===syncUser.uid;
@@ -6377,11 +6413,13 @@ function sRenderPost(post, likedSet, pollVotes) {
       ${post.text && post.questionTitle ? `<div class="spost-q-body">${sEsc(post.text)}</div>` : ''}
     </div>`;
   } else if (post.type==='poll') {
-    const total = (post.pollOptions||[]).reduce((s,o)=>s+(o.votes||0),0);
+    const _pollOpts = _normPollOpts(post.pollOptions);
+    if (!_pollOpts.length) return '';
+    const total = _pollOpts.reduce((s,o)=>s+(o.votes||0),0);
     const myVote = pollVotes ? pollVotes[post.id] : undefined;
     const hasVoted = myVote !== undefined;
     body = `<div class="spost-poll"><div class="spost-poll-q">${sEsc(post.pollQuestion||post.text)}</div>
-      ${(post.pollOptions||[]).map((opt,i) => {
+      ${_pollOpts.map((opt,i) => {
         const pct = total>0 ? Math.round((opt.votes||0)/total*100) : 0;
         const isMine = hasVoted && myVote===i;
         return `<div class="spoll-opt${isMine?' my-vote':hasVoted?' voted':''}" onclick="sPollVote('${post.id}',${i})">
@@ -6619,11 +6657,11 @@ window.sPollVote = async function(postId, optIdx) {
     // refresh the poll UI
     const fresh = await _syncDb.collection('social_posts').doc(postId).get();
     const fd = {id:postId,...fresh.data()};
-    const total=(fd.pollOptions||[]).reduce((s,o)=>s+(o.votes||0),0);
+    const total=_normPollOpts(fd.pollOptions).reduce((s,o)=>s+(o.votes||0),0);
     const card=document.getElementById('spost-'+postId);
     if (card) {
       const pollEl=card.querySelector('.spost-poll');
-      if (pollEl) pollEl.innerHTML=`<div class="spost-poll-q">${sEsc(fd.pollQuestion||fd.text)}</div>${(fd.pollOptions||[]).map((opt,i)=>{const pct=total>0?Math.round((opt.votes||0)/total*100):0;return`<div class="spoll-opt${optIdx===i?' my-vote':' voted'}"><div class="spoll-bar" style="width:${pct}%"></div><div class="spoll-label">${sEsc(opt.text)}</div><div class="spoll-pct">${pct}%</div></div>`}).join('')}<div class="spoll-total">${total} vote${total!==1?'s':''}</div>`;
+      if (pollEl) pollEl.innerHTML=`<div class="spost-poll-q">${sEsc(fd.pollQuestion||fd.text)}</div>${_normPollOpts(fd.pollOptions).map((opt,i)=>{const pct=total>0?Math.round((opt.votes||0)/total*100):0;return`<div class="spoll-opt${optIdx===i?' my-vote':' voted'}"><div class="spoll-bar" style="width:${pct}%"></div><div class="spoll-label">${sEsc(opt.text)}</div><div class="spoll-pct">${pct}%</div></div>`}).join('')}<div class="spoll-total">${total} vote${total!==1?'s':''}</div>`;
     }
     hubToast('Vote counted! 🗳️');
   } catch(e) { hubToast('Error: '+e.message); }
@@ -9279,15 +9317,17 @@ function startMatch() {
     ...chosen.map((d, i) => ({ pairId: i, type: 'eng', text: d.eng.split('/')[0].trim(), emoji: d.emoji })),
   ]);
 
-  document.getElementById('matchGrid').innerHTML = _matchCards.map((c, i) => `
-    <div class="match-card" id="mc${i}" data-idx="${i}">
-      <div class="match-card-front">?</div>
-      <div class="match-card-back${c.type === 'tig' ? ' tig' : ''}">
-        ${c.type === 'tig' ? `<div class="mc-emoji">${c.emoji}</div>` : ''}
-        <div class="mc-text">${c.text}</div>
-        ${c.type === 'tig' && c.hint ? `<div class="mc-hint">${c.hint}</div>` : ''}
-      </div>
-    </div>`).join('');
+  const _tigCols = _matchCards.map((c, i) => ({...c, origIdx: i})).filter(c => c.type === 'tig');
+  const _engCols = _matchCards.map((c, i) => ({...c, origIdx: i})).filter(c => c.type === 'eng');
+  const _renderMC = c => `
+    <div class="match-card ${c.type}" id="mc${c.origIdx}" data-idx="${c.origIdx}">
+      ${c.type === 'tig' ? `<div class="mc-emoji">${c.emoji}</div>` : ''}
+      <div class="mc-text">${c.text}</div>
+      ${c.type === 'tig' && c.hint ? `<div class="mc-hint">${c.hint}</div>` : ''}
+    </div>`;
+  document.getElementById('matchGrid').innerHTML =
+    `<div class="match-col">${_tigCols.map(_renderMC).join('')}</div>` +
+    `<div class="match-col">${_engCols.map(_renderMC).join('')}</div>`;
 
   document.querySelectorAll('#matchGrid .match-card').forEach(el =>
     el.addEventListener('click', () => _matchTap(parseInt(el.dataset.idx)))
@@ -9300,7 +9340,7 @@ document.getElementById('matchNewBtn')?.addEventListener('click', startMatch);
 function _matchTap(idx) {
   if (_matchLocked || _matchMatched.has(idx) || _matchFlipped.includes(idx)) return;
   const card = _matchCards[idx];
-  document.getElementById('mc' + idx).classList.add('flipped');
+  document.getElementById('mc' + idx).classList.add('selected');
   if (card.type === 'tig') speak(card.text);
   _matchFlipped.push(idx); _matchFlips++;
   _updateMatch();
@@ -9310,18 +9350,23 @@ function _matchTap(idx) {
   const ca = _matchCards[a], cb = _matchCards[b];
   if (ca.pairId === cb.pairId && ca.type !== cb.type) {
     setTimeout(() => {
-      [a,b].forEach(i => { document.getElementById('mc'+i).classList.add('matched'); _matchMatched.add(i); });
+      [a,b].forEach(i => {
+        const el = document.getElementById('mc'+i);
+        el.classList.remove('selected');
+        el.classList.add('matched');
+        _matchMatched.add(i);
+      });
       _matchFlipped = []; _matchLocked = false; _updateMatch();
       const tc = ca.type === 'tig' ? ca : cb;
       showWordToast((tc.emoji ? tc.emoji + ' ' : '') + tc.text + (tc.hint ? ' · ' + tc.hint : ''));
       markWordLearned((window._fidelTargetLang||'ti') + ':' + tc.text + ':' + (tc.hint||''));
       if (_matchMatched.size === 16) setTimeout(() => document.getElementById('matchWin').classList.add('show'), 300);
-    }, 500);
+    }, 400);
   } else {
     setTimeout(() => {
-      [a,b].forEach(i => document.getElementById('mc'+i).classList.remove('flipped'));
+      [a,b].forEach(i => document.getElementById('mc'+i).classList.remove('selected'));
       _matchFlipped = []; _matchLocked = false;
-    }, 900);
+    }, 700);
   }
 }
 
@@ -9355,7 +9400,7 @@ function _renderQuizQ() {
 
   if (_quizDir === 'eng-to-tig') {
     if (label) label.textContent = 'How do you say this in Tigrinya?';
-    document.getElementById('quizWord').textContent = w.eng.split('/')[0].trim();
+    document.getElementById('quizWord').textContent = w.eng.split('/')[0].trim() || 'Loading word…';
     document.getElementById('quizRom').textContent  = '';
     const wrongs = _shuffle(_flat3.filter(d => d.tig && d.tig !== w.tig && !d.tig.includes(' ')));
     const opts = _shuffle([w.tig, wrongs[0]?.tig || '', wrongs[1]?.tig || '', wrongs[2]?.tig || ''].filter(Boolean));
@@ -9363,6 +9408,7 @@ function _renderQuizQ() {
       `<button class="quiz-opt" style="font-family:'Noto Serif Ethiopic',serif;font-size:1.1rem">${o}</button>`).join('');
     document.querySelectorAll('.quiz-opt').forEach(btn => {
       btn.addEventListener('click', () => {
+        btn.classList.add('selected');
         document.querySelectorAll('.quiz-opt').forEach(b => { b.disabled = true; });
         if (btn.textContent === w.tig) {
           btn.classList.add('correct'); _quizScore++;
@@ -9378,8 +9424,8 @@ function _renderQuizQ() {
     });
   } else {
     if (label) label.textContent = 'What does this mean?';
-    document.getElementById('quizWord').textContent = w.tig;
-    document.getElementById('quizRom').textContent  = w.rom;
+    document.getElementById('quizWord').textContent = w.tig || 'Loading word…';
+    document.getElementById('quizRom').textContent  = w.rom || '';
     speak(w.tig);
     const wrongs = _shuffle(_flat3.filter(d => d.eng !== w.eng));
     const opts = _shuffle([w.eng, wrongs[0].eng, wrongs[1].eng, wrongs[2].eng]);
@@ -9387,6 +9433,7 @@ function _renderQuizQ() {
       `<button class="quiz-opt">${o}</button>`).join('');
     document.querySelectorAll('.quiz-opt').forEach(btn => {
       btn.addEventListener('click', () => {
+        btn.classList.add('selected');
         document.querySelectorAll('.quiz-opt').forEach(b => { b.disabled = true; });
         if (btn.textContent === w.eng) {
           btn.classList.add('correct'); _quizScore++;
@@ -11633,6 +11680,28 @@ function wotdSpeak() {
     renderLQ();
   }
 
+  function _lqSpeak(text, btn) {
+    if (!text) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="lq-spinner"></span>';
+    btn.classList.add('playing');
+    const restore = () => { btn.disabled = false; btn.textContent = '🔊'; btn.classList.remove('playing'); };
+    if ('speechSynthesis' in window) {
+      const utt = new SpeechSynthesisUtterance(text);
+      const _lm = { ti:'ti-ET', tgr:'ti-ET', am:'am-ET', ar:'ar-SA', en:'en-US' };
+      utt.lang = _lm[window._fidelTargetLang || 'ti'] || 'ti-ET';
+      utt.rate = 0.85;
+      utt.onend = restore;
+      utt.onerror = restore;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utt);
+      // Fallback in case onend never fires (some browsers skip it)
+      setTimeout(restore, 3500);
+    } else {
+      setTimeout(restore, 1800);
+    }
+  }
+
   function renderLQ() {
     if (_lqIdx >= LQ_LEN) { showLQResult(); return; }
     _lqAnswered = false;
@@ -11640,19 +11709,13 @@ function wotdSpeak() {
     document.getElementById('listenProgress').textContent = 'Word ' + (_lqIdx + 1) + ' of ' + LQ_LEN;
 
     const playBtn = document.getElementById('listenPlayBtn');
+    playBtn.disabled = false;
+    playBtn.textContent = '🔊';
     playBtn.classList.remove('playing');
-    playBtn.onclick = () => {
-      if (typeof speak === 'function') speak(w.tig || w.rom);
-      playBtn.classList.add('playing');
-      setTimeout(() => playBtn.classList.remove('playing'), 1800);
-    };
+    playBtn.onclick = () => _lqSpeak(w.tig || w.rom, playBtn);
 
     // Auto-play on first render of each word
-    setTimeout(() => {
-      if (typeof speak === 'function') speak(w.tig || w.rom);
-      playBtn.classList.add('playing');
-      setTimeout(() => playBtn.classList.remove('playing'), 1800);
-    }, 300);
+    setTimeout(() => _lqSpeak(w.tig || w.rom, playBtn), 300);
 
     const _lqAllDict = typeof getActiveLangDict === 'function' ? getActiveLangDict() : DICT;
     const _lqAll = _lqAllDict.map(d => ({ tig: d.tig || d.word || '', eng: d.eng || '' }));
@@ -11757,7 +11820,7 @@ function wotdSpeak() {
     inp.className = 'type-input';
     inp.disabled = false;
     _tySubmit().disabled = false;
-    setTimeout(() => inp.focus(), 80);
+    setTimeout(() => { inp.focus(); inp.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 80);
   }
 
   function _normalize(s) {
@@ -11771,7 +11834,13 @@ function wotdSpeak() {
     const w = _tyWords[_tyIdx];
     const inp = _tyInput();
     const typed = _normalize(inp.value);
-    if (!typed) return;
+    if (!typed) {
+      const fb = document.getElementById('typeFeedback');
+      fb.textContent = '⚠ Please fill out the form input field first.';
+      fb.className = 'type-feedback err';
+      inp.focus();
+      return;
+    }
     _tyAnswered = true;
     inp.disabled = true;
     _tySubmit().disabled = true;
@@ -11867,11 +11936,23 @@ function showWordToast(msg) {
    QUIZ DIRECTION TOGGLE
 ═══════════════════════════════ */
 let _quizDir = 'tig-to-eng';
+
+function _syncQuizDirUI() {
+  const isTigToEng = _quizDir === 'tig-to-eng';
+  const pill = document.getElementById('hubDirPill');
+  const btn  = document.getElementById('quizDirBtn');
+  if (pill) { pill.textContent = isTigToEng ? 'ፊደል ➔ English' : 'English ➔ ፊደል'; pill.classList.toggle('eng', !isTigToEng); }
+  if (btn)  { btn.textContent  = isTigToEng ? 'Tigrinya → English' : 'English → Tigrinya'; btn.classList.toggle('eng', !isTigToEng); }
+}
+
 document.getElementById('quizDirBtn')?.addEventListener('click', () => {
   _quizDir = _quizDir === 'tig-to-eng' ? 'eng-to-tig' : 'tig-to-eng';
-  const btn = document.getElementById('quizDirBtn');
-  btn.textContent = _quizDir === 'tig-to-eng' ? 'Tigrinya → English' : 'English → Tigrinya';
-  btn.classList.toggle('eng', _quizDir === 'eng-to-tig');
+  _syncQuizDirUI();
+});
+
+document.getElementById('hubDirPill')?.addEventListener('click', () => {
+  _quizDir = _quizDir === 'tig-to-eng' ? 'eng-to-tig' : 'tig-to-eng';
+  _syncQuizDirUI();
 });
 
 /* ═══════════════════════════════
