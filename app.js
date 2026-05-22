@@ -945,10 +945,10 @@ function openDuplicates() {
 }
 
 // ── Navigation ─────────────────────────────────────────────────
-document.querySelectorAll('.nav-item').forEach(btn => {
+document.querySelectorAll('.m-nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
     const view = btn.getAttribute('data-view');
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     btn.classList.add('active');
     const viewEl = document.getElementById('view-' + view);
@@ -970,9 +970,9 @@ document.getElementById('searchInput').addEventListener('input', e => {
   const results = all.filter(t => t.title.toLowerCase().includes(q.toLowerCase()) || t.artist.toLowerCase().includes(q.toLowerCase()));
   renderSearchResults(results, q);
   // Switch to search view
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelector('.nav-item[data-view="search"]')?.classList.add('active');
+  document.querySelector('.m-nav-item[data-view="search"]')?.classList.add('active');
   document.getElementById('view-search').classList.add('active');
 });
 
@@ -2180,7 +2180,7 @@ function renderRadioGrid() {
     btn.addEventListener('click', e => { e.stopPropagation(); openRadioInfo(btn.dataset.info); });
   });
 
-  document.querySelector('.nav-item[data-view="radio"]')?.classList.toggle('radio-active', !!currentStation);
+  document.querySelector('.m-nav-item[data-view="radio"]')?.classList.toggle('radio-active', !!currentStation);
 }
 
 /* ── favorites ── */
@@ -2756,7 +2756,7 @@ function closeTVPlayer() {
 document.getElementById('tvClose').addEventListener('click', closeTVPlayer);
 
 // Render TV grid when radio view is first shown
-document.querySelectorAll('.nav-item').forEach(btn => {
+document.querySelectorAll('.m-nav-item').forEach(btn => {
   if (btn.getAttribute('data-view') === 'radio') {
     btn.addEventListener('click', renderTVGrid, { once: true });
   }
@@ -2860,10 +2860,10 @@ window.switchView = switchView;
 function switchView(viewName) {
   localStorage.setItem('erifam_view', viewName);
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active'));
   const viewEl = document.getElementById('view-' + viewName);
   if (viewEl) viewEl.classList.add('active');
-  const navBtn = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+  const navBtn = document.querySelector(`.m-nav-item[data-view="${viewName}"]`);
   if (navBtn) navBtn.classList.add('active');
   // Show/hide floating YT player when navigating away from YouTube view
   const ytFloat = document.getElementById('ytFloat');
@@ -4567,20 +4567,34 @@ document.querySelectorAll('.theme-opt-btn').forEach(btn => {
 // ── SETTINGS: LANGUAGE ─────────────────────────────────────────
 const LANG_DICT = {
   en: {
-    'nav-home':'Home','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Translate','nav-library':'Library',
-    'lib-tab-songs':'Songs','lib-tab-playlists':'Playlists','lib-tab-artists':'Artists','lib-tab-albums':'Albums',
+    'nav-home':'Home','nav-library':'Library','nav-radio':'Radio','nav-youtube':'YouTube','nav-translate':'Translate',
+    'nav-community':'Community','nav-history':'History','nav-settings':'Settings',
+    'hero-greeting':'Welcome','hero-sub':'Your Eritrean music, anywhere',
+    'action-play':'Play','action-play-all':'Play All','action-shuffle':'Shuffle','action-search':'Search...','action-clear':'Clear','action-cancel':'Cancel','action-save':'Save','action-share':'Share',
+    'lib-tab-playlists':'Playlists','lib-tab-artists':'Artists','lib-tab-albums':'Albums','lib-tab-songs':'Songs',
+    'msg-no-playlists':'No playlists yet. Create one!',
+    'songs-play':'Play','songs-shuffle':'Shuffle',
+    'section-recent':'Recently Played','section-promoted':'Promoted','section-charts':'Top Charts',
+    'section-live-radio':'Live Radio','section-live-tv':'Live TV','section-trending':'Trending',
+    'filter-all':'All','filter-local':'Local','filter-cloud':'Cloud','filter-liked':'Liked',
     'fp-label':'Now Playing',
     'extra-eq':'EQ','extra-sleep':'Sleep','extra-playlist':'Playlist','extra-lyrics':'Lyrics','extra-share':'Share','extra-save':'Save',
-    'hero-sub':'Your Eritrean music, anywhere',
-    'songs-play':'Play','songs-shuffle':'Shuffle',
+    'settings-playback':'Playback','settings-library':'Library','settings-language':'Language','settings-theme':'Theme','settings-about':'About & Contact',
   },
   ti: {
-    'nav-home':'ቤት','nav-radio':'ሬድዮ','nav-youtube':'ዩቱብ','nav-translate':'ትርጉም','nav-library':'ቤተ-መጻሕፍቲ',
-    'lib-tab-songs':'ደርፍታት','lib-tab-playlists':'ዝርዝር ደርፊ','lib-tab-artists':'ደረፍቲ','lib-tab-albums':'ኣልበማት',
-    'fp-label':'ሕጂ ይጻወት',
-    'extra-eq':'ኢኪዩ','extra-sleep':'ዕረፍቲ','extra-playlist':'ዝርዝር','extra-lyrics':'ቃላት','extra-share':'ኣካፍል','extra-save':'ምቅሓት',
-    'hero-sub':'ሙዚቃ ኤርትራ፡ ኣብ ዝደለኻዮ',
-    'songs-play':'ጸወት','songs-shuffle':'ቀያዪር',
+    'nav-home':'ዋና ገጽ','nav-library':'መዝገብ','nav-radio':'ራድዮ','nav-youtube':'ዩቱብ','nav-translate':'ትርጉም',
+    'nav-community':'ማሕበረሰብ','nav-history':'ታሪኽ','nav-settings':'ቅንብራት',
+    'hero-greeting':'እንቋዕ ብደሓን መጻእኩም','hero-sub':'ናይ ኤርትራ ሙዚቃ፡ ኣብ ዝኾነ ቦታ',
+    'action-play':'ኣጻውት','action-play-all':'ንኹሉ ኣጻውት','action-shuffle':'ሕዋስ','action-search':'ድለ...','action-clear':'ኣጥፍእ','action-cancel':'ስረዝ','action-save':'ዕቀብ','action-share':'ካፍል',
+    'lib-tab-playlists':'ዝርዝር ደርፊ','lib-tab-artists':'ድምጻውያን','lib-tab-albums':'ኣልበማት','lib-tab-songs':'ደርፊታት',
+    'msg-no-playlists':'ዛጊት ዝኾነ ዝርዝር የለን። ሓዱሽ ፍጠር!',
+    'songs-play':'ኣጻውት','songs-shuffle':'ሕዋስ',
+    'section-recent':'ኣብ ቀረባ ግዜ ዝተጻወተ','section-promoted':'ዝተቓልሐ','section-charts':'ብሉጻት ደርፊታት',
+    'section-live-radio':'ቀጥታ ራድዮ','section-live-tv':'ቀጥታ ቲቪ','section-trending':'ህቡብ',
+    'filter-all':'ኩሉ','filter-local':'ኣብዚ መሳርሒ','filter-cloud':'ክላውድ','filter-liked':'ዝፈተኽዎ',
+    'fp-label':'ሕጂ ዝጻወት ዘሎ',
+    'extra-eq':'ድምጺ ምትዕርራይ (EQ)','extra-sleep':'ናይ ድቃስ ግዜ','extra-playlist':'ናብ ዝርዝር ደርፊ','extra-lyrics':'ግጥሚ','extra-share':'ካፍል','extra-save':'ኣውርድ',
+    'settings-playback':'ኣጸዋውታ','settings-library':'መዝገብ','settings-language':'ቋንቋ','settings-theme':'ገጽታ','settings-about':'ብዛዕባ',
   },
   ar: {
     'nav-home':'الرئيسية','nav-radio':'راديو','nav-youtube':'يوتيوب','nav-translate':'ترجمة','nav-library':'المكتبة',
@@ -4788,7 +4802,7 @@ let _communityLoaded = false;
 async function loadCommunityPosts() {
   if (_communityLoaded) return; // only fetch once per session
   _communityLoaded = true;
-  const grid = document.getElementById('communityPostsGrid');
+  const grid = document.getElementById('communityFeed');
   if (!grid) return;
   try {
     await FB_READY;
@@ -5888,7 +5902,7 @@ document.getElementById('skipFwdBtn')?.addEventListener('click', () => {
   }
 
   function renderHistory() {
-    const list = document.getElementById('historyList');
+    const list = document.getElementById('historyTrackList');
     if (!list) return;
     const hist = loadHistory();
     if (!hist.length) {
@@ -5932,7 +5946,7 @@ document.getElementById('skipFwdBtn')?.addEventListener('click', () => {
   };
   window.switchView = switchView;
 
-  document.getElementById('clearHistoryBtn')?.addEventListener('click', () => {
+  document.getElementById('historyClearAllBtn')?.addEventListener('click', () => {
     if (!confirm('Clear all listening history?')) return;
     localStorage.removeItem(HIST_KEY);
     renderHistory();
