@@ -5990,3 +5990,29 @@ document.getElementById('skipFwdBtn')?.addEventListener('click', () => {
     window._lyricsScrollTimer = setTimeout(() => { lyricsAutoScroll = true; }, 5000);
   }, { passive: true });
 }
+
+/* ── MICRO-ELASTIC PRESS FEEDBACK ─────────────────────────────── */
+// Delegated so it covers dynamically-rendered track cards and chips too
+const _elasticSel = '.track-card, .btn-sm, .mood-chip, .filter-chip';
+
+document.addEventListener('mousedown', e => {
+  const el = e.target.closest(_elasticSel);
+  if (!el) return;
+  el.style.transition = 'transform 0.1s ease';
+  el.style.transform  = 'scale(0.96)';
+}, { passive: true });
+
+document.addEventListener('mouseup', e => {
+  const el = e.target.closest(_elasticSel);
+  if (!el) return;
+  el.style.transition = 'transform 0.15s ease';
+  el.style.transform  = 'translateY(-4px) scale(1.02)';
+}, { passive: true });
+
+// mouseout (bubbles) + relatedTarget check replicates non-bubbling mouseleave
+document.addEventListener('mouseout', e => {
+  const el = e.target.closest(_elasticSel);
+  if (!el || el.contains(e.relatedTarget)) return;
+  el.style.transition = 'transform 0.3s ease';
+  el.style.transform  = 'translateY(0) scale(1)';
+}, { passive: true });
