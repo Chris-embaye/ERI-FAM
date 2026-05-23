@@ -35,31 +35,47 @@ workflows:
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Fidel/Info.plist || true
           agvtool new-version -all "$BUILD" || true
 
+      - name: Set up keychain and signing
+        script: |
+          keychain initialize
+
+          # Generate a fresh RSA-2048 private key for the distribution certificate
+          openssl genrsa 2048 > /tmp/dist.key 2>/dev/null
+          echo "Key header: $(head -1 /tmp/dist.key)"
+          echo "Key size: $(wc -c < /tmp/dist.key) bytes"
+
+          # If OpenSSL produced PKCS#8 format, convert to PKCS#1
+          if grep -q "BEGIN PRIVATE KEY" /tmp/dist.key; then
+            openssl rsa -in /tmp/dist.key -out /tmp/dist.key 2>/dev/null
+            echo "Converted to PKCS#1: $(head -1 /tmp/dist.key)"
+          fi
+
+          # Fetch or create App Store distribution certificate and provisioning profile
+          app-store-connect fetch-signing-files \
+            --bundle-identifier "$BUNDLE_ID" \
+            --platform IOS \
+            --type IOS_APP_STORE \
+            --create \
+            --certificate-key "$(cat /tmp/dist.key)"
+
+          keychain add-certificates
+          cd fidel-ios && xcode-project use-profiles
+
       - name: Archive
         script: |
           cd fidel-ios
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/authkey.p8
           xcodebuild archive \
             -scheme "$XCODE_SCHEME" \
             -configuration Release \
             -destination "generic/platform=iOS" \
-            -archivePath build/Fidel.xcarchive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath /tmp/authkey.p8 \
-            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+            -archivePath build/Fidel.xcarchive
 
       - name: Export IPA
         script: |
           cd fidel-ios
-          xcodebuild -exportArchive \
-            -archivePath build/Fidel.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/FidelExport \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath /tmp/authkey.p8 \
-            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+          xcode-project build-ipa \
+            --archive-path build/Fidel.xcarchive \
+            --export-path build/FidelExport
 
     artifacts:
       - fidel-ios/build/FidelExport/*.ipa
