@@ -41,18 +41,10 @@ workflows:
 
           # Generate a fresh RSA-2048 private key for the distribution certificate
           openssl genrsa 2048 > /tmp/dist.key 2>/dev/null
-          echo "Key header: $(head -1 /tmp/dist.key)"
-          echo "Key size: $(wc -c < /tmp/dist.key) bytes"
-
-          # If OpenSSL produced PKCS#8 format, convert to PKCS#1
-          if grep -q "BEGIN PRIVATE KEY" /tmp/dist.key; then
-            openssl rsa -in /tmp/dist.key -out /tmp/dist.key 2>/dev/null
-            echo "Converted to PKCS#1: $(head -1 /tmp/dist.key)"
-          fi
 
           # Fetch or create App Store distribution certificate and provisioning profile
-          app-store-connect fetch-signing-files \
-            --bundle-identifier "$BUNDLE_ID" \
+          # Bundle ID is a positional argument, not --bundle-identifier
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --platform IOS \
             --type IOS_APP_STORE \
             --create \
