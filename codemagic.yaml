@@ -40,14 +40,14 @@ workflows:
           keychain initialize
           echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/AuthKey.p8
           chmod 600 /tmp/AuthKey.p8
-          echo "$CERTIFICATE_PRIVATE_KEY" > /tmp/cert_key.pem
+          echo "CERT_KEY length: ${#CERTIFICATE_PRIVATE_KEY}"
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create \
             --private-key @file:/tmp/AuthKey.p8 \
             --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --certificate-key @file:/tmp/cert_key.pem
+            --certificate-key @env:CERTIFICATE_PRIVATE_KEY
           keychain add-certificates
           echo "=== Profiles downloaded ==="
           ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "No profiles found"
