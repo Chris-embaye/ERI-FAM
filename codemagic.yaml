@@ -14,6 +14,9 @@ workflows:
     environment:
       groups:
         - app_store          # pulls in APP_STORE_CONNECT_* variables
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.chrisembaye.fidel
       vars:
         BUNDLE_ID: com.chrisembaye.fidel
         XCODE_SCHEME: Fidel
@@ -35,23 +38,8 @@ workflows:
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Fidel/Info.plist || true
           agvtool new-version -all "$BUILD" || true
 
-      - name: Set up keychain and fetch signing files
+      - name: Configure signing
         script: |
-          keychain initialize
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/AuthKey.p8
-          chmod 600 /tmp/AuthKey.p8
-          echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > /tmp/cert_key.pem
-          echo "CERT_KEY length: $(wc -c < /tmp/cert_key.pem)"
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create \
-            --private-key @file:/tmp/AuthKey.p8 \
-            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
-            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
-            --certificate-key "$(cat /tmp/cert_key.pem)"
-          keychain add-certificates
-          echo "=== Profiles downloaded ==="
-          ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "No profiles found"
           cd fidel-ios && xcode-project use-profiles
 
       - name: Archive
