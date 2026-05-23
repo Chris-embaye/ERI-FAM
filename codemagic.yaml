@@ -14,9 +14,6 @@ workflows:
     environment:
       groups:
         - app_store          # pulls in APP_STORE_CONNECT_* variables
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.chrisembaye.fidel
       vars:
         BUNDLE_ID: com.chrisembaye.fidel
         XCODE_SCHEME: Fidel
@@ -38,25 +35,31 @@ workflows:
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Fidel/Info.plist || true
           agvtool new-version -all "$BUILD" || true
 
-      - name: Configure signing
-        script: |
-          cd fidel-ios && xcode-project use-profiles
-
       - name: Archive
         script: |
           cd fidel-ios
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/authkey.p8
           xcodebuild archive \
             -scheme "$XCODE_SCHEME" \
             -configuration Release \
             -destination "generic/platform=iOS" \
-            -archivePath build/Fidel.xcarchive
+            -archivePath build/Fidel.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath /tmp/authkey.p8 \
+            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
 
       - name: Export IPA
         script: |
           cd fidel-ios
-          xcode-project build-ipa \
-            --archive-path build/Fidel.xcarchive \
-            --export-path build/FidelExport
+          xcodebuild -exportArchive \
+            -archivePath build/Fidel.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/FidelExport \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath /tmp/authkey.p8 \
+            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
 
     artifacts:
       - fidel-ios/build/FidelExport/*.ipa
