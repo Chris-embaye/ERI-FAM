@@ -67,7 +67,7 @@ workflows:
           cd fidel-ios
           xcodebuild -exportArchive \
             -archivePath build/Fidel.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
+            -exportOptionsPlist /Users/builder/export_options.plist \
             -exportPath build/FidelExport
 
     artifacts:
