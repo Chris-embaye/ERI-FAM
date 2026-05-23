@@ -39,11 +39,10 @@ workflows:
         script: |
           keychain initialize
 
-          # Generate a fresh RSA-2048 private key for the distribution certificate
-          openssl genrsa 2048 > /tmp/dist.key 2>/dev/null
+          # Decode the persistent RSA key stored in Codemagic env vars
+          echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > /tmp/dist.key
 
           # Fetch or create App Store distribution certificate and provisioning profile
-          # Bundle ID is a positional argument, not --bundle-identifier
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --platform IOS \
             --type IOS_APP_STORE \
