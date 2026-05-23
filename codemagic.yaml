@@ -14,9 +14,6 @@ workflows:
     environment:
       groups:
         - app_store          # pulls in APP_STORE_CONNECT_* variables
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.chrisembaye.fidel
       vars:
         BUNDLE_ID: com.chrisembaye.fidel
         XCODE_SCHEME: Fidel
@@ -34,9 +31,14 @@ workflows:
       - name: Set build number
         script: |
           cd fidel-ios
-          BUILD=$(($GITHUB_RUN_NUMBER + 5))
+          BUILD=$((CM_BUILD_NUMBER + 5))
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Fidel/Info.plist || true
           agvtool new-version -all "$BUILD" || true
+
+      - name: Write API key
+        script: |
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/AuthKey.p8
+          chmod 600 /tmp/AuthKey.p8
 
       - name: Archive
         script: |
@@ -46,7 +48,10 @@ workflows:
             -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath build/Fidel.xcarchive \
-            -allowProvisioningUpdates
+            -allowProvisioningUpdates \
+            -authenticationKeyPath /tmp/AuthKey.p8 \
+            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
 
       - name: Export & upload IPA
         script: |
@@ -55,7 +60,10 @@ workflows:
             -archivePath build/Fidel.xcarchive \
             -exportPath  build/FidelExport \
             -exportOptionsPlist ExportOptions.plist \
-            -allowProvisioningUpdates
+            -allowProvisioningUpdates \
+            -authenticationKeyPath /tmp/AuthKey.p8 \
+            -authenticationKeyID "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
 
     artifacts:
       - fidel-ios/build/FidelExport/*.ipa
