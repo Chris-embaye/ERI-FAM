@@ -65,9 +65,10 @@ workflows:
       - name: Export IPA
         script: |
           cd fidel-ios
-          xcode-project build-ipa \
-            --archive-path build/Fidel.xcarchive \
-            --export-path build/FidelExport
+          xcodebuild -exportArchive \
+            -archivePath build/Fidel.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/FidelExport
 
     artifacts:
       - fidel-ios/build/FidelExport/*.ipa
