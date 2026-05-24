@@ -840,42 +840,55 @@
     #hadasFab:active { transform:scale(.88); }
     #hadasFab .hadas-badge { position:absolute; top:-2px; right:-2px; width:16px; height:16px; background:#ef4444; border:2px solid #fff; border-radius:50%; display:none; }
     #hadasFab .hadas-badge.show { display:block; }
-    #hadasModal { position:fixed; inset:0; z-index:800; display:flex; flex-direction:column; background:var(--bg); transform:translateY(100%); transition:transform .35s cubic-bezier(.32,1.25,.6,1); }
-    #hadasModal.open { transform:translateY(0); }
+    #hadasModal {
+      position:fixed; bottom:calc(var(--nav-h, 64px) + 70px); right:16px;
+      width:340px; max-width:calc(100vw - 32px);
+      height:520px; max-height:calc(100vh - 160px);
+      z-index:9000; display:flex; flex-direction:column;
+      background:var(--card,#1c1c1e);
+      border-radius:22px; overflow:hidden;
+      box-shadow:0 8px 40px rgba(0,0,0,.45), 0 2px 12px rgba(0,0,0,.3);
+      border:1px solid rgba(255,255,255,.08);
+      transform:scale(.88) translateY(20px); opacity:0; pointer-events:none;
+      transition:transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+    }
+    #hadasModal.open { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
     /* Header */
-    .hadas-header { display:flex; align-items:center; gap:12px; padding:max(14px, env(safe-area-inset-top, 14px)) 16px 14px; background:var(--card); border-bottom:1px solid var(--border); flex-shrink:0; }
-    .hadas-avatar { width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; box-shadow:0 2px 10px rgba(99,102,241,.4); }
+    .hadas-header { display:flex; align-items:center; gap:12px; padding:14px 14px 12px; background:linear-gradient(135deg,#4f46e5,#7c3aed); border-bottom:none; flex-shrink:0; border-radius:22px 22px 0 0; }
+    .hadas-avatar { width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.2); border:2px solid rgba(255,255,255,.35); display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
     .hadas-info { flex:1; }
-    .hadas-name { font-size:1.05rem; font-weight:800; }
-    .hadas-status { font-size:0.72rem; color:#22c55e; font-weight:600; display:flex; align-items:center; gap:5px; }
-    .hadas-status-dot { width:7px; height:7px; background:#22c55e; border-radius:50%; flex-shrink:0; }
-    .hadas-close { background:rgba(120,120,128,.16); border:none; border-radius:50%; width:36px; height:36px; font-size:1rem; font-weight:700; cursor:pointer; color:var(--text); display:flex; align-items:center; justify-content:center; }
+    .hadas-name { font-size:1.05rem; font-weight:800; color:#fff; }
+    .hadas-status { font-size:0.72rem; color:rgba(255,255,255,.75); font-weight:600; display:flex; align-items:center; gap:5px; }
+    .hadas-status-dot { width:7px; height:7px; background:#4ade80; border-radius:50%; flex-shrink:0; box-shadow:0 0 6px #4ade80; }
+    .hadas-close { background:rgba(255,255,255,.18); border:none; border-radius:50%; width:36px; height:36px; font-size:1.1rem; font-weight:700; cursor:pointer; color:#fff; display:flex; align-items:center; justify-content:center; transition:background .13s; }
+    .hadas-close:active { background:rgba(255,255,255,.3); }
     /* Messages */
-    .hadas-msgs { flex:1; overflow-y:auto; overflow-x:hidden; padding:14px 14px 10px; display:flex; flex-direction:column; gap:2px; }
-    @keyframes hadasIn { from { opacity:0; transform:translateY(6px) scale(.97); } to { opacity:1; transform:none; } }
-    .hadas-bubble { max-width:80%; padding:10px 14px; border-radius:20px; font-size:0.92rem; line-height:1.55; word-break:break-word; white-space:pre-wrap; animation:hadasIn .2s ease both; }
+    .hadas-msgs { flex:1; overflow-y:auto; overflow-x:hidden; padding:12px 12px 8px; display:flex; flex-direction:column; gap:3px; }
+    @keyframes hadasIn { from { opacity:0; transform:translateY(8px) scale(.96); } to { opacity:1; transform:none; } }
+    .hadas-bubble { max-width:82%; padding:10px 14px; border-radius:22px; font-size:0.93rem; line-height:1.55; word-break:break-word; white-space:pre-wrap; animation:hadasIn .2s ease both; }
     /* AI = left, gray bubble */
-    .hadas-bubble.ai { background:#e5e5ea; color:#1c1c1e; border-bottom-left-radius:5px; align-self:flex-start; }
-    [data-sky="night"] .hadas-bubble.ai { background:#3a3a3c; color:rgba(255,255,255,.95); }
+    .hadas-bubble.ai { background:#f0f0f5; color:#1c1c1e; border-bottom-left-radius:5px; align-self:flex-start; }
+    [data-sky="night"] .hadas-bubble.ai { background:#2c2c2e; color:#f5f5f7; }
     /* User = right, purple bubble */
-    .hadas-bubble.user { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border-bottom-right-radius:5px; align-self:flex-end; }
-    /* Typing dots — same gray as AI bubble */
-    .hadas-typing { display:flex; gap:5px; align-items:center; padding:12px 16px; background:#e5e5ea; border-radius:20px; border-bottom-left-radius:5px; align-self:flex-start; width:fit-content; animation:hadasIn .2s ease both; }
-    [data-sky="night"] .hadas-typing { background:#3a3a3c; }
+    .hadas-bubble.user { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; border-bottom-right-radius:5px; align-self:flex-end; }
+    /* Typing dots */
+    .hadas-typing { display:flex; gap:5px; align-items:center; padding:12px 16px; background:#f0f0f5; border-radius:22px; border-bottom-left-radius:5px; align-self:flex-start; width:fit-content; animation:hadasIn .2s ease both; }
+    [data-sky="night"] .hadas-typing { background:#2c2c2e; }
     .hadas-typing span { width:8px; height:8px; border-radius:50%; background:#8e8e93; animation:hadasDot 1.2s infinite; }
     .hadas-typing span:nth-child(2) { animation-delay:.2s; }
     .hadas-typing span:nth-child(3) { animation-delay:.4s; }
     @keyframes hadasDot { 0%,80%,100%{transform:scale(.55);opacity:.45} 40%{transform:scale(1);opacity:1} }
     /* Chips — single horizontal scroll row */
-    .hadas-chips { display:flex; flex-wrap:nowrap; gap:8px; padding:8px 14px 4px; overflow-x:auto; scrollbar-width:none; flex-shrink:0; }
+    .hadas-chips { display:flex; flex-wrap:nowrap; gap:8px; padding:10px 14px 6px; overflow-x:auto; scrollbar-width:none; flex-shrink:0; border-top:1px solid var(--border); }
     .hadas-chips::-webkit-scrollbar { display:none; }
-    .hadas-chip { background:var(--card); border:1.5px solid rgba(99,102,241,.35); border-radius:999px; padding:7px 14px; font-size:0.78rem; font-weight:600; cursor:pointer; color:#6366f1; white-space:nowrap; flex-shrink:0; transition:all .13s; }
-    .hadas-chip:active { background:rgba(99,102,241,.12); transform:scale(.96); }
+    .hadas-chip { background:var(--card); border:1.5px solid rgba(99,102,241,.4); border-radius:999px; padding:8px 15px; font-size:0.79rem; font-weight:600; cursor:pointer; color:#6366f1; white-space:nowrap; flex-shrink:0; transition:all .13s; }
+    .hadas-chip:hover { background:rgba(99,102,241,.09); }
+    .hadas-chip:active { background:rgba(99,102,241,.18); transform:scale(.95); }
     /* Input bar */
-    .hadas-input-row { display:flex; gap:10px; align-items:center; padding:10px 14px max(12px, env(safe-area-inset-bottom, 12px)); background:var(--card); border-top:1px solid var(--border); flex-shrink:0; }
-    #hadasInput { flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:22px; font-size:16px; background:var(--bg); color:var(--text); outline:none; transition:border-color .15s; }
-    #hadasInput:focus { border-color:#6366f1; }
-    #hadasSend { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none; border-radius:50%; width:42px; height:42px; font-size:1.15rem; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:transform .12s, opacity .15s; }
+    .hadas-input-row { display:flex; gap:8px; align-items:center; padding:8px 12px 10px; background:var(--card); border-top:1px solid var(--border); flex-shrink:0; }
+    #hadasInput { flex:1; padding:10px 16px; border:1.5px solid var(--border); border-radius:24px; font-size:16px; background:var(--bg); color:var(--text); outline:none; transition:border-color .15s; }
+    #hadasInput:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.12); }
+    #hadasSend { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; border:none; border-radius:50%; width:44px; height:44px; font-size:1.2rem; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:transform .12s, opacity .15s; box-shadow:0 2px 10px rgba(99,102,241,.4); }
     #hadasSend:active { transform:scale(.88); }
 
     /* ── TOAST ── */
@@ -1227,7 +1240,7 @@
       color: var(--green); font-weight: 700;
     }
     .dict-rom { font-size: 0.62rem; color: var(--text-dim); font-style: italic; margin-bottom: 1px; }
-    .dict-eng { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .dict-eng { font-size: 1rem; font-weight: 800; color: var(--text); }
     .dict-badge {
       display: inline-block; background: var(--green-light); color: var(--green);
       font-size: 0.6rem; font-weight: 700; border-radius: 5px; padding: 2px 6px; margin-top: 5px;
@@ -3074,7 +3087,8 @@
     .dict-fav-btn { color:var(--text-dim); }
     .dict-fav-btn.faved { color:#ef4444; background:rgba(239,68,68,.12) !important; }
     .dict-learned-stamp { background:var(--green) !important; color:#fff; font-size:.55rem; font-weight:900; }
-    .dc-sep { height:1px; background:var(--border); margin:2px 0; }
+    .dc-sep { display:none; }
+    .dict-eng { font-size: 1rem !important; font-weight: 800 !important; color: var(--text) !important; margin-bottom: 2px; }
     .dc-foot { display:flex; align-items:center; justify-content:space-between; margin-top:1px; }
     /* ── DICT LEARNED BADGE ── */
     .dict-learned-stamp{display:inline-flex;align-items:center;background:var(--green);color:#fff;font-size:.52rem;font-weight:900;padding:1px 5px;border-radius:999px;letter-spacing:.03em;margin-bottom:4px;align-self:flex-start;}
@@ -4737,7 +4751,6 @@ function renderKidProfiles(grid, idInput, loadBtn, toggles) {
     grid.style.display = 'none';
   });
 }
-function renderSavedKids() {} /* legacy stub */
 
 /* ── Schedule check ── */
 function isWithinSchedule(controls) {
@@ -12697,16 +12710,7 @@ if (typeof _origToggleFav === 'function') {
   };
 }
 
-// Word of the day notification
-(function patchWOTDNotif() {
-  const origSchedule = window.scheduleStreakCheck;
-  // The notification system already fires hourly — WOTD is sent once daily
-  // We patch into the existing auth/profile notification flow
-  // WOTD is shown in the card, no additional notification setup needed
-})();
-
 // Init badges on load
-document.addEventListener('DOMContentLoaded', () => {}, { once: true });
 setTimeout(updateDictCatBadges, 500);
 
 /* ═══════════════════════════════
@@ -12989,9 +12993,6 @@ if (_origFcKnow) {
     if (typeof window.dcProgress === 'function') window.dcProgress('flashcards');
   });
 }
-// Hook into quiz completion
-const _origQuizAgain = document.getElementById('quizAgain');
-const _origQdAgain = document.getElementById('quizAgain');
 // Patch showQuizResult to also count
 const _origShowQuizResult = window.showQuizResult;
 window.showQuizResult = function() {
@@ -13219,6 +13220,7 @@ renderDict = function() {
       ? `<div class="dict-rom">${_hl(d.masculine.rom, q)} / ${_hl(d.feminine.rom, q)}</div>`
       : `<div class="dict-rom" style="${isAr?'direction:ltr;':''}">${_hl(d.rom||'', q)}</div>`;
     return `<div class="dict-card stagger-in" style="animation-delay:${Math.min(i % BATCH, 20) * 0.03}s">
+      <div class="dict-eng">${_hl(second, q)}</div>
       <div class="dc-top-row">
         <span class="dc-emoji">${d.emoji || '📖'}</span>
         <div class="dc-btns">
@@ -13228,8 +13230,6 @@ renderDict = function() {
       </div>
       ${tigBlock}
       ${romBlock}
-      <div class="dc-sep"></div>
-      <div class="dict-eng">${_hl(second, q)}</div>
       <div class="dc-foot">
         <span class="dict-badge">${d.cat}</span>
         <div style="display:flex;gap:3px">
@@ -13644,18 +13644,17 @@ if (_matchGridEl) {
   ];
 
   function open() {
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
     modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
     if (!_opened) {
       _opened = true;
       addBubble(_welcome[0], 'ai');
     }
-    setTimeout(() => input.focus(), 350);
+    setTimeout(() => input.focus(), 280);
   }
 
   function close() {
     modal.classList.remove('open');
-    document.body.style.overflow = '';
   }
 
   fab.addEventListener('click', open);
