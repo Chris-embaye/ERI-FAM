@@ -13732,18 +13732,18 @@ if (_matchGridEl) {
 
   // ── Rule-based Tigrinya tutor — powered by the app's own dictionary ──
   function getReply(q) {
-    const dict     = window._flat3 || [];
-    const fullDict = window.DICT   || dict;
+    const fullDict = (typeof getActiveLangDict === 'function' ? getActiveLangDict() : null) || (typeof DICT !== 'undefined' ? DICT : []);
+    const dict     = fullDict;
 
     function catWords(cat, limit) {
       limit = limit || 10;
       return fullDict.filter(function(d){ return d.cat === cat; }).slice(0, limit);
     }
     function fmtList(words) {
+      if (!words || !words.length) return '(no words found)';
       return words.map(function(d){
-        var line = '• ' + d.tig + ' (' + (d.rom || '') + ') — ' + (d.eng || '');
-        if (d.masculine) line = '• ' + d.masculine.tig + ' (' + d.masculine.rom + ') / ' + d.feminine.tig + ' (' + d.feminine.rom + ') — ' + (d.eng || '');
-        return line;
+        if (d.masculine) return '• ' + d.masculine.tig + ' (' + d.masculine.rom + ') / ' + d.feminine.tig + ' (' + d.feminine.rom + ') — ' + (d.eng || '');
+        return '• ' + (d.tig||d.word||'') + (d.rom ? ' (' + d.rom + ')' : '') + ' — ' + (d.eng || '');
       }).join('\n');
     }
     function lookup(term) {
@@ -13751,7 +13751,7 @@ if (_matchGridEl) {
       return dict.find(function(d){
         return (d.eng||'').toLowerCase().includes(t) ||
                (d.rom||'').toLowerCase().includes(t) ||
-               (d.tig||'').includes(term);
+               (d.tig||d.word||'').includes(term);
       }) || null;
     }
 
