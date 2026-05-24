@@ -891,6 +891,24 @@
     #hadasSend { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; border:none; border-radius:50%; width:44px; height:44px; font-size:1.2rem; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:transform .12s, opacity .15s; box-shadow:0 2px 10px rgba(99,102,241,.4); }
     #hadasSend:active { transform:scale(.88); }
 
+    /* ── UPDATE BANNER ── */
+    #swUpdateBanner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 10px 16px; font-size: 0.85rem; font-weight: 600;
+      transform: translateY(-100%); transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+      box-shadow: 0 4px 20px rgba(79,70,229,.5); pointer-events: none;
+    }
+    #swUpdateBanner.visible { transform: translateY(0); pointer-events: all; }
+    #swUpdateBtn {
+      background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.4);
+      color: #fff; border-radius: 20px; padding: 4px 14px;
+      font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background .15s;
+      white-space: nowrap;
+    }
+    #swUpdateBtn:hover { background: rgba(255,255,255,0.35); }
+
     /* ── TOAST ── */
     .hub-toast {
       position: fixed; bottom: calc(var(--nav-h) + 14px); left: 50%;
@@ -4234,6 +4252,10 @@
   <div class="reader-body" id="readerBody"></div>
 </div>
 
+<div id="swUpdateBanner">
+  <span>🔄 Update available</span>
+  <button id="swUpdateBtn" onclick="window._swRefresh && window._swRefresh()">Refresh</button>
+</div>
 <div class="hub-toast" id="hubToast"></div>
 <div id="avatarFlash">😊</div>
 
@@ -10041,18 +10063,40 @@ function hubToast(msg, ms) {
    PWA — SERVICE WORKER + INSTALL
 ═══════════════════════════════ */
 if ('serviceWorker' in navigator) {
-  // Don't auto-reload on the very first install (no previous controller)
-  const _hadController = !!navigator.serviceWorker.controller;
-  let _reloading = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!_hadController || _reloading) return;
-    _reloading = true;
-    window.location.reload();
-  });
+  let _swReg = null;
+
+  function _showUpdateBanner() {
+    const banner = document.getElementById('swUpdateBanner');
+    if (banner) banner.classList.add('visible');
+  }
+
+  window._swRefresh = function() {
+    if (_swReg && _swReg.waiting) {
+      _swReg.waiting.postMessage('SKIP_WAITING');
+      _swReg.waiting.addEventListener('statechange', function(e) {
+        if (e.target.state === 'activated') window.location.reload();
+      });
+    } else {
+      window.location.reload();
+    }
+  };
+
+  function _trackWaiting(reg) {
+    if (reg.waiting) { _showUpdateBanner(); return; }
+    reg.addEventListener('updatefound', () => {
+      const sw = reg.installing;
+      sw.addEventListener('statechange', () => {
+        if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+          _showUpdateBanner();
+        }
+      });
+    });
+  }
 
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').then(reg => {
-      // Check for updates whenever the tab becomes visible, and hourly
+      _swReg = reg;
+      _trackWaiting(reg);
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') reg.update();
       });

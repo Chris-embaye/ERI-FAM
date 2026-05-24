@@ -2,7 +2,7 @@
    FIDEL — Service Worker
 ============================================ */
 
-const CACHE_NAME  = 'fidel-v128';
+const CACHE_NAME  = 'fidel-v129';
 const OFFLINE_URL = './index.html';
 
 const PRECACHE = [
@@ -35,7 +35,7 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
       .then(c => Promise.allSettled(PRECACHE.map(url => c.add(url).catch(() => {}))))
-      .then(() => self.skipWaiting())
+    // No skipWaiting here — we wait for the user to tap "Refresh"
   );
 });
 
