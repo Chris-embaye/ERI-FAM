@@ -9220,8 +9220,6 @@ function renderDict() {
     parent.querySelectorAll('.dict-fav-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation(); toggleDictFav(btn.dataset.key); btn.classList.toggle('faved');
-        if (typeof updateDictCatBadges === 'function') updateDictCatBadges();
-        if (typeof toggleDictFavAndSync === 'function') toggleDictFavAndSync(btn.dataset.key);
       });
     });
     parent.querySelectorAll('.dict-speak-btn').forEach(btn => {
@@ -12568,8 +12566,8 @@ function updateDictCatBadges() {
     if (cat === 'All' || cat === '★ Favorites') return;
     const catWords = DICT.filter(d => d.cat === cat);
     const total   = catWords.length;
-    const faved   = catWords.filter(d => favs.has(d.tig + ':' + d.rom)).length;
-    const learned = catWords.filter(d => learnedSet.has(_lang + ':' + (d.tig||'') + ':' + (d.rom||''))).length;
+    const faved   = catWords.filter(d => favs.has(d.tig + ':' + d.rom) || favs.has(_lang + ':' + (d.tig||d.word||'') + ':' + (d.rom||''))).length;
+    const learned = catWords.filter(d => learnedSet.has(_lang + ':' + (d.tig||d.word||'') + ':' + (d.rom||''))).length;
     let badge = btn.querySelector('.dict-cat-badge');
     if (faved > 0) {
       if (!badge) { badge = document.createElement('span'); badge.className = 'dict-cat-badge'; btn.appendChild(badge); }
@@ -13248,8 +13246,6 @@ renderDict = function() {
         e.stopPropagation();
         toggleDictFav(btn.dataset.key);
         btn.classList.toggle('faved');
-        if (typeof updateDictCatBadges === 'function') updateDictCatBadges();
-        if (typeof toggleDictFavAndSync === 'function') toggleDictFavAndSync(btn.dataset.key);
       });
     });
     parent.querySelectorAll('.dict-speak-btn').forEach(btn => {
@@ -13578,9 +13574,10 @@ if (_origHideAuthGate) {
   };
 }
 
-/* ── Run badge update on load ── */
+/* ── Run badge update + re-render dict on load ── */
 document.addEventListener('DOMContentLoaded', () => {
   updateLangBadge();
+  if (typeof renderDict === 'function') renderDict();
 });
 </script>
 
