@@ -83,7 +83,7 @@
 
     .page-wrap {
       max-width: 680px; margin: 0 auto;
-      padding-top: calc(max(10px, env(safe-area-inset-top)) + 70px);
+      padding-top: calc(env(safe-area-inset-top, 0px) + 70px);
       padding-bottom: calc(var(--nav-h) + max(0px, env(safe-area-inset-bottom)) + 16px);
       min-height: 100%;
       position: relative;
@@ -91,14 +91,13 @@
 
     /* ── STANDALONE PWA: extend header under status bar ── */
     @media all and (display-mode: standalone) {
-      .hub-header { margin-top: calc(10px + env(safe-area-inset-top)); padding-top: 12px; }
+      .hub-header { padding-top: calc(env(safe-area-inset-top, 12px) + 4px); }
     }
 
-    /* ── HEADER — Floating Liquid Glass ── */
+    /* ── HEADER — Fixed to top ── */
     .hub-header {
-      /* Float away from edges */
-      margin: 10px 12px 0;
-      border-radius: 22px;
+      margin: 0;
+      border-radius: 0 0 18px 18px;
       /* Day glass */
       background: rgba(220,232,244,0.68);
       backdrop-filter: blur(44px) saturate(2.2) brightness(1.08);
@@ -110,10 +109,11 @@
         0 8px 32px rgba(0,0,0,0.14),
         0 2px 6px rgba(0,0,0,0.08);
       color: var(--text); padding: 12px 16px 11px;
+      padding-top: max(12px, env(safe-area-inset-top, 12px));
       display: flex; align-items: center; justify-content: space-between;
-      position: fixed; top: max(10px, env(safe-area-inset-top));
+      position: fixed; top: 0;
       left: 50%; transform: translateX(-50%);
-      width: calc(min(100vw, 680px) - 24px);
+      width: min(100vw, 680px);
       z-index: 200;
       transition: background-color 0.35s, border-color 0.35s !important;
     }
