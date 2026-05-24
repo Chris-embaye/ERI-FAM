@@ -9012,6 +9012,38 @@ document.getElementById('transInput').addEventListener('input', e => {
   }
 });
 
+/* ── Curated phrase overrides — correct translations MyMemory cannot produce ──
+   Key = normalized English (lowercase, no trailing punctuation).
+   Each entry: { tig, rom, note } where note explains the morphology. */
+const TRANS_OVERRIDES = {
+  // Pronoun-verb fusion examples
+  'i ask her to send me her picture':   { tig:'ስእላ ክትልእኸለይ ሓቲተያ',      rom:"Se'la kitl'ikhiley hatiteya",   note:'ስእላ = her picture · ክትልእኸለይ = to send for me · ሓቲተያ = I asked her (ያ suffix = her)' },
+  'i asked her to send me her picture': { tig:'ስእላ ክትልእኸለይ ሓቲተያ',      rom:"Se'la kitl'ikhiley hatiteya",   note:'ሓቲተያ = I asked her (ያ = her object suffix fused into verb)' },
+  'i love her':                         { tig:'ፈቲየያ',                      rom:'Fetiyeya',                      note:'ፈቲየ (I loved) + ያ (her) → ፈቲየያ — object fused into verb' },
+  'i love him':                         { tig:'ፈቲየዎ',                      rom:'Fetiyewo',                      note:'ፈቲየ (I loved) + ዎ (him) → ፈቲየዎ' },
+  'i told her':                         { tig:'ነጊረያ',                      rom:'Negireya',                      note:'ነጊረ (I told) + ያ (her) → ነጊረያ' },
+  'i told him':                         { tig:'ነጊረዎ',                      rom:'Negirewo',                      note:'ነጊረ (I told) + ዎ (him) → ነጊረዎ' },
+  'i saw her':                          { tig:'ርኢየያ',                      rom:'Re\'iyeya',                     note:'ርኢየ (I saw) + ያ (her) → ርኢየያ' },
+  'i saw him':                          { tig:'ርኢየዎ',                      rom:'Re\'iyewo',                     note:'ርኢየ (I saw) + ዎ (him) → ርኢየዎ' },
+  'i called her':                       { tig:'ጸዊዔያ',                      rom:"Ts'ewi'eya",                    note:'ጸዊዔ (I called) + ያ (her) → ጸዊዔያ' },
+  'i called him':                       { tig:'ጸዊዔዎ',                      rom:"Ts'ewi'ewo",                    note:'ጸዊዔ (I called) + ዎ (him) → ጸዊዔዎ' },
+  'i gave her':                         { tig:'ሂበያ',                        rom:'Hibeya',                        note:'ሂበ (I gave) + ያ (her) → ሂበያ' },
+  'i gave him':                         { tig:'ሂበዎ',                        rom:'Hibewo',                        note:'ሂበ (I gave) + ዎ (him) → ሂበዎ' },
+  'i know her':                         { tig:'ፈልጠያ',                      rom:'Felteya',                       note:'ፈልጠ (I know) + ያ (her) → ፈልጠያ' },
+  'i know him':                         { tig:'ፈልጠዎ',                      rom:'Feltewo',                       note:'ፈልጠ (I know) + ዎ (him) → ፈልጠዎ' },
+  'i helped her':                       { tig:'ሓጊዘያ',                      rom:'Hagizeya',                      note:'ሓጊዘ (I helped) + ያ (her) → ሓጊዘያ' },
+  'i helped him':                       { tig:'ሓጊዘዎ',                      rom:'Hagizewo',                      note:'ሓጊዘ (I helped) + ዎ (him) → ሓጊዘዎ' },
+  // Common sentences MyMemory gets wrong
+  'i am from eritrea':                  { tig:'ካብ ኤርትራ ኢየ',               rom:'Kab Eritrea iye',               note:'ኢየ = I am (1st person copula)' },
+  "let's eat":                          { tig:'ንብላዕ',                       rom:"Nibla'",                        note:'Cohortative form — ን prefix + verb root' },
+  'could you repeat that':              { tig:'ክትደግመለይ ትኽእልዶ?',           rom:'Kitdegmeley tikhildo?',         note:'Polite request form (to a man); to a woman: ክትደግሚለይ ትኽእሊዶ?' },
+};
+
+function _transCheckOverride(text) {
+  const norm = text.toLowerCase().trim().replace(/[?.!،።]+$/, '');
+  return TRANS_OVERRIDES[norm] || null;
+}
+
 /* Local dictionary lookup — only for Tigrinya ↔ English pairs */
 function _transLookupLocal(text) {
   const from = _transFromLang();
@@ -9108,11 +9140,42 @@ async function _doTranslate() {
   statEl.textContent = ''; statEl.style.color = '';
   if (actEl) actEl.style.display = 'none';
 
-  const localHits = _transLookupLocal(text);
-  if (localHits.length) { _transShowLocal(localHits, outEl, statEl, copyBtn); return; }
-
+  // 1 — Curated override (highest priority — correct translations for morphology-heavy phrases)
   const src = _transFromLang();
   const tgt = _transToLang();
+  if (src === 'en' && tgt === 'ti') {
+    const ov = _transCheckOverride(text);
+    if (ov) {
+      outEl.innerHTML = '';
+      const p = document.createElement('p');
+      p.style.cssText = 'font-family:"Noto Serif Ethiopic",serif;font-size:1.1rem;line-height:1.9;';
+      p.textContent = ov.tig;
+      outEl.appendChild(p);
+      if (ov.rom) {
+        const r = document.createElement('div');
+        r.style.cssText = 'font-size:0.75rem;color:var(--text-dim);font-style:italic;margin-top:2px;';
+        r.textContent = ov.rom;
+        outEl.appendChild(r);
+      }
+      if (ov.note) {
+        const n = document.createElement('div');
+        n.style.cssText = 'font-size:0.72rem;color:var(--text-dim);margin-top:6px;line-height:1.5;';
+        n.textContent = '💡 ' + ov.note;
+        outEl.appendChild(n);
+      }
+      window._lastTranslation = ov.tig;
+      window._lastTransLang   = tgt;
+      statEl.style.color = 'var(--green)';
+      statEl.textContent = '✓ Curated translation — verified Tigrinya';
+      if (actEl) actEl.style.display = '';
+      copyBtn.onclick = () => navigator.clipboard?.writeText(ov.tig).then(() => hubToast('Copied!')).catch(() => {});
+      return;
+    }
+  }
+
+  // 2 — Local dictionary lookup
+  const localHits = _transLookupLocal(text);
+  if (localHits.length) { _transShowLocal(localHits, outEl, statEl, copyBtn); return; }
   btn.disabled = true; btn.textContent = 'Translating…';
   outEl.innerHTML = '<span class="trans-ph">Translating…</span>';
   try {
