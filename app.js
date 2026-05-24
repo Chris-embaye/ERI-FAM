@@ -6038,3 +6038,44 @@ document.addEventListener('mouseout', e => {
   el.style.transition = 'transform 0.3s ease';
   el.style.transform  = 'translateY(0) scale(1)';
 }, { passive: true });
+
+// ── NATIVE YOUTUBE GRID ───────────────────────────────────────────
+// In production, replace mockEritreanVideos with a YouTube Data API fetch
+const mockEritreanVideos = [
+  { id: "VIDEO_ID_1", title: "Awesome Eritrean Song", thumb: "https://img.youtube.com/vi/VIDEO_ID_1/mqdefault.jpg" },
+  { id: "VIDEO_ID_2", title: "New Release 2026", thumb: "https://img.youtube.com/vi/VIDEO_ID_2/mqdefault.jpg" },
+];
+
+function renderYouTubeGrid() {
+  const grid = document.getElementById('ytNativeGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  mockEritreanVideos.forEach(vid => {
+    const card = document.createElement('div');
+    card.className = 'yt-vid-card';
+    card.innerHTML = `
+      <img src="${vid.thumb}" class="yt-thumbnail" alt="thumbnail">
+      <div class="yt-details">
+        <div class="yt-title">${vid.title}</div>
+      </div>`;
+    card.addEventListener('click', () => openCleanPlayer(vid.id));
+    grid.appendChild(card);
+  });
+}
+
+function openCleanPlayer(videoId) {
+  const wrapper = document.getElementById('ytIframeWrapper');
+  const overlay = document.getElementById('ytPlayerOverlay');
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0&controls=1&fs=1`;
+  wrapper.innerHTML = `<iframe src="${embedUrl}" allow="autoplay; fullscreen"></iframe>`;
+  overlay.classList.remove('hidden');
+}
+
+document.getElementById('closeYtPlayer')?.addEventListener('click', () => {
+  document.getElementById('ytPlayerOverlay').classList.add('hidden');
+  document.getElementById('ytIframeWrapper').innerHTML = '';
+});
+
+// app.js is a module (deferred) — DOM is ready by the time this runs
+renderYouTubeGrid();

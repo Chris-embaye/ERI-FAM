@@ -2,7 +2,7 @@
    FIDEL — Service Worker
 ============================================ */
 
-const CACHE_NAME  = 'fidel-v102';
+const CACHE_NAME  = 'fidel-v128';
 const OFFLINE_URL = './index.html';
 
 const PRECACHE = [
@@ -11,6 +11,21 @@ const PRECACHE = [
   './manifest.json',
   './icons/icon-512.png',
   './icons/fidel-logo.svg',
+  './api/data/greetings.json',
+  './api/data/numbers.json',
+  './api/data/family.json',
+  './api/data/food.json',
+  './api/data/phrases.json',
+  './api/data/colors.json',
+  './api/data/days.json',
+  './api/data/months.json',
+  './api/data/body.json',
+  './api/data/verbs.json',
+  './api/data/places.json',
+  './api/data/animals.json',
+  './api/data/jobs.json',
+  './api/data/emotions.json',
+  './api/data/transport.json',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js',
