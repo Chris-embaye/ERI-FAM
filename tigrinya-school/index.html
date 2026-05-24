@@ -1214,17 +1214,17 @@
     /* Search highlight */
     .dict-hl { background: rgba(59,130,246,0.28); border-radius: 3px; color: #3B82F6; font-weight: 700; padding: 0 1px; }
     .dict-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 16px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 14px 16px;
     }
     .dict-card {
-      background: var(--card); border-radius: var(--radius-sm); padding: 11px 12px;
-      box-shadow: var(--shadow); border-top: 3px solid var(--green); cursor: default;
-      transition: transform .12s;
+      background: var(--card); border-radius: 14px; padding: 12px 12px 10px;
+      box-shadow: var(--shadow); border: 1.5px solid var(--border); cursor: default;
+      transition: transform .12s, box-shadow .12s;
     }
-    .dict-card:active { transform: scale(.97); }
+    .dict-card:active { transform: scale(.96); box-shadow: none; }
     .dict-tig {
-      font-size: 1.2rem; font-family: 'Noto Serif Ethiopic', serif; line-height: 1.3;
-      color: var(--green); margin-bottom: 3px;
+      font-size: 1.15rem; font-family: 'Noto Serif Ethiopic', serif; line-height: 1.25;
+      color: var(--green); margin-bottom: 1px;
     }
     .dict-rom { font-size: 0.68rem; color: var(--text-dim); font-style: italic; margin-bottom: 4px; }
     .dict-eng { font-size: 0.78rem; font-weight: 600; color: var(--text); }
@@ -2861,14 +2861,7 @@
       margin-bottom: 1px !important;
       position: relative !important;
     }
-    .dict-card::after {
-      content: '›';
-      position: absolute; right: 13px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 1.2rem; font-weight: 300;
-      color: rgba(0,0,0,0.20);
-    }
-    [data-sky="night"] .dict-card::after { color: rgba(255,255,255,0.20); }
+    .dict-card::after { content: none; }
 
     /* ── LESSON ITEMS: list rows ── */
     .lesson-item {
@@ -3064,13 +3057,24 @@
     .hm30-leg-cell { width:12px;height:12px;border-radius:3px; }
     /* ── Language picker ── */
     /* ── DICT IMAGE ── */
-    .dict-img-wrap{width:100%;height:90px;border-radius:8px;overflow:hidden;margin-bottom:8px;background:var(--border);display:flex;align-items:center;justify-content:center;position:relative;}
-    .dict-img-wrap img{width:100%;height:100%;object-fit:cover;display:none;}
-    .dict-img-wrap img.loaded{display:block;}
-    .dict-img-emoji{font-size:2.2rem;line-height:1;position:absolute;transition:opacity .2s;}
-    .dict-img-wrap img.loaded ~ .dict-img-emoji{opacity:0;pointer-events:none;}
+    .dict-img-wrap{display:none;}
+    /* ── compact dict card layout ── */
+    .dict-card { display:flex; flex-direction:column; gap:5px; }
+    .dict-card-top { display:flex; align-items:flex-start; gap:8px; }
+    .dc-emoji { font-size:1.55rem; line-height:1; flex-shrink:0; margin-top:1px; }
+    .dc-btns { display:flex; flex-direction:column; gap:3px; flex-shrink:0; }
+    .dc-btns button, .dict-note-btn, .dict-share-btn {
+      width:26px; height:26px; border-radius:50%; border:none; background:rgba(128,128,128,.12);
+      font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:background .12s;
+    }
+    .dc-btns button:active, .dict-note-btn:active, .dict-share-btn:active { background:rgba(128,128,128,.25); }
+    .dict-fav-btn { color:var(--text-dim); }
+    .dict-fav-btn.faved { color:#ef4444; background:rgba(239,68,68,.1) !important; }
+    .dc-foot { display:flex; align-items:center; justify-content:space-between; margin-top:1px; }
+    .dc-foot > div { display:flex; gap:4px; }
     /* ── DICT LEARNED BADGE ── */
-    .dict-learned-stamp{position:absolute;top:6px;right:6px;background:var(--green);color:#fff;font-size:.55rem;font-weight:900;padding:2px 6px;border-radius:999px;letter-spacing:.03em;}
+    .dict-learned-stamp{display:inline-flex;align-items:center;background:var(--green);color:#fff;font-size:.52rem;font-weight:900;padding:1px 5px;border-radius:999px;letter-spacing:.03em;margin-bottom:4px;align-self:flex-start;}
     .dict-card{position:relative;}
     /* ── DICT QUIZ (rebuilt) ── */
     #dictQuiz{position:fixed;inset:0;background:#ffffff;z-index:2000;display:flex;flex-direction:column;overflow:hidden;}
@@ -13212,28 +13216,30 @@ renderDict = function() {
       ? `<div class="dict-rom">${_hl(d.masculine.rom, q)} / ${_hl(d.feminine.rom, q)}</div>`
       : `<div class="dict-rom" style="${isAr?'direction:ltr;':''}">${_hl(d.rom||'', q)}</div>`;
     return `<div class="dict-card stagger-in" style="animation-delay:${Math.min(i % BATCH, 20) * 0.03}s">
-      ${isLearned ? '<span class="dict-learned-stamp">✓ Learned</span>' : ''}
-      <div class="dict-img-wrap" data-search="${engSearch(d).replace(/"/g,'&quot;')}">
-        <img alt="" loading="lazy">
-        <span class="dict-img-emoji">${d.emoji || '📖'}</span>
-      </div>
+      ${isLearned ? '<span class="dict-learned-stamp">✓</span>' : ''}
       <div class="dict-card-top">
-        ${tigBlock}
-        <div style="display:flex;gap:4px;flex-shrink:0;align-items:center">
-          ${d.note ? `<button class="dict-note-btn" data-note="${d.note.replace(/"/g,'&quot;')}" title="Cultural note">ℹ</button>` : ''}
-          <button class="dict-share-btn" data-tig="${primary.replace(/"/g,'&quot;')}" data-rom="${(d.rom||'').replace(/"/g,'&quot;')}" data-eng="${second.replace(/"/g,'&quot;')}" data-emoji="${d.emoji||''}" title="Share word">📤</button>
+        <span class="dc-emoji">${d.emoji || '📖'}</span>
+        <div style="min-width:0;flex:1">
+          ${tigBlock}
+          ${romBlock}
+        </div>
+        <div class="dc-btns">
           <button class="dict-fav-btn${favs.has(key)?' faved':''}" data-key="${key}" title="Favourite">♥</button>
           <button class="dict-speak-btn" data-speak="${primary.replace(/"/g,'&quot;')}" data-rom="${(d.rom||'').replace(/"/g,'&quot;')}" title="Hear">🔊</button>
         </div>
       </div>
-      ${romBlock}
       <div class="dict-eng">${_hl(second, q)}</div>
-      <span class="dict-badge">${d.cat}</span>
+      <div class="dc-foot">
+        <span class="dict-badge">${d.cat}</span>
+        <div style="display:flex;gap:4px">
+          ${d.note ? `<button class="dict-note-btn" data-note="${d.note.replace(/"/g,'&quot;')}" title="Cultural note">ℹ</button>` : ''}
+          <button class="dict-share-btn" data-tig="${primary.replace(/"/g,'&quot;')}" data-rom="${(d.rom||'').replace(/"/g,'&quot;')}" data-eng="${second.replace(/"/g,'&quot;')}" data-emoji="${d.emoji||''}" title="Share">📤</button>
+        </div>
+      </div>
     </div>`;
   }
 
   function attachHandlers(parent) {
-    parent.querySelectorAll('.dict-img-wrap').forEach(w => obs.observe(w));
     parent.querySelectorAll('.dict-card').forEach(card => {
       card.addEventListener('click', () => {
         card.classList.remove('tapping'); void card.offsetWidth;
