@@ -7703,6 +7703,7 @@ const DICT = [
   {tig:'ሰላም',           rom:'Selam',             eng:'Hello / Peace',               cat:'Greetings', emoji:'👋', note:'ሰላም means "peace" — it is also a popular given name. Eritreans exchange it dozens of times daily as a greeting, farewell, and blessing.'},
   {tig:'ከመይ ኣለኻ?', rom:'Kemey alekha?', eng:'How are you?', cat:'Greetings', emoji:'🙋', masculine:{tig:'ከመይ ኣለኻ?', rom:'Kemey alekha?'}, feminine:{tig:'ከመይ ኣለኺ?', rom:'Kemey alekhi?'}},
   {tig:'ጽቡቕ',           rom:"Ts'buq",             eng:'Fine / Good',                  cat:'Greetings', emoji:'😊'},
+  {tig:'ጽቡቕ ኣለኹ',    rom:"Ts'buq aleku",       eng:'I am well (masculine speaker)', cat:'Greetings', emoji:'🙂', masculine:{tig:'ጽቡቕ ኣለኹ', rom:"Ts'buq aleku"}, feminine:{tig:'ጽቡቕ ኣለኺ', rom:"Ts'buq aleki"}, note:'The standard reply to "How are you?" — Ts\'buq aleku (man speaking) / Ts\'buq aleki (woman speaking). "Kemti aleku" (ከምቲ ኣለኹ) is a colloquial filler meaning "As I am / Same as always" — not "I am well."'},
   {tig:'የቐንየለይ',       rom:'Yeqenyeley',         eng:'Thank you',                   cat:'Greetings', emoji:'🙏'},
   {tig:'ይቕሬታ',         rom:'Yiqreta',            eng:'Sorry / Excuse me',           cat:'Greetings', emoji:'🙇'},
   {tig:'እወ',             rom:'Iwe',                eng:'Yes',                         cat:'Basic',     emoji:'✅'},
@@ -13817,7 +13818,7 @@ if (_matchGridEl) {
     // ── Greetings ──
     if (/greet|selam|salam|hello|hi\b|good morn|good even|welcome|ሰላም/.test(q)) {
       var w = catWords('Greetings', 10);
-      return 'Tigrinya greetings:\n\n' + fmtList(w) + '\n\n💡 Gender rule:\n• To a man: ኻ ending (alekha)\n• To a woman: ኺ ending (alekhi)';
+      return 'Tigrinya greetings:\n\n' + fmtList(w) + '\n\n💡 Gender rule:\n• To a man: ኻ ending — ከመይ ኣለኻ? (Kemey alekha?)\n• To a woman: ኺ ending — ከመይ ኣለኺ? (Kemey alekhi?)\n\n✅ Correct reply for "I am well":\n• Man speaking: ጽቡቕ ኣለኹ (Ts\'buq aleku)\n• Woman speaking: ጽቡቕ ኣለኺ (Ts\'buq aleki)\n\n⚠️ Note: "Kemti aleku" (ከምቲ ኣለኹ) means "As I am / Same as always" — not "I am well."';
     }
 
     // ── Numbers ──
