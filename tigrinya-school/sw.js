@@ -2,11 +2,12 @@
    FIDEL — Service Worker
 ============================================ */
 
-const CACHE_NAME  = 'fidel-v140';
+const CACHE_NAME  = 'fidel-v141';
 const OFFLINE_URL = './index.html';
 
 const PRECACHE = [
   './index.html',
+  './temp-styles.css',
   './firebase-config.js',
   './manifest.json',
   './icons/icon-512.png',

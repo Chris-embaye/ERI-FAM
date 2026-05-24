@@ -1,0 +1,571 @@
+/* ═══════════════════════════════════════════════════════════
+   TEMP STYLES — Dictionary Apple/RN redesign
+   To revert: remove the <link> tag for this file in index.html
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Page background ── */
+[data-sky="day"] body { background: #F2F2F7; }
+[data-sky="day"] .page-wrap { background: #F2F2F7; }
+
+/* ── Search row — flex row with filter button ── */
+.dict-search-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px 20px 8px !important;
+  background: #F2F2F7 !important;
+}
+[data-sky="night"] .dict-search-row { background: transparent !important; }
+
+.dict-search {
+  flex: 1 !important;
+  background: #E5E5EA !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 11px 14px 11px 38px !important;
+  font-size: 16px !important;
+  color: #1C1C1E !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238E8E93' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m13 13-3-3'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: 12px center !important;
+}
+.dict-search::placeholder { color: #8E8E93 !important; }
+.dict-search:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #3B82F6 !important;
+  border-color: transparent !important;
+}
+[data-sky="night"] .dict-search {
+  background-color: rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.9) !important;
+}
+
+
+/* ── Grid — single column list ── */
+.dict-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 4px 20px 32px !important;
+}
+
+/* ── Card — horizontal Apple-style row ── */
+.dict-card {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #FFFFFF !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  border-top: none !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03) !important;
+}
+[data-sky="night"] .dict-card {
+  background: #1C1C2E !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.45) !important;
+}
+.dict-card:active { transform: scale(.985) !important; }
+/* Remove the glow pseudo-element from existing styles */
+.dict-card::after { display: none !important; }
+
+/* Hide emoji and badge for clean look */
+.dict-emoji-big { display: none !important; }
+.dict-badge      { display: none !important; }
+.dict-rom {
+  font-size: 0.75rem !important;
+  color: var(--text-dim) !important;
+  font-style: italic !important;
+  margin-top: 2px !important;
+}
+
+/* English label — move above Tigrinya using order */
+.dict-eng {
+  order: -1 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #8E8E93 !important;
+  margin-bottom: 3px !important;
+}
+
+/* card-top: Tigrinya text left, action buttons right */
+.dict-card-top {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* Tigrinya — large bold dark */
+.dict-tig {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #1C1C1E !important;
+  margin-bottom: 0 !important;
+}
+[data-sky="night"] .dict-tig { color: rgba(255,255,255,0.96) !important; }
+
+/* Action buttons — tighter, green accent */
+.dict-speak-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  background: rgba(52,168,83,0.12) !important;
+  border-color: rgba(52,168,83,0.25) !important;
+  color: #34A853 !important;
+  font-size: 0.85rem !important;
+}
+.dict-fav-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+}
+.dict-share-btn,
+.dict-note-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.8rem !important;
+}
+
+/* Word count pill */
+.dict-count { margin: 4px 20px 4px !important; }
+
+/* Category chips — keep but lighten */
+.dict-cat {
+  border-radius: 12px !important;
+  padding: 7px 14px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEMP — Linear Gradients: ambient lighting (expo-linear-gradient)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Ambient page background gradient — soft edge lighting */
+[data-sky="day"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 15% 0%,   rgba(59,130,246,0.13)  0%, transparent 55%),
+    radial-gradient(ellipse at 85% 5%,   rgba(168,85,247,0.10)  0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(52,168,83,0.08)   0%, transparent 50%);
+}
+[data-sky="night"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 15% 0%,   rgba(59,130,246,0.18)  0%, transparent 55%),
+    radial-gradient(ellipse at 85% 5%,   rgba(168,85,247,0.14)  0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(52,168,83,0.10)   0%, transparent 50%);
+}
+
+/* Header gradient overlay — warm-to-cool sweep */
+[data-sky="day"] .hub-header {
+  background: linear-gradient(
+    135deg,
+    rgba(220,232,255,0.80) 0%,
+    rgba(240,220,255,0.65) 50%,
+    rgba(210,240,230,0.72) 100%
+  ) !important;
+}
+[data-sky="night"] .hub-header {
+  background: linear-gradient(
+    135deg,
+    rgba(30,40,80,0.72) 0%,
+    rgba(50,20,70,0.60) 50%,
+    rgba(20,50,40,0.65) 100%
+  ) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEMP — Glass card: BlurView intensity=50 tint="light"
+   Applied to .progress-strip (Today's Progress)
+   ═══════════════════════════════════════════════════════════ */
+
+[data-sky="day"] .progress-strip {
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(50px) saturate(1.8) brightness(1.06) !important;
+  -webkit-backdrop-filter: blur(50px) saturate(1.8) brightness(1.06) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 20px !important;
+}
+
+[data-sky="night"] .progress-strip {
+  background: rgba(30, 30, 50, 0.55) !important;
+  backdrop-filter: blur(50px) saturate(1.6) brightness(1.04) !important;
+  -webkit-backdrop-filter: blur(50px) saturate(1.6) brightness(1.04) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.40) !important;
+  border-radius: 20px !important;
+}
+
+/* Also glass up the learn stats bar for consistency */
+[data-sky="day"] .learn-stats-bar {
+  background: rgba(255, 255, 255, 0.50) !important;
+  backdrop-filter: blur(40px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(1.6) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.70) !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.80), 0 4px 16px rgba(0,0,0,0.06) !important;
+}
+[data-sky="night"] .learn-stats-bar {
+  background: rgba(30, 30, 50, 0.50) !important;
+  backdrop-filter: blur(40px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(1.6) !important;
+  border: 1.5px solid rgba(255,255,255,0.09) !important;
+  border-radius: 14px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEMP — Match It game: Apple/RN redesign
+   ═══════════════════════════════════════════════════════════ */
+
+/* Game area background */
+[data-sky="day"] .match-grid { background: #EBF3FA; }
+
+/* Grid layout — wide gap so connector dots never overlap */
+.match-grid {
+  position: relative !important;
+  gap: 48px !important;
+  padding: 0 16px 24px !important;
+  overflow: visible !important;
+}
+.match-col {
+  gap: 16px !important;
+  overflow: visible !important;
+}
+
+/* ── Left cards (Tigrinya) ── */
+.match-card.tig {
+  background: #FFFFFF !important;
+  border: 2px solid transparent !important;
+  border-radius: 20px !important;
+  min-height: 75px !important;
+  height: 75px !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 12px !important;
+  gap: 10px !important;
+  position: relative !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04) !important;
+  overflow: visible !important;
+}
+[data-sky="night"] .match-card.tig {
+  background: #1C1C2E !important;
+}
+
+/* Avatar color dot (left) */
+.match-card.tig::before {
+  content: '' !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: #E3F2FD !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+/* Connector dot removed — SVG line-layer handles connections */
+.match-card.tig::after { display: none !important; }
+
+/* Tigrinya text */
+.match-card.tig .mc-text {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #1C1C1E !important;
+  flex: 1 !important;
+}
+[data-sky="night"] .match-card.tig .mc-text {
+  color: rgba(255,255,255,0.96) !important;
+}
+
+/* Hide emoji & hint */
+.match-card.tig .mc-emoji { display: none !important; }
+.match-card.tig .mc-hint  { display: none !important; }
+
+/* ── Right cards (English) ── */
+.match-card.eng {
+  background: #FFFFFF !important;
+  border: 2px solid transparent !important;
+  border-radius: 20px !important;
+  min-height: 75px !important;
+  height: 75px !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 12px 12px 12px 20px !important;
+  gap: 10px !important;
+  position: relative !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04) !important;
+  overflow: visible !important;
+}
+[data-sky="night"] .match-card.eng {
+  background: #1C1C2E !important;
+}
+
+/* Connector dot removed — SVG line-layer handles connections */
+.match-card.eng::before { display: none !important; }
+
+/* English text */
+.match-card.eng .mc-text {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  color: #48484A !important;
+}
+[data-sky="night"] .match-card.eng .mc-text {
+  color: rgba(255,255,255,0.72) !important;
+}
+
+/* ── SVG line layer ── */
+#line-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+  z-index: 5 !important;
+}
+.match-svg-line {
+  opacity: 0;
+  animation: lineAppear 0.35s ease forwards;
+}
+@keyframes lineAppear {
+  from { opacity: 0; stroke-dashoffset: 200; stroke-dasharray: 200; }
+  to   { opacity: 1; stroke-dashoffset: 0;   stroke-dasharray: 200; }
+}
+
+/* ── Selected state ── */
+.match-card.selected {
+  border-color: #34A853 !important;
+  transform: scale(1.03) !important;
+  box-shadow: 0 0 0 3px rgba(52,168,83,0.25), 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+
+/* ── Matched — green glass, stays visible ── */
+.match-card.matched {
+  background: rgba(52, 168, 83, 0.15) !important;
+  border: 2px solid #34A853 !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  color: #1E4620 !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+[data-sky="night"] .match-card.matched {
+  background: rgba(52, 168, 83, 0.18) !important;
+  color: #86efac !important;
+}
+.match-card.matched::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  top: -50% !important; left: -50% !important;
+  width: 200% !important; height: 200% !important;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  animation: sparkle 0.6s ease-out !important;
+}
+@keyframes sparkle {
+  0%   { opacity: 0; transform: scale(0.2); }
+  50%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* ── Shake on wrong match / wrong sentence order ── */
+.match-card.shake,
+.sb-placed-word.shake {
+  animation: matchShake 0.5s ease !important;
+  border-color: #EF4444 !important;
+}
+@keyframes matchShake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+/* ── Glass pop on successful match / correct sentence word ── */
+.match-card.pop,
+.sb-placed-word.pop {
+  animation: popEffect 0.5s ease-out forwards !important;
+}
+@keyframes popEffect {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.1); box-shadow: 0 0 20px rgba(52, 168, 83, 0.5); }
+  100% { transform: scale(1); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEMP — Speed Round
+   ═══════════════════════════════════════════════════════════ */
+
+.speed-timer {
+  font-size: 3.5rem;
+  font-weight: 900;
+  text-align: center;
+  color: var(--text);
+  line-height: 1;
+  padding: 12px 0 4px;
+  transition: color 0.3s;
+}
+.speed-score {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-sub);
+  margin-bottom: 16px;
+}
+.speed-word {
+  font-family: 'Noto Serif Ethiopic', serif;
+  font-size: 2.2rem;
+  font-weight: 900;
+  text-align: center;
+  color: var(--text);
+  padding: 20px 16px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  margin: 0 16px 20px;
+}
+.speed-opts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px;
+}
+.speed-opt {
+  padding: 14px 8px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.12s, background 0.2s;
+}
+.speed-opt:active { transform: scale(0.96); }
+.speed-opt.sr-correct { background: rgba(52,168,83,0.20) !important; border-color: #34A853 !important; color: #1E4620 !important; }
+.speed-opt.sr-wrong   { background: rgba(239,68,68,0.15) !important; border-color: #EF4444 !important; }
+[data-sky="night"] .speed-opt.sr-correct { color: #86efac !important; }
+.sr-end { text-align: center; padding: 32px 16px; }
+.sr-end-score { font-size: 3rem; font-weight: 900; color: var(--text); line-height: 1.1; }
+.sr-replay-btn { margin-top: 20px; padding: 13px 32px; background: var(--green); color: #fff; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+
+/* ═══════════════════════════════════════════════════════════
+   TEMP — Fidel Flow
+   ═══════════════════════════════════════════════════════════ */
+.ff-progress {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+.ff-char {
+  font-family: 'Noto Serif Ethiopic', serif;
+  font-size: 5rem;
+  font-weight: 900;
+  text-align: center;
+  color: var(--text);
+  padding: 24px 0 20px;
+  line-height: 1.1;
+}
+.ff-opts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px;
+}
+.ff-opt {
+  padding: 14px 8px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.12s, background 0.2s;
+  font-family: monospace;
+}
+.ff-opt:active { transform: scale(0.96); }
+.ff-opt.ff-correct { background: rgba(52,168,83,0.20) !important; border-color: #34A853 !important; color: #1E4620 !important; }
+.ff-opt.ff-wrong   { background: rgba(239,68,68,0.15) !important; border-color: #EF4444 !important; }
+[data-sky="night"] .ff-opt.ff-correct { color: #86efac !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TEMP — Glass card transition (all card types)
+   ═══════════════════════════════════════════════════════════ */
+.vocab-card,
+.fc-card,
+.dict-card,
+.quiz-card,
+.match-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.vocab-card:active,
+.fc-card:active,
+.dict-card:active,
+.quiz-card:active {
+  transform: scale(0.98) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TEMP — Gendered phrase cards (m / f rows)
+   ═══════════════════════════════════════════════════════════ */
+.dict-gendered {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.dict-gender-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dict-gender-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+.dict-gender-tag.m { background: #2196F3; }
+.dict-gender-tag.f { background: #E91E8C; }
+.dict-tig-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1C1C1E;
+  line-height: 1.3;
+}
+[data-sky="night"] .dict-tig-text { color: rgba(255,255,255,0.96); }
