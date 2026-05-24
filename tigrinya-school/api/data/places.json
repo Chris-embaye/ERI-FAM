@@ -1,0 +1,17 @@
+[
+  { "tig": "ቤት",        "rom": "Bet",           "eng": "House / Home" },
+  { "tig": "ገዛ",        "rom": "Geza",          "eng": "Home / House" },
+  { "tig": "ቤት ትምህርቲ", "rom": "Bet timhrti",   "eng": "School" },
+  { "tig": "ሆስፒታል",    "rom": "Hospital",      "eng": "Hospital" },
+  { "tig": "ዕዳጋ",      "rom": "'Edaga",        "eng": "Market / Shop" },
+  { "tig": "ቤተ ክርስቲያን", "rom": "Bete kirstiyan","eng": "Church" },
+  { "tig": "ሰፈር",      "rom": "Sefer",         "eng": "Neighborhood" },
+  { "tig": "ቤት ምግቢ",   "rom": "Bet migbi",     "eng": "Restaurant" },
+  { "tig": "ኣየር ጣብያ",  "rom": "Ayer tabya",    "eng": "Airport" },
+  { "tig": "ባሕሪ",      "rom": "Bahri",         "eng": "Sea / Beach" },
+  { "tig": "ከተማ",      "rom": "Ketema",        "eng": "City / Town" },
+  { "tig": "ዓዲ",       "rom": "'Adi",          "eng": "Village / Country" },
+  { "tig": "ሰሜናዊ",    "rom": "Semenawi",      "eng": "Northern (direction)" },
+  { "tig": "ሃገር",      "rom": "Hager",         "eng": "Country / Nation" },
+  { "tig": "ንፋስ",      "rom": "Nifas",         "eng": "Wind" }
+]

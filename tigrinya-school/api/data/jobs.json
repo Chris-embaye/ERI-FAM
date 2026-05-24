@@ -1,0 +1,16 @@
+[
+  { "tig": "ሓኪም",          "rom": "Hakim",         "eng": "Doctor" },
+  { "tig": "መምህር",          "rom": "Memhir",        "eng": "Teacher" },
+  { "tig": "ሓረስቶ",          "rom": "Harestu",       "eng": "Farmer" },
+  { "tig": "ሓፋሽ",           "rom": "Hafash",        "eng": "Engineer" },
+  { "tig": "ፖሊስ",           "rom": "Polis",         "eng": "Police officer" },
+  { "tig": "ነጋዳይ",          "rom": "Negaday",       "eng": "Merchant / Trader" },
+  { "tig": "ዝናር",           "rom": "Zinar",         "eng": "Soldier" },
+  { "tig": "ሓኪም ስኒ",        "rom": "Hakim sni",     "eng": "Dentist" },
+  { "tig": "ኣብ ቤት ትምህርቲ",  "rom": "Ab bet timhrti","eng": "Student" },
+  { "tig": "መሃሪ",           "rom": "Mehari",        "eng": "Teacher / Instructor" },
+  { "tig": "ትምህርቲ",         "rom": "Timhirti",      "eng": "Education" },
+  { "tig": "ሓጸቢ",           "rom": "Hatsebi",       "eng": "Laundry worker / Cleaner" },
+  { "tig": "ጋዜጠኛ",          "rom": "Gazetegna",     "eng": "Journalist" },
+  { "tig": "ነዋሪ",           "rom": "Newari",        "eng": "Driver / Traveller" }
+]

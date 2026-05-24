@@ -1,0 +1,58 @@
+{
+  "app_metadata": {
+    "version": "1.0.0",
+    "theme": "Liquid Glass",
+    "app_name": "Fidel — ፊደል",
+    "language": "ti"
+  },
+  "library": [
+    {
+      "id": "b1",
+      "title": "ትግርኛ መባእታ",
+      "subtitle": "Tigrinya for Beginners",
+      "image_url": "https://example.com/cover1.jpg",
+      "vocab_refs": ["id_1", "id_2", "id_3"],
+      "progress": 0
+    }
+  ],
+  "hadas_ai_config": {
+    "name": "Hadas",
+    "expertise": ["language_learning", "mechanical_diagnostics"],
+    "personality": "encouraging_and_technical"
+  },
+  "game_modules": [
+    {
+      "id": "match_it",
+      "active": true,
+      "pairs": [
+        { "tig": "ሰላም",  "rom": "Selam",   "eng": "Peace",    "emoji": "☮️" },
+        { "tig": "ገዛ",   "rom": "Geza",    "eng": "House",    "emoji": "🏠" },
+        { "tig": "መኪና",  "rom": "Mekina",  "eng": "Car",      "emoji": "🚗" },
+        { "tig": "ምሳሕ",  "rom": "Misah",   "eng": "Lunch",    "emoji": "🍽️" },
+        { "tig": "ደቂ",   "rom": "Deqi",    "eng": "Children", "emoji": "👧👦" },
+        { "tig": "ማይ",   "rom": "May",     "eng": "Water",    "emoji": "💧" },
+        { "tig": "ቤት",   "rom": "Bet",     "eng": "Home",     "emoji": "🏡" },
+        { "tig": "ሓው",   "rom": "Haw",     "eng": "Brother",  "emoji": "🧑" }
+      ]
+    },
+    {
+      "id": "sentence_architect",
+      "active": true,
+      "sentences": [
+        { "words": ["ሰላም", "ከመይ", "ኣለኻ", "?"],          "translation": "Hello, how are you?",         "correct": ["ሰላም", "ከመይ", "ኣለኻ", "?"] },
+        { "words": ["ስምካ", "እንታይ", "ይብሃል", "?"],        "translation": "What is your name?",          "correct": ["ስምካ", "እንታይ", "ይብሃል", "?"] },
+        { "words": ["ካበይ", "ኢኻ", "?"],                   "translation": "Where are you from?",         "correct": ["ካበይ", "ኢኻ", "?"] },
+        { "words": ["ጽቡቕ", "ኣለኹ", "።"],                  "translation": "I am fine.",                  "correct": ["ጽቡቕ", "ኣለኹ", "።"] },
+        { "words": ["ምሳሕ", "ምብላዕ", "ይደሊ"],              "translation": "I want to eat lunch.",        "correct": ["ምሳሕ", "ምብላዕ", "ይደሊ"] },
+        { "words": ["ሓደ", "ሕጻን", "ኣሎ"],                 "translation": "There is one baby.",          "correct": ["ሓደ", "ሕጻን", "ኣሎ"] },
+        { "words": ["ካብ", "ኤርትራ", "ኢየ", "።"],           "translation": "I am from Eritrea.",          "correct": ["ካብ", "ኤርትራ", "ኢየ", "።"] },
+        { "words": ["ኣበይ", "ኢዩ", "ቤት", "?"],             "translation": "Where is the house?",         "correct": ["ኣበይ", "ኢዩ", "ቤት", "?"] },
+        { "words": ["የቐንየለይ", "ብዙሕ"],                   "translation": "Thank you very much.",        "correct": ["የቐንየለይ", "ብዙሕ"] },
+        { "words": ["ሎሚ", "ዓርቢ", "ኢዩ", "།"],             "translation": "Today is Friday.",            "correct": ["ሎሚ", "ዓርቢ", "ኢዩ", "།"] }
+      ]
+    },
+    { "id": "trace_translate",    "active": false },
+    { "id": "speed_round",        "active": true  },
+    { "id": "fidel_flow",         "active": true  }
+  ]
+}

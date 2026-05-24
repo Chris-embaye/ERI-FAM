@@ -1,0 +1,16 @@
+[
+  { "tig": "መኪና",      "rom": "Mekina",       "eng": "Car / Vehicle" },
+  { "tig": "ሞተር",      "rom": "Motor",        "eng": "Engine" },
+  { "tig": "መሰልጠኒ",   "rom": "Meselteni",    "eng": "Driving / Training" },
+  { "tig": "ኣልተርኔተር", "rom": "Alternator",   "eng": "Alternator" },
+  { "tig": "ባትሪ",      "rom": "Batri",        "eng": "Battery" },
+  { "tig": "ራዲያተር",   "rom": "Radiater",     "eng": "Radiator" },
+  { "tig": "ባርኒታ",    "rom": "Barnita",      "eng": "Tire" },
+  { "tig": "ብሬክ",      "rom": "Brek",         "eng": "Brake" },
+  { "tig": "ላምፓ",      "rom": "Lampa",        "eng": "Headlight" },
+  { "tig": "ፊልተር",    "rom": "Filter",       "eng": "Filter (Oil/Air)" },
+  { "tig": "ፓምፓ ነዳዲ", "rom": "Pampa nedadi", "eng": "Fuel Pump" },
+  { "tig": "ሽማም",      "rom": "Shimam",       "eng": "Exhaust / Muffler" },
+  { "tig": "ክላች",      "rom": "Klach",        "eng": "Clutch" },
+  { "tig": "ሰንሰለት",   "rom": "Senselt",      "eng": "Timing Chain/Belt" }
+]

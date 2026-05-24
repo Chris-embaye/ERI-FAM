@@ -1,0 +1,14 @@
+[
+  { "tig": "መስከረም", "rom": "Meskerem", "eng": "September (Ge'ez month 1)" },
+  { "tig": "ጥቅምቲ",  "rom": "Tiqmti",   "eng": "October" },
+  { "tig": "ሕዳር",   "rom": "H'dar",    "eng": "November" },
+  { "tig": "ታሕሳስ",  "rom": "Tahsas",   "eng": "December" },
+  { "tig": "ጥሪ",    "rom": "Tri",      "eng": "January" },
+  { "tig": "ለካቲት",  "rom": "Lekatit",  "eng": "February" },
+  { "tig": "መጋቢት",  "rom": "Megabit",  "eng": "March" },
+  { "tig": "ሚያዝያ",  "rom": "Miyazya",  "eng": "April" },
+  { "tig": "ግንቦት",  "rom": "Ginbot",   "eng": "May" },
+  { "tig": "ሰነ",    "rom": "Sene",     "eng": "June" },
+  { "tig": "ሓምለ",   "rom": "Hamle",    "eng": "July" },
+  { "tig": "ነሓሰ",   "rom": "Nehase",   "eng": "August" }
+]

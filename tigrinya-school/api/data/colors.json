@@ -1,0 +1,14 @@
+[
+  { "tig": "ቀይሕ",        "rom": "Qeyih",            "eng": "Red" },
+  { "tig": "ሰማያዊ",       "rom": "Semayawi",         "eng": "Blue" },
+  { "tig": "ሓምለዋይ",      "rom": "Hamlewai",         "eng": "Green" },
+  { "tig": "ብጫ",          "rom": "Bicha",            "eng": "Yellow" },
+  { "tig": "ጸሊም",         "rom": "Tselim",           "eng": "Black" },
+  { "tig": "ጻዕዳ",         "rom": "Tsa'da",           "eng": "White" },
+  { "tig": "ቡናዊ",         "rom": "Bunawi",           "eng": "Brown" },
+  { "tig": "ሃምራዊ",        "rom": "Hamrawi",          "eng": "Purple / Pink" },
+  { "tig": "ቱቡቁ",         "rom": "Tubuqu",           "eng": "Orange" },
+  { "tig": "ሩምዲ",         "rom": "Rumdi",            "eng": "Gray" },
+  { "tig": "ብሩህ",         "rom": "Biruh",            "eng": "Bright / Light" },
+  { "tig": "ጸሊምን ጻዕዳን",  "rom": "Tselim na tsa'da", "eng": "Black and white" }
+]

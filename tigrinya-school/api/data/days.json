@@ -1,0 +1,14 @@
+[
+  { "tig": "ሰኑይ", "rom": "Senuy",  "eng": "Monday" },
+  { "tig": "ሰሉስ", "rom": "Selus",  "eng": "Tuesday" },
+  { "tig": "ረቡዕ", "rom": "Rebu'",  "eng": "Wednesday" },
+  { "tig": "ሓሙስ", "rom": "Hamus",  "eng": "Thursday" },
+  { "tig": "ዓርቢ", "rom": "Arbi",   "eng": "Friday" },
+  { "tig": "ቀዳም", "rom": "Qedam",  "eng": "Saturday" },
+  { "tig": "ሰንበት", "rom": "Senbet", "eng": "Sunday" },
+  { "tig": "ሎሚ",  "rom": "Lomi",   "eng": "Today" },
+  { "tig": "ትማሊ", "rom": "Temali", "eng": "Yesterday" },
+  { "tig": "ጽባሕ",  "rom": "Ts'bah", "eng": "Tomorrow" },
+  { "tig": "ሰሙን", "rom": "Semun",  "eng": "Week" },
+  { "tig": "ዕለት", "rom": "Elet",   "eng": "Date / Day" }
+]

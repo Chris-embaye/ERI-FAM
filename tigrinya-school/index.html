@@ -15,7 +15,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700&family=Noto+Serif+Ethiopic:wght@400;700;900&display=swap">
   <!-- TEMP: remove this line to revert dictionary styles -->
   <link rel="stylesheet" href="./temp-styles.css">
   <style>
@@ -3906,6 +3906,9 @@
         <div class="trans-tip">Use ⇄ to quickly swap source and target language — the translation moves to the input</div>
         <div class="trans-tip">Tigrinya uses the Ge'ez script (ፊደል) — a keyboard appears when Tigrinya is selected as source</div>
         <div class="trans-tip">Tigrinya ↔ English uses a local dictionary for common words — faster &amp; more accurate than machine translation</div>
+        <div class="trans-tip">⚠️ Tigrinya verbs fuse pronouns into the verb ending — "I asked her" = ሓቲተያ (ያ = her). Machine translation often gets this wrong.</div>
+        <div class="trans-tip">For sentences with "her / him / me / them / us", prefer the Dictionary tab or Hadas AI — ask "how do you say [phrase]?"</div>
+        <div class="trans-tip">Best accuracy: single words, short noun phrases, and common greetings. Avoid multi-clause sentences for Tigrinya.</div>
       </div>
     </div>
   </div>
@@ -7703,7 +7706,7 @@ const DICT = [
   {tig:'ሰላም',           rom:'Selam',             eng:'Hello / Peace',               cat:'Greetings', emoji:'👋', note:'ሰላም means "peace" — it is also a popular given name. Eritreans exchange it dozens of times daily as a greeting, farewell, and blessing.'},
   {tig:'ከመይ ኣለኻ?', rom:'Kemey alekha?', eng:'How are you?', cat:'Greetings', emoji:'🙋', masculine:{tig:'ከመይ ኣለኻ?', rom:'Kemey alekha?'}, feminine:{tig:'ከመይ ኣለኺ?', rom:'Kemey alekhi?'}},
   {tig:'ጽቡቕ',           rom:"Ts'buq",             eng:'Fine / Good',                  cat:'Greetings', emoji:'😊'},
-  {tig:'ጽቡቕ ኣለኹ',    rom:"Ts'buq aleku",       eng:'I am well (masculine speaker)', cat:'Greetings', emoji:'🙂', masculine:{tig:'ጽቡቕ ኣለኹ', rom:"Ts'buq aleku"}, feminine:{tig:'ጽቡቕ ኣለኺ', rom:"Ts'buq aleki"}, note:'The standard reply to "How are you?" — Ts\'buq aleku (man speaking) / Ts\'buq aleki (woman speaking). "Kemti aleku" (ከምቲ ኣለኹ) is a colloquial filler meaning "As I am / Same as always" — not "I am well."'},
+  {tig:'ጽቡቕ ኣለኹ',    rom:"Ts'buq aleku",       eng:'I am well',                    cat:'Greetings', emoji:'🙂', note:'The standard reply to "How are you?" — used by both men and women. ኣለኹ is 1st person singular (same for all speakers). "Kemti aleku" (ከምቲ ኣለኹ) is a colloquial filler meaning "As I am / Same as always" — not "I am well."'},
   {tig:'የቐንየለይ',       rom:'Yeqenyeley',         eng:'Thank you',                   cat:'Greetings', emoji:'🙏'},
   {tig:'ይቕሬታ',         rom:'Yiqreta',            eng:'Sorry / Excuse me',           cat:'Greetings', emoji:'🙇'},
   {tig:'እወ',             rom:'Iwe',                eng:'Yes',                         cat:'Basic',     emoji:'✅'},
@@ -7726,11 +7729,11 @@ const DICT = [
   {tig:'ክንረኽበካ ንኽእል ዲና?', rom:'Kinrekhbeka nikhil dina?', eng:'Can we meet?', cat:'Social', emoji:'🤝', masculine:{tig:'ክንረኽበካ ንኽእል ዲና?', rom:'Kinrekhbeka nikhil dina?'}, feminine:{tig:'ክንረኽበኪ ንኽእል ዲና?', rom:'Kinrekhbeki nikhil dina?'}},
   // ── Functional ──
   {tig:'እዚ እንታይ እዩ?',       rom:'Ezi entay eyu?',               eng:'What is this?',                 cat:'Functional', emoji:'❓'},
-  {tig:'ደጊምካ በሎ?', rom:'Degimka belo?', eng:'Could you repeat that?', cat:'Functional', emoji:'🔁', masculine:{tig:'ደጊምካ በሎ?', rom:'Degimka belo?'}, feminine:{tig:'ደጊምኪ በሊ?', rom:'Degimki beli?'}},
+  {tig:'ክትደግመለይ ትኽእልዶ?', rom:"Kitdegmeley tikhildo?", eng:'Could you repeat that?', cat:'Functional', emoji:'🔁', masculine:{tig:'ክትደግመለይ ትኽእልዶ?', rom:"Kitdegmeley tikhildo?"}, feminine:{tig:'ክትደግሚለይ ትኽእሊዶ?', rom:"Kitdegmiley tikhilido?"}},
   {tig:'ተረዲኡኒ',              rom:"Teredi'uni",                   eng:'I understand.',                 cat:'Functional', emoji:'💡'},
   {tig:'ኣይተረዳኣንን',          rom:"Aytereda'anin",                eng:"I don't understand.",           cat:'Functional', emoji:'😕'},
   // ── Dining & Hospitality ──
-  {tig:'ብልዕና ንበል',         rom:"Bli'na nibel",       eng:"Let's eat",                    cat:'Dining',    emoji:'🍽️'},
+  {tig:'ንብላዕ',              rom:"Nibla'",              eng:"Let's eat",                    cat:'Dining',    emoji:'🍽️'},
   {tig:'ማይ ክሰቲ ይደሊ',      rom:'May ksiti yideli',   eng:'I want to drink water',        cat:'Dining',    emoji:'💧'},
   // ── Shopping ──
   {tig:'እዚ ክንደይ እዩ?',      rom:'Ezi kindey eyu?',    eng:'How much is this?',            cat:'Shopping',  emoji:'💰'},
@@ -7757,7 +7760,8 @@ const DICT = [
   // ── Community & Work ──
   {tig:'ኣቤት',              rom:'Abet',                eng:'Yes / Present',                cat:'Community',  emoji:'🙋'},
   {tig:'ብጻይ',              rom:'Bitsay',              eng:'Comrade / Friend',             cat:'Community',  emoji:'🤝'},
-  {tig:'ገዛእ ርእሰይ',         rom:'Geza resey',          eng:'Myself',                       cat:'Community',  emoji:'👤'},
+  {tig:'ነብሰይ',              rom:'Nebsey',              eng:'Myself',                       cat:'Community',  emoji:'👤'},
+  {tig:'ገዛእ ርእሰይ',         rom:'Geza resey',          eng:'By myself / On my own',        cat:'Community',  emoji:'👤'},
   {tig:'ጉዳይ',              rom:'Guday',               eng:'Matter / Issue',               cat:'Community',  emoji:'📋'},
   {tig:'ሕጊ',               rom:'Hig',                 eng:'Law',                          cat:'Community',  emoji:'⚖️'},
   // ── Family ──
@@ -7822,7 +7826,7 @@ const DICT = [
   {tig:'ስጋ ደርሆ',         rom:'Siga Derho',           eng:'Chicken (meat)',              cat:'Food', emoji:'🍗'},
   {tig:'ቡን',             rom:'Bun',                eng:'Coffee',                      cat:'Food', emoji:'☕', note:'The Eritrean coffee ceremony is a cherished social ritual. Coffee (ቡን) is roasted, ground, and served in three rounds — each with a name: the first is the strongest; by the third you have received a blessing. Refusing is considered impolite.'},
   {tig:'ሻሂ',             rom:'Shahi',              eng:'Tea',                         cat:'Food', emoji:'🍵'},
-  {tig:'ጥባ',             rom:'Txba',               eng:'Milk',                        cat:'Food', emoji:'🥛'},
+  {tig:'ጥባ',             rom:"T'ba",               eng:'Milk',                        cat:'Food', emoji:'🥛'},
   {tig:'ማይ',             rom:'May',                eng:'Water',                       cat:'Food', emoji:'💧'},
   {tig:'ሽኮር',           rom:'Shikor',             eng:'Sugar',                       cat:'Food', emoji:'🍬'},
   {tig:'ጨው',             rom:"Ch'ew",              eng:'Salt',                        cat:'Food', emoji:'🧂'},
@@ -7996,7 +8000,7 @@ const DICT = [
   {tig:'ካርፔት',         rom:'Karpet',             eng:'Carpet / Rug',                cat:'Household', emoji:'🛍️'},
   // ── Tools ──
   {tig:'መፍትሕ',         rom:'Meftuh',             eng:'Key',                         cat:'Tools', emoji:'🗝️'},
-  {tig:'መቋርጺ',         rom:"Meqartsи",           eng:'Scissors',                    cat:'Tools', emoji:'✂️'},
+  {tig:'መቋርጺ',         rom:"Meqartsi",            eng:'Scissors',                    cat:'Tools', emoji:'✂️'},
   {tig:'ወቋሪ',           rom:'Weqari',             eng:'Hammer',                      cat:'Tools', emoji:'🔨'},
   {tig:'ምሳር',           rom:'Misar',              eng:'Saw',                         cat:'Tools', emoji:'🪚'},
   {tig:'ቆሊፊ',           rom:'Qolifi',             eng:'Wrench / Spanner',            cat:'Tools', emoji:'🔧'},
@@ -8156,7 +8160,7 @@ const DICT = [
   {tig:'ምስማዕ',         rom:"Misma'",             eng:'To listen / hear',            cat:'Verbs', emoji:'👂'},
   {tig:'ምርኣይ',         rom:"Mira'ay",            eng:'To see / look',               cat:'Verbs', emoji:'👁️'},
   {tig:'ምድቃስ',         rom:'Midqas',             eng:'To sleep',                    cat:'Verbs', emoji:'😴'},
-  {tig:'ምስራሕ',         rom:"Mis'raq",            eng:'To work',                     cat:'Verbs', emoji:'💼'},
+  {tig:'ምስራሕ',         rom:'Misrah',             eng:'To work',                     cat:'Verbs', emoji:'💼'},
   {tig:'ምምሃር',         rom:'Mimhar',             eng:'To study / learn',            cat:'Verbs', emoji:'📚'},
   {tig:'ምጽሓፍ',         rom:"Mits'haf",           eng:'To write',                    cat:'Verbs', emoji:'✍️'},
   {tig:'ምንባብ',         rom:'Minbab',             eng:'To read',                     cat:'Verbs', emoji:'📖'},
@@ -8457,6 +8461,272 @@ const DICT = [
   {tig:'ናቐፋ',           rom:'Naqefa',              eng:'Ceiling',                     cat:'Household', emoji:'🏠'},
   // ── MORE Clothing ──
   {tig:'ጥሎፊ',           rom:'Tilof',               eng:'Traditional embroidery',      cat:'Clothing', emoji:'🪡'},
+  // ── Pronouns ──
+  {tig:'ኣነ',             rom:'Ane',                eng:'I / Me',                      cat:'Pronouns', emoji:'👤'},
+  {tig:'ንስኻ',           rom:'Niskha',             eng:'You (singular, masculine)',    cat:'Pronouns', emoji:'👨'},
+  {tig:'ንስኺ',           rom:'Niskhi',             eng:'You (singular, feminine)',     cat:'Pronouns', emoji:'👩'},
+  {tig:'ንሱ',             rom:'Nsu',                eng:'He / Him',                    cat:'Pronouns', emoji:'🧑'},
+  {tig:'ንሳ',             rom:'Nsa',                eng:'She / Her',                   cat:'Pronouns', emoji:'👩‍🦰'},
+  {tig:'ንሕና',           rom:'Nihna',              eng:'We / Us',                     cat:'Pronouns', emoji:'👥'},
+  {tig:'ንስኻትኩም',     rom:"Niskha'tkum",         eng:'You all (plural)',             cat:'Pronouns', emoji:'🫂'},
+  {tig:'ንሶም',           rom:'Nsom',               eng:'They (masculine)',             cat:'Pronouns', emoji:'👨‍👦'},
+  {tig:'ንሰን',           rom:'Nsen',               eng:'They (feminine)',              cat:'Pronouns', emoji:'👩‍👧'},
+  {tig:'እዚ',             rom:'Izi',                eng:'This (near)',                 cat:'Pronouns', emoji:'👇'},
+  {tig:'እቲ',             rom:'Iti',                eng:'That (far)',                  cat:'Pronouns', emoji:'☝️'},
+  {tig:'ኩሉ',             rom:'Kulu',               eng:'All / Every / Whole',         cat:'Pronouns', emoji:'✅'},
+  {tig:'ካልእ',           rom:"Kali'",              eng:'Other / Another',             cat:'Pronouns', emoji:'🔄'},
+  // ── Questions ──
+  {tig:'እንታይ',         rom:'Entay',              eng:'What',                        cat:'Questions', emoji:'❓'},
+  {tig:'ኣበይ',           rom:'Abey',               eng:'Where',                       cat:'Questions', emoji:'📍'},
+  {tig:'መዓዝ',           rom:"Me'az",              eng:'When',                        cat:'Questions', emoji:'📅'},
+  {tig:'መን',             rom:'Men',                eng:'Who',                         cat:'Questions', emoji:'🙋'},
+  {tig:'ስለምንታይ',     rom:'Slemntay',           eng:'Why',                         cat:'Questions', emoji:'🤔'},
+  {tig:'ከመይ',           rom:'Kemey',              eng:'How',                         cat:'Questions', emoji:'💭'},
+  {tig:'ክንደይ',         rom:'Kindey',             eng:'How much / How many',         cat:'Questions', emoji:'🔢'},
+  {tig:'ኣየናይ',         rom:'Ayenay',             eng:'Which',                       cat:'Questions', emoji:'🔀'},
+  {tig:'ናበይ',           rom:'Nabey',              eng:'Where to (direction)',         cat:'Questions', emoji:'🧭'},
+  // ── MORE Verbs (from dictionary) ──
+  {tig:'ምሕታት',         rom:'Mihtat',             eng:'To ask / inquire',            cat:'Verbs', emoji:'🙋'},
+  {tig:'ምፍላጥ',         rom:'Miflat',             eng:'To know',                     cat:'Verbs', emoji:'🧠'},
+  {tig:'ምርዳእ',         rom:"Mirda'",             eng:'To understand',               cat:'Verbs', emoji:'💡'},
+  {tig:'ምጽላይ',         rom:'Mitslay',            eng:'To pray',                     cat:'Verbs', emoji:'🙏'},
+  {tig:'ምጽዋት',         rom:"Mits'wat",           eng:'To play (a game)',            cat:'Verbs', emoji:'🎮'},
+  {tig:'ምፍታው',         rom:'Miftaw',             eng:'To like',                     cat:'Verbs', emoji:'👍'},
+  {tig:'ምድላይ',         rom:'Midlay',             eng:'To want / need',              cat:'Verbs', emoji:'🎯'},
+  {tig:'ምጅማር',         rom:'Mijmar',             eng:'To start / begin',            cat:'Verbs', emoji:'▶️'},
+  {tig:'ምዝዛም',         rom:'Mizzam',             eng:'To finish / end',             cat:'Verbs', emoji:'⏹️'},
+  {tig:'ምቕያር',         rom:'Miqyar',             eng:'To change',                   cat:'Verbs', emoji:'🔄'},
+  {tig:'ምፍታን',         rom:'Miftan',             eng:'To try',                      cat:'Verbs', emoji:'💪'},
+  {tig:'ምኽዳን',         rom:'Mikhdan',            eng:'To wear / dress',             cat:'Verbs', emoji:'👗'},
+  {tig:'ምጽራይ',         rom:'Mitsray',            eng:'To clean',                    cat:'Verbs', emoji:'🧹'},
+  {tig:'ምምዛዝ',         rom:'Mimzaz',             eng:'To choose / select',          cat:'Verbs', emoji:'🎯'},
+  {tig:'ምሩጽ',           rom:'Miruts',             eng:'To run',                      cat:'Verbs', emoji:'🏃'},
+  {tig:'ምዜማ',           rom:'Mizema',             eng:'To sing',                     cat:'Verbs', emoji:'🎤'},
+  {tig:'ምድሓን',         rom:'Midhan',             eng:'To save / rescue',            cat:'Verbs', emoji:'🛡️'},
+  {tig:'ምቕታል',         rom:'Miqtal',             eng:'To kill',                     cat:'Verbs', emoji:'⚔️'},
+  {tig:'ምንባር',         rom:'Minbar',             eng:'To live / dwell',             cat:'Verbs', emoji:'🏠'},
+  {tig:'ምሞት',           rom:'Mimot',              eng:'To die',                      cat:'Verbs', emoji:'💀'},
+  {tig:'ምኽፋቱ',         rom:'Mikhfatu',           eng:'To allow / permit',           cat:'Verbs', emoji:'✅'},
+  {tig:'ምስርሓ',         rom:'Misrha',             eng:'To work (on something)',       cat:'Verbs', emoji:'⚙️'},
+  // ── Key Nouns (from dictionary) ──
+  {tig:'ሰብ',             rom:'Seb',                eng:'People / Person',             cat:'Family', emoji:'👤'},
+  {tig:'ገንዘብ',           rom:'Genzeb',             eng:'Money',                       cat:'Household', emoji:'💰'},
+  {tig:'ስም',             rom:'Sim',                eng:'Name',                        cat:'Greetings', emoji:'🏷️'},
+  {tig:'ዕድሜ',           rom:'Edme',               eng:'Age',                         cat:'Family', emoji:'🎂'},
+  {tig:'ሃይማኖት',       rom:'Heymanot',           eng:'Religion / Faith',            cat:'Places', emoji:'🛐'},
+  {tig:'ሕጊ',             rom:'Hiqi',               eng:'Law / Rule',                  cat:'Places', emoji:'⚖️'},
+  {tig:'ሓቂ',             rom:'Haqi',               eng:'Truth / Fact',                cat:'Adjectives', emoji:'✅'},
+  {tig:'ሓሶት',           rom:'Hasot',              eng:'Lie / Falsehood',             cat:'Adjectives', emoji:'🤥'},
+  {tig:'ሓደጋ',           rom:'Hadega',             eng:'Danger / Accident',           cat:'Health', emoji:'⚠️'},
+  {tig:'ህይወት',         rom:'Hiwet',              eng:'Life',                        cat:'Emotions', emoji:'🌱'},
+  {tig:'ሞት',             rom:'Mot',                eng:'Death',                       cat:'Emotions', emoji:'💀'},
+  {tig:'ናጽነት',         rom:"Nats'net",            eng:'Independence / Freedom',      cat:'Emotions', emoji:'🕊️'},
+  {tig:'ሓሳብ',           rom:'Hasab',              eng:'Idea / Thought / Plan',       cat:'Adjectives', emoji:'💭'},
+  {tig:'ባህሊ',           rom:'Bahli',              eng:'Culture / Tradition',         cat:'Places', emoji:'🎭'},
+  {tig:'ኤርትራ',         rom:'Eritrea',            eng:'Eritrea',                     cat:'Places', emoji:'🇪🇷'},
+  {tig:'ኣስመራ',         rom:'Asmera',             eng:'Asmara (capital of Eritrea)', cat:'Places', emoji:'🏛️'},
+  {tig:'ኲናት',           rom:'Kunat',              eng:'War / Battle',                cat:'Emotions', emoji:'⚔️'},
+  {tig:'ሰላምታ',         rom:'Selamta',            eng:'Greeting / Salutation',       cat:'Greetings', emoji:'🤝'},
+  {tig:'ኣየር',           rom:'Ayer',               eng:'Air / Sky / Weather',         cat:'Nature', emoji:'💨'},
+  // ── Directions ──
+  {tig:'ሰሜን',           rom:'Semen',              eng:'North',                       cat:'Nature', emoji:'⬆️'},
+  {tig:'ደቡብ',           rom:'Debub',              eng:'South',                       cat:'Nature', emoji:'⬇️'},
+  {tig:'ምብራቕ',         rom:"Mibra'",             eng:'East',                        cat:'Nature', emoji:'🌅'},
+  {tig:'ምዕራብ',         rom:"Mi'rab",             eng:'West',                        cat:'Nature', emoji:'🌇'},
+  {tig:'የማን',           rom:'Yeman',              eng:'Right (direction)',            cat:'Nature', emoji:'👉'},
+  {tig:'ጸጋም',           rom:'Tsegam',             eng:'Left (direction)',             cat:'Nature', emoji:'👈'},
+  // ── Function Words / Prepositions ──
+  {tig:'ናብ',             rom:'Nab',                eng:'To / Towards',                cat:'Phrases', emoji:'➡️'},
+  {tig:'ካብ',             rom:'Kab',                eng:'From',                        cat:'Phrases', emoji:'⬅️'},
+  {tig:'ኣብ',             rom:'Ab',                 eng:'In / At / On',                cat:'Phrases', emoji:'📍'},
+  {tig:'ምስ',             rom:'Mis',                eng:'With / Together with',        cat:'Phrases', emoji:'🤝'},
+  {tig:'ብዘይ',           rom:'Bizey',              eng:'Without',                     cat:'Phrases', emoji:'🚫'},
+  {tig:'ግን',             rom:'Gin',                eng:'But / However',               cat:'Phrases', emoji:'🔄'},
+  {tig:'ወይ',             rom:'Wey',                eng:'Or',                          cat:'Phrases', emoji:'🔀'},
+  {tig:'ስለዚ',           rom:'Slezi',              eng:'Therefore / So',              cat:'Phrases', emoji:'➡️'},
+  {tig:'ላዕሊ',           rom:"La'li",              eng:'Above / Up',                  cat:'Phrases', emoji:'⬆️'},
+  {tig:'ታሕቲ',           rom:'Tahti',              eng:'Below / Down / Under',        cat:'Phrases', emoji:'⬇️'},
+  {tig:'ኣብ ውሽጢ',     rom:'Ab wishti',           eng:'Inside',                      cat:'Phrases', emoji:'📦'},
+  {tig:'ኣብ ወጻኢ',     rom:"Ab wets'ai",          eng:'Outside',                     cat:'Phrases', emoji:'🌳'},
+  // ── MORE Adjectives (from dictionary) ──
+  {tig:'ጥዑይ',           rom:"T'uy",               eng:'Healthy / Well',              cat:'Adjectives', emoji:'💚'},
+  {tig:'ምሉእ ሓይሊ',   rom:"Mulu' hayli",         eng:'Strong / Energetic',          cat:'Adjectives', emoji:'💪'},
+  {tig:'ዓሚቕ',           rom:"'Amiq",              eng:'Deep',                        cat:'Adjectives', emoji:'🌊'},
+  {tig:'ቅሩብ',           rom:'Qirub',              eng:'Ready / Willing',             cat:'Adjectives', emoji:'✅'},
+  {tig:'ዓቢ ዕድሚ',    rom:"'Abi edme",           eng:'Old (in age)',                 cat:'Adjectives', emoji:'🧓'},
+  {tig:'ሓቀኛ',           rom:'Haqegna',            eng:'Honest / Truthful',           cat:'Adjectives', emoji:'🤝'},
+  {tig:'ሓሰዋ',           rom:'Hasewa',             eng:'False / Fake',                cat:'Adjectives', emoji:'🤥'},
+  {tig:'ሃብታም',         rom:'Habtam',             eng:'Rich / Wealthy',              cat:'Adjectives', emoji:'🤑'},
+  // ── NEW Animals (Phrasebook + Let's Speak Tigrinya) ──
+  {tig:'ንስሪ',           rom:'Nisri',              eng:'Eagle',                       cat:'Animals', emoji:'🦅'},
+  {tig:'ነብሪ',           rom:'Nebri',              eng:'Leopard',                     cat:'Animals', emoji:'🐆'},
+  {tig:'ተኹላ',           rom:'Tekula',             eng:'Wolf',                        cat:'Animals', emoji:'🐺'},
+  {tig:'ወኻርያ',         rom:'Wekarya',            eng:'Fox',                         cat:'Animals', emoji:'🦊'},
+  {tig:'ሓሰማ',           rom:'Hasema',             eng:'Pig',                         cat:'Animals', emoji:'🐷'},
+  {tig:'በቕሊ',           rom:'Bekli',              eng:'Mule',                        cat:'Animals', emoji:'🫏'},
+  {tig:'ማይ ደርሆ',     rom:'May derho',           eng:'Goose',                       cat:'Animals', emoji:'🪿'},
+  {tig:'ዱዱዕ',           rom:"Dudu'",              eng:'Cockroach',                   cat:'Animals', emoji:'🪳'},
+  {tig:'ነፋሒቶ',         rom:'Nefahito',           eng:'Chameleon',                   cat:'Animals', emoji:'🦎'},
+  {tig:'ኣባ ጨጎራ',     rom:'Aba chegora',         eng:'Caterpillar',                 cat:'Animals', emoji:'🐛'},
+  {tig:'ጻጸ',             rom:'Tsatse',             eng:'Ant',                         cat:'Animals', emoji:'🐜'},
+  {tig:'ኣምቤታ',         rom:'Ambeta',             eng:'Grasshopper / Locust',        cat:'Animals', emoji:'🦗'},
+  {tig:'ጉማሬ',           rom:'Gumarie',            eng:'Hippopotamus',                cat:'Animals', emoji:'🦛'},
+  {tig:'ቁራዕ',           rom:"Qura'",              eng:'Crow / Raven',                cat:'Animals', emoji:'🐦‍⬛'},
+  {tig:'ኣባ ጎቦዬ',     rom:'Aba gobye',           eng:'Tortoise',                    cat:'Animals', emoji:'🐢'},
+  // ── NEW Food & Drink ──
+  {tig:'ቢራ',             rom:'Bira',               eng:'Beer',                        cat:'Food', emoji:'🍺'},
+  {tig:'ሱዋ',             rom:'Suwa',               eng:'Traditional home-brew',       cat:'Food', emoji:'🍶', note:"Suwa is a traditional home-brewed Eritrean beer made from sorghum or barley. Shared at celebrations and gatherings, it is poured from a clay pot and often drunk from a shared cup called a wancha."},
+  {tig:'ኣቸቶ',           rom:'Acheto',             eng:'Vinegar',                     cat:'Food', emoji:'🫙'},
+  {tig:'ሕምባሻ',         rom:'Himbasha',           eng:'Traditional sweet bread',     cat:'Food', emoji:'🫓', note:"Himbasha is a traditional Eritrean/Ethiopian sweet flatbread decorated with floral or geometric patterns. It is baked for special occasions such as holidays and celebrations."},
+  // ── NEW Household / Cultural Objects ──
+  {tig:'ዋንጫ',           rom:'Wancha',             eng:'Traditional drinking cup',    cat:'Household', emoji:'🥂'},
+  // ── NEW Places & Culture ──
+  {tig:'ኣህጉር',         rom:'Ahgur',              eng:'Continent',                   cat:'Places', emoji:'🌍'},
+  {tig:'ዞባ',             rom:'Zoba',               eng:'Region / Zone',               cat:'Places', emoji:'🗺️'},
+  {tig:'ጀነት',           rom:'Genet',              eng:'Paradise / Heaven',           cat:'Places', emoji:'🌿'},
+  {tig:'ጸበል',           rom:"Ts'ebel",            eng:'Holy water / Sacred soil',    cat:'Places', emoji:'💧', note:"Tsebel (ጸበል) is holy water or sacred soil from a saint's shrine in Eritrean Orthodox Christianity. Pilgrims travel to these sites for healing and blessing."},
+  // ── NEW Jobs & Roles ──
+  {tig:'ስፖርተኛ',       rom:'Sportenya',          eng:'Athlete / Sportsperson',      cat:'Sports', emoji:'🏅'},
+  {tig:'ሕርሻ',           rom:'Hirsha',             eng:'Agriculture / Farming',       cat:'Jobs', emoji:'🌾'},
+  // ── NEW Abstract Nouns ──
+  {tig:'ምኽሪ',           rom:'Mikhri',             eng:'Advice / Counsel',            cat:'School', emoji:'💡'},
+  {tig:'ስልጣን',         rom:'Siltan',             eng:'Authority / Power',           cat:'Places', emoji:'👑'},
+  {tig:'ፍርዲ',           rom:'Ferdi',              eng:'Justice / Judgment',          cat:'Places', emoji:'⚖️'},
+  {tig:'ስነ-ስርዓት',     rom:"Sine-sir'at",        eng:'Ceremony / Ritual',           cat:'Greetings', emoji:'🎊'},
+  {tig:'ግጥሚ',           rom:'Gitmi',              eng:'Poem / Poetry',               cat:'School', emoji:'📜'},
+  // ── NEW Cultural Greetings & Expressions ──
+  {tig:'ሓምዋቲ',         rom:'Hamwati',            eng:'Post-wedding celebration',    cat:'Greetings', emoji:'💃', note:"Hamwati is an Eritrean wedding tradition: the day after the wedding, the bride's family brings food to the bridegroom's relatives. Women spend the day eating, singing, and dancing together."},
+  {tig:'ኣምላኽ ይምስገን',rom:'Amlak ymesgen',       eng:'Praise be to God',            cat:'Greetings', emoji:'🙏'},
+  {tig:'ጽቡቕ ጉዕዞ',   rom:"Ts'buq gu'zo",        eng:'Bon voyage / Safe journey',   cat:'Greetings', emoji:'✈️'},
+  // ── NEW Verbs (from textbooks) ──
+  {tig:'ምወሳኽ',         rom:'Miwesakh',           eng:'To add / increase',           cat:'Verbs', emoji:'➕'},
+  {tig:'ምእማን',         rom:"Mi'eman",            eng:'To believe / trust',          cat:'Verbs', emoji:'🙏'},
+  {tig:'ምዕዋት',         rom:"Mi'wat",             eng:'To win / succeed',            cat:'Verbs', emoji:'🏆'},
+  {tig:'ምብጻሕ',         rom:'Mibtsah',            eng:'To visit',                    cat:'Verbs', emoji:'👋'},
+  {tig:'ምስንካት',       rom:'Misnkat',            eng:'To bake / roast',             cat:'Verbs', emoji:'🔥'},
+  // ── Zecarias Dictionary: Body (extended) ──
+  {tig:'ሳንቡእ',         rom:"Sanbu'",             eng:'Lung',                        cat:'Body', emoji:'🫁'},
+  {tig:'ጭዋዳ',           rom:'Tsiwada',            eng:'Muscle',                      cat:'Body', emoji:'💪'},
+  {tig:'ዓንዲ ሕቆ',     rom:"'Andi hiqo",         eng:'Spine / Backbone',            cat:'Body', emoji:'🦴'},
+  {tig:'ኩርናዕ ኢድ',  rom:"Kurna' id",           eng:'Elbow',                       cat:'Body', emoji:'🦾'},
+  {tig:'ኩርናዕ እግሪ', rom:"Kurna' igri",         eng:'Ankle',                       cat:'Body', emoji:'🦶'},
+  {tig:'ፊሕኛ',           rom:'Fihna',              eng:'Bladder',                     cat:'Body', emoji:'💧'},
+  // ── Zecarias Dictionary: Animals (extended) ──
+  {tig:'ሰገን',            rom:'Segen',              eng:'Ostrich',                     cat:'Animals', emoji:'🦤'},
+  {tig:'ኣሞራ',           rom:'Amora',              eng:'Vulture',                     cat:'Animals', emoji:'🦅'},
+  {tig:'ምጹጽላይ',       rom:'Mtsutslai',          eng:'Squirrel',                    cat:'Animals', emoji:'🐿️'},
+  {tig:'ሕንጻይ',         rom:'Hintsay',            eng:'Parrot',                      cat:'Animals', emoji:'🦜'},
+  {tig:'ስዋን',            rom:'Swan',               eng:'Swan',                        cat:'Animals', emoji:'🦢'},
+  {tig:'ኣንበጣ',         rom:'Anbeta',             eng:'Locust',                      cat:'Animals', emoji:'🦗'},
+  // ── Zecarias Dictionary: Food (extended) ──
+  {tig:'ሜስ',             rom:'Mes',                eng:'Honey wine / Mead',           cat:'Food', emoji:'🍯', note:"Mes (ሜስ) is a traditional Eritrean honey wine made from fermented honey and water. Served at celebrations and religious feasts."},
+  {tig:'ቂጫ',             rom:'Qicha',              eng:'Flatbread (round, unleavened)',cat:'Food', emoji:'🫓'},
+  {tig:'ዝግኒ',           rom:'Zigni',              eng:'Spiced beef / chicken stew',  cat:'Food', emoji:'🍛', note:"Zigni (ዝግኒ) is a staple Eritrean spiced stew made with beef or chicken in a rich berbere sauce. Served with injera."},
+  {tig:'ኣልጫ',           rom:'Alcha',              eng:'Mild stew (unspiced)',         cat:'Food', emoji:'🍲'},
+  // ── Zecarias Dictionary: Nature (extended) ──
+  {tig:'ደሴት',           rom:'Deset',              eng:'Island',                      cat:'Nature', emoji:'🏝️'},
+  {tig:'ዋሕዚ',           rom:'Wahzi',              eng:'River / Stream',              cat:'Nature', emoji:'🌊'},
+  {tig:'ሑጻ',             rom:'Hutsa',              eng:'Sand',                        cat:'Nature', emoji:'🏖️'},
+  {tig:'ሓዊ',             rom:'Hawi',               eng:'Fire / Flame',                cat:'Nature', emoji:'🔥'},
+  // ── Zecarias Dictionary: Places (extended) ──
+  {tig:'ቤተ ንባብ',      rom:'Bete nibab',          eng:'Library',                     cat:'School', emoji:'📚'},
+  {tig:'ቤተ ፍርዲ',     rom:'Bete ferdi',          eng:'Courthouse',                  cat:'Places', emoji:'⚖️'},
+  // ── Zecarias Dictionary: Verbs (extended) ──
+  {tig:'ምነፋር',         rom:'Minefar',            eng:'To fly',                      cat:'Verbs', emoji:'✈️'},
+  {tig:'ምሓምባስ',       rom:'Mihambas',           eng:'To swim',                     cat:'Verbs', emoji:'🏊'},
+  {tig:'ምህዳን',         rom:'Mihadan',            eng:'To hunt',                     cat:'Verbs', emoji:'🏹'},
+  {tig:'ምስራቕ',         rom:'Misraq',             eng:'To steal',                    cat:'Verbs', emoji:'🤫'},
+  {tig:'ምስባር',         rom:'Misbar',             eng:'To break / shatter',          cat:'Verbs', emoji:'💥'},
+  {tig:'ምዝላል',         rom:'Mizzlal',            eng:'To jump / leap',              cat:'Verbs', emoji:'🦘'},
+  {tig:'ምዘናብ',         rom:'Mizenab',            eng:'To rain',                     cat:'Verbs', emoji:'🌧️'},
+  {tig:'ምቃጻል',         rom:'Miqatsal',           eng:'To burn / blaze',             cat:'Verbs', emoji:'🔥'},
+  // ── Zecarias Dictionary: Adjectives (extended) ──
+  {tig:'ተባዕ',           rom:"Teba'",              eng:'Brave / Courageous',          cat:'Adjectives', emoji:'🦁'},
+  {tig:'ጥርሑ',           rom:'Tirhu',              eng:'Empty / Vacant',              cat:'Adjectives', emoji:'📭'},
+  {tig:'ምሉእ',           rom:"Mlu'",               eng:'Full / Complete',             cat:'Adjectives', emoji:'✅'},
+  {tig:'ጽቢብ',           rom:'Tsibib',             eng:'Narrow / Tight',              cat:'Adjectives', emoji:'📏'},
+  {tig:'ውሩይ',           rom:'Wuruy',              eng:'Famous / Renowned',           cat:'Adjectives', emoji:'⭐'},
+  {tig:'ጥንታዊ',         rom:'Tintawi',            eng:'Ancient / Historical',        cat:'Adjectives', emoji:'🏛️'},
+  // ── Zecarias Dictionary: Cultural/Religious ──
+  {tig:'መልኣኽ',         rom:"Mel'akh",            eng:'Angel',                       cat:'Greetings', emoji:'👼'},
+  {tig:'ምርቓ',           rom:'Mirqa',              eng:'Blessing / Good wishes',      cat:'Greetings', emoji:'🙏'},
+  // ── Let's Speak Tigrinya (NALRC 2018): School ──
+  {tig:'ርሳስ',           rom:'Rsas',               eng:'Pencil',                      cat:'School',     emoji:'✏️'},
+  // ── Let's Speak Tigrinya (NALRC 2018): Household ──
+  {tig:'ቦርሳ',           rom:'Borsa',              eng:'Bag / Purse / Backpack',      cat:'Household',  emoji:'👜'},
+  {tig:'ኮሽና',           rom:'Koshna',             eng:'Kitchen',                     cat:'Household',  emoji:'🍳'},
+  // ── Let's Speak Tigrinya (NALRC 2018): Food ──
+  {tig:'ፉሲ',            rom:'Fusi',               eng:'Fava beans',                  cat:'Food',       emoji:'🫘'},
+  {tig:'ሰሊጣ',           rom:'Selita',             eng:'Salad',                       cat:'Food',       emoji:'🥗'},
+  {tig:'ቅጥና',           rom:"Q'itna",             eng:'Dried / jerked meat',         cat:'Food',       emoji:'🥩'},
+  {tig:'ርቢቢ',           rom:'Rbibi',              eng:'Berbere (spice blend)',        cat:'Food',       emoji:'🌶️', note:"Rbibi (ርቢቢ) is the dried red chili base of berbere — the spice blend central to Eritrean cuisine. Used in zigni, alicha, and many other dishes."},
+  // ── Let's Speak Tigrinya (NALRC 2018): Vegetables ──
+  {tig:'ካሕሉ',           rom:'Kahlu',              eng:'Leafy greens / Chard',        cat:'Vegetables', emoji:'🌿'},
+  {tig:'ዛጕኒ',           rom:'Zaguni',             eng:'Gourd / Squash',              cat:'Vegetables', emoji:'🥒'},
+  {tig:'ቦቅላ',           rom:'Boqla',              eng:'Field pea / Vetch',           cat:'Vegetables', emoji:'🫛'},
+  // ── Let's Speak Tigrinya (NALRC 2018): Nature ──
+  {tig:'ቀሊዐ',           rom:"Qeli'e",             eng:'Lake',                        cat:'Nature',     emoji:'🏞️'},
+  {tig:'ጭቃ',            rom:"Ts'iqa",             eng:'Mud / Clay',                  cat:'Nature',     emoji:'🟫'},
+  // ── Let's Speak Tigrinya (NALRC 2018): Family ──
+  {tig:'ሽማግሌ',          rom:'Shmagle',            eng:'Elder / Respected elder',     cat:'Family',     emoji:'🧓'},
+  {tig:'ሓዉሲ',           rom:'Hawusi',             eng:'Neighbor',                    cat:'Family',     emoji:'🏘️'},
+  // ── Let's Speak Tigrinya (NALRC 2018): Transport ──
+  {tig:'ዓረብያ',          rom:"'Arabiya",           eng:'Car (colloquial)',             cat:'Transport',  emoji:'🚗'},
+  {tig:'ሞቶር',           rom:'Motor',              eng:'Motorcycle',                  cat:'Transport',  emoji:'🏍️'},
+  // ── Let's Speak Tigrinya (NALRC 2018): Adjectives ──
+  {tig:'ሰፊሕ',           rom:'Sefih',              eng:'Wide / Broad',                cat:'Adjectives', emoji:'↔️'},
+  {tig:'ቀጢን',           rom:"Qet'in",             eng:'Thin / Slim',                 cat:'Adjectives', emoji:'📏'},
+  {tig:'ሓዛን',           rom:'Hazan',              eng:'Sad / Sorrowful',             cat:'Adjectives', emoji:'😢'},
+  // ── Let's Speak Tigrinya (NALRC 2018): Clothing ──
+  {tig:'ዓለባ',           rom:"'Aleba",             eng:'Traditional white robe',      cat:'Clothing',   emoji:'👘', note:"Aleba (ዓለባ) is the traditional white cotton robe worn in Eritrea and Ethiopia at religious ceremonies, holidays, and cultural events."},
+  // ── Teaching Methodology Module II (MoE PGDT 2004): School ──
+  {tig:'ሰዋስው',          rom:'Sewasew',            eng:'Grammar',                     cat:'School',     emoji:'📚'},
+  {tig:'ዕላማ',           rom:"'Elama",             eng:'Goal / Objective',            cat:'School',     emoji:'🎯'},
+  {tig:'ናውቲ',           rom:'Nawti',              eng:'Tools / Materials',           cat:'School',     emoji:'🛠️'},
+  {tig:'ብቕዓት',          rom:"Biq'at",             eng:'Competence / Proficiency',    cat:'School',     emoji:'⭐'},
+  {tig:'ትልሚ',           rom:'Tilmi',              eng:'Plan / Curriculum',           cat:'School',     emoji:'📋'},
+  {tig:'ርኢቶ',           rom:"Ri'ito",             eng:'Opinion / View',              cat:'School',     emoji:'💭'},
+  {tig:'ስርዓት',          rom:"Sir'at",             eng:'System / Rule / Order',       cat:'School',     emoji:'📐'},
+  {tig:'ፍልጠት',          rom:'Filthet',            eng:'Knowledge',                   cat:'School',     emoji:'🧠'},
+  {tig:'ጌጋ',            rom:'Gega',               eng:'Mistake / Error',             cat:'School',     emoji:'❌'},
+  // ── Teaching Methodology Module II (MoE PGDT 2004): Adjectives ──
+  {tig:'ዓቕሚ',           rom:"'Aqmi",              eng:'Ability / Capacity',          cat:'Adjectives', emoji:'💪'},
+  {tig:'ትኽክል',          rom:'Tikhkil',            eng:'Correct / Right',             cat:'Adjectives', emoji:'✅'},
+  {tig:'ዝርዝር',          rom:'Zirzir',             eng:'Detail / Detailed',           cat:'Adjectives', emoji:'🔬'},
+  {tig:'ሓፈሻዊ',          rom:'Hafeshawi',          eng:'General / Overall',           cat:'Adjectives', emoji:'🌐'},
+  // ── Teaching Methodology Module II (MoE PGDT 2004): Verbs ──
+  {tig:'ምምዕባል',         rom:'Mimbal',             eng:'To develop',                  cat:'Verbs',      emoji:'🌱'},
+  {tig:'ምፍታሽ',          rom:'Miftash',            eng:'To test / evaluate',          cat:'Verbs',      emoji:'🔍'},
+  // ── Eritrean Culture & History (KishoreKumar / My New Era): Architecture ──
+  {tig:'ሑድሞ',           rom:'Hudmo',              eng:'Traditional highland house',   cat:'Household',  emoji:'🏠', note:"The hudmo is the typical stone-and-mud dwelling of the Eritrean highlands. Built by collective village labour, it has two rooms — the midribiet (living area) and the wishate (kitchen) — separated by clay grain stores called koffo."},
+  // ── Eritrean Culture & History: Highland Regions ──
+  {tig:'ቀበሳ',           rom:'Kebessa',            eng:'The Eritrean highlands',       cat:'Places',     emoji:'⛰️', note:"Kebessa (ቀበሳ) refers to the highland plateau of Eritrea, home of the Tigrinya-speaking population. It comprises the three historic provinces of Hamasien, Seraye and Akeleguzay."},
+  {tig:'ሃማሴን',          rom:'Hamasien',           eng:'Hamasien (highland region)',   cat:'Places',     emoji:'🗺️'},
+  {tig:'ሰራዬ',           rom:'Seraye',             eng:'Seraye (highland region)',     cat:'Places',     emoji:'🗺️'},
+  {tig:'ኣቀለጉዛይ',       rom:'Akeleguzay',         eng:'Akeleguzay (highland region)', cat:'Places',     emoji:'🗺️'},
+  // ── Eritrean Culture & History: Ancient Sites & Language ──
+  {tig:'ኣኹሱም',          rom:'Axum',               eng:'Axum (ancient empire city)',   cat:'Places',     emoji:'🏛️', note:"Axum was the capital of the ancient Aksumite Empire (4th c. BC – 10th c. AD), which controlled trade between Africa and Arabia. The port of Adulis on the Eritrean Red Sea coast served as its gateway to the world."},
+  {tig:'ኣዱሊስ',          rom:'Adulis',             eng:'Adulis (ancient Red Sea port)', cat:'Places',    emoji:'⚓', note:"Adulis was the principal port of the Aksumite Empire, located on the Eritrean Red Sea coast. It was a major hub for trade with ancient Rome, Arabia, India, and sub-Saharan Africa."},
+  {tig:'ግዕዝ',           rom:"Ge'ez",              eng:"Ge'ez (ancient liturgical language)", cat:'School', emoji:'📜', note:"Ge'ez (ግዕዝ) is the ancient Semitic language from which Tigrinya evolved. Today it is a dead language used only as a liturgical tongue in the Eritrean and Ethiopian Orthodox churches. The Ge'ez alphabet (fidel) has 202 syllabic signs."},
+  {tig:'ሓቤሻ',           rom:'Habesha',            eng:'Habesha (highland people)',    cat:'Places',     emoji:'🇪🇷', note:"Habesha (ሓቤሻ) is the collective cultural term for the highland peoples of Eritrea and Ethiopia — primarily Tigrinya and Amhara speakers. It carries a strong sense of shared civilisational identity rooted in the Aksumite and Ge'ez heritage."},
+  // ── Eritrean Culture & History: Nine Ethnic Groups ──
+  {tig:'ትግረ',           rom:'Tigre',              eng:'Tigre (language / ethnic group)', cat:'Places',  emoji:'🗣️', note:"Tigre is the second largest language in Eritrea (≈31% of the population), spoken mainly in Barka, Sahel, Senhit and the Dahlak islands. It is distinct from Tigrinya despite sharing Ge'ez roots."},
+  {tig:'ኩናማ',           rom:'Kunama',             eng:'Kunama (ethnic group)',        cat:'Places',     emoji:'🌍'},
+  {tig:'ናራ',            rom:'Nara',               eng:'Nara (ethnic group)',          cat:'Places',     emoji:'🌍'},
+  {tig:'ሳሆ',            rom:'Saho',               eng:'Saho (ethnic group)',          cat:'Places',     emoji:'🌍'},
+  {tig:'ብሌን',           rom:'Bilen',              eng:'Bilen (ethnic group)',         cat:'Places',     emoji:'🌍'},
+  {tig:'ርሻይዳ',          rom:'Rashaida',           eng:'Rashaida (Arab-origin group)', cat:'Places',    emoji:'🌍'},
+  {tig:'ኣፋር',           rom:'Afar',               eng:'Afar (ethnic group)',          cat:'Places',     emoji:'🌍'},
+  {tig:'ሕዳሬብ',          rom:'Hedareb',            eng:'Hedareb / Beja (ethnic group)', cat:'Places',   emoji:'🌍'},
+  // ── Sewasew Tigrigna (Franciscan Mission, Asmara 1951): Grammar Terms ──
+  {tig:'ቅጽላ',           rom:'Qitsla',             eng:'Adjective (grammatical)',      cat:'School',     emoji:'📝'},
+  {tig:'ኣንቅጽ',          rom:'Anqits',             eng:'Verb (grammatical category)',  cat:'School',     emoji:'📝'},
+  {tig:'ክንድስም',          rom:'Kindisim',           eng:'Pronoun',                     cat:'School',     emoji:'📝'},
+  {tig:'ዓረፍተ ነገር',      rom:'Arefti neger',       eng:'Sentence',                    cat:'School',     emoji:'📝'},
+  {tig:'ረባሕታ',          rom:'Rebahta',            eng:'Conjugation / Root derivation', cat:'School',   emoji:'📝'},
+  {tig:'ዓይነት',          rom:"'Aynet",             eng:'Type / Kind / Sort',           cat:'School',     emoji:'🔢'},
+  {tig:'ተባዕታይ',         rom:"Teba'itay",          eng:'Masculine (gender)',           cat:'School',     emoji:'🧑'},
+  {tig:'ኣንስታይ',         rom:'Anistay',            eng:'Feminine (gender)',            cat:'School',     emoji:'👩'},
 ];
 
 let libCat = 'all', libQuery = '';
@@ -8863,9 +9133,15 @@ async function _doTranslate() {
       p.textContent = translation;
       outEl.appendChild(p);
       statEl.style.color = 'var(--text-dim)';
-      statEl.textContent = (src === 'ti' || tgt === 'ti')
-        ? '⚠ Machine translation — may be inaccurate for Tigrinya'
-        : '✓ Translated';
+      if (src === 'ti' || tgt === 'ti') {
+        const hasPronouns = /\b(her|him|his|me|my|you|your|they|them|their|we|us|our|she|he|it)\b/i.test(text);
+        const isComplex   = text.trim().split(/\s+/).length > 4;
+        statEl.textContent = (hasPronouns && isComplex)
+          ? '⚠ Likely inaccurate — Tigrinya fuses pronouns into verb endings (e.g. "asked her" = ሓቲተያ). Check with Hadas AI.'
+          : '⚠ Machine translation — may be inaccurate for Tigrinya';
+      } else {
+        statEl.textContent = '✓ Translated';
+      }
       if (actEl) actEl.style.display = '';
       copyBtn.onclick = () => navigator.clipboard?.writeText(translation)
         .then(() => hubToast('Copied!')).catch(() => {});
@@ -8906,7 +9182,7 @@ document.getElementById('transTipsToggle').addEventListener('click', () => {
    DICTIONARY
 ═══════════════════════════════ */
 const DICT_DATA = DICT; // alias for global search
-const DICT_CATS = ['All','★ Favorites','Greetings','Family','Numbers','Food','Fruits','Vegetables','Animals','Body','Health','Colors','Clothing','Household','Tools','Transport','Places','Nature','Weather','Jobs','School','Sports','Music','Verbs','Emotions','Adjectives','Days','Months','Technology'];
+const DICT_CATS = ['All','★ Favorites','Greetings','Family','Numbers','Food','Fruits','Vegetables','Animals','Body','Health','Colors','Clothing','Household','Tools','Transport','Places','Nature','Weather','Jobs','School','Sports','Music','Verbs','Emotions','Adjectives','Days','Months','Technology','Pronouns','Questions','Phrases'];
 
 /* ═══════════════════════════════════════════════════════════
    TIGRE DICTIONARY
@@ -13818,7 +14094,7 @@ if (_matchGridEl) {
     // ── Greetings ──
     if (/greet|selam|salam|hello|hi\b|good morn|good even|welcome|ሰላም/.test(q)) {
       var w = catWords('Greetings', 10);
-      return 'Tigrinya greetings:\n\n' + fmtList(w) + '\n\n💡 Gender rule:\n• To a man: ኻ ending — ከመይ ኣለኻ? (Kemey alekha?)\n• To a woman: ኺ ending — ከመይ ኣለኺ? (Kemey alekhi?)\n\n✅ Correct reply for "I am well":\n• Man speaking: ጽቡቕ ኣለኹ (Ts\'buq aleku)\n• Woman speaking: ጽቡቕ ኣለኺ (Ts\'buq aleki)\n\n⚠️ Note: "Kemti aleku" (ከምቲ ኣለኹ) means "As I am / Same as always" — not "I am well."';
+      return 'Tigrinya greetings:\n\n' + fmtList(w) + '\n\n💡 Gender rule (applies to the LISTENER, not the speaker):\n• To a man: ኻ ending — ከመይ ኣለኻ? (Kemey alekha?)\n• To a woman: ኺ ending — ከመይ ኣለኺ? (Kemey alekhi?)\n\n✅ Correct reply for "I am well" — same for men and women:\n• ጽቡቕ ኣለኹ (Ts\'buq aleku) — I am well\n• ጽቡቕ ኢየ (Ts\'buq iye) — I am fine\n\n⚠️ Note: "Kemti aleku" (ከምቲ ኣለኹ) means "As I am / Same as always" — not "I am well."';
     }
 
     // ── Numbers ──
@@ -13840,7 +14116,7 @@ if (_matchGridEl) {
     }
 
     // ── Drink ──
-    if (/drink|water|coffee|tea|juice|ማይ|ቡን|ሽሂ/.test(q)) {
+    if (/drink|water|coffee|tea|juice|ማይ|ቡን|ሻሂ/.test(q)) {
       var w = catWords('Food', 12).filter(function(d){ return /water|coffee|tea|drink|juice/i.test(d.eng||''); });
       if (!w.length) w = catWords('Food', 6);
       return 'Drinks in Tigrinya:\n\n' + fmtList(w) + '\n\n☕ The Eritrean coffee ceremony (ቡን ፓርቲ) is a 3-round social tradition!';
@@ -13873,7 +14149,7 @@ if (_matchGridEl) {
     // ── Health ──
     if (/health|sick|pain|doctor|hospital|medic|headache|fever|ሕሙም|ሓኪም|ሕክምና/.test(q)) {
       var w = catWords('Health', 10);
-      return 'Health vocabulary:\n\n' + fmtList(w) + '\n\n🚨 Emergency phrases:\n• ሓዊ! (Hawi!) — Help!\n• ሓኪም ጸዊዑ (Hakim ts-ewi-u) — Call a doctor!';
+      return 'Health vocabulary:\n\n' + fmtList(w) + '\n\n🚨 Emergency phrases:\n• ሓግዘኒ! (Hagzeni!) — Help!\n• ሓኪም ጸዊዑ (Hakim ts\'ewi\'u) — Call a doctor!';
     }
 
     // ── Colors ──
@@ -13986,7 +14262,7 @@ if (_matchGridEl) {
 
     // ── Phrases ──
     if (/phrase|common|useful|essential|everyday|express|sentence/.test(q)) {
-      return 'Essential Tigrinya phrases:\n\n• ስምካ ማን ኢዩ? (Simka man iyu?) — What is your name?\n• ካበይ ኢኻ? (Kabey ikha?) — Where are you from? (to a man)\n• ካብ ኤርትራ ኢኹ (Kab Eritrea ikhu) — I am from Eritrea\n• ኣይተረዳኣኒን (Ayterada\'anin) — I don\'t understand\n• ደጊምካ ዛረብ (Degimka zareb) — Please repeat (to a man)\n• ሓደ ሰዓት ክንደይ ኢዩ? — What time is it?\n• ኣበይ ኢዩ? (Abey iyu?) — Where is it?\n• ክንደይ ይሕሰብ? (Kindey yihseb?) — How much does it cost?\n• ፍቐደለይ (Fiqedeley) — Please / Excuse me\n• ሕጂ ሂበኒ (Hiji hibeni) — Give it to me now';
+      return 'Essential Tigrinya phrases:\n\n• ስምካ ማን ኢዩ? (Simka man iyu?) — What is your name?\n• ካበይ ኢኻ? (Kabey ikha?) — Where are you from? (to a man)\n• ካብ ኤርትራ ኢየ (Kab Eritrea iye) — I am from Eritrea\n• ኣይተረዳኣኒን (Ayterada\'anin) — I don\'t understand\n• ደጊምካ ይዛረብ (Degimka yizareb) — Please repeat (to a man)\n• ሓደ ሰዓት ክንደይ ኢዩ? — What time is it?\n• ኣበይ ኢዩ? (Abey iyu?) — Where is it?\n• ክንደይ ይሕሰብ? (Kindey yihseb?) — How much does it cost?\n• ፍቐደለይ (Fiqedeley) — Please / Excuse me\n• ሕጂ ሂበኒ (Hiji hibeni) — Give it to me now';
     }
 
     // ── Grammar ──
@@ -14009,9 +14285,33 @@ if (_matchGridEl) {
       return 'Tips for learning Tigrinya:\n\n1️⃣ Learn the Fidel alphabet first — it\'s logical and consistent\n2️⃣ Do Lessons in order: Greetings → Numbers → Family...\n3️⃣ Use Flashcards daily — 5 cards/day builds real habits\n4️⃣ Take the Quiz after each lesson to lock in words\n5️⃣ Search the Dictionary for any word you encounter\n6️⃣ Play Puzzle games — repetition through fun!\n\n🎯 10 minutes daily beats 2 hours once a week!';
     }
 
+    // ── Pronouns ──
+    if (/pronoun|i am|he is|she is|we are|they are|myself|yourself|himself|herself|ኣነ|ንሱ|ንሳ|ንሕና/.test(q)) {
+      var w = catWords('Pronouns', 13);
+      return 'Personal pronouns in Tigrinya:\n\n' + fmtList(w) + '\n\n💡 Tigrinya verb endings match the pronoun:\n• ኣነ ኣለኹ (Ane aleku) — I am\n• ንሱ ኣሎ (Nsu alo) — He is\n• ንሳ ኣላ (Nsa ala) — She is\n• ንሕና ኣለና (Nihna alena) — We are\n\n📌 Gender matters! Verbs change form for he/she.';
+    }
+
+    // ── Question words ──
+    if (/question word|interrogative|how do i ask|wh.word|what is|who is|where is|when is|why is|ስለምንታይ|እንታይ|ኣበይ|መን|ናበይ/.test(q)) {
+      var w = catWords('Questions', 9);
+      return 'Question words in Tigrinya:\n\n' + fmtList(w) + '\n\n💡 Common question sentences:\n• ስምካ እንታይ ኢዩ? — What is your name?\n• ኣበይ ትቕመጥ? — Where do you live?\n• ከምቲ ምስ ትመጽእ? — When are you coming?\n• ናበይ ትኸይድ? — Where are you going?\n• ስለምንታይ? — Why?';
+    }
+
+    // ── Directions ──
+    if (/direction|north|south|east|west|left|right|compass|navigate|ሰሜን|ደቡብ|ምብራቕ|ምዕራብ|የማን|ጸጋም/.test(q)) {
+      var dirs = fullDict.filter(function(d){ return ['ሰሜን','ደቡብ','ምብራቕ','ምዕራብ','የማን','ጸጋም'].indexOf(d.tig) > -1; });
+      return 'Directions in Tigrinya:\n\n' + fmtList(dirs) + '\n\n🧭 Giving directions:\n• ቀጥ ኢልካ ኪድ (Qet ilka kid) — Go straight\n• የማን ምዙር (Yeman mizur) — Turn right\n• ጸጋም ምዙር (Tsegam mizur) — Turn left\n• ቀረባ ኢዩ (Qereba iyu) — It is nearby\n• ርሑቕ ኢዩ (Rihuq iyu) — It is far';
+    }
+
+    // ── Prepositions / Function words ──
+    if (/preposition|function word|ናብ|ካብ|ምስ|ብዘይ|ግን|ወይ|ላዕሊ|ታሕቲ/.test(q)) {
+      var w = catWords('Phrases', 10);
+      return 'Tigrinya prepositions and connecting words:\n\n' + fmtList(w) + '\n\n💡 Essential patterns:\n• ካብ X ናብ Y — From X to Y\n• ምስ ፈታዊ — With a friend\n• ኣብ ቤት — At home / In the house\n• ቅድሚ ምሳሕ — Before lunch\n• ድሕሪ ቤት ትምህርቲ — After school';
+    }
+
     // ── What can Hadas do ──
     if (/what can you|what do you|who are you|help me|about you|capabilities/.test(q)) {
-      return 'ሰላም! I\'m Hadas 🇪🇷, your Tigrinya tutor.\n\nI can teach you:\n📚 All 29 vocabulary categories\n🔤 Grammar rules & sentence structure\n🗣️ Useful everyday phrases\n🎯 Quiz you on words\n📖 Translate any word — just ask "how do you say X?"\n✍️ The Ge\'ez / Fidel alphabet\n🇪🇷 Eritrean culture & history\n\nTry: "How do you say water?" or "Teach me verbs"!';
+      return 'ሰላም! I\'m Hadas 🇪🇷, your Tigrinya tutor.\n\nI can teach you:\n📚 All 32 vocabulary categories (including Pronouns, Questions & Phrases!)\n🔤 Grammar rules & sentence structure\n🗣️ Useful everyday phrases\n🎯 Quiz you on words\n📖 Translate any word — just ask "how do you say X?"\n✍️ The Ge\'ez / Fidel alphabet\n🇪🇷 Eritrean culture & history\n🧭 Directions & navigation\n\nTry: "How do you say water?" or "Teach me pronouns"!';
     }
 
     // ── Quiz ──

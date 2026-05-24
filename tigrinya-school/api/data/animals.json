@@ -1,0 +1,14 @@
+[
+  { "tig": "ኣንበሳ",    "rom": "Anbesa",    "eng": "Lion" },
+  { "tig": "ሃርማዝ",    "rom": "Harmaz",    "eng": "Elephant" },
+  { "tig": "ዒጭ",      "rom": "Ichi",      "eng": "Goat" },
+  { "tig": "ላም",      "rom": "Lam",       "eng": "Cow" },
+  { "tig": "ኣድጊ",     "rom": "Adgi",      "eng": "Donkey" },
+  { "tig": "ገመል",     "rom": "Gemel",     "eng": "Camel" },
+  { "tig": "ንሒቢ",     "rom": "Nhebi",     "eng": "Bee" },
+  { "tig": "ዓሳ",      "rom": "'Asa",      "eng": "Fish" },
+  { "tig": "ስጋ ደርሆ",  "rom": "Siga Derho","eng": "Chicken" },
+  { "tig": "ድሙ",      "rom": "Dimu",      "eng": "Cat" },
+  { "tig": "ከልቢ",     "rom": "Kelbi",     "eng": "Dog" },
+  { "tig": "ወፊ",      "rom": "Wefi",      "eng": "Bird" }
+]

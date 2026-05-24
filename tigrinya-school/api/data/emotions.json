@@ -1,0 +1,15 @@
+[
+  { "tig": "ሕጉስ",       "rom": "Hugus",       "eng": "Happy" },
+  { "tig": "ሕዙን",       "rom": "Hizun",       "eng": "Sad" },
+  { "tig": "ዝደለ",       "rom": "Zdele",       "eng": "Tired" },
+  { "tig": "ዓቂቡ",       "rom": "'Aqibu",      "eng": "Angry" },
+  { "tig": "ፈሪሁ",       "rom": "Ferihu",      "eng": "Scared / Afraid" },
+  { "tig": "ተገሪሙ",      "rom": "Tegerimu",    "eng": "Surprised" },
+  { "tig": "ፍቅሪ",       "rom": "Fiqri",       "eng": "Love" },
+  { "tig": "ናፍቖት",      "rom": "Nafqot",      "eng": "Longing / Homesickness" },
+  { "tig": "ሓጎስ",       "rom": "Hagos",       "eng": "Joy / Happiness" },
+  { "tig": "ሕዝን",       "rom": "Hizn",        "eng": "Grief / Sorrow" },
+  { "tig": "ጥዕና",       "rom": "T'ena",       "eng": "Health / Wellness" },
+  { "tig": "ሰላም ኣቢሉ",  "rom": "Selam abilu", "eng": "Peaceful / Calm" },
+  { "tig": "ጅግና",       "rom": "Jigna",       "eng": "Hero" }
+]

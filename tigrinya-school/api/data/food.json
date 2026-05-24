@@ -1,0 +1,16 @@
+[
+  { "tig": "እንጀራ", "rom": "Injera",  "eng": "Flatbread (staple)" },
+  { "tig": "ጥብሲ",  "rom": "Tibsi",   "eng": "Grilled meat" },
+  { "tig": "ሽሮ",   "rom": "Shiro",   "eng": "Chickpea stew" },
+  { "tig": "ሻሂ",   "rom": "Shahi",   "eng": "Tea" },
+  { "tig": "ቡን",   "rom": "Bun",     "eng": "Coffee" },
+  { "tig": "ማይ",   "rom": "Mai",     "eng": "Water" },
+  { "tig": "ዳቦ",   "rom": "Dabo",    "eng": "Bread" },
+  { "tig": "ስጋ",   "rom": "Siga",    "eng": "Meat" },
+  { "tig": "ዓሳ",   "rom": "Asa",     "eng": "Fish" },
+  { "tig": "ፍረ",   "rom": "Fire",    "eng": "Fruit" },
+  { "tig": "ሽንጥሮ", "rom": "Shintro", "eng": "Lentils" },
+  { "tig": "ቅቤ",   "rom": "Q'be",    "eng": "Butter / Ghee" },
+  { "tig": "መግቢ",  "rom": "Megbi",   "eng": "Food" },
+  { "tig": "ምሳሕ",  "rom": "Misah",   "eng": "Lunch" }
+]

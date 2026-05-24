@@ -1,0 +1,14 @@
+[
+  { "tig": "ርእሲ",  "rom": "Ri'si",   "eng": "Head" },
+  { "tig": "ዓይኒ",  "rom": "'Ayni",   "eng": "Eye" },
+  { "tig": "እዝኒ",  "rom": "Izni",    "eng": "Ear" },
+  { "tig": "ኣፍ",   "rom": "Af",      "eng": "Mouth" },
+  { "tig": "ኣፍንጫ", "rom": "Afnicha", "eng": "Nose" },
+  { "tig": "ኢድ",   "rom": "Id",      "eng": "Hand / Arm" },
+  { "tig": "እግሪ",  "rom": "Igri",    "eng": "Foot / Leg" },
+  { "tig": "ልቢ",   "rom": "Libi",    "eng": "Heart" },
+  { "tig": "ሆድ",   "rom": "Hod",     "eng": "Stomach" },
+  { "tig": "ዝባን",  "rom": "Ziban",   "eng": "Back" },
+  { "tig": "ጸጉሪ",  "rom": "Tseguri", "eng": "Hair" },
+  { "tig": "ኣስናን", "rom": "Asnan",   "eng": "Teeth" }
+]

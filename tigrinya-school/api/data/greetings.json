@@ -1,0 +1,21 @@
+[
+  { "tig": "ሰላም",               "rom": "Selam",              "eng": "Hello / Peace" },
+  { "tig": "ከመይ ኣለኻ?",         "rom": "Kemey alekha?",      "eng": "How are you? (m)" },
+  { "tig": "ከመይ ኣለኺ?",         "rom": "Kemey alekhi?",      "eng": "How are you? (f)" },
+  { "tig": "ጽቡቕ",               "rom": "Ts'buq",             "eng": "Fine / Good" },
+  { "tig": "የቐንየለይ",           "rom": "Yeqenyeley",         "eng": "Thank you" },
+  { "tig": "ይቕሬታ",             "rom": "Yiqreta",            "eng": "Sorry" },
+  { "tig": "እወ",                 "rom": "Iwe",                "eng": "Yes" },
+  { "tig": "እሂ",                 "rom": "Ihi",                "eng": "Yes / Okay" },
+  { "tig": "ኣይፋልን",            "rom": "Ayfaln",             "eng": "No" },
+  { "tig": "ከመይ ውዒልካ",        "rom": "Kemey we'ilka",      "eng": "Good evening" },
+  { "tig": "ከመይ ሓዲርካ",        "rom": "Kemey hadirka",      "eng": "Good morning" },
+  { "tig": "ሰላም ሕደር",          "rom": "Selam h'der",        "eng": "Good night" },
+  { "tig": "ሰላም ቅነ",            "rom": "Selam q'ne",         "eng": "Goodbye" },
+  { "tig": "ምልላይና ጽቡቕ እዩ",   "rom": "Mllayna ts'buq iyu", "eng": "Nice to meet you" },
+  { "tig": "ምምስጋን ኣየድልን",     "rom": "Mmsgan ayedln",      "eng": "You're welcome" },
+  { "tig": "በጃኻ",               "rom": "Bejakha",            "eng": "Please (m)" },
+  { "tig": "በጃኺ",               "rom": "Bejakhi",            "eng": "Please (f)" },
+  { "tig": "ኣዝዩ",               "rom": "Azyu",               "eng": "Very much" },
+  { "tig": "ኣዝዩ ጽቡቕ",          "rom": "Azyu ts'buq",        "eng": "Very good / Excellent" }
+]

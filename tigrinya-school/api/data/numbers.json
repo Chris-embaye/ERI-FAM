@@ -1,0 +1,14 @@
+[
+  { "tig": "ሓደ",   "rom": "Hade",      "eng": "One (1)" },
+  { "tig": "ክልተ",  "rom": "Kilte",     "eng": "Two (2)" },
+  { "tig": "ሰለስተ", "rom": "Seleste",   "eng": "Three (3)" },
+  { "tig": "ኣርባዕተ","rom": "Arba'te",   "eng": "Four (4)" },
+  { "tig": "ሓሙሽተ", "rom": "Hamushte",  "eng": "Five (5)" },
+  { "tig": "ሽዱሽተ", "rom": "Shidushte", "eng": "Six (6)" },
+  { "tig": "ሸውዓተ", "rom": "Shew'ate",  "eng": "Seven (7)" },
+  { "tig": "ሸሞንተ", "rom": "Shemonte",  "eng": "Eight (8)" },
+  { "tig": "ትሸዓተ", "rom": "Tish'ate",  "eng": "Nine (9)" },
+  { "tig": "ዓሰርተ", "rom": "Aserte",    "eng": "Ten (10)" },
+  { "tig": "ዒሽርተ", "rom": "Eshirte",   "eng": "Twenty (20)" },
+  { "tig": "ሚእቲ",  "rom": "Mi'ti",     "eng": "One Hundred (100)" }
+]

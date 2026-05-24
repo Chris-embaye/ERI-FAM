@@ -1,0 +1,21 @@
+[
+  { "tig": "ስምካ መን ኢዩ?", "rom": "Simka men iyu?",  "eng": "What's your name?" },
+  { "tig": "ስመይ … ኢዩ",   "rom": "Simey … iyu",     "eng": "My name is …" },
+  { "tig": "ካበይ ኢኻ?",    "rom": "Kabey ikha?",     "eng": "Where are you from?" },
+  { "tig": "ክንደይ ዋጋ?",  "rom": "Kindey waga?",    "eng": "How much does it cost?" },
+  { "tig": "ኣበይ ኣሎ?",   "rom": "Abey alo?",       "eng": "Where is it?" },
+  { "tig": "ሓግዘኒ",       "rom": "Hagizeni",        "eng": "Help me please" },
+  { "tig": "ኣይፈልጥን",    "rom": "Ayfeltin",        "eng": "I don't know" },
+  { "tig": "ርደኣኒ",       "rom": "Ride'ani",        "eng": "I understand" },
+  { "tig": "ናፊቐካ",       "rom": "Nafi'qeka",       "eng": "I miss you" },
+  { "tig": "ፍቖዶ",        "rom": "F'qodo",          "eng": "I love you" },
+  { "tig": "ሕጂ ይምለስ",   "rom": "H'ji yimles",     "eng": "Coming back soon" },
+  { "tig": "ሰናይ ጉዕዞ",   "rom": "Senay gu'ezo",    "eng": "Safe travels" },
+  { "tig": "ኣብ",          "rom": "Ab",              "eng": "In / At" },
+  { "tig": "ገንዘብ",        "rom": "Genzeb",          "eng": "Money" },
+  { "tig": "ከም",          "rom": "Kem",             "eng": "As / Like" },
+  { "tig": "ቀደም",         "rom": "Qedem",           "eng": "Before / Previously" },
+  { "tig": "ኡቱ",          "rom": "Utu",             "eng": "That" },
+  { "tig": "ዘመን",         "rom": "Zemen",           "eng": "Era / Time" },
+  { "tig": "ቪዲዮ",         "rom": "Vidyo",           "eng": "Video" }
+]

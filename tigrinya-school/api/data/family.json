@@ -1,0 +1,17 @@
+[
+  { "tig": "ስድራቤት", "rom": "Sidra-bet", "eng": "Family" },
+  { "tig": "ኣቦ",    "rom": "Abo",       "eng": "Father" },
+  { "tig": "ኣደ",    "rom": "Ade",       "eng": "Mother" },
+  { "tig": "ወዲ",    "rom": "Wedi",      "eng": "Son / Boy" },
+  { "tig": "ጓል",    "rom": "Gual",      "eng": "Daughter / Girl" },
+  { "tig": "ሓው",    "rom": "Haw",       "eng": "Brother" },
+  { "tig": "ሓፍቲ",   "rom": "Hafti",     "eng": "Sister" },
+  { "tig": "ሰብኣይ",  "rom": "Seba'i",    "eng": "Husband" },
+  { "tig": "ሰበይቲ",  "rom": "Sebeyti",   "eng": "Wife" },
+  { "tig": "ወለዲ",   "rom": "Weledi",    "eng": "Parents" },
+  { "tig": "ሕጻን",   "rom": "H'tsan",    "eng": "Baby / Child" },
+  { "tig": "ደቂ",    "rom": "Deqi",      "eng": "Children" },
+  { "tig": "ኣቦሓጎ",  "rom": "Abohago",   "eng": "Grandfather" },
+  { "tig": "ኣዲኣ",   "rom": "Adia",      "eng": "Grandmother" },
+  { "tig": "መሓዝ",   "rom": "Me-haz",    "eng": "Friend" }
+]
