@@ -4580,11 +4580,14 @@
   </div>
   <div class="hadas-msgs" id="hadasMsgs"></div>
   <div class="hadas-chips" id="hadasChips">
-    <button class="hadas-chip" data-q="Teach me a Tigrinya greeting">👋 Greetings</button>
+    <button class="hadas-chip" data-q="Teach me Tigrinya greetings">👋 Greetings</button>
     <button class="hadas-chip" data-q="How do I count in Tigrinya?">🔢 Numbers</button>
-    <button class="hadas-chip" data-q="Give me a common Tigrinya phrase">💬 Phrases</button>
-    <button class="hadas-chip" data-q="How do I say family words in Tigrinya?">👨‍👩‍👧 Family</button>
-    <button class="hadas-chip" data-q="Test me on Tigrinya vocabulary">📝 Quiz me</button>
+    <button class="hadas-chip" data-q="Show me family words in Tigrinya">👨‍👩‍👧 Family</button>
+    <button class="hadas-chip" data-q="Teach me Tigrinya food words">🍽️ Food</button>
+    <button class="hadas-chip" data-q="Give me useful Tigrinya phrases">💬 Phrases</button>
+    <button class="hadas-chip" data-q="Explain Tigrinya grammar rules">📖 Grammar</button>
+    <button class="hadas-chip" data-q="Tell me about the Ge'ez alphabet">✍️ Alphabet</button>
+    <button class="hadas-chip" data-q="Quiz me on Tigrinya words">🎯 Quiz me</button>
   </div>
   <div class="hadas-input-row">
     <input id="hadasInput" placeholder="Message Hadas…" autocomplete="off" maxlength="500">
@@ -13727,59 +13730,262 @@ if (_matchGridEl) {
     }, delay);
   }
 
-  // ── Rule-based Tigrinya tutor responses ──
+  // ── Rule-based Tigrinya tutor — powered by the app's own dictionary ──
   function getReply(q) {
-    // Greetings
-    if (/greet|selam|salam|hello|hi\b|ሰላም/.test(q)) {
-      return "Great topic! Here are essential Tigrinya greetings:\n\n• ሰላም (Selam) — Hello / Peace\n• ከመይ ኣለኻ? (Kemey alekha?) — How are you? (to male)\n• ከመይ ኣለኺ? (Kemey alekhi?) — How are you? (to female)\n• ጽቡቕ ኣለኹ (Tsibuq aleku) — I am fine\n• ከምቲ ኣለኹ (Kemti aleku) — I'm doing well\n• የቐንየለይ (Yeqenyeley) — Thank you\n\nTip: Tigrinya changes verb endings based on who you're speaking to!";
+    const dict     = window._flat3 || [];
+    const fullDict = window.DICT   || dict;
+
+    function catWords(cat, limit) {
+      limit = limit || 10;
+      return fullDict.filter(function(d){ return d.cat === cat; }).slice(0, limit);
     }
-    // Numbers
-    if (/number|count|digit|ሓደ|ክልተ|ሰለስተ/.test(q)) {
-      return "Counting in Tigrinya:\n\n1 — ሓደ (Hade)\n2 — ክልተ (Kilte)\n3 — ሰለስተ (Seleste)\n4 — ኣርባዕተ (Arba'ate)\n5 — ሓሙሽተ (Hamushte)\n6 — ሽዱሽተ (Shidushte)\n7 — ሸውዓተ (Shew'ate)\n8 — ሸሞንተ (Shemonte)\n9 — ትሽዓተ (Tish'ate)\n10 — ዓሰርተ (Aserte)\n\nFor 11+, combine: ዓሰርተ ሓደ (11), ዓሰርተ ክልተ (12), etc.";
+    function fmtList(words) {
+      return words.map(function(d){
+        var line = '• ' + d.tig + ' (' + (d.rom || '') + ') — ' + (d.eng || '');
+        if (d.masculine) line = '• ' + d.masculine.tig + ' (' + d.masculine.rom + ') / ' + d.feminine.tig + ' (' + d.feminine.rom + ') — ' + (d.eng || '');
+        return line;
+      }).join('\n');
     }
-    // Family
-    if (/famil|mother|father|parent|sibling|ኣደ|ኣቦ|ሓው|ሓፍ/.test(q)) {
-      return "Tigrinya family words:\n\n• ኣቦ (Abo) — Father\n• ኣደ (Ade) — Mother\n• ሓው (Haw) — Brother\n• ሓፍቲ (Hafti) — Sister\n• ወዲ (Wedi) — Son / Boy\n• ጓል (Gwal) — Daughter / Girl\n• ኣያ (Aya) — Uncle (paternal)\n• ኣኮ (Ako) — Uncle (maternal)\n• ኣብ (Ab) — Father (formal)\n• ናይ ኣቦ ኣደ (Nay abo ade) — Paternal grandmother";
+    function lookup(term) {
+      var t = term.toLowerCase().trim();
+      return dict.find(function(d){
+        return (d.eng||'').toLowerCase().includes(t) ||
+               (d.rom||'').toLowerCase().includes(t) ||
+               (d.tig||'').includes(term);
+      }) || null;
     }
-    // Colors
-    if (/color|colour|red|blue|green|ቀይሕ|ሰማያዊ/.test(q)) {
-      return "Colors in Tigrinya:\n\n• ቀይሕ (Qeyih) — Red\n• ሰማያዊ (Semayawi) — Blue\n• ሓምላይ (Hamlay) — Green\n• ጻዕዳ (Ts'ayda) — White\n• ጸሊም (Tselim) — Black\n• ቢጫ (Bicha) — Yellow\n• ብርቱዕ ብርቱዕ (Brtu') — Orange (lit: intense)\n• ቫዮለት (Vayolet) — Purple\n• ሮዛ (Roza) — Pink";
+
+    // ── Translation lookup: "how do you say X" / "what does X mean" / "translate X" ──
+    var transM = q.match(/(?:how (?:do i |do you |to )?(?:say|write|spell|translate)|translate)\s+(.+?)(?:\s+in tigrinya)?[?]?$/i);
+    var meanM  = q.match(/what (?:is|does|means?)\s+(.+?)(?:\s+mean|\s+in (?:tigrinya|english))?[?]?$/i);
+    if (transM || meanM) {
+      var term  = ((transM ? transM[1] : meanM[1]) || '').trim().replace(/[?"']/g,'');
+      var found = lookup(term);
+      if (found) {
+        var resp = '📖 ' + (found.eng || '') + '\n\n• ፊደል: ' + (found.tig || '') + '\n• Pronunciation: ' + (found.rom || '');
+        if (found.masculine) resp = '📖 ' + (found.eng||'') + '\n\n• To a man: ' + found.masculine.tig + ' (' + found.masculine.rom + ')\n• To a woman: ' + found.feminine.tig + ' (' + found.feminine.rom + ')';
+        if (found.note) resp += '\n\n💡 ' + found.note.split('.')[0] + '.';
+        return resp;
+      }
+      return 'Hmm, I couldn\'t find "' + term + '" yet. Try the Dictionary tab to search, or ask about a category like greetings, food, or numbers!';
     }
-    // Food
-    if (/food|eat|drink|injera|ምሳሕ|ቁርሲ|እንጀራ/.test(q)) {
-      return "Tigrinya food vocabulary:\n\n• እንጀራ (Injera) — Flatbread (staple food)\n• ጣስ (Tas) — Stew / Sauce\n• ቁርሲ (Qursi) — Breakfast\n• ምሳሕ (Misah) — Lunch\n• ድራር (Drar) — Dinner\n• ማይ (May) — Water\n• ሽሂ (Shihi) — Tea\n• ቡን (Bun) — Coffee\n• ሱቡሕ (Subuh) — Morning food\n\nCommon phrase: ምሳሕ ምብላዕ ይደሊ (Misah mibla' yideli) — I want to eat lunch";
+
+    // ── Greetings ──
+    if (/greet|selam|salam|hello|hi\b|good morn|good even|welcome|ሰላም/.test(q)) {
+      var w = catWords('Greetings', 10);
+      return 'Tigrinya greetings:\n\n' + fmtList(w) + '\n\n💡 Gender rule:\n• To a man: ኻ ending (alekha)\n• To a woman: ኺ ending (alekhi)';
     }
-    // Phrases
-    if (/phrase|common|say|speak|express/.test(q)) {
-      return "Essential Tigrinya phrases:\n\n• ስምካ ማን ኢዩ? (Simka man iyu?) — What is your name?\n• ካበይ ኢኻ? (Kabey ikha?) — Where are you from?\n• ካብ ኤርትራ ኢኹ (Kab Eritrea ikhu) — I am from Eritrea\n• ኣይተረዳኣኒን (Ayterada'anin) — I don't understand\n• ደጊምካ ዛረብ (Degimka zareb) — Please repeat\n• ሓደ ሰዓት ክንደይ ኢዩ? (Hade se'at kindey iyu?) — What time is it?\n• ኣበይ ኢዩ? (Abey iyu?) — Where is it?";
+
+    // ── Numbers ──
+    if (/number|count|digit|numer|how many|ሓደ|ክልተ|ሰለስተ|ዓሰርተ/.test(q)) {
+      var w = catWords('Numbers', 15);
+      return 'Counting in Tigrinya:\n\n' + fmtList(w) + '\n\n💡 Compounds: ዓሰርተ ሓደ (11), ዕስራ (20), ሰላሳ (30), ሚእቲ (100)';
     }
-    // Quiz
-    if (/quiz|test|practice|exam|challenge/.test(q)) {
-      const dict = window._flat3 || [];
-      const pool = dict.filter(d => d.tig && d.eng).sort(() => Math.random() - .5).slice(0, 3);
-      if (!pool.length) return "Start a lesson first so I can quiz you on words you've learned! Try the Puzzle tab for games.";
-      let text = "Let's practice! What do these Tigrinya words mean?\n\n";
-      pool.forEach((d, i) => { text += `${i+1}. ${d.tig} (${d.rom})\n`; });
-      text += "\nType your answers and I'll check them! (Just type the English meanings separated by commas)";
+
+    // ── Family ──
+    if (/famil|mother|father|parent|sibling|brother|sister|son|daughter|uncle|aunt|grandm|grandf|husband|wife|ኣደ|ኣቦ|ሓው|ሓፍ/.test(q)) {
+      var w = catWords('Family', 12);
+      return 'Family words in Tigrinya:\n\n' + fmtList(w) + '\n\n💡 Tigrinya has separate words for paternal vs. maternal relatives!';
+    }
+
+    // ── Food ──
+    if (/\bfood\b|eat|hungry|injera|ምሳሕ|ቁርሲ|ድራር|እንጀራ|breakfast|lunch|dinner|meal/.test(q)) {
+      var w = catWords('Food', 12);
+      return 'Food vocabulary:\n\n' + fmtList(w) + '\n\n🍽️ Key phrase: ምሳሕ ምብላዕ ይደሊ (I want to eat lunch)';
+    }
+
+    // ── Drink ──
+    if (/drink|water|coffee|tea|juice|ማይ|ቡን|ሽሂ/.test(q)) {
+      var w = catWords('Food', 12).filter(function(d){ return /water|coffee|tea|drink|juice/i.test(d.eng||''); });
+      if (!w.length) w = catWords('Food', 6);
+      return 'Drinks in Tigrinya:\n\n' + fmtList(w) + '\n\n☕ The Eritrean coffee ceremony (ቡን ፓርቲ) is a 3-round social tradition!';
+    }
+
+    // ── Fruits ──
+    if (/fruit|apple|mango|banana|orange|grape|strawberr|watermelon|ፍሩታ/.test(q)) {
+      var w = catWords('Fruits', 10);
+      return 'Fruits in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Vegetables ──
+    if (/vegetable|veggie|carrot|tomato|onion|potato|spinach|ኣሕምልቲ/.test(q)) {
+      var w = catWords('Vegetables', 10);
+      return 'Vegetables in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Animals ──
+    if (/animal|dog|cat|cow|horse|lion|bird|fish|goat|sheep|ከልቢ|ድሙ|ላም|ኣጓዕ/.test(q)) {
+      var w = catWords('Animals', 10);
+      return 'Animals in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Body ──
+    if (/body|head|hand|eye|ear|nose|mouth|arm|leg|foot|hair|tooth|ርእሲ|ኢድ|ዓይኒ|ኣፍ/.test(q)) {
+      var w = catWords('Body', 12);
+      return 'Body parts in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Health ──
+    if (/health|sick|pain|doctor|hospital|medic|headache|fever|ሕሙም|ሓኪም|ሕክምና/.test(q)) {
+      var w = catWords('Health', 10);
+      return 'Health vocabulary:\n\n' + fmtList(w) + '\n\n🚨 Emergency phrases:\n• ሓዊ! (Hawi!) — Help!\n• ሓኪም ጸዊዑ (Hakim ts\'ewi'u) — Call a doctor!';
+    }
+
+    // ── Colors ──
+    if (/colou?r|red|blue|green|yellow|black|white|pink|orange|purple|ቀይሕ|ሰማያዊ|ሓምላይ/.test(q)) {
+      var w = catWords('Colors', 10);
+      return 'Colors in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Clothing ──
+    if (/cloth|wear|dress|shirt|shoe|hat|pant|jacket|scarf|ክዳን|ሳእኒ|ቆብዕ/.test(q)) {
+      var w = catWords('Clothing', 10);
+      return 'Clothing in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Household ──
+    if (/house|home|room|kitchen|bed|table|chair|door|window|floor|ገዛ|ቤት/.test(q)) {
+      var w = catWords('Household', 10);
+      return 'Household items in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Tools ──
+    if (/\btool|hammer|knife|saw|nail|rope|bucket|መሳርሒ/.test(q)) {
+      var w = catWords('Tools', 10);
+      return 'Tools in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Transport ──
+    if (/transport|bus|taxi|train|plane|car|boat|ship|bicycle|ባስ|ኣውቶቡስ|ነፋሪት|ብሽክለታ/.test(q)) {
+      var w = catWords('Transport', 10);
+      return 'Transport vocabulary:\n\n' + fmtList(w) + '\n\n🚌 ናበይ ትኸይድ? (Nabey tikheyd?) — Where are you going?';
+    }
+
+    // ── Places ──
+    if (/place|where|market|church|mosque|hospital|school|shop|hotel|bank|ዕዳጋ|ቤተ/.test(q)) {
+      var w = catWords('Places', 10);
+      return 'Places in Tigrinya:\n\n' + fmtList(w) + '\n\n📍 ኣበይ ኢዩ? (Abey iyu?) — Where is it?';
+    }
+
+    // ── Nature ──
+    if (/nature|tree|river|mountain|sea|ocean|sky|sun|moon|star|rain|forest|ኦም|ባሕሪ|ጸሓይ|ወርሒ/.test(q)) {
+      var w = catWords('Nature', 10);
+      return 'Nature vocabulary in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Weather ──
+    if (/weather|hot|cold|warm|wind|cloud|storm|temperature|ሙቐት|ዝናብ|ቁሪ/.test(q)) {
+      var w = catWords('Weather', 10);
+      return 'Weather words in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Jobs ──
+    if (/\bjob|work|occup|profession|career|farmer|teacher|driver|engineer|police|ስራሕ|ሓረስታይ|መምህር/.test(q)) {
+      var w = catWords('Jobs', 10);
+      return 'Occupations in Tigrinya:\n\n' + fmtList(w) + '\n\n💼 ስራሕካ እንታይ ኢዩ? (Sirahka entay iyu?) — What is your job?';
+    }
+
+    // ── School ──
+    if (/school|study|learn|book|pen|class|student|teacher|homework|ቤት ትምህርቲ|ተምሃሮ|መምህር/.test(q)) {
+      var w = catWords('School', 10);
+      return 'School vocabulary in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Sports ──
+    if (/sport|play|game|football|soccer|run|swim|jump|race|ኩዕሶ|ስፖርት/.test(q)) {
+      var w = catWords('Sports', 10);
+      return 'Sports vocabulary in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Music ──
+    if (/music|song|sing|dance|drum|instrument|ሙዚቃ|ደስ|ክራር/.test(q)) {
+      var w = catWords('Music', 10);
+      return 'Music vocabulary in Tigrinya:\n\n' + fmtList(w) + '\n\n🎵 Traditional instruments: ክራር (krar — lyre) and ከበሮ (kebero — drum)';
+    }
+
+    // ── Verbs ──
+    if (/\bverb|action|infinitive|ምብላዕ|ምኻድ|ምምጻእ|ምዛረብ|ምድቃስ/.test(q)) {
+      var w = catWords('Verbs', 12);
+      return 'Common Tigrinya verbs (infinitive form):\n\n' + fmtList(w) + '\n\n💡 Tigrinya infinitives always start with ም (mi-)\n   Example: ምብላዕ = mi + bla\'a = to eat';
+    }
+
+    // ── Emotions ──
+    if (/emotion|feel|happy|sad|angry|love|fear|joy|worry|ሓጎስ|ሕዛን|ፍቕሪ|ቁጥዐ/.test(q)) {
+      var w = catWords('Emotions', 10);
+      return 'Emotions in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Adjectives ──
+    if (/adjective|big|small|tall|short|fast|slow|good|bad|beautiful|old|new|ዓቢ|ንእሽቶ|ጽቡቕ/.test(q)) {
+      var w = catWords('Adjectives', 10);
+      return 'Adjectives in Tigrinya:\n\n' + fmtList(w) + '\n\n💡 Adjectives come AFTER the noun they describe\n   Example: ቤት ዓቢ (bet abi) — big house';
+    }
+
+    // ── Days ──
+    if (/\bday|week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|yesterday|ሰኑይ|ሰሉስ|ሮቡዕ/.test(q)) {
+      var w = catWords('Days', 10);
+      return 'Days of the week in Tigrinya:\n\n' + fmtList(w) + '\n\n📅 ሎሚ እንታይ መዓልቲ ኢዩ? — What day is today?\n• ሎሚ (Lomi) — Today\n• ትማሊ (Tmali) — Yesterday\n• ጽባሕ (Ts\'bah) — Tomorrow';
+    }
+
+    // ── Months ──
+    if (/month|january|february|march|april|may|june|july|august|september|october|november|december|ጥሪ|ለካቲት|መጋቢት/.test(q)) {
+      var w = catWords('Months', 13);
+      return 'Months in Tigrinya:\n\n' + fmtList(w) + '\n\n📅 Eritrea uses both the Gregorian and Ge\'ez calendars. The Ge\'ez calendar has 13 months!';
+    }
+
+    // ── Technology ──
+    if (/tech|computer|phone|internet|app|website|social|email|ኮምፒዩተር|ስልኪ|ኢንተርነት/.test(q)) {
+      var w = catWords('Technology', 10);
+      return 'Technology words in Tigrinya:\n\n' + fmtList(w);
+    }
+
+    // ── Phrases ──
+    if (/phrase|common|useful|essential|everyday|express|sentence/.test(q)) {
+      return 'Essential Tigrinya phrases:\n\n• ስምካ ማን ኢዩ? (Simka man iyu?) — What is your name?\n• ካበይ ኢኻ? (Kabey ikha?) — Where are you from? (to a man)\n• ካብ ኤርትራ ኢኹ (Kab Eritrea ikhu) — I am from Eritrea\n• ኣይተረዳኣኒን (Ayterada\'anin) — I don\'t understand\n• ደጊምካ ዛረብ (Degimka zareb) — Please repeat (to a man)\n• ሓደ ሰዓት ክንደይ ኢዩ? — What time is it?\n• ኣበይ ኢዩ? (Abey iyu?) — Where is it?\n• ክንደይ ይሕሰብ? (Kindey yihseb?) — How much does it cost?\n• ፍቐደለይ (Fiqedeley) — Please / Excuse me\n• ሕጂ ሂበኒ (Hiji hibeni) — Give it to me now';
+    }
+
+    // ── Grammar ──
+    if (/grammar|rule|sentence|structure|conjugat|gender|plural|tense|suffix|prefix|verb form/.test(q)) {
+      return 'Key Tigrinya grammar rules:\n\n1️⃣ Gender — every verb changes based on gender\n   • To a man: ኻ (kha) — ከመይ ኣለኻ?\n   • To a woman: ኺ (khi) — ከመይ ኣለኺ?\n\n2️⃣ Sentence order — Subject → Object → Verb\n   ኣነ ማይ ይሰቲ (I water drink)\n\n3️⃣ Infinitives start with ም (mi-)\n   ምብላዕ (to eat) • ምኻድ (to go) • ምምጻእ (to come)\n\n4️⃣ Negation: ኣይ before verb + ን suffix\n   ኣይፈልጥን (I don\'t know) • ኣይኮነን (It is not)\n\n5️⃣ Plurals: add ታት or ት suffix\n   ቤት → ቤታት (houses) • ሰብ → ሰባት (people)\n\n6️⃣ Possession: ናይ (nay) = "of"\n   ናይ ኣቦ ቤት (nay abo bet) — father\'s house';
+    }
+
+    // ── Alphabet / Fidel ──
+    if (/alphabet|letter|fidel|ፊደል|geez|ge'ez|script|syllable|character|write|read/.test(q)) {
+      return 'The Ge\'ez script (ፊደል — Fidel):\n\n✍️ One of the world\'s oldest writing systems!\n• 33 base characters × 7 vowel orders = 231 syllables\n• Each symbol = one consonant + one vowel\n• Reads left to right (like English)\n• No capital letters\n\n1st order (ä vowel):\nሀ ለ ሐ መ ሠ ረ ሰ ሸ ቀ ቐ ቨ ቢ\n\n7 vowel orders:\n1st ä • 2nd u • 3rd i • 4th a • 5th e • 6th (neutral) • 7th o\n\n💡 Tap the Alphabet tab to see all 231 characters with audio!';
+    }
+
+    // ── Eritrea / Culture ──
+    if (/eritrea|eritrean|culture|history|country|asmara|independence|ኤርትራ|ኣስመራ/.test(q)) {
+      return 'Eritrea facts:\n\n🇪🇷 Capital: ኣስመራ (Asmara)\n🌊 Red Sea coast, East Africa\n📅 Independence Day: May 24, 1991\n🗣️ Official languages: Tigrinya, Arabic, English\n☕ Famous coffee ceremony — 3 rounds (ቡን ፓርቲ)\n🕌 Christian & Muslim communities side by side\n💃 Rich traditions in music, poetry & dance\n🏔️ Highlands, lowlands, and Red Sea coast regions\n\n📖 Tigrinya has ~7 million speakers across Eritrea and Ethiopia\'s Tigray region.';
+    }
+
+    // ── Learning tips ──
+    if (/how (?:to|do i|can i) learn|tip|advice|method|study|practice|improve/.test(q)) {
+      return 'Tips for learning Tigrinya:\n\n1️⃣ Learn the Fidel alphabet first — it\'s logical and consistent\n2️⃣ Do Lessons in order: Greetings → Numbers → Family...\n3️⃣ Use Flashcards daily — 5 cards/day builds real habits\n4️⃣ Take the Quiz after each lesson to lock in words\n5️⃣ Search the Dictionary for any word you encounter\n6️⃣ Play Puzzle games — repetition through fun!\n\n🎯 10 minutes daily beats 2 hours once a week!';
+    }
+
+    // ── What can Hadas do ──
+    if (/what can you|what do you|who are you|help me|about you|capabilities/.test(q)) {
+      return 'ሰላም! I\'m Hadas 🇪🇷, your Tigrinya tutor.\n\nI can teach you:\n📚 All 29 vocabulary categories\n🔤 Grammar rules & sentence structure\n🗣️ Useful everyday phrases\n🎯 Quiz you on words\n📖 Translate any word — just ask "how do you say X?"\n✍️ The Ge\'ez / Fidel alphabet\n🇪🇷 Eritrean culture & history\n\nTry: "How do you say water?" or "Teach me verbs"!';
+    }
+
+    // ── Quiz ──
+    if (/quiz|test|practice|exam|challenge|drill|flash/.test(q)) {
+      var pool = dict.filter(function(d){ return d.tig && d.eng; })
+                     .sort(function(){ return Math.random() - 0.5; })
+                     .slice(0, 4);
+      if (!pool.length) return 'Open any Lesson or the Dictionary first so I have words to quiz you on!';
+      var text = '🎯 Quick quiz! What do these Tigrinya words mean?\n\n';
+      pool.forEach(function(d, i){ text += (i+1) + '. ' + d.tig + ' (' + (d.rom||'') + ')\n'; });
+      text += '\nType your answers like: 1-hello, 2-water ...';
       return text;
     }
-    // Eritrea / culture
-    if (/eritrea|eritrean|culture|history|country/.test(q)) {
-      return "Eritrea facts for learners:\n\n🇪🇷 Official languages: Tigrinya, Arabic, English\n📍 Capital: Asmara\n🌊 On the Red Sea coast of East Africa\n🕌 Mix of Christian & Muslim communities\n☕ Famous for coffee culture (ቡን ፓርቲ)\n💃 Rich music, dance & poetry tradition\n\nTigrinya is the most widely spoken language with ~7 million speakers across Eritrea and Ethiopia's Tigray region.";
-    }
-    // Alphabet / fidel
-    if (/alphabet|letter|fidel|ፊደል|geez|ge'ez|script/.test(q)) {
-      return "The Tigrinya alphabet:\n\nTigrinya uses Ge'ez script (ፊደል — Fidel), one of the world's oldest writing systems!\n\n• 33 base characters, each with 7 forms (orders)\n• 33 × 7 = 231 total syllables\n• Each character represents a consonant+vowel sound\n• Read left to right\n\nStart with the 1st order ( አ sounds):\nሀ ለ ሐ መ ሠ ረ ሰ ሸ ቀ ቐ ቨ ቢ\n\nUse the Fidel Flow game in the Puzzle tab to practice!";
-    }
-    // Mechanical / truck (from Hadas config)
-    if (/car|truck|engine|brake|tire|mechanic|ሞተር|መኪና|ብሬክ/.test(q)) {
-      return "Tigrinya automotive vocabulary:\n\n• መኪና (Mekina) — Car / Vehicle\n• ሞተር (Motor) — Engine\n• ብሬክ (Brek) — Brake\n• ባርኒታ (Barnita) — Tire\n• ባትሪ (Batri) — Battery\n• ፊልተር (Filter) — Oil/Air filter\n• ክላች (Klach) — Clutch\n• ራዲያተር (Radiater) — Radiator\n• ኣልተርኔተር (Alternator) — Alternator\n• ፓምፓ ነዳዲ (Pampa nedadi) — Fuel pump";
-    }
-    // Generic encouragement / don't know
-    const fallbacks = [
-      "That's a great question! I'm built around Tigrinya language learning. Try asking me about:\n• Greetings & phrases\n• Numbers\n• Family vocabulary\n• Colors or food\n• The Ge'ez alphabet\n• Quiz me on words\n\nWhat topic interests you most?",
-      "Hmm, I'm still growing my knowledge! For now I'm best at teaching Tigrinya vocabulary and phrases. What would you like to learn?",
-      "ጽቡቕ (Tsibuq)! I might not have that answer yet, but ask me about Tigrinya words, greetings, numbers, or cultural topics and I'll do my best 🇪🇷",
+
+    // ── Fallbacks ──
+    var fallbacks = [
+      'Great question! Ask me about any of these topics:\n\n👋 Greetings • 🔢 Numbers • 👨‍👩‍👧 Family • 🍽️ Food • 🐾 Animals • 🎨 Colors • 💼 Jobs • 📅 Days • 🔤 Grammar • ✍️ Alphabet • 🇪🇷 Culture\n\nOr ask "how do you say [word]?" for an instant translation!',
+      'Hmm, I didn\'t quite catch that 🌱 Try:\n• "How do you say goodbye in Tigrinya?"\n• "Teach me body parts"\n• "What does ሰላም mean?"\n• "Quiz me!"',
+      'ጽቡቕ (Ts\'buq — Good)! I may not have that answer yet, but ask me about vocabulary, grammar, or Eritrean culture 🇪🇷',
     ];
     return fallbacks[Math.floor(Math.random() * fallbacks.length)];
   }
