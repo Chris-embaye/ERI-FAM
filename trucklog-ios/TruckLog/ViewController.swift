@@ -123,8 +123,8 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     // MARK: - Offline / error fallback + Tweak 5: haptic feedback
 
     // Catches errors that occur after the connection is established (e.g. server drops mid-load)
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        webView(webView, didFailProvisionalNavigation: navigation, withError: error)
+    func webView(_ wv: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        self.webView(wv, didFailProvisionalNavigation: navigation, withError: error)
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
