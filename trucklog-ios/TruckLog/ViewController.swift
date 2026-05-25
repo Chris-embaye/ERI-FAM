@@ -53,8 +53,12 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     }
 
     @objc private func handleRefresh(_ sender: UIRefreshControl) {
-        loadApp()
-        // End refreshing after a short delay so the spinner feels responsive
+        // Reload current page; fall back to root if no URL is loaded yet
+        if webView.url != nil {
+            webView.reload()
+        } else {
+            loadApp()
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             sender.endRefreshing()
         }
@@ -82,7 +86,6 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
                 let p = Float(progress)
                 self.progressView.setProgress(p, animated: true)
                 self.progressView.isHidden = p >= 1.0
-                if p < 1.0 { self.progressView.isHidden = false }
             }
         }
     }
@@ -118,6 +121,11 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     }
 
     // MARK: - Offline / error fallback + Tweak 5: haptic feedback
+
+    // Catches errors that occur after the connection is established (e.g. server drops mid-load)
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        webView(webView, didFailProvisionalNavigation: navigation, withError: error)
+    }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         isShowingOffline = true
