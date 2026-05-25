@@ -86,3 +86,89 @@ workflows:
         notify:
           success: true
           failure: true
+
+  trucklog-ios-appstore:
+    name: TruckLog — App Store Upload
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+      cancel_previous_builds: true
+
+    environment:
+      groups:
+        - app_store
+      vars:
+        BUNDLE_ID: com.chrisdrive.trucklog
+        XCODE_SCHEME: TruckLog
+      xcode: latest
+
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen
+
+      - name: Generate Xcode project
+        script: |
+          cd trucklog-ios
+          xcodegen generate
+
+      - name: Set build number
+        script: |
+          cd trucklog-ios
+          BUILD=$((CM_BUILD_NUMBER + 10))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" TruckLog/Info.plist || true
+          agvtool new-version -all "$BUILD" || true
+
+      - name: Set up keychain and signing
+        script: |
+          keychain initialize
+
+          echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > /tmp/dist.key
+
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --platform IOS \
+            --type IOS_APP_STORE \
+            --create \
+            --certificate-key "$(cat /tmp/dist.key)"
+
+          keychain add-certificates
+          cd trucklog-ios && xcode-project use-profiles
+
+      - name: Archive
+        script: |
+          cd trucklog-ios
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/TruckLog.xcarchive
+
+      - name: Export IPA
+        script: |
+          cd trucklog-ios
+          xcodebuild -exportArchive \
+            -archivePath build/TruckLog.xcarchive \
+            -exportOptionsPlist /Users/builder/export_options.plist \
+            -exportPath build/TruckLogExport
+
+    artifacts:
+      - trucklog-ios/build/TruckLogExport/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: false
+        submit_to_app_store: false
+      email:
+        recipients:
+          - mebrahatom12@gmail.com
+        notify:
+          success: true
+          failure: true
