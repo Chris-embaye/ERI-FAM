@@ -1,96 +1,243 @@
 <!DOCTYPE html>
 <html>
-<head><title>Generate Truck-Log Screenshots</title></head>
-<body style="font-family:sans-serif;padding:20px;background:#111;color:#fff">
-<h2>Truck-Log Screenshot Generator</h2>
-<p>Generates placeholder store screenshots (1080×1920). Download both, place them in the <code>screenshots/</code> folder.</p>
-<br>
-<button onclick="gen(1,'Dashboard','Weekly revenue\ntrip stats & expenses')" style="margin:8px;padding:10px 20px;background:#EA580C;color:black;font-weight:bold;border:none;border-radius:8px;cursor:pointer">Download screen-mobile-1.png</button>
-<button onclick="gen(2,'Trip Log','Log loads, track\nmiles & revenue')" style="margin:8px;padding:10px 20px;background:#EA580C;color:black;font-weight:bold;border:none;border-radius:8px;cursor:pointer">Download screen-mobile-2.png</button>
-<br><br>
-<div id="preview" style="display:flex;gap:16px;flex-wrap:wrap"></div>
-<canvas id="c" hidden></canvas>
+<head>
+  <title>TruckLog — App Store Screenshot Generator</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; padding: 24px; background: #111; color: #fff; }
+    h2 { color: #EA580C; margin-bottom: 4px; }
+    p  { color: #888; font-size: 14px; margin-bottom: 24px; }
+    .section { margin-bottom: 32px; }
+    .section h3 { font-size: 13px; font-weight: 700; color: #aaa; text-transform: uppercase;
+                  letter-spacing: .08em; margin-bottom: 12px; border-bottom: 1px solid #333;
+                  padding-bottom: 8px; }
+    button {
+      margin: 6px; padding: 10px 18px; background: #EA580C; color: #000;
+      font-weight: 700; font-size: 13px; border: none; border-radius: 10px;
+      cursor: pointer; transition: opacity .15s;
+    }
+    button:hover { opacity: .8; }
+    #previews { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+    #previews img { height: 180px; border-radius: 10px; border: 1px solid #333; }
+    canvas { display: none; }
+    .sizes { font-size: 12px; color: #666; margin-top: 4px; }
+  </style>
+</head>
+<body>
+<h2>🚛 TruckLog — App Store Screenshot Generator</h2>
+<p>Generates screenshots at every size Apple requires. Download all and upload to App Store Connect.</p>
+
+<div class="section">
+  <h3>📱 iPhone 6.9" — 1320 × 2868 px (Required · iPhone 16 Pro Max)</h3>
+  <button onclick="makeAll('iphone69')">Generate All 3 Screens — iPhone 6.9"</button>
+  <div class="sizes">1320 × 2868 px</div>
+</div>
+
+<div class="section">
+  <h3>📱 iPhone 6.5" — 1284 × 2778 px (Required · iPhone 14/15 Plus)</h3>
+  <button onclick="makeAll('iphone65')">Generate All 3 Screens — iPhone 6.5"</button>
+  <div class="sizes">1284 × 2778 px</div>
+</div>
+
+<div class="section">
+  <h3>📱 iPhone 5.5" — 1242 × 2208 px (iPhone 8 Plus)</h3>
+  <button onclick="makeAll('iphone55')">Generate All 3 Screens — iPhone 5.5"</button>
+  <div class="sizes">1242 × 2208 px</div>
+</div>
+
+<div class="section">
+  <h3>📲 iPad 13" — 2064 × 2752 px (Required · iPad Pro M4)</h3>
+  <button onclick="makeAll('ipad13')">Generate All 3 Screens — iPad 13"</button>
+  <div class="sizes">2064 × 2752 px</div>
+</div>
+
+<div class="section">
+  <h3>📲 iPad 12.9" — 2048 × 2732 px (iPad Pro 3rd–6th gen)</h3>
+  <button onclick="makeAll('ipad129')">Generate All 3 Screens — iPad 12.9"</button>
+  <div class="sizes">2048 × 2732 px</div>
+</div>
+
+<div id="previews"></div>
+<canvas id="c"></canvas>
+
 <script>
-function gen(n, title, subtitle) {
+const SIZES = {
+  iphone69: { w: 1320, h: 2868, label: 'iphone-6.9' },
+  iphone65: { w: 1284, h: 2778, label: 'iphone-6.5' },
+  iphone55: { w: 1242, h: 2208, label: 'iphone-5.5' },
+  ipad13:   { w: 2064, h: 2752, label: 'ipad-13'    },
+  ipad129:  { w: 2048, h: 2732, label: 'ipad-12.9'  },
+};
+
+const SCREENS = [
+  {
+    n: 1,
+    headline: 'Your Digital Logbook',
+    sub: 'Log every trip instantly',
+    cards: [
+      { label: 'TRIPS THIS WEEK',   value: '12 Loads',       accent: true  },
+      { label: 'TOTAL MILES',       value: '3,480 mi',       accent: false },
+      { label: 'GROSS REVENUE',     value: '$4,250',         accent: false },
+      { label: 'RECENT TRIP',       value: 'Dallas → Austin',accent: false },
+    ]
+  },
+  {
+    n: 2,
+    headline: 'Scan Documents',
+    sub: 'Rate cons, BOLs & receipts',
+    cards: [
+      { label: 'RATE CONFIRMATION', value: '📷 Tap to Scan',  accent: true  },
+      { label: 'BILL OF LADING',    value: '📎 Attached',     accent: false },
+      { label: 'FUEL RECEIPT',      value: '✅ Saved',        accent: false },
+      { label: 'DELIVERY PROOF',    value: '📷 Tap to Scan',  accent: false },
+    ]
+  },
+  {
+    n: 3,
+    headline: 'Track Your Earnings',
+    sub: 'Revenue, miles & expenses',
+    cards: [
+      { label: 'REVENUE / MILE',    value: '$1.22 / mi',     accent: true  },
+      { label: 'EXPENSES',          value: '-$680 fuel',     accent: false },
+      { label: 'NET THIS MONTH',    value: '$7,840',         accent: false },
+      { label: 'MILES DRIVEN',      value: '6,420 mi total', accent: false },
+    ]
+  },
+];
+
+function makeAll(sizeKey) {
+  SCREENS.forEach(s => generate(sizeKey, s));
+}
+
+function generate(sizeKey, screen) {
+  const { w, h, label } = SIZES[sizeKey];
   const c = document.getElementById('c');
-  const W = 1080, H = 1920;
-  c.width = W; c.height = H;
+  c.width = w; c.height = h;
   const ctx = c.getContext('2d');
+  const scale = w / 1080; // design at 1080 wide, scale up
 
-  // Background
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(0, 0, W, H);
+  // ── Background
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, w, h);
 
-  // Top status bar
-  ctx.fillStyle = '#111111';
-  ctx.fillRect(0, 0, W, 80);
+  // ── Top hero gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, h * 0.38);
+  grad.addColorStop(0, '#1a0a00');
+  grad.addColorStop(1, '#0a0a0a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h * 0.38);
 
-  // Orange hero bar
+  // ── Orange accent bar
   ctx.fillStyle = '#EA580C';
-  ctx.fillRect(0, 80, W, 320);
+  ctx.fillRect(0, 0, w, 10 * scale);
 
-  // App title in hero
-  ctx.fillStyle = '#000000';
-  ctx.font = 'bold 90px Arial Black, Arial';
+  // ── App name
+  ctx.fillStyle = '#EA580C';
+  ctx.font = `bold ${72 * scale}px -apple-system, Arial Black, Arial`;
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('Truck-Log', W/2, 200);
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('🚛 TruckLog', w / 2, 160 * scale);
 
-  ctx.font = 'bold 52px Arial';
-  ctx.fillText(title, W/2, 310);
+  // ── Headline
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold ${58 * scale}px -apple-system, Arial`;
+  ctx.fillText(screen.headline, w / 2, 260 * scale);
 
-  // Card placeholders
-  const cards = [
-    { y: 460, h: 260, label: subtitle },
-    { y: 760, h: 180, label: 'Cost / Mile    Rev / Hour' },
-    { y: 980, h: 180, label: 'Trips    Miles    Hours' },
-    { y: 1200, h: 220, label: 'Recent Trips' },
-    { y: 1460, h: 160, label: 'Expenses This Week' },
-  ];
+  // ── Sub
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = `${38 * scale}px -apple-system, Arial`;
+  ctx.fillText(screen.sub, w / 2, 330 * scale);
 
-  cards.forEach(card => {
-    // Card background
-    ctx.fillStyle = '#1a1a1a';
-    roundRect(ctx, 60, card.y, W - 120, card.h, 36);
+  // ── Phone frame hint
+  const frameX = w * 0.08;
+  const frameW = w * 0.84;
+  const frameY = 400 * scale;
+  const frameH = h * 0.38;
+  ctx.fillStyle = '#1a1a1a';
+  roundRect(ctx, frameX, frameY, frameW, frameH, 32 * scale);
+  ctx.fill();
+  ctx.strokeStyle = '#2a2a2a';
+  ctx.lineWidth = 3 * scale;
+  roundRect(ctx, frameX, frameW, frameW, frameH, 32 * scale);
+  ctx.stroke();
+
+  // ── Cards
+  const cardStartY = h * 0.55;
+  const cardGap    = 28 * scale;
+  const cardH      = (h * 0.34) / 4 - cardGap * 0.75;
+  const cardX      = w * 0.06;
+  const cardW      = w * 0.88;
+
+  screen.cards.forEach((card, i) => {
+    const cy = cardStartY + i * (cardH + cardGap);
+
+    // Card bg
+    ctx.fillStyle = card.accent ? '#1f0e00' : '#141414';
+    roundRect(ctx, cardX, cy, cardW, cardH, 20 * scale);
     ctx.fill();
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
-    roundRect(ctx, 60, card.y, W - 120, card.h, 36);
-    ctx.stroke();
 
-    // Card label
-    ctx.fillStyle = '#888888';
-    ctx.font = '40px Arial';
-    ctx.textAlign = 'center';
+    if (card.accent) {
+      ctx.strokeStyle = '#EA580C';
+      ctx.lineWidth = 2.5 * scale;
+      roundRect(ctx, cardX, cy, cardW, cardH, 20 * scale);
+      ctx.stroke();
+    }
+
+    // Label
+    ctx.fillStyle = card.accent ? '#EA580C' : '#666';
+    ctx.font = `600 ${24 * scale}px -apple-system, Arial`;
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const lines = card.label.split('\n');
-    lines.forEach((line, i) => {
-      ctx.fillText(line, W/2, card.y + card.h/2 + (i - (lines.length-1)/2) * 52);
-    });
+    ctx.fillText(card.label, cardX + 28 * scale, cy + cardH * 0.32);
+
+    // Value
+    ctx.fillStyle = card.accent ? '#ffffff' : 'rgba(255,255,255,0.85)';
+    ctx.font = `bold ${40 * scale}px -apple-system, Arial`;
+    ctx.fillText(card.value, cardX + 28 * scale, cy + cardH * 0.72);
   });
 
-  // Bottom nav bar
+  // ── Bottom nav
+  const navH = 130 * scale;
   ctx.fillStyle = '#111111';
-  ctx.fillRect(0, H - 160, W, 160);
-  const tabs = ['Dashboard','Trips','Expenses','Fuel','More'];
+  ctx.fillRect(0, h - navH, w, navH);
+  ctx.fillStyle = '#222';
+  ctx.fillRect(0, h - navH, w, 1.5 * scale);
+
+  const tabs = [
+    { icon: '🏠', name: 'Home'     },
+    { icon: '🗺️', name: 'Trips'    },
+    { icon: '📄', name: 'Docs'     },
+    { icon: '⛽',  name: 'Fuel'    },
+    { icon: '👤', name: 'Profile' },
+  ];
+  const tabW = w / tabs.length;
   tabs.forEach((tab, i) => {
-    const x = W/10 + i * (W/5);
-    ctx.fillStyle = i === 0 ? '#EA580C' : '#555';
-    ctx.font = 'bold 32px Arial';
+    const tx = tabW * i + tabW / 2;
+    const ty = h - navH + navH * 0.35;
+    const active = i === (screen.n - 1) % tabs.length;
+
+    ctx.font = `${36 * scale}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(tab, x, H - 80);
+    ctx.fillText(tab.icon, tx, ty);
+
+    ctx.font = `${22 * scale}px -apple-system, Arial`;
+    ctx.fillStyle = active ? '#EA580C' : '#555';
+    ctx.fillText(tab.name, tx, ty + 44 * scale);
   });
 
+  // ── Download
+  const fname = `trucklog-${label}-screen-${screen.n}.png`;
   const a = document.createElement('a');
   a.href = c.toDataURL('image/png');
-  a.download = `screen-mobile-${n}.png`;
+  a.download = fname;
   a.click();
 
+  // ── Preview
   const img = new Image();
   img.src = a.href;
-  img.style = 'width:140px;border-radius:12px;border:1px solid #333';
-  document.getElementById('preview').appendChild(img);
+  img.title = fname;
+  img.style.cssText = 'height:180px;border-radius:10px;border:1px solid #333;';
+  document.getElementById('previews').appendChild(img);
 }
 
 function roundRect(ctx, x, y, w, h, r) {
