@@ -133,7 +133,10 @@ workflows:
             --platform IOS \
             --type IOS_APP_STORE \
             --create \
-            --certificate-key "$(cat /tmp/dist.key)"
+            --certificate-key /tmp/dist.key \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
 
           keychain add-certificates
           cd trucklog-ios && xcode-project use-profiles
