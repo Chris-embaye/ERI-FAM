@@ -31,7 +31,7 @@ workflows:
       - name: Set build number
         script: |
           cd fidel-ios
-          BUILD=$((CM_BUILD_NUMBER + 5))
+          BUILD=$((CM_BUILD_NUMBER + 10))
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Fidel/Info.plist || true
           agvtool new-version -all "$BUILD" || true
 
