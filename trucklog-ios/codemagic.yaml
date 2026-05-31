@@ -1,0 +1,78 @@
+workflows:
+  ios-release:
+    name: TruckLog — App Store Release
+    max_build_duration: 60
+
+    environment:
+      xcode: "15.4"
+      # ── Groups to create in Codemagic UI (Settings → Teams → Global variables) ──
+      #
+      # Group: "app_store_connect"
+      #   APP_STORE_CONNECT_ISSUER_ID       — from App Store Connect → Keys
+      #   APP_STORE_CONNECT_KEY_IDENTIFIER  — key ID (starts with a letter)
+      #   APP_STORE_CONNECT_PRIVATE_KEY     — contents of the .p8 file (the whole text)
+      #
+      # Group: "ios_signing"
+      #   DIST_CERT_P12       — base64 of your Apple Distribution .p12 certificate
+      #                         (on Mac: base64 -i cert.p12 | pbcopy)
+      #   DIST_CERT_PASSWORD  — password you set when exporting the .p12
+      #   PROVISIONING_PROFILE — base64 of the "TruckLog App Store" .mobileprovision
+      #                          (on Mac: base64 -i profile.mobileprovision | pbcopy)
+      groups:
+        - app_store_connect
+        - ios_signing
+
+    cache:
+      cache_paths:
+        - $HOME/Library/Caches/Homebrew
+
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen
+
+      - name: Generate Xcode project
+        script: xcodegen generate
+
+      - name: Initialize keychain
+        script: keychain initialize
+
+      - name: Import distribution certificate
+        script: |
+          echo "$DIST_CERT_P12" | base64 --decode > /tmp/dist.p12
+          keychain add-certificates \
+            --certificate /tmp/dist.p12 \
+            --certificate-password "$DIST_CERT_PASSWORD"
+
+      - name: Install provisioning profile
+        script: |
+          PROFILES="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES"
+          echo "$PROVISIONING_PROFILE" | base64 --decode > "$PROFILES/TruckLog.mobileprovision"
+
+      - name: Archive
+        script: |
+          xcodebuild \
+            -scheme TruckLog \
+            -configuration Release \
+            -archivePath build/TruckLog.xcarchive \
+            -destination "generic/platform=iOS" \
+            archive
+
+      - name: Export IPA
+        script: |
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/TruckLog.xcarchive \
+            -exportPath build/ipa \
+            -exportOptionsPlist ExportOptions.plist
+
+    artifacts:
+      - build/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        # Uses the app_store_connect group above — no extra config needed here
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: true
