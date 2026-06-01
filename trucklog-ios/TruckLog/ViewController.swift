@@ -4,7 +4,6 @@ import Network
 import AuthenticationServices
 import CryptoKit
 
-@MainActor
 class ViewController: UIViewController,
                       WKNavigationDelegate,
                       WKUIDelegate,
@@ -214,12 +213,12 @@ class ViewController: UIViewController,
 
     // MARK: - WKScriptMessageHandler
 
-    nonisolated func userContentController(
+    func userContentController(
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage
     ) {
         guard message.name == "appleSignIn" else { return }
-        Task { @MainActor in self.initiateAppleSignIn() }
+        DispatchQueue.main.async { self.initiateAppleSignIn() }
     }
 
     // MARK: - Sign in with Apple
