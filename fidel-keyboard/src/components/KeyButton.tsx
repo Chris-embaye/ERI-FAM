@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import type { KeyboardKey } from '../types/keyboard.types';
 import type { GeezKeyboardHandler } from '../engine/GeezKeyboardHandler';
+import { getCharFamily } from '../engine/characterFamily';
 import '../styles/keyboard.css';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
   tigrinyaContext?: boolean;
   shiftActive?: boolean;
   isPredicted?: boolean;    // AI expanded touch target — next most likely key
+  showFamilyColors?: boolean;
 }
 
 const ACTION_FALLBACK: Record<string, string> = {
@@ -19,7 +21,7 @@ const ACTION_FALLBACK: Record<string, string> = {
   switch_to_geez:   'ፊደል',
 };
 
-export function KeyButton({ keyItem, handler, onActionOverride, tigrinyaContext, shiftActive, isPredicted }: Props) {
+export function KeyButton({ keyItem, handler, onActionOverride, tigrinyaContext, shiftActive, isPredicted, showFamilyColors }: Props) {
   const isAction = keyItem.type === 'action';
   // Use !== undefined so that label: "" (blank spacebar) renders nothing intentionally
   const baseLabel = isAction
@@ -55,6 +57,7 @@ export function KeyButton({ keyItem, handler, onActionOverride, tigrinyaContext,
         tigrinyaContext                       ? 'kbd-key--geez-punct'   : '',
         shiftActive && keyItem.action === 'toggle_shift' ? 'kbd-key--shift-on'   : '',
         isPredicted                                     ? 'kbd-key--predicted'   : '',
+        showFamilyColors && !isAction ? (getCharFamily(keyItem.key) ?? '') : '',
       ].join(' ').trim()}
       onPointerDown={(e) => {
         e.preventDefault();

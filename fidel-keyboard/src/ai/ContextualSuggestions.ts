@@ -144,6 +144,33 @@ export class ContextualSuggestions {
       if (preds?.length) return preds.slice(0, 3).map(w => ({ text: w, type: 'prediction' as const }));
     }
 
+    // Spelling check: if the previous completed word is unknown, suggest corrections
+    if (prevWord && prevWord.length > 2 && hasGeezChars(prevWord)) {
+      const exact = trie.search(prevWord, 1);
+      if (exact[0] !== prevWord) {
+        const corrections = cascadeSearch(prevWord, 2);
+        if (corrections.length) {
+          return [
+            { text: corrections[0], type: 'completion', gloss: '✓ ቅኑዕ?' },
+            ...(corrections[1] ? [{ text: corrections[1], type: 'completion' as const, gloss: '✓ ቅኑዕ?' }] : []),
+            ...PHRASE_TEMPLATES.slice(0, 1).map(p => ({ text: p, type: 'phrase' as const })),
+          ].slice(0, 3);
+        }
+      }
+    }
+
     return PHRASE_TEMPLATES.slice(0, 3).map(p => ({ text: p, type: 'phrase' as const }));
+  }
+
+  /** Returns the set of Ge'ez words in `text` that are NOT in the dictionary */
+  getUnknownWords(text: string): Set<string> {
+    const unknown = new Set<string>();
+    const words = text.split(/[\s፡።፣፤፧]+/).filter(Boolean);
+    for (const word of words) {
+      if (!hasGeezChars(word) || word.length < 2) continue;
+      const exact = trie.search(word, 1);
+      if (exact[0] !== word) unknown.add(word);
+    }
+    return unknown;
   }
 }

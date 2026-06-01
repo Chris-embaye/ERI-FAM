@@ -1,7 +1,32 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { FidelKeyboard } from './components/FidelKeyboard';
 import { InstallGuide } from './components/InstallGuide';
+import { ContextualSuggestions } from './ai/ContextualSuggestions';
 import './styles/keyboard.css';
+
+const spellChecker = new ContextualSuggestions();
+
+/** Renders text with unknown Ge'ez words underlined in red */
+function TextPreview({ committed, preEdit }: { committed: string; preEdit: string }) {
+  const unknown = useMemo(
+    () => spellChecker.getUnknownWords(committed),
+    [committed]
+  );
+
+  const parts = committed.split(/(\s+)/);
+
+  return (
+    <span className="text-preview-content">
+      {parts.map((part, i) =>
+        unknown.has(part)
+          ? <span key={i} className="text-spell-error" title="ዘይፍለጥ ቃል">{part}</span>
+          : <span key={i}>{part}</span>
+      )}
+      {preEdit && <span className="text-preedit">{preEdit}</span>}
+      <span className="cursor" />
+    </span>
+  );
+}
 
 export default function App() {
   const [committedText, setCommittedText] = useState('');
@@ -27,13 +52,7 @@ export default function App() {
           {!hasContent ? (
             <span className="text-preview-placeholder">ክትጽሕፍ ጀምር…</span>
           ) : (
-            <span className="text-preview-content">
-              {committedText}
-              {preEditText && (
-                <span className="text-preedit">{preEditText}</span>
-              )}
-              <span className="cursor" />
-            </span>
+            <TextPreview committed={committedText} preEdit={preEditText} />
           )}
         </div>
 

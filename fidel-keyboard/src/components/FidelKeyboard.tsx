@@ -13,6 +13,8 @@ import { VariantPopup } from './VariantPopup';
 import { UtilityRibbon } from './UtilityRibbon';
 import { ClipboardPanel } from './ClipboardPanel';
 import { NumberPad } from './NumberPad';
+import { HadasPanel } from './HadasPanel';
+import { getCharFamily } from '../engine/characterFamily';
 import geezLayout    from '../data/tigrinya_keyboard_layout.json';
 import englishLayout from '../data/english_keyboard_layout.json';
 import '../styles/keyboard.css';
@@ -47,6 +49,7 @@ export function FidelKeyboard({ text, onTextChange, onPreEditChange }: Props) {
   const [suggestions, setSuggestions]     = useState<Suggestion[]>([]);
   const [showClipboard, setShowClipboard] = useState(false);
   const [clipboard, setClipboard]         = useState<string[]>(loadClipboard);
+  const [showHadas, setShowHadas]          = useState(false);
 
   const activeLayout = LAYOUTS[layoutMode] ?? LAYOUTS.geez;
 
@@ -303,7 +306,16 @@ export function FidelKeyboard({ text, onTextChange, onPreEditChange }: Props) {
     <div className="fidel-keyboard">
       <UtilityRibbon voice={voice} clipboardCount={clipboard.length} layoutMode={layoutMode}
         phoneticMode={phoneticMode} onTogglePhonetic={() => setPhoneticMode(v => !v)}
-        onToggleClipboard={() => setShowClipboard(v => !v)} onOpenNumbers={() => setLayoutMode('numbers')} />
+        onToggleClipboard={() => setShowClipboard(v => !v)} onOpenNumbers={() => setLayoutMode('numbers')}
+        onOpenHadas={() => setShowHadas(v => !v)} hadasActive={showHadas} />
+
+      {showHadas && (
+        <HadasPanel
+          currentText={text}
+          onInsert={(t) => onTextChange(prev => prev + t)}
+          onClose={() => setShowHadas(false)}
+        />
+      )}
 
       {showClipboard && (
         <ClipboardPanel items={clipboard} currentText={fullText}
@@ -324,6 +336,7 @@ export function FidelKeyboard({ text, onTextChange, onPreEditChange }: Props) {
                 shiftActive={shiftActive && layoutMode === 'english'}
                 isPredicted={predictedKey !== null && keyItem.key === predictedKey}
                 tigrinyaContext={tigrinyaContext && (keyItem.key === '፣' || keyItem.key === '።')}
+                showFamilyColors={layoutMode === 'geez'}
                 onActionOverride={
                   keyItem.action === 'toggle_shift'
                     ? () => setShiftActive(v => !v)

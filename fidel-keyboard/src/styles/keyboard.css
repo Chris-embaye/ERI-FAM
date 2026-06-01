@@ -123,6 +123,13 @@ html, body, #root {
 .text-preview-placeholder { color: #3a3a3a; font-size: 16px; }
 .text-preview-content { position: relative; }
 
+/* Unknown word — red squiggly underline */
+.text-spell-error {
+  text-decoration: underline wavy #ff453a;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 /* Pre-edit text — underlined in iOS blue while phonetic composition is in progress */
 .text-preedit {
   text-decoration: underline;
@@ -919,3 +926,221 @@ html, body, #root {
   line-height: 1.7;
 }
 .install-note strong { color: var(--color-greeting); }
+
+/* ── Character family color-coding (Ge'ez layout only) ──────── */
+/* Subtle left-border + tinted background so key identity stays clear */
+.kbd-key--family-guttural  { border-left: 2px solid #5ac8fa; background: rgba(90,200,250,0.10); }
+.kbd-key--family-nasal     { border-left: 2px solid #30d158; background: rgba(48,209,88,0.10); }
+.kbd-key--family-liquid    { border-left: 2px solid #ff9f0a; background: rgba(255,159,10,0.12); }
+.kbd-key--family-labial    { border-left: 2px solid #bf5af2; background: rgba(191,90,242,0.10); }
+.kbd-key--family-sibilant  { border-left: 2px solid #ffd60a; background: rgba(255,214,10,0.10); }
+.kbd-key--family-velar     { border-left: 2px solid #ff6961; background: rgba(255,105,97,0.10); }
+.kbd-key--family-dental    { border-left: 2px solid #0a84ff; background: rgba(10,132,255,0.10); }
+.kbd-key--family-palatal   { border-left: 2px solid #64d2ff; background: rgba(100,210,255,0.10); }
+.kbd-key--family-emphatic  { border-left: 2px solid #ff453a; background: rgba(255,69,58,0.12); }
+.kbd-key--family-glide     { border-left: 2px solid #34c759; background: rgba(52,199,89,0.10); }
+
+/* ── Hadas translate button ─────────────────────────────────── */
+.util-btn--hadas {
+  background: rgba(191,90,242,0.12);
+  border-color: rgba(191,90,242,0.35);
+  color: #bf5af2;
+  font-family: var(--font-geez);
+}
+.util-btn--hadas.util-btn--active {
+  background: rgba(191,90,242,0.25);
+  border-color: #bf5af2;
+}
+
+/* ── Hadas AI panel ─────────────────────────────────────────── */
+.hadas-panel {
+  background: rgba(28,20,40,0.97);
+  border-bottom: 1px solid rgba(191,90,242,0.25);
+  animation: slideDown 0.18s ease;
+}
+
+.hadas-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 6px;
+  border-bottom: 1px solid rgba(191,90,242,0.15);
+}
+
+.hadas-panel-logo {
+  font-family: var(--font-geez);
+  font-size: 18px;
+  font-weight: 800;
+  color: #bf5af2;
+}
+
+.hadas-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e0d0f5;
+  flex: 1;
+}
+
+.hadas-panel-dir {
+  font-size: 10px;
+  color: rgba(191,90,242,0.7);
+  background: rgba(191,90,242,0.1);
+  border: 1px solid rgba(191,90,242,0.2);
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+.hadas-close {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  border-radius: 50%;
+  color: #888;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hadas-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px 10px;
+}
+
+.hadas-input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(191,90,242,0.2);
+  border-radius: 10px;
+  color: #e0d0f5;
+  font-family: var(--font-geez);
+  font-size: 14px;
+  padding: 8px 10px;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+}
+.hadas-input:focus { border-color: rgba(191,90,242,0.5); }
+.hadas-input::placeholder { color: #555; }
+
+.hadas-translate-btn {
+  align-self: flex-start;
+  background: rgba(191,90,242,0.18);
+  border: 1px solid rgba(191,90,242,0.4);
+  border-radius: 10px;
+  color: #bf5af2;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.hadas-translate-btn:active  { background: rgba(191,90,242,0.30); }
+.hadas-translate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.hadas-spinner { display: inline-block; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hadas-error {
+  font-size: 11px;
+  color: #ff6b6b;
+  background: rgba(255,59,48,0.08);
+  border: 1px solid rgba(255,59,48,0.2);
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.hadas-result {
+  background: rgba(191,90,242,0.07);
+  border: 1px solid rgba(191,90,242,0.2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hadas-result-text {
+  font-family: var(--font-geez);
+  font-size: 15px;
+  color: #e0d0f5;
+  line-height: 1.6;
+}
+
+.hadas-result-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.hadas-copy-btn,
+.hadas-insert-btn {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(191,90,242,0.3);
+}
+
+.hadas-copy-btn   { background: rgba(255,255,255,0.05); color: #aaa; }
+.hadas-insert-btn { background: rgba(191,90,242,0.2); color: #bf5af2; }
+.hadas-insert-btn:active { background: rgba(191,90,242,0.35); }
+
+/* ── Adaptive light / dark theme ────────────────────────────── */
+@media (prefers-color-scheme: light) {
+  :root {
+    --kbd-bg:            rgba(210, 210, 218, 0.88);
+    --kbd-key-bg:        rgba(255, 255, 255, 0.95);
+    --kbd-key-press:     rgba(200, 200, 210, 1);
+    --kbd-action-bg:     rgba(185, 185, 196, 0.9);
+    --kbd-action-press:  rgba(165, 165, 178, 1);
+    --kbd-text:          #1c1c1e;
+    --kbd-text-dim:      #6c6c70;
+    --kbd-shadow:        rgba(0,0,0,0.18);
+
+    --suggest-bg:        rgba(228, 228, 234, 0.95);
+    --suggest-border:    rgba(190, 190, 200, 0.7);
+    --accent:            #007aff;
+    --color-greeting:    #30a14e;
+    --color-predict:     #c85000;
+    --color-homophone:   #b07800;
+    --color-phrase:      #7b2fbe;
+  }
+
+  html, body, #root { background: #d1d1d6; }
+  .app              { background: #e5e5ea; }
+  .app-header       { background: #f2f2f7; border-bottom-color: #ddd; }
+  .app-logo-latin   { color: #888; }
+
+  .text-preview {
+    background: #ffffff;
+    border-color: #d1d1d6;
+    color: #1c1c1e;
+  }
+  .text-preview-placeholder { color: #b0b0b8; }
+
+  .fidel-keyboard   { border-top-color: #c8c8d0; }
+  .suggestion-bar   { background: var(--suggest-bg); border-bottom-color: var(--suggest-border); }
+
+  .utility-ribbon   { background: #e0e0e8; border-bottom-color: #ccc; }
+  .util-btn         { background: rgba(255,255,255,0.7); border-color: #ccc; color: #444; }
+
+  .variant-popup    { background: rgba(245,245,248,0.92); border-color: rgba(0,0,0,0.12); }
+  .variant-chip     { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #1c1c1e; }
+
+  .clipboard-panel  { background: #f2f2f7; border-bottom-color: #ddd; }
+  .clipboard-item   { background: #fff; border-color: #ddd; }
+  .clipboard-item-text { color: #333; }
+
+  .hadas-panel      { background: rgba(245,240,255,0.97); border-bottom-color: rgba(130,80,180,0.2); }
+  .hadas-panel-header { border-bottom-color: rgba(130,80,180,0.12); }
+  .hadas-panel-title { color: #2c1a4a; }
+  .hadas-input      { background: rgba(255,255,255,0.8); color: #2c1a4a; border-color: rgba(130,80,180,0.2); }
+  .hadas-result     { background: rgba(130,80,180,0.05); }
+  .hadas-result-text { color: #2c1a4a; }
+}

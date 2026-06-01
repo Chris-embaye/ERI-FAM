@@ -10,11 +10,14 @@ interface Props {
   onTogglePhonetic: () => void;
   onToggleClipboard: () => void;
   onOpenNumbers: () => void;
+  onOpenHadas: () => void;
+  hadasActive: boolean;
 }
 
 export function UtilityRibbon({
   voice, clipboardCount, layoutMode, phoneticMode,
   onTogglePhonetic, onToggleClipboard, onOpenNumbers,
+  onOpenHadas, hadasActive,
 }: Props) {
   return (
     <div className="utility-ribbon">
@@ -46,6 +49,16 @@ export function UtilityRibbon({
       >
         <span className="util-icon">፩</span>
         <span className="util-label">ቁጽሪ</span>
+      </button>
+
+      {/* Hadas AI translate */}
+      <button
+        className={`util-btn util-btn--hadas ${hadasActive ? 'util-btn--active' : ''}`}
+        onPointerDown={onOpenHadas}
+        title="Translate with Hadas AI"
+      >
+        <span className="util-icon">ሓ</span>
+        <span className="util-label">Translate</span>
       </button>
 
       {/* Phonetic mode toggle — only visible in English layout */}
