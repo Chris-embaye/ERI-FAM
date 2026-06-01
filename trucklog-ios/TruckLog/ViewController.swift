@@ -62,7 +62,7 @@ class ViewController: UIViewController,
     }
 
     @objc private func handleRefresh(_ sender: UIRefreshControl) {
-        webView.url != nil ? webView.reload() : loadApp()
+        if webView.url != nil { webView.reload() } else { loadApp() }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { sender.endRefreshing() }
     }
 
