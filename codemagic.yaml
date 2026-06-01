@@ -147,6 +147,13 @@ workflows:
           xcodebuild archive \
             -scheme "$XCODE_SCHEME" \
             -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -archivePath build/TruckLog.xcarchive 2>&1 | grep -E "error:|warning:|note:|ARCHIVE" | head -50 || true
+          xcodebuild archive \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
             -destination "generic/platform=iOS" \
             -archivePath build/TruckLog.xcarchive
 
