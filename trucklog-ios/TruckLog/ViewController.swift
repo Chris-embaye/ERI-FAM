@@ -4,6 +4,7 @@ import Network
 import AuthenticationServices
 import CryptoKit
 
+@MainActor
 class ViewController: UIViewController,
                       WKNavigationDelegate,
                       WKUIDelegate,
@@ -20,18 +21,15 @@ class ViewController: UIViewController,
 
     private let appURL = URL(string: "https://trucklogapp.com")!
 
-    // Safari user agent so Google/Firebase OAuth isn't blocked by disallowed_useragent
+    // Safari UA so Google/Firebase OAuth is not blocked by disallowed_useragent
     private let safariAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
 
     override func loadView() {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
-        config.allowsAirPlayForMediaPlayback = true
-        config.allowsPictureInPictureMediaPlayback = true
 
-        // Bridge: web page calls window.webkit.messageHandlers.appleSignIn.postMessage({})
-        // when the injected Apple button is tapped.
+        // Bridge: injected Apple button calls window.webkit.messageHandlers.appleSignIn.postMessage({})
         config.userContentController.add(self, name: "appleSignIn")
 
         webView = WKWebView(frame: .zero, configuration: config)
@@ -69,7 +67,7 @@ class ViewController: UIViewController,
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { sender.endRefreshing() }
     }
 
-    // MARK: - Loading progress bar
+    // MARK: - Progress bar
 
     private func setupProgressBar() {
         progressView = UIProgressView(progressViewStyle: .bar)
@@ -95,7 +93,7 @@ class ViewController: UIViewController,
         }
     }
 
-    // MARK: - Auto-reconnect via NWPathMonitor
+    // MARK: - Network monitor
 
     private func startNetworkMonitor() {
         pathMonitor = NWPathMonitor()
@@ -111,7 +109,7 @@ class ViewController: UIViewController,
         pathMonitor?.start(queue: DispatchQueue(label: "NetworkMonitor"))
     }
 
-    // MARK: - Open target="_blank" links in the same webview
+    // MARK: - Open target="_blank" links in same webview
 
     func webView(
         _ webView: WKWebView,
@@ -123,13 +121,17 @@ class ViewController: UIViewController,
         return nil
     }
 
-    // MARK: - Offline / error fallback
+    // MARK: - Offline fallback
 
     func webView(_ wv: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        self.webView(wv, didFailProvisionalNavigation: navigation, withError: error)
+        showOfflinePage()
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        showOfflinePage()
+    }
+
+    private func showOfflinePage() {
         isShowingOffline = true
         UINotificationFeedbackGenerator().notificationOccurred(.error)
         let html = """
@@ -152,7 +154,7 @@ class ViewController: UIViewController,
         webView.loadHTMLString(html, baseURL: nil)
     }
 
-    // MARK: - Inject Sign in with Apple button after each page load
+    // MARK: - Inject Sign in with Apple after each page load
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard let url = webView.url?.absoluteString,
@@ -160,15 +162,11 @@ class ViewController: UIViewController,
         webView.evaluateJavaScript(appleButtonInjectionScript)
     }
 
-    // Injects a native-looking "Sign in with Apple" button immediately above the
-    // "Continue with Google" button. Idempotent: safe to call on every page load.
-    // Uses a MutationObserver to handle React/SPA route changes that re-render the form.
     private var appleButtonInjectionScript: String { """
         (function() {
           function inject() {
             if (document.getElementById('_ios_apple_btn')) return;
 
-            // Locate the Google button by any common pattern
             var googleBtn = document.querySelector('[data-provider="google"]')
               || Array.from(document.querySelectorAll('button')).find(function(b){
                    return b.textContent.toLowerCase().includes('google');
@@ -185,14 +183,14 @@ class ViewController: UIViewController,
             + '</svg>'
             + '<span>Sign in with Apple</span>';
             btn.style.cssText = [
-              'display:flex', 'align-items:center', 'justify-content:center', 'gap:10px',
-              'width:100%', 'padding:14px 20px',
-              'background:#000', 'color:#fff',
+              'display:flex','align-items:center','justify-content:center','gap:10px',
+              'width:100%','padding:14px 20px',
+              'background:#000','color:#fff',
               'border:1px solid rgba(255,255,255,0.15)',
-              'border-radius:14px', 'font-size:16px', 'font-weight:600',
-              'cursor:pointer', 'margin-bottom:10px',
+              'border-radius:14px','font-size:16px','font-weight:600',
+              'cursor:pointer','margin-bottom:10px',
               'font-family:-apple-system,BlinkMacSystemFont,sans-serif',
-              'box-sizing:border-box', '-webkit-tap-highlight-color:rgba(0,0,0,0.3)'
+              'box-sizing:border-box','-webkit-tap-highlight-color:rgba(0,0,0,0.3)'
             ].join(';');
 
             btn.addEventListener('click', function(e) {
@@ -204,11 +202,9 @@ class ViewController: UIViewController,
           }
 
           inject();
-          // Retry for slow-rendering SPAs
           setTimeout(inject, 600);
           setTimeout(inject, 2000);
 
-          // Watch for DOM mutations (React re-renders login form on tab switch)
           if (!window._appleObserver) {
             window._appleObserver = new MutationObserver(inject);
             window._appleObserver.observe(document.body, { childList: true, subtree: true });
@@ -216,14 +212,14 @@ class ViewController: UIViewController,
         })();
         """ }
 
-    // MARK: - WKScriptMessageHandler — receives tap on injected button
+    // MARK: - WKScriptMessageHandler
 
-    func userContentController(
+    nonisolated func userContentController(
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage
     ) {
         guard message.name == "appleSignIn" else { return }
-        initiateAppleSignIn()
+        Task { @MainActor in self.initiateAppleSignIn() }
     }
 
     // MARK: - Sign in with Apple
@@ -242,7 +238,6 @@ class ViewController: UIViewController,
         controller.performRequests()
     }
 
-    // Called by iOS on successful Apple authentication
     func authorizationController(
         controller: ASAuthorizationController,
         didCompleteWithAuthorization authorization: ASAuthorization
@@ -254,9 +249,10 @@ class ViewController: UIViewController,
             let nonce     = currentNonce
         else { return }
 
-        // Sanitise values before embedding in JS string literals
-        func esc(_ s: String) -> String { s.replacingOccurrences(of: "'", with: "\\'")
-                                           .replacingOccurrences(of: "\\", with: "\\\\") }
+        func esc(_ s: String) -> String {
+            s.replacingOccurrences(of: "'", with: "\\'")
+             .replacingOccurrences(of: "\\", with: "\\\\")
+        }
 
         let email     = esc(cred.email ?? "")
         let firstName = esc(cred.fullName?.givenName  ?? "")
@@ -264,14 +260,6 @@ class ViewController: UIViewController,
         let userID    = esc(cred.user)
         let safeToken = esc(idToken)
 
-        // Pass the credential to the web app.
-        //
-        // The web app should listen for the 'iosAppleSignIn' DOM event and call:
-        //   const provider = new OAuthProvider('apple.com');
-        //   const credential = provider.credential({ idToken: e.detail.idToken, rawNonce: e.detail.rawNonce });
-        //   await signInWithCredential(auth, credential);
-        //
-        // If window.__iosAppleSignIn is defined, it is called directly (preferred).
         let js = """
         (function() {
           var payload = {
@@ -290,17 +278,16 @@ class ViewController: UIViewController,
           }
         })();
         """
-        DispatchQueue.main.async { self.webView.evaluateJavaScript(js) }
+        webView.evaluateJavaScript(js)
     }
 
-    // User cancelled or error — web form remains available, nothing to do
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {}
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         return view.window ?? UIWindow()
     }
 
-    // MARK: - Nonce helpers (required by Apple to prevent replay attacks)
+    // MARK: - Nonce helpers
 
     private func randomNonceString(length: Int = 32) -> String {
         let charset = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
@@ -318,7 +305,7 @@ class ViewController: UIViewController,
 
     private func sha256(_ input: String) -> String {
         SHA256.hash(data: Data(input.utf8))
-            .compactMap { String(format: "%02x", $0) }
+            .map { String(format: "%02x", $0) }
             .joined()
     }
 

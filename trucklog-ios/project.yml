@@ -23,7 +23,8 @@ targets:
         MARKETING_VERSION: "1.0.2"
         CURRENT_PROJECT_VERSION: "11"
         DEVELOPMENT_TEAM: 49D2THWCHV
-        SWIFT_VERSION: "5.9"
+        SWIFT_VERSION: "5"
+        SWIFT_STRICT_CONCURRENCY: minimal
         SDKROOT: iphoneos
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: TruckLog/Info.plist
