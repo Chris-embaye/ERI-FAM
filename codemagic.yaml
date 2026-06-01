@@ -119,7 +119,7 @@ workflows:
       - name: Set build number
         script: |
           cd trucklog-ios
-          BUILD=$((CM_BUILD_NUMBER + 10))
+          BUILD=$((CM_BUILD_NUMBER + 100))
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" TruckLog/Info.plist || true
           agvtool new-version -all "$BUILD" || true
 
