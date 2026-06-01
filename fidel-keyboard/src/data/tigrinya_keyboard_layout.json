@@ -1,0 +1,74 @@
+{
+  "layout_name": "Tigrinya Standard Ge'ez",
+  "version": "1.0.0",
+  "script": "Ge'ez",
+  "language_code": "ti",
+  "primary_grid": {
+    "row_1": [
+      { "key": "ቀ", "has_variants": true,  "type": "consonant" },
+      { "key": "ወ", "has_variants": true,  "type": "consonant" },
+      { "key": "እ", "has_variants": true,  "type": "consonant" },
+      { "key": "ረ", "has_variants": true,  "type": "consonant" },
+      { "key": "ተ", "has_variants": true,  "type": "consonant" },
+      { "key": "የ", "has_variants": true,  "type": "consonant" },
+      { "key": "ኡ", "has_variants": false, "type": "vowel" },
+      { "key": "ኢ", "has_variants": false, "type": "vowel" },
+      { "key": "ኦ", "has_variants": false, "type": "vowel" },
+      { "key": "ጰ", "has_variants": true,  "type": "consonant" }
+    ],
+    "row_2": [
+      { "key": "ሀ", "has_variants": true,  "type": "consonant" },
+      { "key": "ሰ", "has_variants": true,  "type": "consonant" },
+      { "key": "ደ", "has_variants": true,  "type": "consonant" },
+      { "key": "ፈ", "has_variants": true,  "type": "consonant" },
+      { "key": "ገ", "has_variants": true,  "type": "consonant" },
+      { "key": "ሐ", "has_variants": true,  "type": "consonant" },
+      { "key": "ጀ", "has_variants": true,  "type": "consonant" },
+      { "key": "ከ", "has_variants": true,  "type": "consonant" },
+      { "key": "ለ", "has_variants": true,  "type": "consonant" }
+    ],
+    "row_3": [
+      { "key": "SHIFT",     "action": "toggle_shift",     "type": "action",  "has_variants": false },
+      { "key": "ዘ",         "has_variants": true,          "type": "consonant" },
+      { "key": "ኀ",         "has_variants": true,          "type": "consonant" },
+      { "key": "ጨ",         "has_variants": true,          "type": "consonant" },
+      { "key": "ጘ",         "has_variants": true,          "type": "consonant" },
+      { "key": "በ",         "has_variants": true,          "type": "consonant" },
+      { "key": "ነ",         "has_variants": true,          "type": "consonant" },
+      { "key": "መ",         "has_variants": true,          "type": "consonant" },
+      { "key": "BACKSPACE", "action": "delete_char",       "type": "action",  "has_variants": false }
+    ],
+    "row_4": [
+      { "key": "GLOBE", "action": "switch_to_english", "type": "action",      "has_variants": false, "label": "🌐" },
+      { "key": "፣",    "has_variants": false,           "type": "punctuation" },
+      { "key": "SPACE", "action": "insert_space",       "type": "action",      "has_variants": false, "label": "ባዶ ቦታ" },
+      { "key": "።",    "has_variants": false,           "type": "punctuation" },
+      { "key": "ENTER", "action": "insert_newline",     "type": "action",      "has_variants": false, "label": "እተው" }
+    ]
+  },
+  "geez_matrix": {
+    "ሀ": ["ሀ", "ሁ", "ሂ", "ሃ", "ሄ", "ህ", "ሆ"],
+    "ለ": ["ለ", "ሉ", "ሊ", "ላ", "ሌ", "ል", "ሎ", "ሏ"],
+    "ሐ": ["ሐ", "ሑ", "ሒ", "ሓ", "ሔ", "ሕ", "ሖ"],
+    "መ": ["መ", "ሙ", "ሚ", "ማ", "ሜ", "ም", "ሞ", "ሟ"],
+    "ረ": ["ረ", "ሩ", "ሪ", "ራ", "ሬ", "ር", "ሮ", "ሯ"],
+    "ሰ": ["ሰ", "ሱ", "ሲ", "ሳ", "ሴ", "ስ", "ሶ", "ሷ"],
+    "ቀ": ["ቀ", "ቁ", "ቂ", "ቃ", "ቄ", "ቅ", "ቆ", "ቋ"],
+    "በ": ["በ", "ቡ", "ቢ", "ባ", "ቤ", "ብ", "ቦ", "ቧ"],
+    "ተ": ["ተ", "ቱ", "ቲ", "ታ", "ቴ", "ት", "ቶ", "ቷ"],
+    "ነ": ["ነ", "ኑ", "ኒ", "ና", "ኔ", "ን", "ኖ", "ኗ"],
+    "ከ": ["ከ", "ኩ", "ኪ", "ካ", "ኬ", "ክ", "ኮ", "ኳ"],
+    "ወ": ["ወ", "ዉ", "ዊ", "ዋ", "ዌ", "ው", "ዎ"],
+    "ዘ": ["ዘ", "ዙ", "ዚ", "ዛ", "ዜ", "ዝ", "ዞ", "ዟ"],
+    "የ": ["የ", "ዩ", "ዪ", "ያ", "ዬ", "ይ", "ዮ"],
+    "ደ": ["ደ", "ዱ", "ዲ", "ዳ", "ዴ", "ድ", "ዶ", "ዷ"],
+    "ገ": ["ገ", "ጉ", "ጊ", "ጋ", "ጌ", "ግ", "ጎ", "ጓ"],
+    "ጨ": ["ጨ", "ጩ", "ጪ", "ጫ", "ጬ", "ጭ", "ጮ", "ጯ"],
+    "ፈ": ["ፈ", "ፉ", "ፊ", "ፋ", "ፌ", "ፍ", "ፎ", "ፏ"],
+    "እ": ["እ", "ኡ", "ኢ", "አ", "ኤ", "እ", "ኦ"],
+    "ኀ": ["ኀ", "ኁ", "ኂ", "ኃ", "ኄ", "ኅ", "ኆ"],
+    "ጀ": ["ጀ", "ጁ", "ጂ", "ጃ", "ጄ", "ጅ", "ጆ"],
+    "ጘ": ["ጘ", "ጙ", "ጚ", "ጛ", "ጜ", "ጝ", "ጞ"],
+    "ጰ": ["ጰ", "ጱ", "ጲ", "ጳ", "ጴ", "ጵ", "ጶ"]
+  }
+}

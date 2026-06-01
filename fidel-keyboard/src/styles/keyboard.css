@@ -1,0 +1,921 @@
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+  --kbd-bg:            #1c1c1e;
+  --kbd-key-bg:        #3a3a3c;
+  --kbd-key-press:     #5a5a5e;
+  --kbd-action-bg:     #2c2c2e;
+  --kbd-action-press:  #484848;
+  --kbd-text:          #ffffff;
+  --kbd-text-dim:      #aeaeb2;
+  --kbd-shadow:        rgba(0,0,0,0.45);
+  --kbd-radius:        8px;
+  --kbd-row-gap:       8px;
+  --kbd-key-gap:       6px;
+  --kbd-key-h:         46px;
+
+  --suggest-bg:        #252528;
+  --suggest-border:    #3a3a3c;
+  --accent:            #0a84ff;
+  --color-greeting:    #30d158;
+  --color-predict:     #ff9f0a;
+  --color-homophone:   #ffd60a;
+  --color-phrase:      #bf5af2;
+
+  --font-geez: 'Noto Sans Ethiopic', serif;
+  --font-ui:   'Inter', system-ui, sans-serif;
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  background: #000;
+  color: var(--kbd-text);
+  font-family: var(--font-ui);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
+/* ── App shell ─────────────────────────────────────────────── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  background: #0a0a0a;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 10px;
+  background: #111;
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
+}
+
+.app-logo { display: flex; align-items: baseline; gap: 8px; }
+
+.app-logo-geez {
+  font-family: var(--font-geez);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.app-logo-latin {
+  font-size: 15px;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.app-tagline { font-size: 11px; color: #444; letter-spacing: 0.04em; }
+
+/* Install button in header */
+.install-btn {
+  background: rgba(10,132,255,0.14);
+  border: 1px solid rgba(10,132,255,0.3);
+  border-radius: 10px;
+  color: var(--accent);
+  font-family: var(--font-geez);
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.install-btn:active { background: rgba(10,132,255,0.25); }
+
+/* ── Text preview ──────────────────────────────────────────── */
+.app-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.text-preview {
+  flex: 1;
+  background: #141414;
+  border: 1px solid #272727;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-family: var(--font-geez);
+  font-size: 20px;
+  line-height: 1.75;
+  color: #f0f0f0;
+  overflow-y: auto;
+  word-break: break-word;
+  white-space: pre-wrap;
+  direction: auto;
+}
+
+.text-preview-placeholder { color: #3a3a3a; font-size: 16px; }
+.text-preview-content { position: relative; }
+
+/* Pre-edit text — underlined in iOS blue while phonetic composition is in progress */
+.text-preedit {
+  text-decoration: underline;
+  text-decoration-color: #007aff;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  color: #c0dcff;
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.text-actions { display: flex; justify-content: flex-end; padding-top: 8px; }
+.clear-btn {
+  background: #222;
+  border: none;
+  border-radius: 6px;
+  color: #666;
+  font-size: 12px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+.clear-btn:hover { background: #2e2e2e; color: #aaa; }
+
+/* ── Keyboard container ────────────────────────────────────── */
+.app-keyboard-wrapper { flex-shrink: 0; }
+
+.fidel-keyboard {
+  background: var(--kbd-bg);
+  padding: 8px 4px 18px;
+  border-top: 1px solid #2a2a2a;
+  position: relative;
+}
+
+/* ── Suggestion bar ────────────────────────────────────────── */
+.suggestion-bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--suggest-bg);
+  border-bottom: 1px solid var(--suggest-border);
+  margin-bottom: 8px;
+  height: 48px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.suggestion-bar::-webkit-scrollbar { display: none; }
+
+.suggestion-chip {
+  flex: 1;
+  min-width: 0;           /* allow flex children to shrink below content width */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--suggest-border);
+  color: var(--kbd-text);
+  cursor: pointer;
+  padding: 4px 6px;
+  overflow: hidden;       /* contain long sentence strings */
+  transition: background 0.1s;
+  touch-action: manipulation;
+}
+.suggestion-chip:last-child { border-right: none; }
+.suggestion-chip:active { background: #2e2e32; }
+
+/* Centre chip gets slightly more space — it holds the "best" sentence prediction */
+.suggestion-chip--primary {
+  flex: 1.5;
+  background: rgba(10,132,255,0.10);
+}
+
+.suggestion-type-label {
+  font-family: var(--font-geez);
+  font-size: 8px;
+  color: var(--kbd-text-dim);
+  opacity: 0.5;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.suggestion-text {
+  font-family: var(--font-geez);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;             /* fill the chip's available flex width */
+  text-align: center;
+}
+
+/* Chip colours by type */
+.suggestion-chip--greeting   .suggestion-text { color: var(--color-greeting);  }
+.suggestion-chip--prediction .suggestion-text { color: var(--color-predict);   }
+.suggestion-chip--phrase     .suggestion-text { color: var(--color-phrase);    }
+.suggestion-chip--completion .suggestion-text { color: #ddd; }
+.suggestion-chip--homophone  .suggestion-text { color: var(--color-homophone); }
+.suggestion-chip--homophone::before {
+  content: '✱';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 8px;
+  color: var(--color-homophone);
+  opacity: 0.7;
+}
+.suggestion-chip--homophone { position: relative; }
+
+/* ── Key rows ──────────────────────────────────────────────── */
+.kbd-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kbd-row-gap);
+  padding: 0 4px;
+}
+
+.kbd-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: var(--kbd-key-gap);
+}
+
+/* ── Individual key ────────────────────────────────────────── */
+.kbd-key {
+  position: relative;
+  flex: 1;
+  max-width: 44px;
+  height: var(--kbd-key-h);
+  background: var(--kbd-key-bg);
+  border: none;
+  border-radius: var(--kbd-radius);
+  color: var(--kbd-text);
+  font-family: var(--font-geez);
+  font-size: 18px;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Extend tappable area by 3px in every direction without changing visual */
+  padding: 3px;
+  box-shadow: 0 2px 0 var(--kbd-shadow);
+  transition: background 0.07s, transform 0.07s;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  /* Ensure content doesn't overflow the visual bounds */
+  overflow: hidden;
+}
+
+.kbd-key:active {
+  background: var(--kbd-key-press);
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 var(--kbd-shadow);
+}
+
+/* Vowel modifier keys — blue tint only on Ge'ez layout (ኡ ኢ ኦ are phonetic modifiers) */
+.kbd-rows--ti .kbd-key--vowel {
+  background: #2a2a40;
+  color: #a8c8ff;
+}
+.kbd-rows--ti .kbd-key--vowel:active { background: #3a3a5a; }
+
+/* Action keys */
+.kbd-key--action {
+  background: var(--kbd-action-bg);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--kbd-text-dim);
+  flex: 1.6;
+  max-width: 58px;
+}
+.kbd-key--action:active { background: var(--kbd-action-press); }
+
+/* Space bar */
+.kbd-key--space {
+  flex: 4;
+  max-width: 200px;
+  font-family: var(--font-geez);
+  font-size: 13px;
+  color: var(--kbd-text-dim);
+}
+
+/* Enter key */
+.kbd-key--enter {
+  flex: 2;
+  max-width: 82px;
+  background: #0d2a4a;
+  color: var(--accent);
+  font-family: var(--font-geez);
+  font-size: 14px;
+  font-weight: 600;
+}
+.kbd-key--enter:active { background: #081d35; }
+
+/* Variant indicator dot */
+.variant-dot {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.28);
+  pointer-events: none;
+}
+
+/* ── Variant popup — Liquid Glass ──────────────────────────── */
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.variant-popup {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  /* Liquid glass effect */
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(36, 36, 42, 0.72);
+  border: 1px solid rgba(255,255,255,0.11);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow:
+    0 10px 40px rgba(0,0,0,0.65),
+    0  0   0 0.5px rgba(255,255,255,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.09);
+  animation: popIn 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.82) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+
+.variant-chip {
+  min-width: 42px;
+  height: 46px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 9px;
+  color: var(--kbd-text);
+  font-family: var(--font-geez);
+  font-size: 17px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s, transform 0.1s, border-color 0.1s;
+  touch-action: none;
+}
+
+.variant-chip--hover,
+.variant-chip:active {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.12);
+  box-shadow: 0 4px 16px rgba(10,132,255,0.4);
+}
+
+/* ── Row-specific tweaks ───────────────────────────────────── */
+.kbd-row--1 .kbd-key { max-width: 38px; font-size: 17px; }
+.kbd-row--4 .kbd-key { font-size: 13px; }
+
+/* Globe / language toggle key */
+.kbd-key--globe {
+  font-size: 16px;
+  background: #1a2a3a;
+  color: #5ac8fa;
+}
+.kbd-key--globe:active { background: #102030; }
+
+/* English QWERTY row adjustments — lowercase by default, shift toggles caps */
+.kbd-rows--en .kbd-key {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+  max-width: 40px;
+}
+.kbd-rows--en .kbd-row--1 .kbd-key { max-width: 36px; }
+
+/* English bottom row: all 5 keys equal width — no oversized spacebar */
+.kbd-rows--en .kbd-key--space {
+  flex: 1;
+  max-width: unset;
+  font-size: 12px;
+}
+.kbd-rows--en .kbd-key--enter {
+  flex: 1;
+  max-width: unset;
+  font-size: 14px;
+}
+.kbd-rows--en .kbd-key--action {
+  flex: 1;
+  max-width: unset;
+}
+
+/* Gloss shown only on the right-side English fallback chip, kept tiny */
+.suggestion-gloss {
+  font-family: var(--font-ui);
+  font-size: 8px;
+  color: var(--kbd-text-dim);
+  opacity: 0.45;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Compound correction chip */
+.suggestion-chip--compound  .suggestion-text { color: #64d2ff; }
+.suggestion-chip--transliteration .suggestion-text { color: #5ac8fa; }
+.suggestion-chip--calendar  .suggestion-text {
+  color: var(--color-greeting);
+  font-family: var(--font-geez);
+  font-size: 12px;
+}
+
+/* ── Utility ribbon ─────────────────────────────────────────── */
+.utility-ribbon {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px 4px;
+  background: #161618;
+  border-bottom: 1px solid #282828;
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: relative;
+}
+.utility-ribbon::-webkit-scrollbar { display: none; }
+
+.util-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #252528;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: var(--kbd-text-dim);
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: var(--font-geez);
+  font-size: 10px;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+  touch-action: manipulation;
+  min-width: 60px;
+}
+.util-btn:active { background: #333; }
+
+.util-btn--recording {
+  background: rgba(255, 59, 48, 0.18);
+  border-color: #ff3b30;
+  color: #ff3b30;
+  animation: pulse-rec 1s ease-in-out infinite;
+}
+@keyframes pulse-rec {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,59,48,0.3); }
+  50%      { box-shadow: 0 0 0 6px rgba(255,59,48,0); }
+}
+
+.util-btn--has-items { border-color: var(--accent); }
+.util-btn--active    { background: rgba(10,132,255,0.18); border-color: var(--accent); color: var(--accent); }
+.util-btn:disabled   { opacity: 0.35; }
+
+.util-icon  { font-size: 16px; line-height: 1; }
+.util-label { font-size: 9px; font-family: var(--font-geez); }
+
+/* Phonetic mode toggle */
+.util-btn--phonetic { min-width: 68px; }
+.util-icon--phonetic {
+  font-family: var(--font-geez);
+  font-size: 14px;
+  font-weight: 700;
+}
+.util-btn--phonetic.util-btn--active {
+  background: rgba(255, 214, 10, 0.15);
+  border-color: var(--color-homophone);
+  color: var(--color-homophone);
+}
+
+/* SHIFT key — highlights blue when active */
+.kbd-key--shift-on {
+  background: rgba(10,132,255,0.22);
+  border: 1px solid rgba(10,132,255,0.5);
+  color: var(--accent);
+}
+
+/* Predicted next key — expanded invisible touch target + subtle glow */
+.kbd-key--predicted {
+  z-index: 2;
+  /* Expand tappable area by 5px beyond the visual edge using padding + negative margin */
+  padding: 5px;
+  margin: -5px;
+  box-shadow: 0 0 0 1.5px rgba(10,132,255,0.4), 0 2px 0 var(--kbd-shadow);
+}
+
+/* Smart punctuation key — glows gold when swapped to Ge'ez form */
+.kbd-key--geez-punct {
+  background: rgba(255, 214, 10, 0.12);
+  border: 1px solid rgba(255, 214, 10, 0.35);
+  color: var(--color-homophone);
+  font-family: var(--font-geez);
+  font-size: 16px;
+}
+.kbd-key--geez-punct:active { background: rgba(255, 214, 10, 0.25); }
+
+.voice-interim {
+  flex: 1;
+  padding: 2px 8px;
+  font-family: var(--font-geez);
+  font-size: 13px;
+  color: #aaa;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.voice-error {
+  flex: 1;
+  padding: 2px 8px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: #ff6b6b;
+  background: rgba(255,59,48,0.08);
+  border: 1px solid rgba(255,59,48,0.2);
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Clipboard panel ────────────────────────────────────────── */
+.clipboard-panel {
+  background: #1a1a1c;
+  border-bottom: 1px solid #2e2e30;
+  padding: 10px 12px;
+  max-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideDown 0.18s ease;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.clipboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clipboard-title {
+  font-family: var(--font-geez);
+  font-size: 11px;
+  color: #666;
+}
+
+.clipboard-close {
+  background: transparent;
+  border: none;
+  color: #555;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.clipboard-save-btn {
+  background: rgba(10,132,255,0.12);
+  border: 1px solid rgba(10,132,255,0.3);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: var(--font-geez);
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.clipboard-empty {
+  color: #444;
+  font-family: var(--font-geez);
+  font-size: 13px;
+  text-align: center;
+  padding: 8px;
+}
+
+.clipboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.clipboard-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #252528;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+  gap: 8px;
+  transition: background 0.1s;
+}
+.clipboard-item:active { background: #333; }
+
+.clipboard-item-text {
+  font-family: var(--font-geez);
+  font-size: 13px;
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.clipboard-paste-hint {
+  font-size: 10px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.clipboard-clear-btn {
+  background: transparent;
+  border: none;
+  color: #ff3b30;
+  font-family: var(--font-geez);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
+  padding: 2px 0;
+  opacity: 0.7;
+}
+
+/* ── Number pad ─────────────────────────────────────────────── */
+.number-pad {
+  padding: 8px 8px 16px;
+}
+
+.numpad-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.numpad-toggle {
+  display: flex;
+  background: #252528;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+
+.toggle-btn {
+  padding: 5px 12px;
+  background: transparent;
+  border: none;
+  color: var(--kbd-text-dim);
+  font-family: var(--font-geez);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.toggle-btn--active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.calendar-chip {
+  flex: 1;
+  background: rgba(48,209,88,0.1);
+  border: 1px solid rgba(48,209,88,0.25);
+  border-radius: 8px;
+  color: var(--color-greeting);
+  font-family: var(--font-geez);
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.numpad-grid { display: flex; flex-direction: column; gap: 8px; }
+.numpad-row  { display: flex; gap: 6px; }
+
+.numpad-key {
+  flex: 1;
+  height: 46px;
+  background: var(--kbd-key-bg);
+  border: none;
+  border-radius: var(--kbd-radius);
+  color: var(--kbd-text);
+  font-family: var(--font-geez);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 0 var(--kbd-shadow);
+  transition: background 0.08s, transform 0.08s;
+  touch-action: none;
+}
+.numpad-key:active { background: var(--kbd-key-press); transform: translateY(1px); }
+
+.numpad-key--back  { background: var(--kbd-action-bg); font-family: var(--font-geez); font-size: 13px; color: var(--kbd-text-dim); }
+.numpad-key--space { flex: 2; background: var(--kbd-action-bg); font-family: var(--font-geez); font-size: 12px; color: var(--kbd-text-dim); }
+.numpad-key--del   { background: var(--kbd-action-bg); font-size: 16px; color: var(--kbd-text-dim); }
+.numpad-key--enter { background: #0d2a4a; color: var(--accent); font-size: 18px; }
+
+/* ── Install Guide overlay ──────────────────────────────────── */
+.install-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.install-panel {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90dvh;
+  background: #18181b;
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid #2e2e32;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.25s cubic-bezier(0.34,1.3,0.64,1);
+  overflow: hidden;
+}
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.install-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
+}
+
+.install-title-geez {
+  font-family: var(--font-geez);
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.install-title-en {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: #666;
+}
+
+.install-close {
+  background: #2e2e32;
+  border: none;
+  border-radius: 50%;
+  color: #888;
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.install-close:active { background: #3e3e42; }
+
+.install-body {
+  overflow-y: auto;
+  padding: 16px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+.install-section { display: flex; flex-direction: column; gap: 12px; }
+
+.install-section-title {
+  font-family: var(--font-geez);
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.install-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.install-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #000;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.install-step-label {
+  font-family: var(--font-geez);
+  font-size: 13px;
+  color: #e0e0e0;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.install-step-detail {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.install-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(48,209,88,0.07);
+  border: 1px solid rgba(48,209,88,0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.install-note-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+.install-note p {
+  font-family: var(--font-geez);
+  font-size: 12px;
+  color: #888;
+  line-height: 1.7;
+}
+.install-note strong { color: var(--color-greeting); }

@@ -1,0 +1,50 @@
+{
+  "layout_name": "English QWERTY",
+  "version": "1.0.0",
+  "script": "Latin",
+  "language_code": "en",
+  "primary_grid": {
+    "row_1": [
+      { "key": "q", "has_variants": false, "type": "consonant" },
+      { "key": "w", "has_variants": false, "type": "consonant" },
+      { "key": "e", "has_variants": false, "type": "vowel" },
+      { "key": "r", "has_variants": false, "type": "consonant" },
+      { "key": "t", "has_variants": false, "type": "consonant" },
+      { "key": "y", "has_variants": false, "type": "consonant" },
+      { "key": "u", "has_variants": false, "type": "vowel" },
+      { "key": "i", "has_variants": false, "type": "vowel" },
+      { "key": "o", "has_variants": false, "type": "vowel" },
+      { "key": "p", "has_variants": false, "type": "consonant" }
+    ],
+    "row_2": [
+      { "key": "a", "has_variants": false, "type": "vowel" },
+      { "key": "s", "has_variants": false, "type": "consonant" },
+      { "key": "d", "has_variants": false, "type": "consonant" },
+      { "key": "f", "has_variants": false, "type": "consonant" },
+      { "key": "g", "has_variants": false, "type": "consonant" },
+      { "key": "h", "has_variants": false, "type": "consonant" },
+      { "key": "j", "has_variants": false, "type": "consonant" },
+      { "key": "k", "has_variants": false, "type": "consonant" },
+      { "key": "l", "has_variants": false, "type": "consonant" }
+    ],
+    "row_3": [
+      { "key": "SHIFT",     "action": "toggle_shift", "type": "action", "has_variants": false },
+      { "key": "z", "has_variants": false, "type": "consonant" },
+      { "key": "x", "has_variants": false, "type": "consonant" },
+      { "key": "c", "has_variants": false, "type": "consonant" },
+      { "key": "v", "has_variants": false, "type": "consonant" },
+      { "key": "b", "has_variants": false, "type": "consonant" },
+      { "key": "n", "has_variants": false, "type": "consonant" },
+      { "key": "m", "has_variants": false, "type": "consonant" },
+      { "key": "BACKSPACE", "action": "delete_char", "type": "action", "has_variants": false }
+    ],
+    "row_4": [
+      { "key": "GLOBE",  "action": "switch_to_geez",   "type": "action", "has_variants": false, "label": "ፊደል" },
+      { "key": ",",      "has_variants": false, "type": "punctuation" },
+      { "key": "SPACE",  "action": "insert_space",     "type": "action", "has_variants": false, "label": "" },
+      { "key": ".",      "has_variants": false, "type": "punctuation" },
+      { "key": "ENTER",  "action": "insert_newline",   "type": "action", "has_variants": false, "label": "↵" }
+    ]
+  },
+  "geez_matrix": {}
+}
