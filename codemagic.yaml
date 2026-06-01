@@ -105,7 +105,7 @@ workflows:
       vars:
         BUNDLE_ID: com.chrisdrive.trucklog
         XCODE_SCHEME: TruckLog
-      xcode: "16.2"
+      xcode: latest
 
     scripts:
       - name: Install XcodeGen
