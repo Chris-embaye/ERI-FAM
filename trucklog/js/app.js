@@ -108,6 +108,12 @@ window.__iosAppleSignIn = async function(payload) {
     await firebase.auth().signInWithCredential(credential);
   } catch (err) {
     console.error('[TruckLog] Apple sign-in error:', err.code, err.message);
+    // Show error visibly on the login screen so we can diagnose on device
+    const errEl = document.getElementById('auth-error');
+    if (errEl) {
+      errEl.textContent = 'Apple Sign In failed: ' + (err.code || err.message || 'unknown error');
+      errEl.classList.remove('hidden');
+    }
   }
 };
 // Fallback: Swift fired the event before the handler was registered
