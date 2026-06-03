@@ -49,6 +49,14 @@ workflows:
           mkdir -p "$PROFILES"
           echo "$PROVISIONING_PROFILE" | base64 --decode > "$PROFILES/TruckLog.mobileprovision"
 
+      - name: Bump build number
+        script: |
+          # Codemagic's automatic "Set build number" step overwrites project.yml.
+          # This runs after it and before Archive, guaranteeing a unique number.
+          BUILD_NUM=$((BUILD_NUMBER + 200))
+          echo "Setting build number to $BUILD_NUM"
+          agvtool new-version -all "$BUILD_NUM"
+
       - name: Archive
         script: |
           xcodebuild \
