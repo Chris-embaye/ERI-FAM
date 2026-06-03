@@ -248,27 +248,23 @@ class ViewController: UIViewController,
             let nonce     = currentNonce
         else { return }
 
-        func esc(_ s: String) -> String {
-            s.replacingOccurrences(of: "'", with: "\\'")
-             .replacingOccurrences(of: "\\", with: "\\\\")
-        }
-
-        let email     = esc(cred.email ?? "")
-        let firstName = esc(cred.fullName?.givenName  ?? "")
-        let lastName  = esc(cred.fullName?.familyName ?? "")
-        let userID    = esc(cred.user)
-        let safeToken = esc(idToken)
+        // Use JSONSerialization — safe for any token content, no manual escaping
+        let payload: [String: Any] = [
+            "idToken":        idToken,
+            "rawNonce":       nonce,
+            "email":          cred.email ?? "",
+            "firstName":      cred.fullName?.givenName  ?? "",
+            "lastName":       cred.fullName?.familyName ?? "",
+            "userIdentifier": cred.user
+        ]
+        guard
+            let payloadData = try? JSONSerialization.data(withJSONObject: payload),
+            let payloadJSON = String(data: payloadData, encoding: .utf8)
+        else { return }
 
         let js = """
         (function() {
-          var payload = {
-            idToken: '\(safeToken)',
-            rawNonce: '\(nonce)',
-            email: '\(email)',
-            firstName: '\(firstName)',
-            lastName: '\(lastName)',
-            userIdentifier: '\(userID)'
-          };
+          var payload = \(payloadJSON);
           if (typeof window.__iosAppleSignIn === 'function') {
             window.__iosAppleSignIn(payload);
           } else {
