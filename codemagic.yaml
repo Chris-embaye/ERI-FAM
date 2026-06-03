@@ -119,8 +119,10 @@ workflows:
       - name: Set build number
         script: |
           cd trucklog-ios
-          BUILD=$((CM_BUILD_NUMBER + 100))
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" TruckLog/Info.plist || true
+          # CM_BUILD_NUMBER is 0 for manually triggered builds — use timestamp instead
+          BUILD=$(( $(date -u +%s) - 1740000000 ))
+          echo "==> CFBundleVersion will be: $BUILD"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" TruckLog/Info.plist
           agvtool new-version -all "$BUILD" || true
 
       - name: Set up keychain and signing
