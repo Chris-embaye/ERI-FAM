@@ -21,7 +21,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chrisdrive.trucklog
         MARKETING_VERSION: "1.0.2"
-        CURRENT_PROJECT_VERSION: "11"
+        CURRENT_PROJECT_VERSION: "101"
         DEVELOPMENT_TEAM: 49D2THWCHV
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: minimal
@@ -36,7 +36,7 @@ targets:
       properties:
         CFBundleName: TruckLog
         CFBundleDisplayName: TruckLog
-        CFBundleVersion: "6"
+        CFBundleVersion: "101"
         CFBundleShortVersionString: "1.0.2"
         LSRequiresIPhoneOS: true
         UILaunchScreen:

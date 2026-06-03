@@ -100,6 +100,23 @@ document.getElementById('modal-overlay').addEventListener('click', e => {
 window.navigate = navigate;
 window.refresh  = render;
 
+// iOS Apple Sign In bridge — Swift calls window.__iosAppleSignIn(payload) after ASAuthorizationController succeeds
+window.__iosAppleSignIn = async function(payload) {
+  try {
+    const provider   = new firebase.auth.OAuthProvider('apple.com');
+    const credential = provider.credential({ idToken: payload.idToken, rawNonce: payload.rawNonce });
+    await firebase.auth().signInWithCredential(credential);
+  } catch (err) {
+    console.error('[TruckLog] Apple sign-in error:', err.code, err.message);
+  }
+};
+// Fallback: Swift fired the event before the handler was registered
+document.addEventListener('iosAppleSignIn', e => window.__iosAppleSignIn(e.detail));
+if (window._pendingAppleCredential) {
+  window.__iosAppleSignIn(window._pendingAppleCredential);
+  window._pendingAppleCredential = null;
+}
+
 // ── Service Worker + auto-update ──────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
