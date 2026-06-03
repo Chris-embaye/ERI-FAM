@@ -49,21 +49,18 @@ workflows:
           mkdir -p "$PROFILES"
           echo "$PROVISIONING_PROFILE" | base64 --decode > "$PROFILES/TruckLog.mobileprovision"
 
-      - name: Bump build number
-        script: |
-          # Codemagic's automatic "Set build number" step overwrites project.yml.
-          # This runs after it and before Archive, guaranteeing a unique number.
-          BUILD_NUM=$((BUILD_NUMBER + 200))
-          echo "Setting build number to $BUILD_NUM"
-          agvtool new-version -all "$BUILD_NUM"
-
       - name: Archive
         script: |
+          # CURRENT_PROJECT_VERSION on the command line overrides agvtool/project settings.
+          # CFBundleVersion in Info.plist uses $(CURRENT_PROJECT_VERSION) so this flows through.
+          BUILD_NUM=$((BUILD_NUMBER + 200))
+          echo "==> Build number: $BUILD_NUM"
           xcodebuild \
             -scheme TruckLog \
             -configuration Release \
             -archivePath build/TruckLog.xcarchive \
             -destination "generic/platform=iOS" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUM" \
             archive
 
       - name: Export IPA
