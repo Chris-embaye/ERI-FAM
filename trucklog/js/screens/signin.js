@@ -9,8 +9,8 @@ function setError(container, msg) {
 
 export function renderSignIn() {
   const html = `
-    <div class="flex flex-col h-full bg-black text-white overflow-hidden">
-      <div class="flex-1 flex flex-col justify-center px-6 py-10 max-w-sm mx-auto w-full auth-animate">
+    <div class="flex flex-col min-h-full bg-black text-white">
+      <div class="flex flex-col justify-center px-6 py-10 max-w-sm mx-auto w-full auth-animate" style="min-height:100%">
 
         <!-- Logo -->
         <div class="text-center mb-8">
@@ -163,13 +163,6 @@ export function renderSignIn() {
       e.preventDefault();
       const fd  = new FormData(e.target);
       const btn = formSignIn.querySelector('#auth-submit');
-
-      // Kill code bypass — enter any email + "5455" as password
-      if (fd.get('password') === '5455') {
-        localStorage.setItem('rl_kill_access', '1');
-        window.refresh?.();
-        return;
-      }
 
       btn.disabled = true; btn.textContent = 'Signing in…';
       setError(container, '');

@@ -328,6 +328,12 @@ export function renderSettings() {
         </button>
         ` : ''}
 
+        <!-- Legal & support links — required for App Store compliance -->
+        <div style="text-align:center;padding:8px 0 4px;display:flex;justify-content:center;gap:24px">
+          <a href="/privacy.html" style="font-size:.75rem;color:rgba(156,163,175,0.6);text-decoration:none">Privacy Policy</a>
+          <a href="/support.html" style="font-size:.75rem;color:rgba(156,163,175,0.6);text-decoration:none">Support</a>
+        </div>
+
         <div style="height:24px"></div>
       </div>
     </div>`;

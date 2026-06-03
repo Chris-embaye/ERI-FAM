@@ -19,14 +19,6 @@ export function getCurrentUser() { return _user; }
 export function isAuthReady()    { return _ready; }
 
 export function initAuth() {
-  // Kill code bypass — skip auth entirely, present as a guest user
-  if (localStorage.getItem('rl_kill_access') === '1') {
-    _user = { uid: 'kill_master', email: 'master@bypass.local', displayName: 'Master Access', isBypass: true };
-    _ready = true;
-    _listeners.forEach(fn => fn(_user));
-    return;
-  }
-
   if (!window.firebase?.auth) {
     // Firebase not available — run in offline/guest mode
     _user = null;

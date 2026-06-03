@@ -280,10 +280,21 @@ class ViewController: UIViewController,
         webView.evaluateJavaScript(js)
     }
 
-    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {}
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        // Ignore user cancellation — anything else tell the page so the UI can recover
+        let code = (error as? ASAuthorizationError)?.code
+        guard code != .canceled else { return }
+        let js = "document.dispatchEvent(new CustomEvent('iosAppleSignInError', { detail: '\(error.localizedDescription)' }));"
+        webView.evaluateJavaScript(js)
+    }
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        return view.window ?? UIWindow()
+        // view.window can be nil during iPad multitasking — walk connected scenes instead
+        if let window = view.window { return window }
+        return UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first(where: { $0.isKeyWindow }) ?? UIWindow()
     }
 
     // MARK: - Nonce helpers
