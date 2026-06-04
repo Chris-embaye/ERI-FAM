@@ -987,6 +987,15 @@ function showFidelToast(msg) {
     { r:'P',    c:['ፐ','ፑ','ፒ','ፓ','ፔ','ፕ','ፖ'] },
   ];
   const SOUNDS = ['ä','u','i','a','ē','ə','o'];
+  const normalizeFidelSearch = value => (value || '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ə/g, 'e');
+  const soundFor = (row, i) => row.r + SOUNDS[i];
+  const searchableSoundFor = (row, i) => normalizeFidelSearch(soundFor(row, i));
 
   // Tweak 1: explored progress
   let _explored = new Set(JSON.parse(localStorage.getItem('fidel_explored') || '[]'));
@@ -1043,9 +1052,14 @@ function showFidelToast(msg) {
   }
 
   function renderGrid(filter) {
-    const q = (filter || '').trim().toLowerCase();
+    const rawQ = (filter || '').trim();
+    const q = normalizeFidelSearch(rawQ);
     const rows = q
-      ? ROWS.filter(row => row.c.some(ch => ch.includes(q)) || row.r.toLowerCase().startsWith(q))
+      ? ROWS.filter(row =>
+          row.c.some(ch => ch.includes(rawQ)) ||
+          normalizeFidelSearch(row.r).startsWith(q) ||
+          row.c.some((_, i) => searchableSoundFor(row, i).startsWith(q))
+        )
       : ROWS;
 
     if (!rows.length) {
@@ -1059,9 +1073,9 @@ function showFidelToast(msg) {
         `<div class="fidel-cell` +
         (_explored.has(ch) ? ' explored' : '') +
         (_activeCol === i   ? ' col-active' : '') +
-        `" data-col="${i}" data-char="${ch}" title="${row.r + SOUNDS[i]}">` +
+        `" data-col="${i}" data-char="${ch}" title="${soundFor(row, i)}">` +
         `<span class="fidel-char">${ch}</span>` +
-        `<span class="fidel-sound">${row.r + SOUNDS[i]}</span>` +
+        `<span class="fidel-sound">${soundFor(row, i)}</span>` +
         `</div>`
       ).join('') + `</div>`
     ).join('');
@@ -1119,6 +1133,129 @@ function showFidelToast(msg) {
 })();
 
 // ── DARK MODE ─────────────────────────────────
+// Tigrinya lessons
+(function initTigrinyaLessons() {
+  const grid = document.getElementById('lessonsGrid');
+  const modal = document.getElementById('lessonModal');
+  const modalBody = document.getElementById('lessonModalBody');
+  const modalClose = document.getElementById('lessonModalClose');
+  const progressBar = document.getElementById('lessonsProgressBar');
+  const progressLabel = document.getElementById('lessonsProgressLabel');
+  if (!grid) return;
+
+  const LESSONS = [
+    {
+      id: 'alphabet',
+      icon: '🔤',
+      title: 'Alphabet Basics',
+      summary: 'Start with common Fidel sounds and how the seven forms change.',
+      focus: ['ሀ ha', 'ሁ hu', 'ሂ hi', 'ሃ ha', 'ሄ he', 'ህ h', 'ሆ ho'],
+      practice: 'Tap letters in the Fidel table, then say the roman sound out loud.'
+    },
+    {
+      id: 'numbers',
+      icon: '🔢',
+      title: 'Numbers',
+      summary: 'Learn the first numbers used in counting, shopping, and dates.',
+      focus: ['ሓደ - one', 'ክልተ - two', 'ሰለስተ - three', 'ኣርባዕተ - four', 'ሓሙሽተ - five'],
+      practice: 'Count five objects near you in Tigrinya.'
+    },
+    {
+      id: 'colors',
+      icon: '🎨',
+      title: 'Colors',
+      summary: 'Useful words for describing clothes, flags, food, and places.',
+      focus: ['ቀይሕ - red', 'ጻዕዳ - white', 'ጸሊም - black', 'ሰማያዊ - blue', 'ሓምላይ - green'],
+      practice: 'Pick three colors in the room and name them in Tigrinya.'
+    },
+    {
+      id: 'days',
+      icon: '📅',
+      title: 'Days of the Week',
+      summary: 'Recognize the days in conversation and planning.',
+      focus: ['ሰንበት - Sunday', 'ሶኑይ - Monday', 'ሰሉስ - Tuesday', 'ረቡዕ - Wednesday', 'ዓርቢ - Friday'],
+      practice: 'Say today, tomorrow, and yesterday using the day names.'
+    },
+    {
+      id: 'phrases',
+      icon: '💬',
+      title: 'Common Phrases',
+      summary: 'Everyday greetings and polite phrases for beginners.',
+      focus: ['ሰላም - hello', 'ከመይ ኣለኻ? - how are you?', 'የቐንየለይ - thank you', 'ይቕሬታ - sorry', 'ደሓን ኩን - goodbye'],
+      practice: 'Practice a full greeting: hello, how are you, thank you.'
+    }
+  ];
+
+  let completed = new Set(JSON.parse(localStorage.getItem('tigrinya_lessons_done') || '[]'));
+
+  function saveCompleted() {
+    localStorage.setItem('tigrinya_lessons_done', JSON.stringify([...completed]));
+  }
+
+  function updateLessonsProgress() {
+    const done = completed.size;
+    if (progressBar) progressBar.style.width = `${(done / LESSONS.length) * 100}%`;
+    if (progressLabel) progressLabel.textContent = `${done} / ${LESSONS.length} complete`;
+  }
+
+  function renderLessons() {
+    grid.innerHTML = LESSONS.map((lesson, index) => {
+      const done = completed.has(lesson.id);
+      return `
+        <button class="lesson-card${done ? ' complete' : ''}" data-lesson="${lesson.id}">
+          <span class="lesson-card-icon">${lesson.icon}</span>
+          <span class="lesson-card-step">Lesson ${index + 1}</span>
+          <span class="lesson-card-title">${lesson.title}</span>
+          <span class="lesson-card-summary">${lesson.summary}</span>
+          <span class="lesson-card-status">${done ? '✓ Complete' : 'Start lesson'}</span>
+        </button>`;
+    }).join('');
+
+    grid.querySelectorAll('.lesson-card').forEach(card => {
+      card.addEventListener('click', () => openLesson(card.getAttribute('data-lesson')));
+    });
+  }
+
+  function openLesson(id) {
+    const lesson = LESSONS.find(item => item.id === id);
+    if (!lesson || !modal || !modalBody) return;
+    const done = completed.has(lesson.id);
+    modalBody.innerHTML = `
+      <div class="lesson-modal-kicker">${lesson.icon} ${lesson.title}</div>
+      <h3>${lesson.summary}</h3>
+      <div class="lesson-focus-list">
+        ${lesson.focus.map(item => `<div class="lesson-focus-item">${item}</div>`).join('')}
+      </div>
+      <p class="lesson-practice">${lesson.practice}</p>
+      <button class="lesson-complete-btn" id="lessonCompleteBtn">${done ? 'Mark incomplete' : 'Mark complete'}</button>
+    `;
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    document.getElementById('lessonCompleteBtn')?.addEventListener('click', () => {
+      if (completed.has(lesson.id)) completed.delete(lesson.id);
+      else completed.add(lesson.id);
+      saveCompleted();
+      updateLessonsProgress();
+      renderLessons();
+      openLesson(lesson.id);
+    });
+  }
+
+  function closeLesson() {
+    if (modal) modal.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  modalClose?.addEventListener('click', closeLesson);
+  modal?.addEventListener('click', e => { if (e.target === modal) closeLesson(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal && !modal.hidden) closeLesson();
+  });
+
+  updateLessonsProgress();
+  renderLessons();
+})();
+
 const darkToggleBtn = document.getElementById('darkToggle');
 
 function applyDarkMode(dark) {

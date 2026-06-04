@@ -3355,6 +3355,7 @@
       <button class="tab-btn" data-tab="write">✍️ Write</button>
       <button class="tab-btn" data-tab="grammar">📚 Grammar</button>
       <button class="tab-btn" data-tab="pronunciation">🗣 Sounds</button>
+      <button class="tab-btn" data-tab="speak">🎤 Speak</button>
     </div>
 
     <!-- ALPHABET -->
@@ -3399,6 +3400,56 @@
         <button class="fidel-speak" id="fidelSpeakBtn" title="Hear pronunciation">🔊</button>
       </div>
       <p style="font-size:.68rem;color:var(--text-dim);text-align:center;margin-bottom:16px">Tap any character to see its name and pronunciation</p>
+    </div>
+
+    <!-- SPEAK / PRONUNCIATION ASSESSMENT -->
+    <div class="tab-panel" id="tab-speak">
+      <style>
+        @keyframes speakPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+        #speakRecordBtn:active { transform:scale(.96); }
+      </style>
+
+      <!-- Character card -->
+      <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:32px 20px;text-align:center;box-shadow:var(--shadow);margin-bottom:18px">
+        <div id="speakCharGz" style="font-family:'Noto Sans Ethiopic','Ebrima',sans-serif;font-size:5rem;font-weight:800;color:var(--green);line-height:1.1"></div>
+        <div id="speakCharRom" style="font-size:1rem;font-weight:700;color:var(--text-sub);margin-top:8px;letter-spacing:1.5px;text-transform:uppercase"></div>
+        <div style="font-size:.7rem;color:var(--text-dim);margin-top:6px">Say this character out loud, then tap Stop</div>
+      </div>
+
+      <!-- Record button -->
+      <div style="display:flex;justify-content:center;margin-bottom:14px">
+        <button id="speakRecordBtn" onclick="speakToggleRecord()" style="height:52px;padding:0 30px;border-radius:26px;border:2px solid var(--green);background:var(--green-light);color:var(--green);font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:border-color .2s,background .2s,color .2s">
+          <span id="speakRecordIcon">🎤</span>
+          <span id="speakRecordLabel">Start Recording</span>
+        </button>
+      </div>
+
+      <!-- Recording indicator -->
+      <div id="speakRecordingInd" style="display:none;justify-content:center;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="width:9px;height:9px;border-radius:50%;background:#FF3B30;display:inline-block;animation:speakPulse .8s infinite"></span>
+        <span style="color:#FF3B30;font-size:.82rem;font-weight:600">Recording…</span>
+      </div>
+
+      <!-- Loading -->
+      <div id="speakLoading" style="display:none;text-align:center;color:var(--text-dim);font-size:.82rem;padding:10px">
+        Analyzing pronunciation…
+      </div>
+
+      <!-- Error -->
+      <div id="speakError" style="display:none;color:#FF3B30;font-size:.8rem;text-align:center;margin-bottom:10px;padding:0 8px"></div>
+
+      <!-- Result card -->
+      <div id="speakResult" style="display:none;background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:14px;text-align:center">
+        <div id="speakScore" style="font-size:3.2rem;font-weight:800"></div>
+        <div id="speakScoreLabel" style="font-size:.95rem;font-weight:700;margin-top:4px;margin-bottom:14px"></div>
+        <div id="speakDetected" style="font-size:.78rem;color:var(--text-sub);margin-bottom:12px"></div>
+        <div id="speakTimeline" style="display:flex;flex-direction:column;gap:5px;text-align:left"></div>
+      </div>
+
+      <!-- Next button -->
+      <div style="display:flex;justify-content:center;padding-bottom:20px">
+        <button onclick="speakNextChar()" style="height:42px;padding:0 26px;border-radius:21px;border:1.5px solid var(--border);background:var(--bg);color:var(--text-sub);font-size:.88rem;font-weight:600;cursor:pointer">Next Character →</button>
+      </div>
     </div>
 
     <!-- VOCABULARY -->
@@ -5863,6 +5914,7 @@ document.querySelectorAll('#learnTabs .tab-btn').forEach(btn => {
     });
     if (btn.dataset.tab === 'flashcards' && !fcInited) initFlashcards();
     if (btn.dataset.tab === 'lessons') renderLessons();
+    if (btn.dataset.tab === 'speak') window._initSpeakTab?.();
   });
 });
 
@@ -14598,6 +14650,119 @@ if (_matchGridEl) {
     ];
     return fallbacks[Math.floor(Math.random() * fallbacks.length)];
   }
+})();
+
+
+/* ═══════════════════════════════
+   SPEAK / PRONUNCIATION ASSESSMENT
+═══════════════════════════════ */
+(function() {
+  const ASSESS_URL = 'https://hadas-ai-server-production.up.railway.app/api/test/evaluate-pronunciation';
+  let currentChar  = null;
+  let mediaRecorder = null;
+  let audioChunks  = [];
+  let isRecording  = false;
+  let inited       = false;
+
+  function pickChar() {
+    const row = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+    const fi  = Math.floor(Math.random() * row.forms.length);
+    currentChar = { gz: row.forms[fi], rom: row.sounds[fi] };
+    document.getElementById('speakCharGz').textContent  = currentChar.gz;
+    document.getElementById('speakCharRom').textContent = currentChar.rom;
+    document.getElementById('speakResult').style.display  = 'none';
+    document.getElementById('speakError').style.display   = 'none';
+    document.getElementById('speakLoading').style.display = 'none';
+  }
+
+  window.speakNextChar = pickChar;
+
+  window.speakToggleRecord = async function() {
+    if (isRecording) {
+      mediaRecorder.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks  = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        await evaluate();
+      };
+      mediaRecorder.start();
+      isRecording = true;
+      setUI(true);
+    } catch {
+      showErr('Microphone access denied. Please allow microphone in your browser settings.');
+    }
+  };
+
+  function setUI(recording) {
+    isRecording = recording;
+    const btn = document.getElementById('speakRecordBtn');
+    document.getElementById('speakRecordIcon').textContent   = recording ? '⏹' : '🎤';
+    document.getElementById('speakRecordLabel').textContent  = recording ? 'Stop & Evaluate' : 'Start Recording';
+    btn.style.borderColor  = recording ? '#FF3B30' : 'var(--green)';
+    btn.style.background   = recording ? 'rgba(255,59,48,0.12)' : 'var(--green-light)';
+    btn.style.color        = recording ? '#FF3B30' : 'var(--green)';
+    document.getElementById('speakRecordingInd').style.display = recording ? 'flex' : 'none';
+    document.getElementById('speakError').style.display = 'none';
+  }
+
+  async function evaluate() {
+    setUI(false);
+    document.getElementById('speakLoading').style.display = 'block';
+    try {
+      const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+      const fd   = new FormData();
+      fd.append('audio', blob, 'recording.webm');
+      fd.append('expectedRomanization', currentChar.rom);
+      fd.append('targetTigrinya', currentChar.gz);
+      const res  = await fetch(ASSESS_URL, { method: 'POST', body: fd });
+      const data = await res.json();
+      document.getElementById('speakLoading').style.display = 'none';
+      if (!data.success) throw new Error(data.error || 'Server error');
+      showResult(data);
+    } catch(err) {
+      document.getElementById('speakLoading').style.display = 'none';
+      showErr(err.message || 'Evaluation failed — try again.');
+    }
+  }
+
+  function showResult(data) {
+    const color = data.score >= 75 ? '#22c55e' : data.score >= 50 ? '#f59e0b' : '#ef4444';
+    const label = data.score >= 75 ? '✓ Great pronunciation!' : data.score >= 50 ? '~ Almost there' : '✗ Keep practicing';
+    document.getElementById('speakScore').textContent      = data.score + '%';
+    document.getElementById('speakScore').style.color      = color;
+    document.getElementById('speakScoreLabel').textContent = label;
+    document.getElementById('speakScoreLabel').style.color = color;
+    document.getElementById('speakDetected').textContent   = 'Detected: ' + (data.detected || '—');
+    document.getElementById('speakTimeline').innerHTML     = (data.timelineDiagnostics || []).map(p => {
+      const c = p.confidence >= 75 ? '#22c55e' : p.confidence >= 50 ? '#f59e0b' : '#ef4444';
+      return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:8px;padding:6px 10px">
+        <span style="font-family:'Noto Sans Ethiopic',sans-serif;font-weight:700;width:22px;text-align:center">${p.phoneme}</span>
+        <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${p.confidence}%;background:${c};border-radius:3px;transition:width .4s"></div>
+        </div>
+        <span style="font-size:.7rem;color:var(--text-dim);width:32px;text-align:right">${p.confidence}%</span>
+      </div>`;
+    }).join('');
+    document.getElementById('speakResult').style.display = 'block';
+  }
+
+  function showErr(msg) {
+    const el = document.getElementById('speakError');
+    el.textContent   = msg;
+    el.style.display = 'block';
+  }
+
+  window._initSpeakTab = function() {
+    if (inited) return;
+    inited = true;
+    pickChar();
+  };
 })();
 
 </script>

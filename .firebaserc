@@ -16,6 +16,9 @@
         ],
         "vault": [
           "eri-fam-vault"
+        ],
+        "trucklog": [
+          "trucklogapp-1b40e"
         ]
       }
     },
