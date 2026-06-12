@@ -9,9 +9,9 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.erifam.fidelkeyboard
+        bundle_identifier: com.embayechris.fidelkeyboard2
       vars:
-        APP_STORE_APPLE_ID: "1234567890"   # replace with your App Store Connect numeric App ID
+        APP_STORE_APPLE_ID: "6779067687"
       node: 20.x
       xcode: latest
 
