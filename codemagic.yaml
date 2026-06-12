@@ -11,7 +11,7 @@ workflows:
         BUNDLE_ID: com.embayechris.fidelkeyboard2
         XCODE_SCHEME: App
       xcode: latest
-      node: 20.x
+      node: 20
 
     scripts:
       - name: Install npm dependencies
