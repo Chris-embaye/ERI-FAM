@@ -1,4 +1,86 @@
 workflows:
+  fidel-keyboard-testflight:
+    name: Fidel Keyboard — TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      groups:
+        - app_store
+      vars:
+        BUNDLE_ID: com.embayechris.fidelkeyboard2
+        XCODE_SCHEME: App
+      xcode: latest
+      node: 20.x
+
+    scripts:
+      - name: Install npm dependencies
+        script: cd fidel-keyboard && npm ci
+
+      - name: Build web app
+        script: cd fidel-keyboard && npm run build
+
+      - name: Capacitor sync iOS
+        script: cd fidel-keyboard && npx cap sync ios
+
+      - name: Set build number
+        script: |
+          cd fidel-keyboard/ios/App
+          BUILD=$(( $(date -u +%s) - 1740000000 ))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" App/Info.plist || true
+          agvtool new-version -all "$BUILD" || true
+
+      - name: Set up keychain and signing
+        script: |
+          keychain initialize
+          echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > /tmp/dist.key
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --platform IOS \
+            --type IOS_APP_STORE \
+            --create \
+            --certificate-key @file:/tmp/dist.key \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
+            --private-key @env:APP_STORE_CONNECT_PRIVATE_KEY
+          keychain add-certificates
+          cd fidel-keyboard/ios/App && xcode-project use-profiles
+
+      - name: Archive
+        script: |
+          cd fidel-keyboard/ios/App
+          xcodebuild archive \
+            -project App.xcodeproj \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -archivePath build/FidelKeyboard.xcarchive
+
+      - name: Export IPA
+        script: |
+          cd fidel-keyboard/ios/App
+          xcodebuild -exportArchive \
+            -archivePath build/FidelKeyboard.xcarchive \
+            -exportOptionsPlist /Users/builder/export_options.plist \
+            -exportPath build/FidelKeyboardExport
+
+    artifacts:
+      - fidel-keyboard/ios/App/build/FidelKeyboardExport/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+      email:
+        recipients:
+          - mebrahatom12@gmail.com
+        notify:
+          success: true
+          failure: true
+
   fidel-ios-appstore:
     name: Fidel — App Store Upload
     max_build_duration: 60
