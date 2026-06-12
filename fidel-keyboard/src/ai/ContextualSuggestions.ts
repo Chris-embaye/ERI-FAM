@@ -151,7 +151,7 @@ export class ContextualSuggestions {
         const corrections = cascadeSearch(prevWord, 2);
         if (corrections.length) {
           return [
-            { text: corrections[0], type: 'completion', gloss: '✓ ቅኑዕ?' },
+            { text: corrections[0], type: 'completion' as const, gloss: '✓ ቅኑዕ?' },
             ...(corrections[1] ? [{ text: corrections[1], type: 'completion' as const, gloss: '✓ ቅኑዕ?' }] : []),
             ...PHRASE_TEMPLATES.slice(0, 1).map(p => ({ text: p, type: 'phrase' as const })),
           ].slice(0, 3);

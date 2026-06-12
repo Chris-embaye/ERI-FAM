@@ -1,0 +1,50 @@
+workflows:
+  ios-testflight:
+    name: Fidel Keyboard — iOS TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic_api_key   # name of your API key in Codemagic dashboard
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.erifam.fidelkeyboard
+      vars:
+        APP_STORE_APPLE_ID: "1234567890"   # replace with your App Store Connect numeric App ID
+      node: 20.x
+      xcode: latest
+
+    scripts:
+      - name: Install npm dependencies
+        script: npm ci
+
+      - name: Build web app
+        script: npm run build
+
+      - name: Capacitor sync iOS
+        script: npx cap sync ios
+
+      - name: Set build number from TestFlight
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo "0")
+          agvtool new-version -all $(($LATEST + 1))
+        working_directory: ios/App
+
+      - name: Archive and export IPA
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --project ios/App/App.xcodeproj \
+            --scheme App
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - External Testers
