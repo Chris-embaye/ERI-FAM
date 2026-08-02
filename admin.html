@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ERI-FAM — Cloud Upload</title>
+<link rel="icon" href="icons/icon-512.png" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d0d10; color: #fff; min-height: 100vh; padding: 24px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  h1 span { color: #C8914A; }
+  .sub { color: rgba(255,255,255,.55); font-size: .9rem; margin-bottom: 24px; }
+  .card {
+    background: #1a1a1f; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px; padding: 20px; margin-bottom: 16px;
+  }
+  label { display: block; font-size: .8rem; color: rgba(255,255,255,.6); margin: 10px 0 4px; }
+  input[type=email], input[type=password] {
+    width: 100%; padding: 11px 12px; border-radius: 9px; font-size: 1rem;
+    background: #26262c; border: 1px solid rgba(255,255,255,.12); color: #fff;
+  }
+  button {
+    font-family: inherit; font-size: .95rem; font-weight: 700; cursor: pointer;
+    border: none; border-radius: 9px; padding: 11px 18px; margin-top: 14px;
+    background: #C8914A; color: #14100a;
+  }
+  button:disabled { opacity: .45; cursor: default; }
+  button.ghost { background: #26262c; color: #fff; border: 1px solid rgba(255,255,255,.15); }
+  .status { font-size: .85rem; margin-top: 10px; color: rgba(255,255,255,.7); min-height: 1.2em; }
+  .status.err { color: #ff6b60; }
+  .status.ok  { color: #46d97a; }
+  .hidden { display: none; }
+  .progress-outer {
+    height: 10px; background: #26262c; border-radius: 6px; overflow: hidden; margin-top: 12px;
+  }
+  .progress-inner { height: 100%; width: 0%; background: linear-gradient(90deg, #C8914A, #e0b06a); transition: width .3s; }
+  .stats { display: flex; gap: 18px; margin-top: 12px; font-size: .85rem; flex-wrap: wrap; }
+  .stats b { color: #C8914A; }
+  table { width: 100%; border-collapse: collapse; font-size: .8rem; margin-top: 12px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,.06); }
+  th { color: rgba(255,255,255,.5); font-weight: 600; }
+  td.st-done { color: #46d97a; } td.st-fail { color: #ff6b60; } td.st-skip { color: rgba(255,255,255,.4); }
+  .albums-preview { font-size: .82rem; color: rgba(255,255,255,.65); margin-top: 8px; line-height: 1.6; }
+  .note { font-size: .78rem; color: rgba(255,255,255,.45); margin-top: 10px; line-height: 1.5; }
+  #fileTable-wrap { max-height: 340px; overflow-y: auto; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ERI-<span>FAM</span> · Cloud Upload</h1>
+  <p class="sub">Upload your music library to the cloud — every device gets the same songs, organized by album &amp; title.</p>
+
+  <!-- STEP 1: LOGIN -->
+  <div class="card" id="loginCard">
+    <strong>1 · Admin sign in</strong>
+    <label>Email</label>
+    <input type="email" id="email" autocomplete="username" />
+    <label>Password</label>
+    <input type="password" id="password" autocomplete="current-password" />
+    <button id="loginBtn">Sign In</button>
+    <div class="status" id="loginStatus"></div>
+  </div>
+
+  <!-- STEP 2: PICK MUSIC -->
+  <div class="card hidden" id="pickCard">
+    <strong>2 · Choose your music folder</strong>
+    <p class="note">Pick a folder (e.g. <b>All Music</b>). Songs are scanned for real album/title/artist tags;
+    files without tags use their folder name as the album. Already-uploaded songs are skipped automatically,
+    so you can re-run this any time.</p>
+    <input type="file" id="folderInput" webkitdirectory multiple hidden />
+    <input type="file" id="filesInput" accept=".mp3,.m4a,.flac,.wav,.ogg,.aac" multiple hidden />
+    <button onclick="document.getElementById('folderInput').click()">📁 Choose Folder</button>
+    <button class="ghost" onclick="document.getElementById('filesInput').click()">🎵 Choose Files</button>
+    <div class="status" id="scanStatus"></div>
+    <div class="albums-preview" id="albumsPreview"></div>
+  </div>
+
+  <!-- STEP 3: UPLOAD -->
+  <div class="card hidden" id="uploadCard">
+    <strong>3 · Upload</strong>
+    <div class="stats">
+      <span>Total: <b id="stTotal">0</b></span>
+      <span>Uploaded: <b id="stDone">0</b></span>
+      <span>Skipped: <b id="stSkip">0</b></span>
+      <span>Failed: <b id="stFail">0</b></span>
+    </div>
+    <div class="progress-outer"><div class="progress-inner" id="progBar"></div></div>
+    <div class="status" id="upStatus"></div>
+    <button id="startBtn">🚀 Start Upload</button>
+    <button class="ghost" id="stopBtn" disabled>⏸ Stop</button>
+    <div id="fileTable-wrap"><table id="fileTable"></table></div>
+    <p class="note">Keep this tab open while uploading. If you stop or close it, run again later —
+    finished songs are skipped. Firebase free plan holds ~5&nbsp;GB (≈1,000 songs); above that the
+    project needs the pay-as-you-go plan (~$0.03/GB per month).</p>
+  </div>
+</div>
+
+<script src="firebase-config.js?v=3.1.0"></script>
+<script type="module">
+/* ═══ Firebase ═══ */
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, collection, getDocs, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+const app = initializeApp(window.FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const st = getStorage(app);
+
+const $ = id => document.getElementById(id);
+$('email').value = window.ADMIN_EMAIL || '';
+
+/* ═══ ID3 tag reader (same engine as the app) ═══ */
+function _id3Text(bytes, start, len) {
+  if (len <= 1) return '';
+  const enc = bytes[start];
+  const data = bytes.subarray(start + 1, start + len);
+  try {
+    if (enc === 1) return new TextDecoder('utf-16').decode(data).replace(/\0/g, '').trim();
+    if (enc === 2) return new TextDecoder('utf-16be').decode(data).replace(/\0/g, '').trim();
+    if (enc === 3) return new TextDecoder('utf-8').decode(data).replace(/\0/g, '').trim();
+    return new TextDecoder('iso-8859-1').decode(data).replace(/\0/g, '').trim();
+  } catch { return ''; }
+}
+function readID3FromBuffer(buf) {
+  const out = { title: '', artist: '', album: '' };
+  try {
+    const b = new Uint8Array(buf);
+    if (b.length > 10 && b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33) {
+      const ver = b[3];
+      const tagSize = ((b[6]&0x7f)<<21)|((b[7]&0x7f)<<14)|((b[8]&0x7f)<<7)|(b[9]&0x7f);
+      const end = Math.min(10 + tagSize, b.length);
+      let pos = 10;
+      if (b[5] & 0x40) {
+        const ext = ver === 4
+          ? ((b[10]&0x7f)<<21)|((b[11]&0x7f)<<14)|((b[12]&0x7f)<<7)|(b[13]&0x7f)
+          : (b[10]<<24)|(b[11]<<16)|(b[12]<<8)|b[13];
+        pos += ext;
+      }
+      const idLen = ver === 2 ? 3 : 4;
+      const hdLen = ver === 2 ? 6 : 10;
+      const want = ver === 2
+        ? { TT2:'title', TP1:'artist', TAL:'album' }
+        : { TIT2:'title', TPE1:'artist', TALB:'album' };
+      while (pos + hdLen <= end) {
+        const idStr = String.fromCharCode(...b.subarray(pos, pos + idLen));
+        if (!/^[A-Z0-9]+$/.test(idStr)) break;
+        let fSize;
+        if (ver === 2)      fSize = (b[pos+3]<<16)|(b[pos+4]<<8)|b[pos+5];
+        else if (ver === 4) fSize = ((b[pos+4]&0x7f)<<21)|((b[pos+5]&0x7f)<<14)|((b[pos+6]&0x7f)<<7)|(b[pos+7]&0x7f);
+        else                fSize = (b[pos+4]<<24)|(b[pos+5]<<16)|(b[pos+6]<<8)|b[pos+7];
+        if (fSize <= 0 || pos + hdLen + fSize > end) break;
+        const key = want[idStr];
+        if (key && !out[key]) out[key] = _id3Text(b, pos + hdLen, fSize);
+        pos += hdLen + fSize;
+        if (out.title && out.artist && out.album) break;
+      }
+    }
+    if ((!out.title || !out.artist || !out.album) && b.length > 128) {
+      const t = b.subarray(b.length - 128);
+      if (t[0] === 0x54 && t[1] === 0x41 && t[2] === 0x47) {
+        const dec = s => new TextDecoder('iso-8859-1').decode(s).replace(/\0/g, '').trim();
+        if (!out.title)  out.title  = dec(t.subarray(3, 33));
+        if (!out.artist) out.artist = dec(t.subarray(33, 63));
+        if (!out.album)  out.album  = dec(t.subarray(63, 93));
+      }
+    }
+  } catch {}
+  return out;
+}
+function parseFilename(filename) {
+  let name = filename.replace(/\.[^.]+$/, '').trim().replace(/^\d{1,3}[\s.\-]+/, '').trim();
+  let artist = 'Unknown Artist', title = name;
+  if (name.includes(' - ')) {
+    const parts = name.split(' - ');
+    artist = parts[0].trim();
+    title = parts.slice(1).join(' - ').trim();
+  }
+  return { title: title || name, artist };
+}
+function albumFromPath(file) {
+  const parts = (file.webkitRelativePath || '').split('/');
+  return parts.length >= 2 ? parts[parts.length - 2].trim() : '';
+}
+function readDuration(file) {
+  return new Promise(resolve => {
+    const a = new Audio();
+    const url = URL.createObjectURL(file);
+    const done = d => { URL.revokeObjectURL(url); resolve(d); };
+    a.addEventListener('loadedmetadata', () => done(a.duration || 0));
+    a.addEventListener('error', () => done(0));
+    setTimeout(() => done(0), 8000);
+    a.preload = 'metadata';
+    a.src = url;
+  });
+}
+
+/* ═══ State ═══ */
+let queue = [];      // { file, title, artist, album, hashKey, status }
+let existing = new Set();
+let running = false;
+
+/* ═══ Login ═══ */
+$('loginBtn').addEventListener('click', async () => {
+  const s = $('loginStatus');
+  s.className = 'status';
+  s.textContent = 'Signing in…';
+  try {
+    await signInWithEmailAndPassword(auth, $('email').value.trim(), $('password').value);
+    s.className = 'status ok';
+    s.textContent = '✅ Signed in';
+    $('loginCard').classList.add('hidden');
+    $('pickCard').classList.remove('hidden');
+    loadExisting();
+  } catch (e) {
+    s.className = 'status err';
+    s.textContent = '⚠ ' + (e.code === 'auth/invalid-credential' ? 'Wrong email or password' : e.message);
+  }
+});
+$('password').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginBtn').click(); });
+
+async function loadExisting() {
+  try {
+    const snap = await getDocs(collection(db, 'tracks'));
+    snap.docs.forEach(d => { const h = d.data().hashKey; if (h) existing.add(h); });
+    $('scanStatus').textContent = existing.size
+      ? `${existing.size} songs already in the cloud — they'll be skipped.` : '';
+  } catch (e) {
+    $('scanStatus').textContent = '⚠ Could not read existing cloud songs: ' + e.message;
+  }
+}
+
+/* ═══ Scan folder ═══ */
+async function scan(files) {
+  const audio = Array.from(files).filter(f =>
+    /\.(mp3|m4a|flac|wav|ogg|aac)$/i.test(f.name));
+  if (!audio.length) { $('scanStatus').textContent = '⚠ No audio files found in that folder.'; return; }
+  $('scanStatus').textContent = `Reading tags from ${audio.length} files…`;
+  queue = [];
+  const albums = {};
+  let i = 0;
+  for (const file of audio) {
+    // Read just the head + tail for tags — fast even on thousands of files
+    const head = await file.slice(0, 512 * 1024).arrayBuffer();
+    let tags = readID3FromBuffer(head);
+    if (!tags.title && !tags.album) {
+      const tail = await file.slice(Math.max(0, file.size - 128)).arrayBuffer();
+      const t2 = readID3FromBuffer(tail);
+      tags.title = tags.title || t2.title; tags.artist = tags.artist || t2.artist; tags.album = tags.album || t2.album;
+    }
+    const parsed = parseFilename(file.name);
+    const entry = {
+      file,
+      title:  tags.title  || parsed.title,
+      artist: tags.artist || parsed.artist,
+      album:  tags.album  || albumFromPath(file) || '',
+      hashKey: file.name.toLowerCase().trim() + '_' + file.size,
+      status: 'pending',
+    };
+    if (existing.has(entry.hashKey)) entry.status = 'skip';
+    queue.push(entry);
+    albums[entry.album || 'Unknown Album'] = (albums[entry.album || 'Unknown Album'] || 0) + 1;
+    if (++i % 100 === 0) $('scanStatus').textContent = `Reading tags… ${i}/${audio.length}`;
+  }
+  const gb = (audio.reduce((s, f) => s + f.size, 0) / 1e9).toFixed(1);
+  $('scanStatus').className = 'status ok';
+  $('scanStatus').textContent = `✅ ${queue.length} songs ready (${gb} GB) · ${Object.keys(albums).length} albums`;
+  $('albumsPreview').innerHTML = Object.entries(albums).sort((a,b) => b[1]-a[1]).slice(0, 12)
+    .map(([n, c]) => `💿 ${n} — ${c}`).join('<br>');
+  $('uploadCard').classList.remove('hidden');
+  renderStats();
+}
+$('folderInput').addEventListener('change', e => scan(e.target.files));
+$('filesInput').addEventListener('change', e => scan(e.target.files));
+
+/* ═══ Upload ═══ */
+function renderStats() {
+  const done = queue.filter(q => q.status === 'done').length;
+  const skip = queue.filter(q => q.status === 'skip').length;
+  const fail = queue.filter(q => q.status === 'fail').length;
+  $('stTotal').textContent = queue.length;
+  $('stDone').textContent = done;
+  $('stSkip').textContent = skip;
+  $('stFail').textContent = fail;
+  $('progBar').style.width = queue.length ? ((done + skip + fail) / queue.length * 100) + '%' : '0%';
+}
+function logRow(q) {
+  const tbl = $('fileTable');
+  const cls = q.status === 'done' ? 'st-done' : q.status === 'fail' ? 'st-fail' : 'st-skip';
+  tbl.insertAdjacentHTML('afterbegin',
+    `<tr><td>${q.title}</td><td>${q.album || '—'}</td><td class="${cls}">${q.status}${q.err ? ' · ' + q.err : ''}</td></tr>`);
+}
+
+$('startBtn').addEventListener('click', async () => {
+  if (running) return;
+  running = true;
+  $('startBtn').disabled = true;
+  $('stopBtn').disabled = false;
+  const pending = queue.filter(q => q.status === 'pending');
+  for (const q of pending) {
+    if (!running) break;
+    $('upStatus').textContent = `⏳ Uploading: ${q.title}`;
+    try {
+      const safe = q.file.name.replace(/[^\w.\-]+/g, '_').slice(0, 80);
+      const path = `eri_music/${Date.now()}_${safe}`;
+      const task = uploadBytesResumable(ref(st, path), q.file,
+        { contentType: q.file.type || 'audio/mpeg' });
+      await new Promise((res, rej) => task.on('state_changed', null, rej, res));
+      const url = await getDownloadURL(task.snapshot.ref);
+      const duration = await readDuration(q.file);
+      await addDoc(collection(db, 'tracks'), {
+        title: q.title, artist: q.artist, album: q.album,
+        duration, size: q.file.size, url, storagePath: path,
+        hashKey: q.hashKey, addedAt: Date.now(), playCount: 0,
+      });
+      q.status = 'done';
+      existing.add(q.hashKey);
+    } catch (e) {
+      q.status = 'fail';
+      q.err = e.code || e.message;
+    }
+    logRow(q);
+    renderStats();
+  }
+  running = false;
+  $('startBtn').disabled = false;
+  $('stopBtn').disabled = true;
+  const done = queue.filter(q => q.status === 'done').length;
+  $('upStatus').className = 'status ok';
+  $('upStatus').textContent = `✅ Finished — ${done} songs uploaded. Open the app and pull-refresh to see them.`;
+});
+$('stopBtn').addEventListener('click', () => { running = false; $('stopBtn').disabled = true; });
+window.addEventListener('beforeunload', e => { if (running) { e.preventDefault(); e.returnValue = ''; } });
+</script>
+</body>
+</html>

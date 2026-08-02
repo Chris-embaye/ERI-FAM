@@ -15,9 +15,10 @@ const getEnv = (key) => {
   return null;
 };
 
-// Default configuration — OVERRIDE these in production with env vars
+// Firebase WEB config — these values are public by design (like a website URL).
+// Real security lives in Firestore/Storage RULES, never in hiding this config.
 const FIREBASE_CONFIG = {
-  apiKey:            getEnv('VITE_FIREBASE_API_KEY') || "YOUR_API_KEY",
+  apiKey:            getEnv('VITE_FIREBASE_API_KEY') || "AIzaSyCcvA7TBrkdsfXVSIT-J9U-asNsIKWvX2E",
   authDomain:        getEnv('VITE_FIREBASE_AUTH_DOMAIN') || "eri-fam.firebaseapp.com",
   databaseURL:       getEnv('VITE_FIREBASE_DB_URL') || "https://eri-fam-default-rtdb.firebaseio.com",
   projectId:         getEnv('VITE_FIREBASE_PROJECT_ID') || "eri-fam",
@@ -28,7 +29,7 @@ const FIREBASE_CONFIG = {
 };
 
 // Admin email (pre-fills the login form — password is entered manually for security)
-const ADMIN_EMAIL = "admin@eri-fam.app";
+const ADMIN_EMAIL = "embayechris@gmail.com";
 
 // OPTIONAL API Keys — Features will gracefully degrade if not provided
 const AUDD_API_KEY    = getEnv('VITE_AUDD_API_KEY') || "";    // Music ID at https://audd.io
