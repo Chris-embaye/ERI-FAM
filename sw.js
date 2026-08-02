@@ -3,7 +3,7 @@
  * Enables offline playback, caching, and app updates
  */
 
-const CACHE_NAME = 'eri-fam-v2.0';
+const CACHE_NAME = 'eri-fam-v3.0';
 const CRITICAL_ASSETS = [
   '/',
   '/index.html',

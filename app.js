@@ -549,7 +549,7 @@ audio.addEventListener('pause', () => {
 window.addEventListener('beforeunload', savePlaybackState);
 window.addEventListener('pagehide', savePlaybackState);
 document.addEventListener('visibilitychange', () => { if (document.hidden) savePlaybackState(); });
-setInterval(() => { if (S.playing && !audio.paused) savePlaybackState(); }, 5000);
+setInterval(() => { if (S.playing && !audio.paused) savePlaybackState(); }, 15000);
 audio.addEventListener('error', () => toast('⚠ Could not play this track'));
 
 // ── Media Session API (lock screen / background) ───────────────
@@ -572,31 +572,51 @@ function updateMediaSession() {
 // ── UI Updates ─────────────────────────────────────────────────
 const RING_C = 867.08; // 2π × 138 (SVG ring circumference)
 
+// Cached progress elements — avoids 12+ DOM lookups firing 4x/sec (battery saver)
+let _progEls = null;
+function _getProgEls() {
+  if (!_progEls) {
+    _progEls = {
+      miniFill: document.getElementById('miniProgFill'),
+      fpFill:   document.getElementById('fpProgFill'),
+      gpBar:    document.getElementById('gpProgressBar'),
+      fpThumb:  document.getElementById('fpProgThumb'),
+      fpCur:    document.getElementById('fpCurTime'),
+      fpDur:    document.getElementById('fpDuration'),
+      fpCur2:   document.getElementById('fpCurTime2'),
+      fpDur2:   document.getElementById('fpDuration2'),
+      ringFill: document.getElementById('fpRingFill'),
+      ringDot:  document.getElementById('fpRingDot'),
+    };
+  }
+  return _progEls;
+}
+
+let _lastPosUpdate = 0;
 function updateProgress() {
   const dur = audio.duration || 0;
   const cur = audio.currentTime || 0;
   const ratio = dur ? cur / dur : 0;
   const pct = ratio * 100;
+  const el = _getProgEls();
 
-  document.getElementById('miniProgFill').style.width = pct + '%';
-  document.getElementById('fpProgFill').style.width   = pct + '%';
-  const gpBar = document.getElementById('gpProgressBar');
-  if (gpBar) gpBar.style.width = pct + '%';
-  document.getElementById('fpProgThumb').style.left   = pct + '%';
-  document.getElementById('fpCurTime').textContent    = fmtTime(cur);
-  document.getElementById('fpDuration').textContent   = fmtTime(dur);
-  const ct2 = document.getElementById('fpCurTime2');
-  const d2  = document.getElementById('fpDuration2');
-  if (ct2) ct2.textContent = fmtTime(cur);
-  if (d2)  d2.textContent  = fmtTime(dur);
+  if (el.miniFill) el.miniFill.style.width = pct + '%';
+  if (el.fpFill)   el.fpFill.style.width   = pct + '%';
+  if (el.gpBar)    el.gpBar.style.width    = pct + '%';
+  if (el.fpThumb)  el.fpThumb.style.left   = pct + '%';
+  if (el.fpCur)  el.fpCur.textContent  = fmtTime(cur);
+  if (el.fpDur)  el.fpDur.textContent  = fmtTime(dur);
+  if (el.fpCur2) el.fpCur2.textContent = fmtTime(cur);
+  if (el.fpDur2) el.fpDur2.textContent = fmtTime(dur);
 
   // Drive circular progress ring
-  const ringFill = document.getElementById('fpRingFill');
-  const ringDot  = document.getElementById('fpRingDot');
-  if (ringFill) ringFill.style.strokeDashoffset = RING_C * (1 - ratio);
-  if (ringDot)  ringDot.setAttribute('transform', `rotate(${ratio * 360} 150 150)`);
+  if (el.ringFill) el.ringFill.style.strokeDashoffset = RING_C * (1 - ratio);
+  if (el.ringDot)  el.ringDot.setAttribute('transform', `rotate(${ratio * 360} 150 150)`);
 
-  if ('mediaSession' in navigator && dur) {
+  // Throttle media-session position updates to 1/sec (was 4/sec)
+  const now = Date.now();
+  if ('mediaSession' in navigator && dur && now - _lastPosUpdate > 1000) {
+    _lastPosUpdate = now;
     navigator.mediaSession.setPositionState({ duration: dur, position: cur, playbackRate: S.playbackSpeed || 1 });
   }
 }
@@ -1006,22 +1026,29 @@ document.getElementById('searchToggleBtn').addEventListener('click', () => {
   if (searchBarEl.classList.contains('open')) document.getElementById('searchInput').focus();
 });
 document.getElementById('searchClose').addEventListener('click', () => searchBarEl.classList.remove('open'));
+let _searchDebounce = null;
 document.getElementById('searchInput').addEventListener('input', e => {
-  const q = e.target.value.trim();
-  const all = getAllTracks();
-  if (!q) { renderSearchResults(all, ''); return; }
-  const results = all.filter(t => t.title.toLowerCase().includes(q.toLowerCase()) || t.artist.toLowerCase().includes(q.toLowerCase()));
-  renderSearchResults(results, q);
-  // Switch to search view
-  document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelector('.m-nav-item[data-view="search"]')?.classList.add('active');
-  document.getElementById('view-search').classList.add('active');
+  clearTimeout(_searchDebounce);
+  _searchDebounce = setTimeout(() => {
+    const q = e.target.value.trim();
+    const all = getAllTracks();
+    if (!q) { renderSearchResults(all, ''); return; }
+    const lq = q.toLowerCase();
+    const results = all.filter(t => (t.title||'').toLowerCase().includes(lq) || (t.artist||'').toLowerCase().includes(lq));
+    renderSearchResults(results, q);
+    // Switch to search view
+    document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelector('.m-nav-item[data-view="search"]')?.classList.add('active');
+    document.getElementById('view-search').classList.add('active');
+  }, 150);
 });
 
-// ── Home Search ────────────────────────────────────────────────
+// ── Home Search (debounced) ────────────────────────────────────
+let _homeSearchDebounce = null;
 document.getElementById('homeSearchInput').addEventListener('input', e => {
-  renderTracks(e.target.value.trim());
+  clearTimeout(_homeSearchDebounce);
+  _homeSearchDebounce = setTimeout(() => renderTracks(e.target.value.trim()), 150);
 });
 
 // ── Promotions ─────────────────────────────────────────────────
@@ -2049,9 +2076,12 @@ function startVisualizer() {
   const ctx = canvas.getContext('2d');
   const buf = new Uint8Array(analyserNode.frequencyBinCount);
 
-  function draw() {
+  let _lastFrame = 0;
+  function draw(ts) {
     if (!vizActive) return;
     vizRaf = requestAnimationFrame(draw);
+    if (ts - _lastFrame < 33) return; // cap at ~30fps — half the GPU work, looks identical
+    _lastFrame = ts;
     analyserNode.getByteFrequencyData(buf);
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0, 0, W, H);
@@ -4817,7 +4847,7 @@ function _cycleAmbient() {
     `radial-gradient(ellipse at 70% 75%, ${b} 0%, transparent 65%)`;
   _ambIdx++;
 }
-function _startAmbient() { if (!_ambInterval) _ambInterval = setInterval(_cycleAmbient, 6000); }
+function _startAmbient() { if (!_ambInterval) _ambInterval = setInterval(_cycleAmbient, 30000); }
 function _stopAmbient()  { clearInterval(_ambInterval); _ambInterval = null; }
 _cycleAmbient();
 _startAmbient();
@@ -4825,26 +4855,8 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) _stopAmbient(); else _startAmbient();
 });
 
-// 3D card tilt on desktop (mouse hover) — passive to avoid blocking scroll
-let _tiltRaf = null;
-document.addEventListener('mousemove', e => {
-  cancelAnimationFrame(_tiltRaf);
-  _tiltRaf = requestAnimationFrame(() => {
-    const card = e.target.closest('.track-card');
-    document.querySelectorAll('.track-card').forEach(c => {
-      if (c !== card) { c.style.transform = ''; c.style.boxShadow = ''; }
-    });
-    if (!card) return;
-    const r = card.getBoundingClientRect();
-    const dx = (e.clientX - r.left - r.width  / 2) / (r.width  / 2);
-    const dy = (e.clientY - r.top  - r.height / 2) / (r.height / 2);
-    card.style.transform = `perspective(700px) rotateY(${dx*8}deg) rotateX(${-dy*8}deg) scale(1.04) translateZ(10px)`;
-    card.style.boxShadow = `${-dx*10}px ${dy*10}px 36px rgba(0,0,0,.65), 0 0 0 1px rgba(200,145,74,.28)`;
-  });
-}, { passive: true });
-document.addEventListener('mouseleave', () => {
-  document.querySelectorAll('.track-card').forEach(c => { c.style.transform = ''; c.style.boxShadow = ''; });
-}, true);
+// 3D card tilt removed — a document-wide mousemove handler forced constant
+// style recalculation and drained battery. Simple CSS :hover covers this now.
 
 // ── Full-player fullscreen toggle ──────────────────────────
 document.getElementById('fpFullscreenBtn')?.addEventListener('click', () => {

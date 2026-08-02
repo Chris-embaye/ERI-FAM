@@ -3838,3 +3838,97 @@ body {
   .main-content { padding: 16px; padding-bottom: 160px; }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   v3.0 PERFORMANCE & BATTERY MODE
+   Kills GPU-heavy decorative effects so the phone stays cool.
+   Keeps functional motion: loading spinner, playing bars, live dot.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1 ── Static ambient background: no more full-screen animation */
+.ambient-bg {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* 2 ── Remove blurred floating orbs (each was a constantly-composited
+        blur(40px) layer) */
+.hero-orb { display: none !important; }
+
+/* 3 ── Kill decorative infinite animations (major heat source) */
+.nav-item.active::after,
+.m-nav-item.active::after { animation: none !important; opacity: .14 !important; }
+.app-header::after { animation: none !important; }
+.yt2-offline-icon,
+.kc-glow, [class*="kc-"] { animation: none !important; }
+
+/* 4 ── Lighter glass: big blur radii force the GPU to re-composite
+        every frame anything moves. Halve them + raise opacity. */
+.app-header {
+  background: rgba(10,10,12,.92) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.05) !important;
+}
+.glass-panel, .mobile-bottom-nav {
+  background: rgba(12,12,14,.94) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+.search-bar, .side-panel, .bottom-sheet {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* 5 ── Calmer nav active state: static highlight, no glow stack */
+.nav-item.active svg, .m-nav-item.active svg {
+  filter: none !important;
+}
+.nav-item.active span, .m-nav-item.active span {
+  text-shadow: none !important;
+}
+
+/* 6 ── Simple hover for track cards (replaces JS 3D tilt) */
+.track-card { will-change: auto !important; }
+@media (hover: hover) {
+  .track-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+}
+
+/* 7 ── Faster long-list rendering: browser skips off-screen rows */
+.track-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 64px;
+}
+.track-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
+}
+
+/* 8 ── Bigger, easier touch targets (min 44px) */
+.mobile-bottom-nav .m-nav-item,
+.nav-item { min-height: 48px; min-width: 48px; }
+.icon-btn { min-width: 42px; min-height: 42px; }
+
+/* 9 ── Respect system low-power / reduced-motion setting fully */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 10 ── Slow the remaining tiny status dots (half the wakeups) */
+.sync-dot        { animation-duration: 2.4s !important; }
+.radio-live-dot  { animation-duration: 3s !important; }
+
+/* 11 ── Kill the remaining big-element loops (precise selectors) */
+.fp-art            { animation: none !important; }   /* floating artwork  */
+.radio-fs-glow     { animation: none !important; }   /* radio glow pulse  */
+.radio-fs-icon     { animation: none !important; filter: drop-shadow(0 0 10px rgba(139,92,246,.5)) !important; }
+.kc-glyph          { animation: none !important; }
+.fp-vinyl-grooves  { animation: none !important; }   /* spinning vinyl repaint */
+.app-header.music-playing::after { animation: none !important; opacity: .5 !important; }
