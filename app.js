@@ -2948,13 +2948,27 @@ function switchView(viewName) {
   if (viewName === 'community') loadCommunityPosts();
 }
 
-document.querySelectorAll('.sb-nav-item').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (!btn.dataset.view) return; // settings btn has no data-view; handled by its own listener
-    switchView(btn.dataset.view);
-    closeSidebar();
+// Attach sidebar navigation listeners
+function attachSidebarListeners() {
+  document.querySelectorAll('.sb-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!btn.dataset.view) return; // settings btn has no data-view; handled by its own listener
+      try {
+        switchView(btn.dataset.view);
+        closeSidebar();
+      } catch(e) {
+        console.warn('[Sidebar] Navigation error:', e);
+      }
+    });
   });
-});
+}
+
+// Attach on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', attachSidebarListeners);
+} else {
+  attachSidebarListeners();
+}
 
 document.querySelectorAll('.sb-sub-item').forEach(btn => {
   btn.addEventListener('click', () => {
