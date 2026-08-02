@@ -14,7 +14,6 @@ import { UtilityRibbon } from './UtilityRibbon';
 import { ClipboardPanel } from './ClipboardPanel';
 import { NumberPad } from './NumberPad';
 import { HadasPanel } from './HadasPanel';
-import { getCharFamily } from '../engine/characterFamily';
 import geezLayout    from '../data/tigrinya_keyboard_layout.json';
 import englishLayout from '../data/english_keyboard_layout.json';
 import '../styles/keyboard.css';
@@ -289,7 +288,8 @@ export function FidelKeyboard({ text, onTextChange, onPreEditChange }: Props) {
       <div className="fidel-keyboard">
         <UtilityRibbon voice={voice} clipboardCount={clipboard.length} layoutMode={layoutMode}
           phoneticMode={phoneticMode} onTogglePhonetic={() => setPhoneticMode(v => !v)}
-          onToggleClipboard={() => setShowClipboard(v => !v)} onOpenNumbers={() => setLayoutMode('geez')} />
+          onToggleClipboard={() => setShowClipboard(v => !v)} onOpenNumbers={() => setLayoutMode('geez')}
+          onOpenHadas={() => setShowHadas(v => !v)} hadasActive={showHadas} />
         {showClipboard && (
           <ClipboardPanel items={clipboard} currentText={fullText}
             onPaste={pasteClipboard} onSaveCurrent={saveCurrent}
