@@ -1,38 +1,42 @@
 // ================================================================
-//  ERI-FAM — Firebase & API Configuration
-//  1. Go to https://console.firebase.google.com
-//  2. Create a project → Add Web App → copy config below
-//  3. Enable: Firestore, Storage, Authentication (Anonymous + Email)
+//  ERI-FAM — Firebase & API Configuration v2.0
+//
+//  SECURITY NOTE: Never commit real API keys to version control.
+//  Use environment variables or a separate .env file.
+//  Create a firebase-config.local.js for local development.
 // ================================================================
 
+// Default configuration — OVERRIDE these in production with env vars
 const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyCcvA7TBrkdsfXVSIT-J9U-asNsIKWvX2E",
-  authDomain:        "eri-fam.firebaseapp.com",
-  databaseURL:       "https://eri-fam-default-rtdb.firebaseio.com",
-  projectId:         "eri-fam",
-  storageBucket:     "eri-fam.firebasestorage.app",
-  messagingSenderId: "640644486226",
-  appId:             "1:640644486226:web:9a076e9775c58763cffb8b",
-  measurementId:     "G-GMYL5P3F1P"
+  apiKey:            import.meta.env?.VITE_FIREBASE_API_KEY || "YOUR_API_KEY",
+  authDomain:        import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN || "eri-fam.firebaseapp.com",
+  databaseURL:       import.meta.env?.VITE_FIREBASE_DB_URL || "https://eri-fam-default-rtdb.firebaseio.com",
+  projectId:         import.meta.env?.VITE_FIREBASE_PROJECT_ID || "eri-fam",
+  storageBucket:     import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET || "eri-fam.firebasestorage.app",
+  messagingSenderId: import.meta.env?.VITE_FIREBASE_MESSAGING_ID || "640644486226",
+  appId:             import.meta.env?.VITE_FIREBASE_APP_ID || "1:640644486226:web:9a076e9775c58763cffb8b",
+  measurementId:     import.meta.env?.VITE_FIREBASE_MEASUREMENT_ID || "G-GMYL5P3F1P"
 };
 
 // Admin email (pre-fills the login form — password is entered manually for security)
-const ADMIN_EMAIL = "embayechris@gmail.com";
+const ADMIN_EMAIL = "admin@eri-fam.app";
 
-// Music Identification — free tier at https://audd.io
-const AUDD_API_KEY   = "";
+// OPTIONAL API Keys — Features will gracefully degrade if not provided
+const AUDD_API_KEY    = import.meta.env?.VITE_AUDD_API_KEY || "";    // Music ID at https://audd.io
+const GEMINI_API_KEY  = import.meta.env?.VITE_GEMINI_API_KEY || "";  // AI Translation
+const YOUTUBE_API_KEY = import.meta.env?.VITE_YOUTUBE_API_KEY || ""; // YouTube search
 
-// AI Translation — Gemini free at https://aistudio.google.com/app/apikey
-const GEMINI_API_KEY = "";
-
-// Cloudinary (free audio storage — cloudinary.com)
+// Cloudinary configuration (optional)
 const CLOUDINARY_CLOUD  = "dcbqqqpmw";
 const CLOUDINARY_PRESET = "eri-fam-music";
 
-// YouTube Data API v3 — free 10,000 units/day (~100 searches)
-// Get key: console.cloud.google.com → Enable "YouTube Data API v3" → Credentials → API Key
-// Restrict key to: HTTP referrers → https://chris-embaye.github.io/*
-const YOUTUBE_API_KEY = "";
-
 // YouTube backend URL (optional — deploy yt-dlp backend separately)
-const YT_BACKEND_URL = "";
+const YT_BACKEND_URL = import.meta.env?.VITE_YT_BACKEND_URL || "";
+
+// Try to load local config if it exists (for development)
+if (typeof window !== 'undefined' && localStorage.getItem('eri-fam-config-loaded') !== 'true') {
+  import('./firebase-config.local.js').catch(() => {
+    console.log('[Config] Using default Firebase configuration');
+    localStorage.setItem('eri-fam-config-loaded', 'true');
+  });
+}

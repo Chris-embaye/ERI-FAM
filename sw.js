@@ -1,89 +1,121 @@
-'use strict';
+/**
+ * ERI-FAM v2.0 — Service Worker
+ * Enables offline playback, caching, and app updates
+ */
 
-const CACHE = 'erifam-v39';
-const STATIC = [
-  './',
-  './index.html',
-  './styles.css',
-  './app.js',
-  './manifest.json',
-  './firebase-config.js',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
+const CACHE_NAME = 'eri-fam-v2.0';
+const CRITICAL_ASSETS = [
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/app.js',
+  '/firebase-config.js',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/manifest.json'
 ];
 
-// These hosts must always bypass the SW — never intercept Firebase SDK or APIs
-const BYPASS_HOSTS = [
-  'gstatic.com',                      // Firebase SDK JS files live here
-  'googleapis.com',                   // Firebase APIs (Firestore, Storage, Auth, etc.)
-  'firebaseapp.com',
-  'accounts.google.com',
-];
-
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE)
-      .then(c =>
-        // allSettled so one slow/failed file doesn't abort the whole install
-        Promise.allSettled(STATIC.map(url =>
-          c.add(url).catch(err => console.warn('[SW] cache miss:', url, err))
-        ))
-      )
-      .then(() => self.skipWaiting())
+// Install event — cache critical assets
+self.addEventListener('install', (event) => {
+  console.log('[SW] Installing...');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('[SW] Caching critical assets');
+        return Promise.all([
+          cache.addAll(CRITICAL_ASSETS).catch(err => {
+            console.warn('[SW] Could not cache all assets:', err);
+          })
+        ]);
+      })
+      .then(() => {
+        console.log('[SW] Installation complete');
+        return self.skipWaiting();
+      })
+      .catch(err => console.error('[SW] Install failed:', err))
   );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-      ))
-      .then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-
-  const url = new URL(e.request.url);
-
-  // Let Firebase/Google traffic go straight to the network — no SW interception
-  // (intercepting Firebase SDK JS files breaks them when they're not in cache)
-  if (BYPASS_HOSTS.some(h => url.hostname.endsWith(h))) return;
-
-  // Network-first for own-origin files so updates land immediately
-  if (url.origin === self.location.origin) {
-    e.respondWith(
-      fetch(e.request)
-        .then(res => {
-          if (res.ok) {
-            caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+// Activate event — clean up old caches
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating...');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
           }
-          return res;
         })
-        .catch(() =>
-          caches.match(e.request)
-            .then(r => r || caches.match('./index.html'))
-        )
+      );
+    })
+    .then(() => self.clients.claim())
+    .catch(err => console.error('[SW] Activate failed:', err))
+  );
+});
+
+// Fetch event — network-first with cache fallback
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip cross-origin requests
+  if (url.origin !== location.origin) {
+    return;
+  }
+
+  // For audio files — cache them aggressively
+  if (request.destination === 'audio' || url.pathname.endsWith('.mp3')) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        return fetch(request)
+          .then((response) => {
+            if (response.ok) {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(request, responseClone);
+              });
+            }
+            return response;
+          })
+          .catch(() => cachedResponse || new Response('Audio not available', { status: 404 }));
+      })
     );
     return;
   }
 
-  // Cache-first for other external CDN resources (HLS.js, fonts, etc.)
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(res => {
-        if (res && res.ok && res.type !== 'opaque') {
-          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+  // For everything else — network-first
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (!response || response.status !== 200 || response.type === 'error') {
+          return response;
         }
-        return res;
-      }).catch(() => caches.match('./index.html'));
-    })
+        
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseClone);
+        });
+        return response;
+      })
+      .catch(() => {
+        return caches.match(request)
+          .then(cachedResponse => cachedResponse || new Response('Offline — no cached version', { status: 503 }));
+      })
   );
 });
 
-self.addEventListener('message', e => {
-  if (e.data === 'SKIP_WAITING') self.skipWaiting();
+// Handle messages from client (update check, etc.)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    caches.delete(CACHE_NAME).then(() => {
+      event.ports[0].postMessage({ cleared: true });
+    });
+  }
 });
+
+console.log('[SW] Service Worker v2.0 loaded');

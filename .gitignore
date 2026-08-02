@@ -1,0 +1,46 @@
+# Environment & Secrets
+firebase-config.local.js
+.env
+.env.local
+.env.*.local
+firebase-config.development.js
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build & Dist
+dist/
+build/
+*.tgz
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary
+*.tmp
+.temp/
+
+# Local backups
+*.backup
+*.bak
