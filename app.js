@@ -3,6 +3,13 @@
    ================================================================ */
 'use strict';
 
+// ── Import utility modules ─────────────────────────────────────
+// Note: These are included for reference but not yet integrated
+// import { ensureAudioContextRunning } from './audio-context-helper.js';
+// import { ErrorHandler } from './error-handler.js';
+// import { SearchIndex } from './search-index.js';
+// import { debounce, throttle, measurePerformance } from './performance.js';
+
 // ── Firebase dynamic import ────────────────────────────────────
 let db, storage, auth;
 const FB_READY = (async () => {
@@ -22,6 +29,29 @@ const FB_READY = (async () => {
     return true;
   } catch (e) { console.warn('[Firebase] Load failed:', e); return false; }
 })();
+
+// ── Utility: Cleanup & Listeners ───────────────────────────────
+const listeners = [];
+const cleanup = () => {
+  listeners.forEach(({ target, event, handler }) => {
+    target?.removeEventListener?.(event, handler);
+  });
+  listeners.length = 0;
+};
+
+const addListener = (target, event, handler, opts = false) => {
+  if (target) {
+    target.addEventListener(event, handler, opts);
+    listeners.push({ target, event, handler });
+  }
+};
+
+// ── Utility: Better Error Handling ──────────────────────────────
+const handleError = (context, error, fallback = null) => {
+  console.warn(`[${context}] Error:`, error?.message || error);
+  if (fallback !== null) return fallback;
+  throw error;
+};
 
 // ── State ──────────────────────────────────────────────────────
 const S = {
