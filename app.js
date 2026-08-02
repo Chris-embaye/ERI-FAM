@@ -1758,7 +1758,7 @@ document.querySelectorAll('.phrase-chip').forEach(chip => {
 });
 
 // ── YouTube → MP3 ─────────────────────────────────────────────
-document.getElementById('ytBtn').addEventListener('click', () => openModal('ytModal'));
+document.getElementById('ytBtn')?.addEventListener('click', () => openModal('ytModal'));
 document.getElementById('ytClose').addEventListener('click', () => closeModal('ytModal'));
 document.getElementById('ytConvertBtn').addEventListener('click', async () => {
   const url = document.getElementById('ytUrl').value.trim();
@@ -2478,7 +2478,7 @@ document.getElementById('radioFsStop').addEventListener('click', () => stopRadio
 document.getElementById('radioFsClose').addEventListener('click', () => {
   document.getElementById('radioFullscreen').style.display = 'none';
 });
-document.getElementById('radioHeaderBtn').addEventListener('click', () => {
+document.getElementById('radioHeaderBtn')?.addEventListener('click', () => {
   if (currentStation) { openRadioFullscreen(); } else { switchView('radio'); }
 });
 
@@ -2852,7 +2852,7 @@ renderTVGrid();
 let feedbackRating = 0;
 
 // FAB opens feedback modal
-document.getElementById('feedbackFab').addEventListener('click', () => {
+document.getElementById('feedbackFab')?.addEventListener('click', () => {
   feedbackRating = 0;
   updateStars(0);
   document.getElementById('feedbackName').value  = '';
