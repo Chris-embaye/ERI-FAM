@@ -307,14 +307,84 @@ async function readTrackMeta(file) {
 }
 
 // ── Import tracks from files ───────────────────────────────────
+/* ── ID3 tag reader (title / artist / album) — no dependencies ──
+   Reads ID3v2.2/2.3/2.4 text frames and falls back to ID3v1.     */
+function _id3Text(bytes, start, len) {
+  if (len <= 1) return '';
+  const enc = bytes[start];
+  const data = bytes.subarray(start + 1, start + len);
+  try {
+    if (enc === 1) return new TextDecoder('utf-16').decode(data).replace(/\0/g, '').trim();
+    if (enc === 2) return new TextDecoder('utf-16be').decode(data).replace(/\0/g, '').trim();
+    if (enc === 3) return new TextDecoder('utf-8').decode(data).replace(/\0/g, '').trim();
+    return new TextDecoder('iso-8859-1').decode(data).replace(/\0/g, '').trim();
+  } catch { return ''; }
+}
+function readID3FromBuffer(buf) {
+  const out = { title: '', artist: '', album: '' };
+  try {
+    const b = new Uint8Array(buf);
+    // ── ID3v2 at file start ──
+    if (b.length > 10 && b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33) {
+      const ver = b[3];
+      const tagSize = ((b[6] & 0x7f) << 21) | ((b[7] & 0x7f) << 14) | ((b[8] & 0x7f) << 7) | (b[9] & 0x7f);
+      const end = Math.min(10 + tagSize, b.length);
+      let pos = 10;
+      if (b[5] & 0x40) { // extended header — skip it
+        const ext = ver === 4
+          ? ((b[10]&0x7f)<<21)|((b[11]&0x7f)<<14)|((b[12]&0x7f)<<7)|(b[13]&0x7f)
+          : (b[10]<<24)|(b[11]<<16)|(b[12]<<8)|b[13];
+        pos += ext;
+      }
+      const idLen = ver === 2 ? 3 : 4;
+      const hdLen = ver === 2 ? 6 : 10;
+      const want = ver === 2
+        ? { TT2: 'title', TP1: 'artist', TAL: 'album' }
+        : { TIT2: 'title', TPE1: 'artist', TALB: 'album' };
+      while (pos + hdLen <= end) {
+        const idStr = String.fromCharCode(...b.subarray(pos, pos + idLen));
+        if (!/^[A-Z0-9]+$/.test(idStr)) break;
+        let fSize;
+        if (ver === 2)      fSize = (b[pos+3]<<16)|(b[pos+4]<<8)|b[pos+5];
+        else if (ver === 4) fSize = ((b[pos+4]&0x7f)<<21)|((b[pos+5]&0x7f)<<14)|((b[pos+6]&0x7f)<<7)|(b[pos+7]&0x7f);
+        else                fSize = (b[pos+4]<<24)|(b[pos+5]<<16)|(b[pos+6]<<8)|b[pos+7];
+        if (fSize <= 0 || pos + hdLen + fSize > end) break;
+        const key = want[idStr];
+        if (key && !out[key]) out[key] = _id3Text(b, pos + hdLen, fSize);
+        pos += hdLen + fSize;
+        if (out.title && out.artist && out.album) break;
+      }
+    }
+    // ── ID3v1 at file end (fallback for whatever is still missing) ──
+    if ((!out.title || !out.artist || !out.album) && b.length > 128) {
+      const t = b.subarray(b.length - 128);
+      if (t[0] === 0x54 && t[1] === 0x41 && t[2] === 0x47) { // "TAG"
+        const dec = s => new TextDecoder('iso-8859-1').decode(s).replace(/\0/g, '').trim();
+        if (!out.title)  out.title  = dec(t.subarray(3, 33));
+        if (!out.artist) out.artist = dec(t.subarray(33, 63));
+        if (!out.album)  out.album  = dec(t.subarray(63, 93));
+      }
+    }
+  } catch { /* corrupt tags — fall back to filename */ }
+  return out;
+}
+
+/* Album fallback: the folder the file came from (folder imports) */
+function _albumFromPath(file) {
+  const rel = file.webkitRelativePath || '';
+  const parts = rel.split('/');
+  return parts.length >= 2 ? parts[parts.length - 2].trim() : '';
+}
+
 async function importFiles(files) {
   const arr = Array.from(files);
   if (!arr.length) return;
   toast(`⏳ Adding ${arr.length} track${arr.length>1?'s':''}…`);
 
-  let added = 0;
+  let added = 0, scanned = 0;
   for (const file of arr) {
-    if (!file.type.match(/audio/)) continue;
+    scanned++;
+    if (!file.type.match(/audio/) && !/\.(mp3|m4a|flac|wav|ogg|aac)$/i.test(file.name)) continue;
     const { duration } = await readTrackMeta(file);
     const buf = await file.arrayBuffer();
     const hashKey = file.name.toLowerCase().trim() + '_' + Math.round(duration);
@@ -322,22 +392,29 @@ async function importFiles(files) {
     const existing = S.tracks.find(t => t.hashKey === hashKey);
     if (existing) continue;
 
-    // Smart metadata extraction from filename
-    const { title, artist } = parseFilename(file.name);
+    // Metadata: real ID3 tags first, then filename / folder fallbacks
+    const tags   = readID3FromBuffer(buf);
+    const parsed = parseFilename(file.name);
+    const title  = tags.title  || parsed.title;
+    const artist = tags.artist || parsed.artist;
+    const album  = tags.album  || _albumFromPath(file) || '';
 
     const mimeType = file.type || 'audio/mpeg';
     const id = uid();
     const track = {
       id, title, artist,
-      album: '', duration, size: file.size,
+      album, duration, size: file.size,
       addedAt: Date.now(), playCount: 0, liked: false,
       type: 'local', hashKey, mimeType,
     };
     await idbPut('tracks', track);
     await idbPut('trackData', { id, data: buf });
-    track._blobUrl = URL.createObjectURL(new Blob([buf], { type: mimeType }));
+    track._blobUrl = null; // created lazily on play — keeps big imports light on memory
     S.tracks.push(track);
     added++;
+
+    // Progress feedback for large imports
+    if (added % 25 === 0) toast(`⏳ ${added} added… (${scanned}/${arr.length} scanned)`);
   }
 
   if (added > 0) {
@@ -1498,6 +1575,7 @@ function renderAlbums() {
     if (!map[key].artwork && t.artwork) map[key].artwork = t.artwork;
   });
   const albums = Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
+  albums.forEach(a => a.tracks.sort((x, y) => (x.title || '').localeCompare(y.title || '')));
   const el = document.getElementById('albumGrid');
   if (!albums.length) { el.innerHTML = '<p class="empty-msg">No albums yet.</p>'; return; }
   el.innerHTML = albums.map(a => `
