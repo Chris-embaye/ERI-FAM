@@ -233,7 +233,7 @@ svg {
 .main-content {
   margin-top: var(--header-h);
   margin-bottom: var(--nav-h);
-  padding: 20px;
+  padding: 12px 8px;
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
@@ -265,17 +265,17 @@ svg {
 
 .home-hero {
   text-align: center;
-  padding: 40px 20px;
+  padding: 20px 16px;
   background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(243, 156, 18, 0.1));
   border-radius: var(--radius-lg);
-  margin-bottom: 30px;
+  margin-bottom: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .hero-greeting {
-  font-size: 2.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -283,15 +283,15 @@ svg {
 }
 
 .hero-sub {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .hero-quick-btns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
 }
 
 .hero-quick-btn {
@@ -329,9 +329,9 @@ svg {
   background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(46, 204, 113, 0.1));
   border: 2px dashed rgba(52, 152, 219, 0.3);
   border-radius: var(--radius-lg);
-  padding: 40px 20px;
+  padding: 20px 12px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   transition: all var(--transition);
   cursor: pointer;
 }
