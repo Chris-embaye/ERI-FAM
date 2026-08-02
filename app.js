@@ -6,7 +6,7 @@
 // ── Firebase dynamic import ────────────────────────────────────
 let db, storage, auth;
 const FB_READY = (async () => {
-  if (typeof FIREBASE_CONFIG === 'undefined' || FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') return false;
+  if (typeof window.FIREBASE_CONFIG === 'undefined' || window.FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') return false;
   try {
     const { initializeApp }           = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
     const { getFirestore, collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs }
@@ -15,7 +15,7 @@ const FB_READY = (async () => {
                                        = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js');
     const { getAuth, signInWithEmailAndPassword, signOut }
                                        = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
-    const app = initializeApp(FIREBASE_CONFIG);
+    const app = initializeApp(window.FIREBASE_CONFIG);
     db      = { getFirestore: () => getFirestore(app), collection, query, orderBy, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs, _db: getFirestore(app) };
     storage = { getStorage: () => getStorage(app), ref, getDownloadURL, uploadBytesResumable, deleteObject, _st: getStorage(app) };
     auth    = { _auth: getAuth(app), signInWithEmailAndPassword, signOut };
@@ -1618,8 +1618,8 @@ document.getElementById('gaplessCheck').addEventListener('change', e => {
 
 // ── Music Identification ───────────────────────────────────────
 document.getElementById('identifyBtn').addEventListener('click', async () => {
-  const key = typeof AUDD_API_KEY !== 'undefined' ? AUDD_API_KEY : '';
-  if (!key) { toast('⚠ Add AUDD_API_KEY in firebase-config.js'); return; }
+  const key = typeof window.AUDD_API_KEY !== 'undefined' ? window.AUDD_API_KEY : '';
+  if (!key) { toast('⚠ Add window.AUDD_API_KEY in firebase-config.js'); return; }
   if (!S.currentTrack) { toast('Play a track first'); return; }
   openModal('identifyModal');
   document.getElementById('identifyResult').innerHTML = '<p style="text-align:center;padding:20px">🎵 Listening…</p>';
@@ -1670,7 +1670,7 @@ document.getElementById('transBtn').addEventListener('click', async () => {
   const from = document.getElementById('transFrom').value;
   const to   = document.getElementById('transTo').value;
   transOutput.innerHTML = '<p style="color:var(--text-sub)">⏳ Translating…</p>';
-  const key  = typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '';
+  const key  = typeof window.GEMINI_API_KEY !== 'undefined' ? window.GEMINI_API_KEY : '';
   if (key) {
     try {
       const body = { contents: [{ parts: [{ text: `Translate the following text from ${from} to ${to}. Return ONLY the translation, nothing else.\n\n${text}` }] }] };
@@ -3056,10 +3056,10 @@ async function ytvSearch(query, skipHistory = false) {
   const q = encodeURIComponent(fullQuery);
 
   // ── Official YouTube Data API v3 (requires key) ──
-  if (typeof YOUTUBE_API_KEY !== 'undefined' && YOUTUBE_API_KEY) {
+  if (typeof window.YOUTUBE_API_KEY !== 'undefined' && window.YOUTUBE_API_KEY) {
     try {
       const res = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&q=${q}&key=${YOUTUBE_API_KEY}`,
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&q=${q}&key=${window.YOUTUBE_API_KEY}`,
         { signal: AbortSignal.timeout(8000) }
       );
       if (res.ok) {
@@ -5199,7 +5199,7 @@ document.getElementById('kbdHelpBtn')?.addEventListener('click', _toggleKeyboard
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
     ]);
-    const app  = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
+    const app  = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(window.FIREBASE_CONFIG);
     const db   = fsMod.getFirestore(app);
     const snap = await fsMod.getDoc(fsMod.doc(db, 'hub_settings', 'about'));
     const empty = document.getElementById('settingsAboutEmpty');
@@ -5240,7 +5240,7 @@ document.getElementById('kbdHelpBtn')?.addEventListener('click', _toggleKeyboard
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
     ]);
-    const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(FIREBASE_CONFIG);
+    const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(window.FIREBASE_CONFIG);
     const db  = fsMod.getFirestore(app);
 
     // Donation / support
