@@ -9,6 +9,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     private var progressObservation: NSKeyValueObservation?
     private var pathMonitor: NWPathMonitor?
     private var isShowingOffline = false
+    private var practiceNav: UINavigationController?
 
     private let appURL = URL(string: "https://eri-tigrinya-school.web.app")!
 
@@ -97,8 +98,9 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
             guard let self else { return }
             if path.status == .satisfied && self.isShowingOffline {
                 DispatchQueue.main.async {
-                    self.isShowingOffline = false
-                    self.loadApp()
+                    /* Must dismiss the practice screen too, or reconnecting
+                       reloads the site behind a modal the child can't see past. */
+                    self.dismissOfflinePractice()
                 }
             }
         }
@@ -125,26 +127,42 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         isShowingOffline = true
         UINotificationFeedbackGenerator().notificationOccurred(.error)
 
-        let html = """
-        <html>
-        <head><meta name='viewport' content='width=device-width,initial-scale=1'></head>
-        <body style='background:#0d1117;color:white;font-family:-apple-system,sans-serif;
-                     display:flex;align-items:center;justify-content:center;
-                     height:100vh;margin:0;text-align:center'>
-          <div>
-            <div style='font-size:4rem;margin-bottom:16px'>📡</div>
-            <h2 style='margin-bottom:8px'>No Connection</h2>
-            <p style='color:rgba(255,255,255,0.6);margin-bottom:24px'>Check your internet and try again</p>
-            <button onclick='location.reload()'
-              style='background:#3B82F6;color:white;border:none;padding:14px 28px;
-                     border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer'>
-              Retry
-            </button>
-          </div>
-        </body>
-        </html>
-        """
-        webView.loadHTMLString(html, baseURL: nil)
+        /* The whole app is this web view, so losing the network used to leave a
+           child with a dead "No Connection" screen. The bundled flashcard deck
+           needs no network, so offer that instead of nothing. */
+        showOfflinePractice()
+    }
+
+    // MARK: - Offline practice
+
+    private func showOfflinePractice() {
+        guard practiceNav == nil, presentedViewController == nil else { return }
+
+        let practice = PracticeViewController()
+        practice.navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "Retry", style: .plain, target: self, action: #selector(retryConnection)
+        )
+
+        let nav = UINavigationController(rootViewController: practice)
+        nav.modalPresentationStyle = .fullScreen
+        nav.navigationBar.tintColor = brandColor
+        nav.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        nav.navigationBar.barTintColor = UIColor(red: 0.07, green: 0.07, blue: 0.12, alpha: 1)
+        nav.navigationBar.isTranslucent = false
+
+        practiceNav = nav
+        present(nav, animated: true)
+    }
+
+    @objc private func retryConnection() {
+        dismissOfflinePractice()
+    }
+
+    private func dismissOfflinePractice() {
+        isShowingOffline = false
+        guard let nav = practiceNav else { loadApp(); return }
+        practiceNav = nil
+        nav.dismiss(animated: true) { [weak self] in self?.loadApp() }
     }
 
     // MARK: - Status bar style
