@@ -90,9 +90,22 @@ service cloud.firestore {
     }
 
     // ── hub (admin panel) — owner-managed ───────────────────────────
+    // The panel decides access by reading back this document's `status`
+    // (admin/admin.js: `if (currentUserData.status !== 'approved')`). Letting a
+    // user write their own doc freely therefore lets them self-approve straight
+    // into the admin panel — so registration is pinned to an unapproved viewer,
+    // and only the owner may move `role` or `status` afterwards.
     match /hub_users/{userId} {
       allow read:   if isOwner() || isOwnDoc(userId);
-      allow write:  if isOwner() || isOwnDoc(userId);
+      allow create: if isOwner() ||
+        (isOwnDoc(userId)
+         && request.resource.data.role   == 'viewer'
+         && request.resource.data.status == 'pending');
+      allow update: if isOwner() ||
+        (isOwnDoc(userId)
+         && request.resource.data.role   == resource.data.role
+         && request.resource.data.status == resource.data.status);
+      allow delete: if isOwner();
     }
     match /hub_invitations/{docId} {
       allow read:  if isOwner();
