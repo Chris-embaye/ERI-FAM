@@ -176,6 +176,14 @@ function idbGetAll(store) {
     req.onerror   = () => rej(req.error);
   });
 }
+function idbGetAllKeys(store) {
+  return new Promise((res, rej) => {
+    const tx = idb.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAllKeys();
+    req.onsuccess = () => res(req.result);
+    req.onerror   = () => rej(req.error);
+  });
+}
 function idbPut(store, val) {
   return new Promise((res, rej) => {
     const tx = idb.transaction(store, 'readwrite');
@@ -381,46 +389,58 @@ async function importFiles(files) {
   if (!arr.length) return;
   toast(`⏳ Adding ${arr.length} track${arr.length>1?'s':''}…`);
 
-  let added = 0, scanned = 0;
+  let added = 0, scanned = 0, failed = 0;
   for (const file of arr) {
     scanned++;
     if (!file.type.match(/audio/) && !/\.(mp3|m4a|flac|wav|ogg|aac)$/i.test(file.name)) continue;
-    const { duration } = await readTrackMeta(file);
-    const buf = await file.arrayBuffer();
-    const hashKey = file.name.toLowerCase().trim() + '_' + Math.round(duration);
+    try {
+      const { duration } = await readTrackMeta(file);
+      const buf = await file.arrayBuffer();
+      const hashKey = file.name.toLowerCase().trim() + '_' + Math.round(duration);
 
-    const existing = S.tracks.find(t => t.hashKey === hashKey);
-    if (existing) continue;
+      const existing = S.tracks.find(t => t.hashKey === hashKey);
+      if (existing) continue;
 
-    // Metadata: real ID3 tags first, then filename / folder fallbacks
-    const tags   = readID3FromBuffer(buf);
-    const parsed = parseFilename(file.name);
-    const title  = tags.title  || parsed.title;
-    const artist = tags.artist || parsed.artist;
-    const album  = tags.album  || _albumFromPath(file) || '';
+      // Metadata: real ID3 tags first, then filename / folder fallbacks
+      const tags   = readID3FromBuffer(buf);
+      const parsed = parseFilename(file.name);
+      const title  = tags.title  || parsed.title;
+      const artist = tags.artist || parsed.artist;
+      const album  = tags.album  || _albumFromPath(file) || '';
 
-    const mimeType = file.type || 'audio/mpeg';
-    const id = uid();
-    const track = {
-      id, title, artist,
-      album, duration, size: file.size,
-      addedAt: Date.now(), playCount: 0, liked: false,
-      type: 'local', hashKey, mimeType,
-    };
-    await idbPut('tracks', track);
-    await idbPut('trackData', { id, data: buf });
-    track._blobUrl = null; // created lazily on play — keeps big imports light on memory
-    S.tracks.push(track);
-    added++;
+      const mimeType = file.type || 'audio/mpeg';
+      const id = uid();
+      const track = {
+        id, title, artist,
+        album, duration, size: file.size,
+        addedAt: Date.now(), playCount: 0, liked: false,
+        type: 'local', hashKey, mimeType,
+      };
+      // Audio data FIRST, metadata second — if we die in between there is
+      // no "ghost track" (a listed song with no audio behind it)
+      await idbPut('trackData', { id, data: buf });
+      await idbPut('tracks', track);
+      track._blobUrl = null; // created lazily on play — keeps big imports light on memory
+      S.tracks.push(track);
+      added++;
+    } catch (e) {
+      // Unreadable file (moved, cloud-only placeholder, permission) — skip it, keep going
+      console.warn('[Import] could not read:', file.name, e);
+      failed++;
+    }
 
     // Progress feedback for large imports
-    if (added % 25 === 0) toast(`⏳ ${added} added… (${scanned}/${arr.length} scanned)`);
+    if (scanned % 25 === 0) toast(`⏳ ${added} added… (${scanned}/${arr.length} scanned)`);
   }
 
-  if (added > 0) {
+  renderTracks();
+  updateStats();
+  if (added > 0 && failed > 0) {
+    toast(`✅ Added ${added} · ⚠ ${failed} file${failed>1?'s':''} couldn't be read — try selecting ${failed>1?'them':'it'} again`, 5000);
+  } else if (added > 0) {
     toast(`✅ Added ${added} track${added>1?'s':''}`);
-    renderTracks();
-    updateStats();
+  } else if (failed > 0) {
+    toast(`⚠ ${failed} file${failed>1?'s':''} couldn't be read. If they're in a cloud folder (OneDrive/iCloud), open them once so they download, then add again.`, 6000);
   } else {
     toast('⚠ No new tracks (duplicates skipped)');
   }
@@ -471,6 +491,19 @@ async function addTrackFromUrl() {
 async function loadLocalTracks() {
   const rows = await idbGetAll('tracks');
   S.tracks = rows.map(t => ({ ...t, _blobUrl: null }));
+
+  // Auto-heal: drop "ghost" tracks whose audio never finished importing
+  // (keys-only check — never loads the audio blobs into memory)
+  try {
+    const dataIds = new Set(await idbGetAllKeys('trackData'));
+    const ghosts = S.tracks.filter(t => t.type === 'local' && !dataIds.has(t.id));
+    if (ghosts.length) {
+      for (const g of ghosts) await idbDelete('tracks', g.id);
+      S.tracks = S.tracks.filter(t => !(t.type === 'local' && !dataIds.has(t.id)));
+      toast(`🧹 Removed ${ghosts.length} broken track${ghosts.length>1?'s':''} from a failed import — add the file${ghosts.length>1?'s':''} again`, 5000);
+    }
+  } catch (e) { console.warn('[Heal]', e); }
+
   renderTracks();
   if (activeLibTab === 'songs')   renderSongs();
   if (activeLibTab === 'artists') renderArtists();
@@ -516,7 +549,10 @@ async function playTrack(track, queueTracks) {
   }
 
   let src = (track.type === 'cloud' || track.type === 'link') ? track.url : await getBlobUrl(track);
-  if (!src) { toast('⚠ Could not load track'); return; }
+  if (!src) {
+    toast('⚠ This song\'s audio is missing (its import didn\'t finish). Remove it with ⋯ → Delete, then add the file again.', 5500);
+    return;
+  }
 
   audio.src = src;
   audio.volume = S.volume;
