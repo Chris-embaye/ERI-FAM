@@ -3,11 +3,12 @@
  * Enables offline playback, caching, and app updates
  */
 
-const CACHE_NAME = 'eri-fam-v3.1.0';
+const CACHE_NAME = 'eri-fam-v4.0.0';
 const CRITICAL_ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
+  '/theme.css',
   '/app.js',
   '/firebase-config.js',
   '/icons/icon-192.png',
