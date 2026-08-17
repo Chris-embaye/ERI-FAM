@@ -1257,13 +1257,14 @@
 <div class="modal-overlay" id="ytModal">
   <div class="modal-box">
     <h3>▶️ YouTube → MP3</h3>
-    <p class="modal-sub">Paste a YouTube link to convert & download</p>
+    <p class="modal-sub">1 · Convert &nbsp;→&nbsp; 2 · Download the MP3 &nbsp;→&nbsp; 3 · Add it with “Add Music”</p>
     <input type="url" id="ytUrl" class="modal-input" placeholder="https://youtube.com/watch?v=…" />
     <div class="modal-actions">
-      <button class="btn-primary" id="ytConvertBtn">Convert & Add</button>
+      <button class="btn-primary" id="ytConvertBtn">Convert</button>
       <button class="btn-secondary" id="ytClose">Cancel</button>
     </div>
-    <p class="modal-note" id="ytStatus">Uses cobalt.tools · falls back to loader.to if unavailable · free, no sign-in</p>
+    <p class="modal-note" id="ytStatus">Free converter · no sign-in needed</p>
+    <div id="ytEmbedWrap" style="display:none; margin-top:12px; border-radius:12px; overflow:hidden; border:1px solid rgba(226,166,91,0.25);"></div>
   </div>
 </div>
 
@@ -1464,6 +1465,6 @@
 <div class="offline-bar" id="offlineBar" style="display:none">📡 Offline — your music still plays!</div>
 
 <script src="firebase-config.js?v=3.0.1"></script>
-<script type="module" src="app.js?v=4.0.1"></script>
+<script type="module" src="app.js?v=4.0.2"></script>
 </body>
 </html>

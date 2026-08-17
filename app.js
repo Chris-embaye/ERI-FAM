@@ -1867,24 +1867,35 @@ document.getElementById('ytConvertBtn').addEventListener('click', async () => {
   statusEl.textContent = '⏳ Converting… this may take a moment';
   convertBtn.disabled = true;
 
-  // Try cobalt.tools new API (v10+)
+  // Try cobalt.tools new API (v10+) — usually auth-locked now, but cheap to try
   const cobaltResult = await tryCobalt(url);
   if (cobaltResult) {
     triggerDownload(cobaltResult);
-    statusEl.innerHTML = '✅ Download started!<br><small>Save the MP3 then add it to ERI-FAM with the + button.</small>';
+    statusEl.innerHTML = '✅ Download started!<br><small>Save the MP3 then add it with “Add Music”.</small>';
     convertBtn.disabled = false;
     return;
   }
 
-  // Fallback: open loader.to in new tab
-  const loaderUrl = `https://loader.to/api/button/?url=${encodeURIComponent(url)}&f=mp3`;
-  statusEl.innerHTML = `Cobalt unavailable — opening <strong>loader.to</strong> as backup…`;
-  setTimeout(() => {
-    window.open(loaderUrl, '_blank', 'noopener');
-    statusEl.innerHTML = '✅ Opened loader.to — download the MP3 then add it to ERI-FAM with the + button.';
-    convertBtn.disabled = false;
-  }, 800);
+  // Main path: loader.to converter embedded right inside this modal
+  const wrap = document.getElementById('ytEmbedWrap');
+  wrap.innerHTML = `<iframe
+    src="https://loader.to/api/button/?url=${encodeURIComponent(url)}&f=mp3&color=E2A65B"
+    style="width:100%; height:340px; border:0; display:block; background:#1B1610;"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-downloads"
+    title="MP3 converter"></iframe>`;
+  wrap.style.display = 'block';
+  statusEl.innerHTML = 'Tap <strong>Download MP3</strong> below, wait for the progress bar, then save the file and add it with <strong>“Add Music”</strong>.';
+  convertBtn.disabled = false;
 });
+
+// Stop the embedded converter when the modal closes
+function ytClearEmbed() {
+  const wrap = document.getElementById('ytEmbedWrap');
+  if (wrap) { wrap.innerHTML = ''; wrap.style.display = 'none'; }
+  const st = document.getElementById('ytStatus');
+  if (st) st.textContent = 'Free converter · no sign-in needed';
+}
+document.getElementById('ytClose')?.addEventListener('click', ytClearEmbed);
 
 async function tryCobalt(url) {
   // cobalt.tools API v10+ (new format)
@@ -1908,7 +1919,7 @@ function triggerDownload(href) {
   a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.click();
 }
 
-document.getElementById('ytModal').addEventListener('click', e => { if (e.target.id === 'ytModal') closeModal('ytModal'); });
+document.getElementById('ytModal').addEventListener('click', e => { if (e.target.id === 'ytModal') { closeModal('ytModal'); ytClearEmbed(); } });
 
 // ── Firebase Cloud Sync ────────────────────────────────────────
 async function syncCloud() {
