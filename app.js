@@ -1855,8 +1855,8 @@ document.querySelectorAll('.phrase-chip').forEach(chip => {
 
 // ── YouTube → MP3 ─────────────────────────────────────────────
 document.getElementById('ytBtn')?.addEventListener('click', () => openModal('ytModal'));
-document.getElementById('ytClose').addEventListener('click', () => closeModal('ytModal'));
-document.getElementById('ytConvertBtn').addEventListener('click', async () => {
+document.getElementById('ytClose')?.addEventListener('click', () => closeModal('ytModal'));
+document.getElementById('ytConvertBtn')?.addEventListener('click', async () => {
   const url = document.getElementById('ytUrl').value.trim();
   if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
     document.getElementById('ytStatus').textContent = '⚠ Enter a valid YouTube URL';
@@ -1919,7 +1919,7 @@ function triggerDownload(href) {
   a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.click();
 }
 
-document.getElementById('ytModal').addEventListener('click', e => { if (e.target.id === 'ytModal') { closeModal('ytModal'); ytClearEmbed(); } });
+document.getElementById('ytModal')?.addEventListener('click', e => { if (e.target.id === 'ytModal') { closeModal('ytModal'); ytClearEmbed(); } });
 
 // ── Firebase Cloud Sync ────────────────────────────────────────
 async function syncCloud() {
@@ -3492,7 +3492,7 @@ function ytvStop() {
 }
 
 // Audio-only / Background play mode
-document.getElementById('ytvAudioBtn').addEventListener('click', () => {
+document.getElementById('ytvAudioBtn')?.addEventListener('click', () => {
   if (ytState.audioMode || document.getElementById('ytvAudioBtn').classList.contains('active')) {
     ytvExitAudioMode();
   } else {
@@ -3573,21 +3573,21 @@ function ytvExitAudioMode() {
 }
 
 // PiP — guide the user (iframe PiP is browser-native)
-document.getElementById('ytvPipBtn').addEventListener('click', () => {
+document.getElementById('ytvPipBtn')?.addEventListener('click', () => {
   toast('▶ Tap inside the video → browser menu → Picture in Picture');
 });
 
-document.getElementById('ytvCloseBtn').addEventListener('click', ytvStop);
+document.getElementById('ytvCloseBtn')?.addEventListener('click', ytvStop);
 
 // Prev / Next / Shuffle / Repeat controls
-document.getElementById('ytvPrevBtn').addEventListener('click', ytvPrev);
-document.getElementById('ytvNextBtn').addEventListener('click', ytvNext);
-document.getElementById('ytvShuffleBtn').addEventListener('click', () => {
+document.getElementById('ytvPrevBtn')?.addEventListener('click', ytvPrev);
+document.getElementById('ytvNextBtn')?.addEventListener('click', ytvNext);
+document.getElementById('ytvShuffleBtn')?.addEventListener('click', () => {
   ytState.shuffle = !ytState.shuffle;
   document.getElementById('ytvShuffleBtn').classList.toggle('active', ytState.shuffle);
   toast(ytState.shuffle ? '🔀 Shuffle ON' : '🔀 Shuffle OFF');
 });
-document.getElementById('ytvRepeatBtn').addEventListener('click', () => {
+document.getElementById('ytvRepeatBtn')?.addEventListener('click', () => {
   const btn = document.getElementById('ytvRepeatBtn');
   if (!ytState.repeat && !ytState.repeatAll) {
     ytState.repeat = true; ytState.repeatAll = false;
@@ -3605,17 +3605,17 @@ document.getElementById('ytvRepeatBtn').addEventListener('click', () => {
 });
 
 // Float player controls
-document.getElementById('ytFloatOpen').addEventListener('click',  () => switchView('youtube'));
-document.getElementById('ytFloatClose').addEventListener('click', ytvStop);
+document.getElementById('ytFloatOpen')?.addEventListener('click',  () => switchView('youtube'));
+document.getElementById('ytFloatClose')?.addEventListener('click', ytvStop);
 document.getElementById('ytFloatPrev')?.addEventListener('click', ytvPrev);
 document.getElementById('ytFloatNext')?.addEventListener('click', ytvNext);
 
 // Search
-document.getElementById('ytvSearchBtn').addEventListener('click', () => {
+document.getElementById('ytvSearchBtn')?.addEventListener('click', () => {
   const q = document.getElementById('ytvSearch').value.trim();
   if (q) ytvSearch(q);
 });
-document.getElementById('ytvSearch').addEventListener('keydown', e => {
+document.getElementById('ytvSearch')?.addEventListener('keydown', e => {
   if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) ytvSearch(q); }
 });
 
