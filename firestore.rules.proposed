@@ -1,0 +1,214 @@
+// PROPOSED replacement for firestore.rules — review, then:
+//   mv firestore.rules.proposed firestore.rules && firebase deploy --only firestore:rules
+//
+// Why: the current file writes `isOwner() || isAuth()` on ~25 collections.
+// That is equivalent to plain `isAuth()` — the isOwner() half can never change
+// the result — so every signed-in account (including any pupil who registers)
+// could read and overwrite other children's progress, rewrite any child's
+// parental controls, and edit site content, news and curriculum.
+//
+// Behaviour changes to sanity-check before deploying:
+//   * progress   — writes now pinned to the owning pupil's uid (reads stay open
+//                  because the leaderboard queries the collection by xp)
+//   * controls   — claimed by the first adult to set them, then locked to that
+//                  parent, so a child can't lift their own limits
+//   * content    — news/music/curriculum/announcements become owner-write-only,
+//                  matching this file's own comments. If your admin panel signs
+//                  in as anything other than embayechris@gmail.com, widen
+//                  isOwner() first or those writes will start failing.
+//   * user_data  — added; it was missing entirely, so every write was denied by
+//                  default and the client's .catch(() => {}) hid it
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── helpers ────────────────────────────────────────────────────
+    function isAuth()  { return request.auth != null; }
+    function isOwner() { return isAuth() && request.auth.token.email == 'embayechris@gmail.com'; }
+    function isOwnDoc(uid) { return isAuth() && request.auth.uid == uid; }
+    // Prevent writes larger than 64 KB
+    function notTooLarge() { return request.resource.data.size() < 65536; }
+
+    // ── student lookup ──────────────────────────────────────────────
+    // Read must stay public: sign-in by ERI-ID resolves the e-mail BEFORE the
+    // user is authenticated. Note this means a guessed or enumerated Student ID
+    // returns that pupil's e-mail address. Closing that properly needs the
+    // lookup moved behind a Cloud Function (or App Check); until then, writes
+    // are at least restricted so nobody can repoint another pupil's ID.
+    match /studentLookup/{studentId} {
+      allow read: if true;
+      allow create, update: if isOwner() ||
+        (isAuth() && request.resource.data.email == request.auth.token.email);
+      allow delete: if isOwner();
+    }
+
+    // ── user profiles ───────────────────────────────────────────────
+    match /users/{userId} {
+      allow read:  if isOwner() || isOwnDoc(userId);
+      allow write: if isOwner() || (isOwnDoc(userId) && notTooLarge());
+    }
+
+    // ── per-user app data (dictionary favourites, etc.) ──────────────
+    match /user_data/{userId} {
+      allow read:  if isOwner() || isOwnDoc(userId);
+      allow write: if isOwner() || (isOwnDoc(userId) && notTooLarge());
+    }
+
+    // ── student progress ────────────────────────────────────────────
+    // Docs are keyed by Student ID but carry the owning `uid`, so writes can be
+    // pinned to that pupil. Reads stay open to signed-in users because the
+    // leaderboard queries the collection ordered by xp.
+    match /progress/{studentId} {
+      allow read:   if isAuth();
+      allow create: if isOwner() ||
+        (isAuth() && request.resource.data.uid == request.auth.uid && notTooLarge());
+      allow update: if isOwner() ||
+        (isAuth() && resource.data.uid == request.auth.uid && notTooLarge());
+      allow delete: if isOwner();
+    }
+
+    // ── parental controls ────────────────────────────────────────────
+    // A child must not be able to lift their own screen-time limits, so this is
+    // claimed by the adult who first sets it (`parentUid`) and locked to them
+    // thereafter. Docs created before that field existed stay writable so they
+    // can be claimed — back-fill `parentUid`, then delete that legacy clause.
+    match /controls/{studentId} {
+      allow read:   if isAuth();
+      allow create: if isOwner() ||
+        (isAuth() && request.resource.data.parentUid == request.auth.uid);
+      allow update: if isOwner()
+        || (isAuth() && resource.data.parentUid == request.auth.uid)
+        || (isAuth() && !('parentUid' in resource.data));   // legacy claim
+      allow delete: if isOwner();
+    }
+
+    // ── feedback (write anyone authed, read/delete = owner only) ────
+    match /feedback/{docId} {
+      allow create: if isAuth() && notTooLarge();
+      allow read, update, delete: if isOwner();
+    }
+
+    // ── hub (admin panel) — owner-managed ───────────────────────────
+    // The panel decides access by reading back this document's `status`
+    // (admin/admin.js: `if (currentUserData.status !== 'approved')`). Letting a
+    // user write their own doc freely therefore lets them self-approve straight
+    // into the admin panel — so registration is pinned to an unapproved viewer,
+    // and only the owner may move `role` or `status` afterwards.
+    match /hub_users/{userId} {
+      allow read:   if isOwner() || isOwnDoc(userId);
+      allow create: if isOwner() ||
+        (isOwnDoc(userId)
+         && request.resource.data.role   == 'viewer'
+         && request.resource.data.status == 'pending');
+      allow update: if isOwner() ||
+        (isOwnDoc(userId)
+         && request.resource.data.role   == resource.data.role
+         && request.resource.data.status == resource.data.status);
+      allow delete: if isOwner();
+    }
+    match /hub_invitations/{docId} {
+      allow read:  if isOwner();
+      allow write: if isOwner();
+    }
+    match /hub_apps/{docId}          { allow read: if isAuth(); allow write: if isOwner(); }
+    match /hub_playlists/{docId}     { allow read: if isAuth(); allow write: if isOwner(); }
+    match /hub_employees/{docId}     { allow read: if isOwner(); allow write: if isOwner(); }
+    match /hub_notifications/{docId} { allow read: if isAuth(); allow write: if isOwner(); }
+    match /hub_assets/{docId}        { allow read: if isAuth(); allow write: if isOwner(); }
+    match /hub_activity/{docId} {
+      allow read:   if isOwner();
+      allow create: if isAuth() && notTooLarge();
+      allow update, delete: if isOwner();
+    }
+    match /hub_admin_notes/{docId} { allow read, write: if isOwner(); }
+
+    // ── music (owner-curated catalogue) ─────────────────────────────
+    match /tracks/{docId}     { allow read: if isAuth(); allow write: if isOwner(); }
+    match /eri_music/{docId}  { allow read: if isAuth(); allow write: if isOwner(); }
+    match /eri_tracks/{docId} { allow read: if true;     allow write: if isOwner(); }
+
+    // ── community ───────────────────────────────────────────────────
+    match /community_posts/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && notTooLarge();
+      allow update, delete: if isOwner() || (isAuth() && request.auth.uid == resource.data.authorId);
+    }
+
+    // ── news / newsletter (owner-published) ─────────────────────────
+    match /eri_news/{docId}       { allow read: if true;     allow write: if isOwner(); }
+    match /eri_articles/{docId}   { allow read: if true;     allow write: if isOwner(); }
+    match /eri_gallery/{docId}    { allow read: if true;     allow write: if isOwner(); }
+    match /eri_famous/{docId}     { allow read: if true;     allow write: if isOwner(); }
+    match /eri_artists/{docId}    { allow read: if true;     allow write: if isOwner(); }
+    match /eri_newsletter/{docId} { allow read: if isAuth(); allow write: if isOwner(); }
+
+    // ── announcements (public read, owner write) ────────────────────
+    match /fidel_announcements/{docId} { allow read: if true; allow write: if isOwner(); }
+    match /eri_announcements/{docId}   { allow read: if true; allow write: if isOwner(); }
+    match /rl_announcements/{docId}    { allow read: if true; allow write: if isOwner(); }
+
+    // ── promotions ──────────────────────────────────────────────────
+    match /promotions/{docId} { allow read: if isAuth(); allow write: if isOwner(); }
+
+    // ── riglog ──────────────────────────────────────────────────────
+    match /rl_users/{userId} {
+      allow read, write: if isOwner() || isOwnDoc(userId);
+    }
+
+    // ── settings / config / versions ────────────────────────────────
+    match /settings/{docId}      { allow read: if isAuth(); allow write: if isOwner(); }
+    match /seo_meta/{docId}      { allow read: if isAuth(); allow write: if isOwner(); }
+    match /versions/{docId}      { allow read: if isAuth(); allow write: if isOwner(); }
+    match /storage_meta/{docId}  { allow read: if isAuth(); allow write: if isOwner(); }
+    match /about_content/{docId} { allow read: if isAuth(); allow write: if isOwner(); }
+
+    // ── FIDEL curriculum (owner-authored) ───────────────────────────
+    match /fidel_curriculum/{docId} { allow read: if isAuth(); allow write: if isOwner(); }
+
+    // ── events (public read; members may post, authors may edit) ────
+    match /fidel_events/{docId} {
+      allow read:   if true;
+      allow create: if isAuth() && notTooLarge()
+                    && request.resource.data.postedBy == request.auth.token.email;
+      allow update, delete: if isOwner()
+                    || (isAuth() && resource.data.postedBy == request.auth.token.email);
+    }
+
+    // ── social (owner bypass + author ownership) ────────────────────
+    match /social_profiles/{userId} {
+      allow read:  if isAuth();
+      allow write: if isOwner() || (isAuth() && isOwnDoc(userId) && notTooLarge());
+    }
+    match /social_posts/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && notTooLarge();
+      allow update: if isOwner() || (isAuth() && request.auth.uid == resource.data.authorId);
+      allow delete: if isOwner() || (isAuth() && request.auth.uid == resource.data.authorId);
+    }
+    match /social_comments/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && notTooLarge();
+      allow delete: if isOwner() || (isAuth() && request.auth.uid == resource.data.authorId);
+    }
+    // Likes / votes / follows are one doc per relationship. Reads stay open to
+    // members; a member may only create or remove their OWN reaction.
+    // Field names verified against the client: likes and poll votes store
+    // `userId`, follows store `followerId`.
+    match /social_likes/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isOwner() || (isAuth() && resource.data.userId == request.auth.uid);
+    }
+    match /social_poll_votes/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner() || (isAuth() && resource.data.userId == request.auth.uid);
+    }
+    match /social_follows/{docId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.followerId == request.auth.uid;
+      allow delete: if isOwner() || (isAuth() && resource.data.followerId == request.auth.uid);
+    }
+  }
+}

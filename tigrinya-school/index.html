@@ -5008,32 +5008,97 @@ function renderChildProgress(p) {
 /* ═══════════════════════════════
    DATA — ALPHABET
 ═══════════════════════════════ */
+/* The seven vowel orders (ኣገባብ) every family runs through. */
+const VOWEL_ORDERS = ['ä','u','i','a','e','ə','o'];
+
+/* Base letter, row label, and the consonant its sounds are built from.
+   `archaic:true` marks letters that share a sound with another in modern
+   Tigrinya (ሠ=ሰ, ኀ=ሀ, ፀ=ጸ, and the loanword-only ቨ ዠ ጘ). They stay in the
+   traditional recitation order — Eritrean pupils still learn them in
+   sequence — but the flag lets the UI explain them instead of hiding them. */
+const ALPHABET_FAMILIES = [
+  { base:'ሀ', roman:'H', c:'h', word:{ tig:'ሃገር', rom:'hager', eng:'Country' } },
+  { base:'ለ', roman:'L', c:'l', word:{ tig:'ለካቲት', rom:'Lekatit', eng:'February' } },
+  { base:'ሐ', roman:'Ḥ', c:'ḥ', word:{ tig:'ሓመድ', rom:'hamed', eng:'Soil / Dirt' } },
+  { base:'መ', roman:'M', c:'m', word:{ tig:'መኪና', rom:'mekina', eng:'Car' } },
+  { base:'ሠ', roman:'Ś', c:'ś', archaic:true, word:{ tig:'ሠራዊት', rom:'serawit', eng:'Army / Troops' } },
+  { base:'ረ', roman:'R', c:'r', word:{ tig:'ረድኤት', rom:'rediet', eng:'Aid / Help' } },
+  { base:'ሰ', roman:'S', c:'s', word:{ tig:'ሰላም', rom:'Selam', eng:'Hello / Peace' } },
+  { base:'ሸ', roman:'Sh', c:'sh', word:{ tig:'ሸሞንተ', rom:'Shemonte', eng:'Eight (8)' } },
+  { base:'ቀ', roman:'Q', c:'q', word:{ tig:'ቀደም', rom:'Qedem', eng:'Before / Previously' } },
+  { base:'ቐ', roman:'Q̈', c:'q̈' },
+  { base:'በ', roman:'B', c:'b', word:{ tig:'በጃኻ', rom:'Bejakha', eng:'Please (m)' } },
+  { base:'ቨ', roman:'V', c:'v', archaic:true, word:{ tig:'ቪዲዮ', rom:'Vidyo', eng:'Video' } },
+  { base:'ተ', roman:'T', c:'t', word:{ tig:'ተገሪሙ', rom:'Tegerimu', eng:'Surprised' } },
+  { base:'ቸ', roman:'Ch', c:'ch' },
+  { base:'ኀ', roman:'Ḫ', c:'ḫ', archaic:true },
+  { base:'ነ', roman:'N', c:'n', word:{ tig:'ነሓሰ', rom:'Nehase', eng:'August' } },
+  { base:'ኘ', roman:'Ñ', c:'ñ' },
+  { base:'አ', roman:'ʾ', c:'', word:{ tig:'እወ', rom:'Iwe', eng:'Yes' } },
+  { base:'ከ', roman:'K', c:'k', word:{ tig:'ከም', rom:'Kem', eng:'As / Like' } },
+  { base:'ኸ', roman:'Kh', c:'kh' },
+  { base:'ወ', roman:'W', c:'w', word:{ tig:'ወዲ', rom:'Wedi', eng:'Son / Boy' } },
+  { base:'ዐ', roman:'ʿ', c:'ʿ', word:{ tig:'ዓሰርተ', rom:'Aserte', eng:'Ten (10)' } },
+  { base:'ዘ', roman:'Z', c:'z', word:{ tig:'ዘመን', rom:'Zemen', eng:'Era / Time' } },
+  { base:'ዠ', roman:'Zh', c:'zh', archaic:true },
+  { base:'የ', roman:'Y', c:'y', word:{ tig:'የቐንየለይ', rom:'Yeqenyeley', eng:'Thank you' } },
+  { base:'ደ', roman:'D', c:'d', word:{ tig:'ደቂ', rom:'Deqi', eng:'Children' } },
+  { base:'ጀ', roman:'J', c:'j', word:{ tig:'ጅግና', rom:'Jigna', eng:'Hero' } },
+  { base:'ገ', roman:'G', c:'g', word:{ tig:'ገንዘብ', rom:'Genzeb', eng:'Money' } },
+  { base:'ጘ', roman:'Ŋ', c:'ŋ', archaic:true },
+  { base:'ጠ', roman:'Ṭ', c:'ṭ', word:{ tig:'ጥብሲ', rom:'Tibsi', eng:'Grilled meat' } },
+  { base:'ጨ', roman:'Čh', c:'čh', word:{ tig:'ጨው', rom:'Chew', eng:'Salt' } },
+  { base:'ጰ', roman:'P̣', c:'p̣', word:{ tig:'ጳጉሜ', rom:'Pagumé', eng:'13th month' } },
+  { base:'ጸ', roman:'Ts', c:'ts', word:{ tig:'ጸሊም', rom:'Tselim', eng:'Black' } },
+  { base:'ፀ', roman:'Ṣ', c:'ṣ', archaic:true },
+  { base:'ፈ', roman:'F', c:'f', word:{ tig:'ፈሪሁ', rom:'Ferihu', eng:'Scared / Afraid' } },
+  { base:'ፐ', roman:'P', c:'p', word:{ tig:'ፖሊስ', rom:'Polis', eng:'Police officer' } },
+];
+
+/* forms[] and sounds[] are DERIVED from each family's Unicode base codepoint:
+   the Ethiopic block lays every family out as base+0..6, one slot per order.
+   The previous hand-written table had drifted badly — 11 families were absent
+   (ቐ ኸ ዐ ጸ among them) while 31% of this app's own vocabulary used them, and
+   the first six rows used a different romanization scheme from the rest. */
+/* Labiovelars break the +0..6 pattern: five forms at offsets 0,2,3,4,5
+   (offset 1 is unassigned). They aren't optional extras — ቋንቋ (language)
+   and ጓል (girl) can't be written without them. */
+const LABIO_OFFSETS = [0, 2, 3, 4, 5];
+/* Plain vowels: the ʷ belongs to the consonant (ቋ is qʷ + a), so keeping it
+   here too would double it into "qʷʷa". */
+const LABIO_ORDERS  = ['ä', 'i', 'a', 'e', 'ə'];
+
+const LABIO_FAMILIES = [
+  { base:'ቈ', roman:'Qʷ',  c:'qʷ'  },
+  { base:'ቘ', roman:'Q̈ʷ', c:'q̈ʷ' },
+  { base:'ኈ', roman:'Ḫʷ',  c:'ḫʷ', archaic:true },
+  { base:'ኰ', roman:'Kʷ',  c:'kʷ'  },
+  { base:'ዀ', roman:'Khʷ', c:'khʷ' },
+  { base:'ጐ', roman:'Gʷ',  c:'gʷ'  },
+];
+
+function buildFamily(f, offsets, orders, stage, isLabio) {
+  const cp = f.base.codePointAt(0);
+  return {
+    base:    f.base,
+    roman:   f.roman,
+    archaic: !!f.archaic,
+    labio:   !!isLabio,
+    /* Carried per-row so nothing downstream may assume seven columns. */
+    orders,
+    forms:   offsets.map(o => String.fromCodePoint(cp + o)),
+    /* The vowel-less order (ሳድስ) leaves the consonant standing alone. */
+    sounds:  orders.map(v => v === 'ə' ? (f.c || 'ə') : f.c + v),
+    practiceWord: f.word,
+    stage,
+    status:  stage === 1 ? 'active' : 'locked',
+  };
+}
+
 const ALPHABET = [
-  { base:'ሀ', roman:'H',  forms:['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'], sounds:['ha','hu','hi','haa','he','hi/h','ho'], practiceWord:{ tig:'ሃገር', rom:'hager', eng:'Country' }, stage:1, status:'completed' },
-  { base:'ለ', roman:'L',  forms:['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'], sounds:['la','lu','li','laa','le','li/l','lo'], practiceWord:{ tig:'ላም', rom:'lam', eng:'Cow' }, stage:2, status:'active' },
-  { base:'ሐ', roman:'Ḥ',  forms:['ሐ','ሑ','ሒ','ሓ','ሔ','ሕ','ሖ'], sounds:['ha','hu','hi','haa','he','hi/h','ho'], practiceWord:{ tig:'ሓመድ', rom:'hamed', eng:'Soil / Dirt' }, stage:3, status:'locked' },
-  { base:'መ', roman:'M',  forms:['መ','ሙ','ሚ','ማ','ሜ','ም','ሞ'], sounds:['ma','mu','mi','maa','me','mi/m','mo'], practiceWord:{ tig:'መኪና', rom:'mekina', eng:'Car' }, stage:4, status:'locked' },
-  { base:'ሠ', roman:'Ś',  forms:['ሠ','ሡ','ሢ','ሣ','ሤ','ሥ','ሦ'], sounds:['sa','su','si','saa','se','si/s','so'], practiceWord:{ tig:'ሠራዊት', rom:'serawit', eng:'Army / Troops' }, stage:5, status:'locked' },
-  { base:'ረ', roman:'R',  forms:['ረ','ሩ','ሪ','ራ','ሬ','ር','ሮ'], sounds:['ra','ru','ri','raa','re','ri/r','ro'], practiceWord:{ tig:'ረድኤት', rom:'rediet', eng:'Aid / Help' }, stage:6, status:'locked' },
-  { base:'ሰ', roman:'S',  forms:['ሰ','ሱ','ሲ','ሳ','ሴ','ስ','ሶ'], sounds:['sä','su','si','sa','se','s','so'] },
-  { base:'ሸ', roman:'Sh', forms:['ሸ','ሹ','ሺ','ሻ','ሼ','ሽ','ሾ'], sounds:['shä','shu','shi','sha','she','sh','sho'] },
-  { base:'ቀ', roman:'Q',  forms:['ቀ','ቁ','ቂ','ቃ','ቄ','ቅ','ቆ'], sounds:['qä','qu','qi','qa','qe','q','qo'] },
-  { base:'በ', roman:'B',  forms:['በ','ቡ','ቢ','ባ','ቤ','ብ','ቦ'], sounds:['bä','bu','bi','ba','be','b','bo'] },
-  { base:'ተ', roman:'T',  forms:['ተ','ቱ','ቲ','ታ','ቴ','ት','ቶ'], sounds:['tä','tu','ti','ta','te','t','to'] },
-  { base:'ቸ', roman:'Ch', forms:['ቸ','ቹ','ቺ','ቻ','ቼ','ች','ቾ'], sounds:['chä','chu','chi','cha','che','ch','cho'] },
-  { base:'ነ', roman:'N',  forms:['ነ','ኑ','ኒ','ና','ኔ','ን','ኖ'], sounds:['nä','nu','ni','na','ne','n','no'] },
-  { base:'አ', roman:'ʾ',  forms:['አ','ኡ','ኢ','ኣ','ኤ','እ','ኦ'], sounds:['ä','u','i','a','e','ə','o'] },
-  { base:'ከ', roman:'K',  forms:['ከ','ኩ','ኪ','ካ','ኬ','ክ','ኮ'], sounds:['kä','ku','ki','ka','ke','k','ko'] },
-  { base:'ወ', roman:'W',  forms:['ወ','ዉ','ዊ','ዋ','ዌ','ው','ዎ'], sounds:['wä','wu','wi','wa','we','w','wo'] },
-  { base:'ዘ', roman:'Z',  forms:['ዘ','ዙ','ዚ','ዛ','ዜ','ዝ','ዞ'], sounds:['zä','zu','zi','za','ze','z','zo'] },
-  { base:'የ', roman:'Y',  forms:['የ','ዩ','ዪ','ያ','ዬ','ይ','ዮ'], sounds:['yä','yu','yi','ya','ye','y','yo'] },
-  { base:'ደ', roman:'D',  forms:['ደ','ዱ','ዲ','ዳ','ዴ','ድ','ዶ'], sounds:['dä','du','di','da','de','d','do'] },
-  { base:'ጀ', roman:'J',  forms:['ጀ','ጁ','ጂ','ጃ','ጄ','ጅ','ጆ'], sounds:['jä','ju','ji','ja','je','j','jo'] },
-  { base:'ገ', roman:'G',  forms:['ገ','ጉ','ጊ','ጋ','ጌ','ግ','ጎ'], sounds:['gä','gu','gi','ga','ge','g','go'] },
-  { base:'ጠ', roman:'Ṭ',  forms:['ጠ','ጡ','ጢ','ጣ','ጤ','ጥ','ጦ'], sounds:['ṭä','ṭu','ṭi','ṭa','ṭe','ṭ','ṭo'] },
-  { base:'ጨ', roman:'Čh', forms:['ጨ','ጩ','ጪ','ጫ','ጬ','ጭ','ጮ'], sounds:['čhä','čhu','čhi','čha','čhe','čh','čho'] },
-  { base:'ፈ', roman:'F',  forms:['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ'], sounds:['fä','fu','fi','fa','fe','f','fo'] },
-  { base:'ፐ', roman:'P',  forms:['ፐ','ፑ','ፒ','ፓ','ፔ','ፕ','ፖ'], sounds:['pä','pu','pi','pa','pe','p','po'] },
+  ...ALPHABET_FAMILIES.map((f, i) => buildFamily(f, [0,1,2,3,4,5,6], VOWEL_ORDERS, i + 1, false)),
+  ...LABIO_FAMILIES.map((f, i) =>
+    buildFamily(f, LABIO_OFFSETS, LABIO_ORDERS, ALPHABET_FAMILIES.length + i + 1, true)),
 ];
 
 /* ═══════════════════════════════
@@ -5959,7 +6024,10 @@ document.querySelectorAll('#communityTabs .tab-btn').forEach(btn => {
     document.getElementById('fidelBig').textContent   = row.forms[fi];
     document.getElementById('fidelName').textContent  = row.forms[fi] + ' (' + row.roman + ' row)';
     document.getElementById('fidelRoman').textContent = 'Romanized: "' + row.sounds[fi] + '"';
-    document.getElementById('fidelSound').textContent = 'Order ' + (fi + 1) + ' of 7 · Vowel: "' + ['ä','u','i','a','e','ə','o'][fi] + '"';
+    /* Labiovelar rows have five orders, not seven — read both from the row. */
+    document.getElementById('fidelSound').textContent =
+      'Order ' + (fi + 1) + ' of ' + row.forms.length + ' · Vowel: "' + row.orders[fi] + '"'
+      + (row.archaic ? ' · same sound as its plain twin in modern Tigrinya' : '');
     const detail = document.getElementById('fidelDetail');
     detail.classList.remove('slide-up');
     void detail.offsetWidth;
@@ -5968,7 +6036,9 @@ document.querySelectorAll('#communityTabs .tab-btn').forEach(btn => {
     detail.scrollIntoView({ behavior:'smooth', block:'nearest' });
   });
   document.getElementById('fidelSpeakBtn').addEventListener('click', () => {
-    if (selRi >= 0) speak(ALPHABET[selRi].sounds[selFi]);
+    /* Speak the Ge'ez letter, not its romanization: passing "hä"/"čhä" to a
+       speech engine just gets the ASCII read out in whatever voice answers. */
+    if (selRi >= 0) speak(ALPHABET[selRi].forms[selFi]);
   });
 
   /* TWEAK 8: ALPHABET SEARCH */
@@ -5998,7 +6068,7 @@ document.querySelectorAll('#communityTabs .tab-btn').forEach(btn => {
     formsEl.innerHTML = data.forms.map((f, i) =>
       '<div style="width:38px;height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
       'background:var(--bg);border:1.5px solid var(--border);border-radius:10px;cursor:pointer" ' +
-      'onclick="speak(\'' + data.sounds[i] + '\')">' +
+      'onclick="speak(\'' + f + '\')">' +
       '<span style="font-family:\'Noto Sans Ethiopic\',sans-serif;font-size:1.1rem;font-weight:700">' + f + '</span>' +
       '<span style="font-size:.5rem;color:var(--text-dim)">' + data.sounds[i] + '</span>' +
       '</div>'
@@ -7331,7 +7401,21 @@ function speak(text) {
   if (!soundOn || !('speechSynthesis' in window)) return;
   const utt = new SpeechSynthesisUtterance(text);
   const _langMap = { ti:'ti-ET', tgr:'ti-ET', am:'am-ET', ar:'ar-SA', en:'en-US' };
-  utt.lang = _langMap[window._fidelTargetLang || 'ti'] || 'ti-ET';
+  const want = _langMap[window._fidelTargetLang || 'ti'] || 'ti-ET';
+
+  /* No platform currently ships a ti-ET voice, so asking for one just hands
+     the text to whatever voice answers — usually en-US, which reads Ge'ez as
+     nonsense. Prefer a real installed voice, falling back to am-ET: Amharic
+     uses the same script and its vowels are close enough to be useful. */
+  const voices = speechSynthesis.getVoices() || [];
+  const pick = [want, want === 'ti-ET' ? 'am-ET' : null]
+    .filter(Boolean)
+    .map(code => voices.find(v => v.lang === code || v.lang === code.replace('-', '_')))
+    .find(Boolean);
+
+  if (pick) { utt.voice = pick; utt.lang = pick.lang; }
+  else      { utt.lang = want; }
+
   utt.rate = 0.85;
   speechSynthesis.cancel();
   speechSynthesis.speak(utt);
@@ -7348,7 +7432,7 @@ const BOOKS = [
     chapters:[
       { title:'Welcome to Tigrinya', body:`<p>Tigrinya (ትግርኛ) is a Semitic language spoken by about 7 million people, mainly in Eritrea and the Tigray region of Ethiopia. It is written in the ancient Ge'ez script (Fidel) — one of the oldest alphabets still in active use today.</p><p>Learning Tigrinya connects you to a rich culture, deep history, and a warm global community. Whether you grew up hearing it at home or are starting from zero, this guide will take you step by step.</p>` },
       { title:'Your First Words', body:`<p>The most important word in Tigrinya is:</p><div class="tig-block"><div class="tig-script">ሰላም</div><div class="tig-rom">Selam</div><div class="tig-eng">Hello / Peace</div></div><p>In Eritrean culture, greeting someone properly is a sign of deep respect. Here are a few more essential words:</p><div class="tig-block"><div class="tig-script">ጽቡቕ</div><div class="tig-rom">Ts'buq</div><div class="tig-eng">Good / Fine</div></div><div class="tig-block"><div class="tig-script">የቐንየለይ</div><div class="tig-rom">Yeqenyeley</div><div class="tig-eng">Thank you</div></div><div class="tig-block"><div class="tig-script">ይቕረ</div><div class="tig-rom">Yiqre</div><div class="tig-eng">Sorry / Excuse me</div></div><div class="tig-block"><div class="tig-script">እወ</div><div class="tig-rom">Iwe</div><div class="tig-eng">Yes</div></div><div class="tig-block"><div class="tig-script">ኣይፋሉ</div><div class="tig-rom">Ayfalu</div><div class="tig-eng">No</div></div>` },
-      { title:'The Alphabet — Fidel', body:`<p>Tigrinya uses the Ge'ez alphabet (Fidel). Each base character has 7 forms — one for each vowel sound. There are 32 base characters, giving around 230 total characters. Once you learn the pattern, the whole system clicks.</p><p>The 7 vowel orders are: <strong>ä · u · i · a · e · ə · o</strong></p><p>Here is the M-row as an example:</p><div class="tig-block"><div class="tig-script">መ · ሙ · ሚ · ማ · ሜ · ም · ሞ</div><div class="tig-rom">mä · mu · mi · ma · me · m · mo</div></div><p>Visit the Alphabet tab in the Learn section to explore all 24 rows interactively.</p>` },
+      { title:'The Alphabet — Fidel', body:`<p>Tigrinya uses the Ge'ez alphabet (Fidel). Each base character has 7 forms — one for each vowel sound. There are 36 base characters, giving 252 characters in all, plus six labiovelar rows (ቈ ቘ ኈ ኰ ዀ ጐ) that add another 30. Once you learn the pattern, the whole system clicks.</p><p>The 7 vowel orders are: <strong>ä · u · i · a · e · ə · o</strong></p><p>Here is the M-row as an example:</p><div class="tig-block"><div class="tig-script">መ · ሙ · ሚ · ማ · ሜ · ም · ሞ</div><div class="tig-rom">mä · mu · mi · ma · me · m · mo</div></div><p>Visit the Alphabet tab in the Learn section to explore all 42 rows interactively.</p>` },
       { title:'Your First Sentences', body:`<div class="tig-block"><div class="tig-script">ስምካ መን ኢዩ?</div><div class="tig-rom">Simka men iyu?</div><div class="tig-eng">What is your name? (to male)</div></div><div class="tig-block"><div class="tig-script">ስምኪ መን ኢዩ?</div><div class="tig-rom">Simki men iyu?</div><div class="tig-eng">What is your name? (to female)</div></div><div class="tig-block"><div class="tig-script">ስመይ … ኢዩ</div><div class="tig-rom">Simey … iyu</div><div class="tig-eng">My name is …</div></div><div class="tig-block"><div class="tig-script">ካበይ ኢኻ?</div><div class="tig-rom">Kabey ikha?</div><div class="tig-eng">Where are you from? (to male)</div></div><div class="tig-block"><div class="tig-script">ካብ ኤርትራ ኢየ</div><div class="tig-rom">Kab Eritrea iye</div><div class="tig-eng">I am from Eritrea</div></div><p>Practice these phrases out loud. The vocabulary and flashcard sections of the Hub will help you build from here!</p>` },
     ]
   },
@@ -7356,7 +7440,7 @@ const BOOKS = [
     id:2, emoji:'✍', title:"Ge'ez Script Workbook", author:'Tekle Haile', cat:'language',
     desc:"Practice every Fidel character with phonics guides and pronunciation tips for every vowel order.",
     chapters:[
-      { title:"Understanding the Fidel System", body:`<p>The Ge'ez script is an <strong>abugida</strong> — each symbol represents a consonant with a built-in vowel sound, modified by its order. There are 7 vowel orders and 32 base characters, creating around 230 total characters. The good news: once you learn the pattern of one row, the rest follow naturally.</p>` },
+      { title:"Understanding the Fidel System", body:`<p>The Ge'ez script is an <strong>abugida</strong> — each symbol represents a consonant with a built-in vowel sound, modified by its order. There are 7 vowel orders and 36 base characters, creating 252 total characters. The good news: once you learn the pattern of one row, the rest follow naturally.</p>` },
       { title:'The Seven Vowel Orders', body:`<p>Every row follows this exact pattern:</p><div class="tig-block"><div class="tig-script">Order 1 — ä</div><div class="tig-rom">like "a" in "about" (most common)</div></div><div class="tig-block"><div class="tig-script">Order 2 — u</div><div class="tig-rom">like "oo" in "moon"</div></div><div class="tig-block"><div class="tig-script">Order 3 — i</div><div class="tig-rom">like "ee" in "see"</div></div><div class="tig-block"><div class="tig-script">Order 4 — a</div><div class="tig-rom">like "a" in "father"</div></div><div class="tig-block"><div class="tig-script">Order 5 — e</div><div class="tig-rom">like "e" in "bed"</div></div><div class="tig-block"><div class="tig-script">Order 6 — ə</div><div class="tig-rom">neutral vowel, barely voiced — often a pure consonant</div></div><div class="tig-block"><div class="tig-script">Order 7 — o</div><div class="tig-rom">like "o" in "go"</div></div>` },
       { title:'Practice: The S-Row (ሰ family)', body:`<p>Let's practice the full S-row — you'll recognise it from ሰላም (Selam):</p><div class="tig-block"><div class="tig-script">ሰ · ሱ · ሲ · ሳ · ሴ · ስ · ሶ</div><div class="tig-rom">sä · su · si · sa · se · s · so</div></div><p>Read these words aloud and find them in the Vocabulary section:</p><div class="tig-block"><div class="tig-script">ሰላም</div><div class="tig-rom">Se-la-m</div><div class="tig-eng">Hello / Peace (ሰ + ላ + ም)</div></div><div class="tig-block"><div class="tig-script">ሰሙን</div><div class="tig-rom">Se-mun</div><div class="tig-eng">Week (ሰ + ሙ + ን)</div></div>` },
       { title:'Practice: Reading Your First Word', body:`<p>Break down ሰላም letter by letter:</p><ul><li><strong>ሰ</strong> = sä (S-row, order 1)</li><li><strong>ላ</strong> = la (L-row, order 4)</li><li><strong>ም</strong> = m (M-row, order 6 — neutral/final consonant)</li></ul><p>Together: <strong>sä · la · m = ሰላም</strong> (Selam)</p><p>Use the Alphabet tab in the Hub to tap any character and hear its sound. Practice reading one row every day and you will have the full script in a month.</p>` },
@@ -10126,6 +10210,10 @@ function subscribeStudentControls(studentId) {
       document.querySelectorAll('.sched-day-btn.on').forEach(b => scheduleDays.push(parseInt(b.dataset.d, 10)));
 
       await _syncDb.collection('controls').doc(sid).set({
+        /* Claims these controls for the adult who set them. The security rules
+           lock later edits to this uid, so a pupil signed in as themselves
+           cannot switch their own limits off. */
+        parentUid:      syncUser ? syncUser.uid : null,
         translate:      document.getElementById('ctrlTranslate').checked,
         dictionary:     document.getElementById('ctrlDictionary').checked,
         community:      document.getElementById('ctrlCommunity').checked,
@@ -14588,7 +14676,7 @@ if (_matchGridEl) {
 
     // ── Alphabet / Fidel ──
     if (/alphabet|letter|fidel|ፊደል|geez|ge'ez|script|syllable|character|write|read/.test(q)) {
-      return 'The Ge\'ez script (ፊደል — Fidel):\n\n✍️ One of the world\'s oldest writing systems!\n• 33 base characters × 7 vowel orders = 231 syllables\n• Each symbol = one consonant + one vowel\n• Reads left to right (like English)\n• No capital letters\n\n1st order (ä vowel):\nሀ ለ ሐ መ ሠ ረ ሰ ሸ ቀ ቐ ቨ ቢ\n\n7 vowel orders:\n1st ä • 2nd u • 3rd i • 4th a • 5th e • 6th (neutral) • 7th o\n\n💡 Tap the Alphabet tab to see all 231 characters with audio!';
+      return 'The Ge\'ez script (ፊደል — Fidel):\n\n✍️ One of the world\'s oldest writing systems!\nâ¢ 36 base characters × 7 vowel orders = 252 syllables\n• Each symbol = one consonant + one vowel\n• Reads left to right (like English)\n• No capital letters\n\n1st order (ä vowel):\nሀ ለ ሐ መ ሠ ረ ሰ ሸ ቀ ቐ ቨ ቢ\n\n7 vowel orders:\n1st ä • 2nd u • 3rd i • 4th a • 5th e • 6th (neutral) • 7th o\n\n💡 Tap the Alphabet tab to see all 231 characters with audio!';
     }
 
     // ── Eritrea / Culture ──

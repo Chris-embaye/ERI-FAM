@@ -1,0 +1,43 @@
+// PROPOSED storage.rules — review, then:
+//   mv storage.rules.proposed storage.rules && firebase deploy --only storage
+//
+// firebase.json declares "storage": { "rules": "storage.rules" } but no such
+// file exists in the repo. Two consequences today:
+//   1. a bare `firebase deploy` fails outright, and
+//   2. the bucket is running on whatever rules were last set by hand — not in
+//      version control, not reviewable, and not reproducible.
+//
+// Only the admin panel touches Storage (admin.html and admin/admin.js upload
+// audio to eri_music/). The school app makes no Storage calls at all, so
+// nothing a pupil does depends on these rules.
+//
+// Reads are left open because the public site streams this audio and existing
+// assets may live at paths not listed here — denying reads wholesale would
+// break them. Writes are closed to everyone but the owner, which is the actual
+// gap. If you later store anything private, give it its own match block with a
+// narrower read rule rather than widening this one.
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuth()  { return request.auth != null; }
+    function isOwner() { return isAuth() && request.auth.token.email == 'embayechris@gmail.com'; }
+
+    // Music uploaded from the admin panel, streamed by the public site.
+    // Path shape: eri_music/<timestamp>_<sanitised filename>
+    match /eri_music/{file=**} {
+      allow read:  if true;
+      allow write: if isOwner()
+                   && request.resource.size < 25 * 1024 * 1024
+                   && request.resource.contentType.matches('audio/.*');
+    }
+
+    // Everything else: readable (preserves existing assets), owner-write only.
+    match /{allPaths=**} {
+      allow read:  if true;
+      allow write: if isOwner() && request.resource.size < 25 * 1024 * 1024;
+    }
+  }
+}
