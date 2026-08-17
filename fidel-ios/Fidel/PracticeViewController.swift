@@ -10,7 +10,9 @@ class PracticeViewController: UIViewController {
 
     private var words: [Word] = []
     private var currentIndex = 0
-    private var knownIndices: Set<Int> = []
+    /* Keyed by the word itself, not its index: `words` is reshuffled on every
+       launch, so saved positions pointed at different cards each time. */
+    private var knownWords: Set<String> = []
     private var isFlipped = false
 
     private let progressView = UIProgressView(progressViewStyle: .default)
@@ -39,12 +41,11 @@ class PracticeViewController: UIViewController {
               let data = try? Data(contentsOf: url),
               let decoded = try? JSONDecoder().decode([Word].self, from: data) else { return }
         words = decoded.shuffled()
-        let saved = UserDefaults.standard.array(forKey: "knownIndices") as? [Int] ?? []
-        knownIndices = Set(saved)
+        knownWords = Set(UserDefaults.standard.stringArray(forKey: "knownWords") ?? [])
     }
 
     private func saveProgress() {
-        UserDefaults.standard.set(Array(knownIndices), forKey: "knownIndices")
+        UserDefaults.standard.set(Array(knownWords), forKey: "knownWords")
     }
 
     private func setupUI() {
@@ -188,7 +189,7 @@ class PracticeViewController: UIViewController {
 
         let pct = Float(currentIndex) / Float(words.count)
         progressView.setProgress(pct, animated: true)
-        statusLabel.text = "Card \(currentIndex + 1) of \(words.count)  ·  \(knownIndices.count) known"
+        statusLabel.text = "Card \(currentIndex + 1) of \(words.count)  ·  \(knownWords.count) known"
     }
 
     @objc private func flipCard() {
@@ -208,7 +209,7 @@ class PracticeViewController: UIViewController {
     }
 
     @objc private func markKnown() {
-        knownIndices.insert(currentIndex)
+        knownWords.insert(words[currentIndex].tigrinya)
         saveProgress()
         advance()
     }
@@ -236,7 +237,7 @@ class PracticeViewController: UIViewController {
         let alert = UIAlertController(title: "Reset Progress?", message: "This will clear all saved progress.", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Reset", style: .destructive) { _ in
-            self.knownIndices = []
+            self.knownWords = []
             self.currentIndex = 0
             self.words.shuffle()
             self.saveProgress()
@@ -248,7 +249,17 @@ class PracticeViewController: UIViewController {
     private func showCompletion() {
         progressView.setProgress(1.0, animated: true)
         let total = words.count
-        let known = knownIndices.count
+
+        /* If Words.json is missing or unreadable the deck is empty, and the
+           congratulation below would read "you know all 0 words". */
+        guard total > 0 else {
+            tigrinyaLabel.text = "—"
+            tapHintLabel.text = "Offline practice is unavailable"
+            statusLabel.text = ""
+            return
+        }
+
+        let known = knownWords.count
         let msg = known == total
             ? "Perfect! You know all \(total) words!"
             : "You knew \(known) of \(total) words. Keep going!"
