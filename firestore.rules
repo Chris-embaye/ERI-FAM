@@ -33,9 +33,9 @@ service cloud.firestore {
       allow write: if isOwner() || isAuth();
     }
 
-    // ── feedback (write anyone authed, read/delete = owner only) ────
+    // ── feedback (anyone can send — ERI-FAM app has no login) ───────
     match /feedback/{docId} {
-      allow create: if isAuth() && notTooLarge();
+      allow create: if notTooLarge();
       allow read, update, delete: if isOwner() || isAuth();
     }
 
@@ -78,14 +78,15 @@ service cloud.firestore {
     }
 
     // ── music ───────────────────────────────────────────────────────
-    match /tracks/{docId}     { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
+    // tracks: public read so the ERI-FAM player streams without login
+    match /tracks/{docId}     { allow read: if true;     allow write: if isOwner() || isAuth(); }
     match /eri_music/{docId}  { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
     match /eri_tracks/{docId} { allow read: if true;     allow write: if isOwner() || isAuth(); }
 
-    // ── community ───────────────────────────────────────────────────
+    // ── community (public — ERI-FAM users read & post without login) ─
     match /community_posts/{docId} {
-      allow read:   if isAuth();
-      allow create: if isAuth() && notTooLarge();
+      allow read:   if true;
+      allow create: if notTooLarge();
       allow update, delete: if isOwner() || (isAuth() && request.auth.uid == resource.data.authorId);
     }
 
@@ -102,11 +103,18 @@ service cloud.firestore {
     match /eri_announcements/{docId}   { allow read: if true; allow write: if isOwner() || isAuth(); }
     match /rl_announcements/{docId}    { allow read: if true; allow write: if isOwner() || isAuth(); }
 
-    // ── promotions ──────────────────────────────────────────────────
-    match /promotions/{docId} { allow read: if isAuth(); allow write: if isOwner() || isAuth(); }
+    // ── promotions (public read — shown in the ERI-FAM app) ─────────
+    match /promotions/{docId} { allow read: if true; allow write: if isOwner() || isAuth(); }
 
     // ── riglog ──────────────────────────────────────────────────────
     match /rl_users/{docId} { allow read, write: if isOwner() || isAuth(); }
+
+    // ── ERI-FAM app extras ──────────────────────────────────────────
+    match /hub_settings/{docId}  { allow read: if true; allow write: if isOwner() || isAuth(); }
+    match /hub_sponsors/{docId}  { allow read: if true; allow write: if isOwner() || isAuth(); }
+    match /notifications/{docId} { allow read: if true; allow write: if isOwner() || isAuth(); }
+    // anonymous device presence pings
+    match /app_sessions/{docId}  { allow write: if true; allow read: if isOwner(); }
 
     // ── settings / config / versions ────────────────────────────────
     match /settings/{docId}      { allow read: if isAuth(); allow write: if isOwner(); }

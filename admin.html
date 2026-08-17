@@ -7,57 +7,112 @@
 <link rel="icon" href="icons/icon-512.png" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #C8914A;
+    --gold-2: #e0b06a;
+    --bg: #0b0b10;
+    --card: rgba(26,26,32,.82);
+    --line: rgba(255,255,255,.09);
+    --txt-dim: rgba(255,255,255,.55);
+    --ok: #46d97a;
+    --err: #ff6b60;
+  }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0d0d10; color: #fff; min-height: 100vh; padding: 24px;
+    background:
+      radial-gradient(1000px 500px at 85% -10%, rgba(139,92,246,.14), transparent 60%),
+      radial-gradient(800px 400px at -10% 110%, rgba(200,145,74,.10), transparent 60%),
+      var(--bg);
+    color: #fff; min-height: 100vh; padding: clamp(16px, 4vw, 32px);
   }
-  .wrap { max-width: 760px; margin: 0 auto; }
-  h1 { font-size: 1.4rem; margin-bottom: 4px; }
-  h1 span { color: #C8914A; }
-  .sub { color: rgba(255,255,255,.55); font-size: .9rem; margin-bottom: 24px; }
+  .wrap { max-width: 780px; margin: 0 auto; }
+
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  header img { width: 46px; height: 46px; border-radius: 12px; }
+  h1 { font-size: 1.35rem; letter-spacing: .3px; }
+  h1 span { background: linear-gradient(90deg, var(--gold), var(--gold-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: var(--txt-dim); font-size: .85rem; margin-top: 2px; }
+
   .card {
-    background: #1a1a1f; border: 1px solid rgba(255,255,255,.08);
-    border-radius: 14px; padding: 20px; margin-bottom: 16px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 22px; margin-bottom: 16px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
-  label { display: block; font-size: .8rem; color: rgba(255,255,255,.6); margin: 10px 0 4px; }
+  .step-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 50%; flex: 0 0 26px;
+    display: grid; place-items: center; font-size: .8rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--gold), var(--gold-2)); color: #14100a;
+  }
+  .step-head strong { font-size: 1rem; }
+  .step-head .right { margin-left: auto; }
+
+  label { display: block; font-size: .78rem; color: var(--txt-dim); margin: 12px 0 5px; }
   input[type=email], input[type=password] {
-    width: 100%; padding: 11px 12px; border-radius: 9px; font-size: 1rem;
-    background: #26262c; border: 1px solid rgba(255,255,255,.12); color: #fff;
+    width: 100%; padding: 12px 13px; border-radius: 10px; font-size: 1rem;
+    background: rgba(38,38,44,.9); border: 1px solid var(--line); color: #fff;
+    transition: border-color .15s;
   }
+  input:focus { outline: none; border-color: var(--gold); }
+
   button {
     font-family: inherit; font-size: .95rem; font-weight: 700; cursor: pointer;
-    border: none; border-radius: 9px; padding: 11px 18px; margin-top: 14px;
-    background: #C8914A; color: #14100a;
+    border: none; border-radius: 10px; padding: 12px 20px; margin-top: 14px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-2)); color: #14100a;
+    min-height: 44px;
   }
-  button:disabled { opacity: .45; cursor: default; }
-  button.ghost { background: #26262c; color: #fff; border: 1px solid rgba(255,255,255,.15); }
-  .status { font-size: .85rem; margin-top: 10px; color: rgba(255,255,255,.7); min-height: 1.2em; }
-  .status.err { color: #ff6b60; }
-  .status.ok  { color: #46d97a; }
-  .hidden { display: none; }
-  .progress-outer {
-    height: 10px; background: #26262c; border-radius: 6px; overflow: hidden; margin-top: 12px;
+  button:hover:not(:disabled) { filter: brightness(1.08); }
+  button:disabled { opacity: .4; cursor: default; }
+  button.ghost { background: rgba(38,38,44,.9); color: #fff; border: 1px solid rgba(255,255,255,.16); }
+  button.small { padding: 8px 14px; min-height: 36px; font-size: .8rem; margin-top: 0; }
+
+  .status { font-size: .85rem; margin-top: 12px; color: rgba(255,255,255,.7); min-height: 1.2em; line-height: 1.5; }
+  .status.err { color: var(--err); }
+  .status.ok  { color: var(--ok); }
+  .hidden { display: none !important; }
+
+  .rules-warn {
+    margin-top: 12px; padding: 12px 14px; border-radius: 10px; font-size: .82rem; line-height: 1.55;
+    background: rgba(255,107,96,.1); border: 1px solid rgba(255,107,96,.35); color: #ffb3ad;
   }
-  .progress-inner { height: 100%; width: 0%; background: linear-gradient(90deg, #C8914A, #e0b06a); transition: width .3s; }
-  .stats { display: flex; gap: 18px; margin-top: 12px; font-size: .85rem; flex-wrap: wrap; }
-  .stats b { color: #C8914A; }
-  table { width: 100%; border-collapse: collapse; font-size: .8rem; margin-top: 12px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,.06); }
-  th { color: rgba(255,255,255,.5); font-weight: 600; }
-  td.st-done { color: #46d97a; } td.st-fail { color: #ff6b60; } td.st-skip { color: rgba(255,255,255,.4); }
-  .albums-preview { font-size: .82rem; color: rgba(255,255,255,.65); margin-top: 8px; line-height: 1.6; }
-  .note { font-size: .78rem; color: rgba(255,255,255,.45); margin-top: 10px; line-height: 1.5; }
-  #fileTable-wrap { max-height: 340px; overflow-y: auto; margin-top: 8px; }
+
+  .progress-outer { height: 12px; background: rgba(38,38,44,.9); border-radius: 8px; overflow: hidden; margin-top: 14px; }
+  .progress-inner { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), var(--gold-2)); transition: width .4s; border-radius: 8px; }
+
+  .stats { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .stat {
+    flex: 1 1 100px; text-align: center; padding: 10px 6px; border-radius: 12px;
+    background: rgba(38,38,44,.6); border: 1px solid var(--line);
+  }
+  .stat b { display: block; font-size: 1.15rem; color: var(--gold-2); }
+  .stat span { font-size: .68rem; color: var(--txt-dim); text-transform: uppercase; letter-spacing: .6px; }
+
+  .meta-row { display: flex; gap: 16px; margin-top: 10px; font-size: .78rem; color: var(--txt-dim); flex-wrap: wrap; }
+
+  .table-wrap { max-height: 320px; overflow: auto; margin-top: 14px; border-radius: 10px; border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,.05); white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+  thead th { position: sticky; top: 0; background: #1e1e26; color: var(--txt-dim); font-weight: 600; font-size: .7rem; text-transform: uppercase; letter-spacing: .5px; }
+  td.st-done { color: var(--ok); } td.st-fail { color: var(--err); } td.st-skip { color: rgba(255,255,255,.35); }
+
+  .albums-preview { font-size: .82rem; color: rgba(255,255,255,.65); margin-top: 10px; line-height: 1.7; }
+  .note { font-size: .76rem; color: rgba(255,255,255,.4); margin-top: 12px; line-height: 1.55; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>ERI-<span>FAM</span> · Cloud Upload</h1>
-  <p class="sub">Upload your music library to the cloud — every device gets the same songs, organized by album &amp; title.</p>
+  <header>
+    <img src="icons/icon-512.png" alt="" />
+    <div>
+      <h1>ERI-<span>FAM</span> · Cloud Upload</h1>
+      <p class="sub">Put your music in the cloud — every device gets the same library, organized by album &amp; title.</p>
+    </div>
+  </header>
 
   <!-- STEP 1: LOGIN -->
   <div class="card" id="loginCard">
-    <strong>1 · Admin sign in</strong>
+    <div class="step-head"><div class="step-num">1</div><strong>Admin sign in</strong></div>
     <label>Email</label>
     <input type="email" id="email" autocomplete="username" />
     <label>Password</label>
@@ -68,35 +123,65 @@
 
   <!-- STEP 2: PICK MUSIC -->
   <div class="card hidden" id="pickCard">
-    <strong>2 · Choose your music folder</strong>
-    <p class="note">Pick a folder (e.g. <b>All Music</b>). Songs are scanned for real album/title/artist tags;
-    files without tags use their folder name as the album. Already-uploaded songs are skipped automatically,
-    so you can re-run this any time.</p>
+    <div class="step-head">
+      <div class="step-num">2</div><strong>Choose your music</strong>
+      <span class="right"><button class="ghost small" id="signOutBtn">Sign out</button></span>
+    </div>
+    <p class="note">Pick a folder (e.g. <b>All Music</b>). Real album / title / artist tags are read from
+    each song; files without tags use their folder name as the album. Already-uploaded songs are skipped
+    automatically — safe to re-run any time.</p>
     <input type="file" id="folderInput" webkitdirectory multiple hidden />
     <input type="file" id="filesInput" accept=".mp3,.m4a,.flac,.wav,.ogg,.aac" multiple hidden />
-    <button onclick="document.getElementById('folderInput').click()">📁 Choose Folder</button>
-    <button class="ghost" onclick="document.getElementById('filesInput').click()">🎵 Choose Files</button>
+    <div class="btn-row">
+      <button id="pickFolderBtn">📁 Choose Folder</button>
+      <button class="ghost" id="pickFilesBtn">🎵 Choose Files</button>
+    </div>
     <div class="status" id="scanStatus"></div>
     <div class="albums-preview" id="albumsPreview"></div>
   </div>
 
   <!-- STEP 3: UPLOAD -->
   <div class="card hidden" id="uploadCard">
-    <strong>3 · Upload</strong>
+    <div class="step-head"><div class="step-num">3</div><strong>Upload</strong></div>
     <div class="stats">
-      <span>Total: <b id="stTotal">0</b></span>
-      <span>Uploaded: <b id="stDone">0</b></span>
-      <span>Skipped: <b id="stSkip">0</b></span>
-      <span>Failed: <b id="stFail">0</b></span>
+      <div class="stat"><b id="stTotal">0</b><span>Total</span></div>
+      <div class="stat"><b id="stDone">0</b><span>Uploaded</span></div>
+      <div class="stat"><b id="stSkip">0</b><span>Skipped</span></div>
+      <div class="stat"><b id="stFail">0</b><span>Failed</span></div>
     </div>
     <div class="progress-outer"><div class="progress-inner" id="progBar"></div></div>
+    <div class="meta-row">
+      <span id="metaBytes">0 GB / 0 GB</span>
+      <span id="metaSpeed"></span>
+      <span id="metaEta"></span>
+    </div>
     <div class="status" id="upStatus"></div>
-    <button id="startBtn">🚀 Start Upload</button>
-    <button class="ghost" id="stopBtn" disabled>⏸ Stop</button>
-    <div id="fileTable-wrap"><table id="fileTable"></table></div>
-    <p class="note">Keep this tab open while uploading. If you stop or close it, run again later —
-    finished songs are skipped. Firebase free plan holds ~5&nbsp;GB (≈1,000 songs); above that the
-    project needs the pay-as-you-go plan (~$0.03/GB per month).</p>
+    <div class="rules-warn hidden" id="rulesWarn">
+      🔒 <b>Firebase needs one-time setup before uploads can work.</b><br>
+      In the <b>Firebase console</b> (console.firebase.google.com → <b>eri-fam</b> project):<br>
+      1 · <b>Build → Storage → Get started</b> — creates the storage bucket (needs the Blaze
+      pay-as-you-go plan; your library is bigger than the free 5&nbsp;GB anyway).<br>
+      2 · <b>Build → Authentication → Sign-in method</b> — enable <b>Email/Password</b>, and under
+      <b>Users</b> add your admin account if it isn't there.<br>
+      3 · Deploy the security rules (already written, in the ERI-FAM folder): run
+      <code>npx firebase-tools login</code> then
+      <code>npx firebase-tools deploy --only firestore:rules,storage</code>.<br>
+      Then come back here and press <b>Start Upload</b> again.
+    </div>
+    <div class="btn-row">
+      <button id="startBtn">🚀 Start Upload</button>
+      <button class="ghost" id="stopBtn" disabled>⏸ Stop</button>
+      <button class="ghost hidden" id="retryBtn">🔁 Retry failed</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Song</th><th>Album</th><th>Status</th></tr></thead>
+        <tbody id="fileTable"></tbody>
+      </table>
+    </div>
+    <p class="note">Keep this tab open while uploading (you can minimize the window). If it stops,
+    just run it again — finished songs are skipped. Firebase's free plan holds ~5&nbsp;GB (≈1,000 songs);
+    beyond that the project needs the pay-as-you-go plan (~$0.03 per GB per month).</p>
   </div>
 </div>
 
@@ -104,17 +189,32 @@
 <script type="module">
 /* ═══ Firebase ═══ */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, collection, getDocs, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
-const app = initializeApp(window.FIREBASE_CONFIG);
+const app  = initializeApp(window.FIREBASE_CONFIG);
 const auth = getAuth(app);
-const db = getFirestore(app);
-const st = getStorage(app);
+const db   = getFirestore(app);
+const st   = getStorage(app);
+st.maxUploadRetryTime    = 30000;   // fail fast instead of silently retrying for 10 min
+st.maxOperationRetryTime = 20000;
 
 const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 $('email').value = window.ADMIN_EMAIL || '';
+
+const AUTH_ERRORS = {
+  'auth/invalid-credential':      'Wrong email or password.',
+  'auth/wrong-password':          'Wrong email or password.',
+  'auth/user-not-found':          'No account with that email. Create it in Firebase console → Authentication → Users.',
+  'auth/invalid-email':           'That email address looks invalid.',
+  'auth/too-many-requests':       'Too many attempts — wait a few minutes and try again.',
+  'auth/network-request-failed':  'No internet connection. Check your network and retry.',
+  'auth/operation-not-allowed':   'Email/Password sign-in is disabled. Enable it in Firebase console → Authentication → Sign-in method.',
+};
+const isRulesError = e => /permission[-_ ]denied|unauthorized|insufficient permissions/i.test((e?.code || '') + ' ' + (e?.message || ''));
+const isSetupError = e => /retry-limit-exceeded|unknown|bucket|not.?found|network/i.test((e?.code || '') + ' ' + (e?.message || ''));
 
 /* ═══ ID3 tag reader (same engine as the app) ═══ */
 function _id3Text(bytes, start, len) {
@@ -192,7 +292,8 @@ function readDuration(file) {
   return new Promise(resolve => {
     const a = new Audio();
     const url = URL.createObjectURL(file);
-    const done = d => { URL.revokeObjectURL(url); resolve(d); };
+    let settled = false;
+    const done = d => { if (settled) return; settled = true; URL.revokeObjectURL(url); resolve(d); };
     a.addEventListener('loadedmetadata', () => done(a.duration || 0));
     a.addEventListener('error', () => done(0));
     setTimeout(() => done(0), 8000);
@@ -200,59 +301,78 @@ function readDuration(file) {
     a.src = url;
   });
 }
+const fmtGB = b => (b / 1e9).toFixed(2) + ' GB';
 
 /* ═══ State ═══ */
-let queue = [];      // { file, title, artist, album, hashKey, status }
+let queue = [];          // { file, title, artist, album, hashKey, status, err }
 let existing = new Set();
 let running = false;
+let doneBytes = 0, pendingBytes = 0, runStart = 0, runStartBytes = 0;
 
-/* ═══ Login ═══ */
+/* ═══ Auth (persistent — skips login if already signed in) ═══ */
+let authReadyOnce = false;
+onAuthStateChanged(auth, user => {
+  if (user) {
+    $('loginCard').classList.add('hidden');
+    $('pickCard').classList.remove('hidden');
+    if (!authReadyOnce) { authReadyOnce = true; loadExisting(); }
+  } else {
+    $('loginCard').classList.remove('hidden');
+    $('pickCard').classList.add('hidden');
+    $('uploadCard').classList.add('hidden');
+    authReadyOnce = false;
+  }
+});
+
 $('loginBtn').addEventListener('click', async () => {
   const s = $('loginStatus');
   s.className = 'status';
   s.textContent = 'Signing in…';
+  $('loginBtn').disabled = true;
   try {
     await signInWithEmailAndPassword(auth, $('email').value.trim(), $('password').value);
     s.className = 'status ok';
     s.textContent = '✅ Signed in';
-    $('loginCard').classList.add('hidden');
-    $('pickCard').classList.remove('hidden');
-    loadExisting();
   } catch (e) {
     s.className = 'status err';
-    s.textContent = '⚠ ' + (e.code === 'auth/invalid-credential' ? 'Wrong email or password' : e.message);
+    s.textContent = '⚠ ' + (AUTH_ERRORS[e.code] || e.message);
   }
+  $('loginBtn').disabled = false;
 });
 $('password').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginBtn').click(); });
+$('signOutBtn').addEventListener('click', () => { if (!running) signOut(auth); });
 
 async function loadExisting() {
   try {
     const snap = await getDocs(collection(db, 'tracks'));
+    existing = new Set();
     snap.docs.forEach(d => { const h = d.data().hashKey; if (h) existing.add(h); });
-    $('scanStatus').textContent = existing.size
-      ? `${existing.size} songs already in the cloud — they'll be skipped.` : '';
+    if (existing.size) $('scanStatus').textContent = `${existing.size} songs already in the cloud — they'll be skipped.`;
   } catch (e) {
-    $('scanStatus').textContent = '⚠ Could not read existing cloud songs: ' + e.message;
+    if (isRulesError(e)) { $('uploadCard').classList.remove('hidden'); $('rulesWarn').classList.remove('hidden'); }
+    $('scanStatus').className = 'status err';
+    $('scanStatus').textContent = '⚠ Could not read existing cloud songs: ' + (e.code || e.message);
   }
 }
 
-/* ═══ Scan folder ═══ */
+/* ═══ Scan ═══ */
 async function scan(files) {
-  const audio = Array.from(files).filter(f =>
-    /\.(mp3|m4a|flac|wav|ogg|aac)$/i.test(f.name));
-  if (!audio.length) { $('scanStatus').textContent = '⚠ No audio files found in that folder.'; return; }
+  if (running) return;
+  const audio = Array.from(files).filter(f => /\.(mp3|m4a|flac|wav|ogg|aac)$/i.test(f.name));
+  if (!audio.length) { $('scanStatus').className = 'status err'; $('scanStatus').textContent = '⚠ No audio files found there.'; return; }
+  $('scanStatus').className = 'status';
   $('scanStatus').textContent = `Reading tags from ${audio.length} files…`;
   queue = [];
   const albums = {};
   let i = 0;
   for (const file of audio) {
-    // Read just the head + tail for tags — fast even on thousands of files
+    // Read head + tail only — fast even on thousands of files
     const head = await file.slice(0, 512 * 1024).arrayBuffer();
     let tags = readID3FromBuffer(head);
-    if (!tags.title && !tags.album) {
-      const tail = await file.slice(Math.max(0, file.size - 128)).arrayBuffer();
+    if (!tags.title || !tags.artist || !tags.album) {
+      const tail = await file.slice(Math.max(0, file.size - 256)).arrayBuffer();
       const t2 = readID3FromBuffer(tail);
-      tags.title = tags.title || t2.title; tags.artist = tags.artist || t2.artist; tags.album = tags.album || t2.album;
+      tags = { title: tags.title || t2.title, artist: tags.artist || t2.artist, album: tags.album || t2.album };
     }
     const parsed = parseFilename(file.name);
     const entry = {
@@ -265,77 +385,137 @@ async function scan(files) {
     };
     if (existing.has(entry.hashKey)) entry.status = 'skip';
     queue.push(entry);
-    albums[entry.album || 'Unknown Album'] = (albums[entry.album || 'Unknown Album'] || 0) + 1;
+    const aKey = entry.album || 'Unknown Album';
+    albums[aKey] = (albums[aKey] || 0) + 1;
     if (++i % 100 === 0) $('scanStatus').textContent = `Reading tags… ${i}/${audio.length}`;
   }
-  const gb = (audio.reduce((s, f) => s + f.size, 0) / 1e9).toFixed(1);
+  const totalBytes = audio.reduce((s, f) => s + f.size, 0);
+  const nAlb = Object.keys(albums).length;
   $('scanStatus').className = 'status ok';
-  $('scanStatus').textContent = `✅ ${queue.length} songs ready (${gb} GB) · ${Object.keys(albums).length} albums`;
+  $('scanStatus').textContent = `✅ ${queue.length} song${queue.length>1?'s':''} ready (${fmtGB(totalBytes)}) · ${nAlb} album${nAlb>1?'s':''}`;
   $('albumsPreview').innerHTML = Object.entries(albums).sort((a,b) => b[1]-a[1]).slice(0, 12)
-    .map(([n, c]) => `💿 ${n} — ${c}`).join('<br>');
+    .map(([n, c]) => `💿 ${esc(n)} — ${c}`).join('<br>');
   $('uploadCard').classList.remove('hidden');
+  $('fileTable').innerHTML = '';
+  doneBytes = 0;
   renderStats();
 }
+$('pickFolderBtn').addEventListener('click', () => { if (!running) $('folderInput').click(); });
+$('pickFilesBtn').addEventListener('click',  () => { if (!running) $('filesInput').click(); });
 $('folderInput').addEventListener('change', e => scan(e.target.files));
 $('filesInput').addEventListener('change', e => scan(e.target.files));
 
-/* ═══ Upload ═══ */
+/* ═══ Progress ═══ */
 function renderStats() {
   const done = queue.filter(q => q.status === 'done').length;
   const skip = queue.filter(q => q.status === 'skip').length;
   const fail = queue.filter(q => q.status === 'fail').length;
   $('stTotal').textContent = queue.length;
-  $('stDone').textContent = done;
-  $('stSkip').textContent = skip;
-  $('stFail').textContent = fail;
-  $('progBar').style.width = queue.length ? ((done + skip + fail) / queue.length * 100) + '%' : '0%';
+  $('stDone').textContent  = done;
+  $('stSkip').textContent  = skip;
+  $('stFail').textContent  = fail;
+  $('retryBtn').classList.toggle('hidden', fail === 0 || running);
+
+  const uploadBytesTotal = queue.filter(q => q.status !== 'skip').reduce((s, q) => s + q.file.size, 0);
+  $('progBar').style.width = uploadBytesTotal ? (doneBytes / uploadBytesTotal * 100) + '%' : '0%';
+  $('metaBytes').textContent = `${fmtGB(doneBytes)} / ${fmtGB(uploadBytesTotal)}`;
+
+  if (running && doneBytes > runStartBytes) {
+    const elapsed = (Date.now() - runStart) / 1000;
+    const speed = (doneBytes - runStartBytes) / elapsed;             // bytes/sec
+    const remain = uploadBytesTotal - doneBytes;
+    $('metaSpeed').textContent = `⚡ ${(speed / 1e6).toFixed(1)} MB/s`;
+    if (speed > 0) {
+      const etaMin = Math.ceil(remain / speed / 60);
+      $('metaEta').textContent = etaMin > 90 ? `⏱ ~${(etaMin/60).toFixed(1)} hours left` : `⏱ ~${etaMin} min left`;
+    }
+  } else if (!running) {
+    $('metaSpeed').textContent = ''; $('metaEta').textContent = '';
+  }
 }
 function logRow(q) {
-  const tbl = $('fileTable');
   const cls = q.status === 'done' ? 'st-done' : q.status === 'fail' ? 'st-fail' : 'st-skip';
+  const tbl = $('fileTable');
   tbl.insertAdjacentHTML('afterbegin',
-    `<tr><td>${q.title}</td><td>${q.album || '—'}</td><td class="${cls}">${q.status}${q.err ? ' · ' + q.err : ''}</td></tr>`);
+    `<tr><td>${esc(q.title)}</td><td>${esc(q.album) || '—'}</td><td class="${cls}">${q.status}${q.err ? ' · ' + esc(q.err) : ''}</td></tr>`);
+  while (tbl.rows.length > 200) tbl.deleteRow(-1);   // keep the table light
 }
 
-$('startBtn').addEventListener('click', async () => {
+/* ═══ Upload (3 parallel workers) ═══ */
+async function uploadOne(q) {
+  const safe = q.file.name.replace(/[^\w.\-]+/g, '_').slice(0, 80);
+  const path = `eri_music/${Date.now()}_${Math.random().toString(36).slice(2, 7)}_${safe}`;
+  const task = uploadBytesResumable(ref(st, path), q.file, { contentType: q.file.type || 'audio/mpeg' });
+  await new Promise((res, rej) => task.on('state_changed', null, rej, res));
+  const url = await getDownloadURL(task.snapshot.ref);
+  const duration = await readDuration(q.file);
+  await addDoc(collection(db, 'tracks'), {
+    title: q.title, artist: q.artist, album: q.album,
+    duration, size: q.file.size, url, storagePath: path,
+    hashKey: q.hashKey, addedAt: Date.now(), playCount: 0,
+  });
+}
+
+async function runUpload() {
   if (running) return;
+  const pending = queue.filter(q => q.status === 'pending');
+  if (!pending.length) { $('upStatus').textContent = 'Nothing to upload — everything is already in the cloud.'; return; }
   running = true;
+  $('rulesWarn').classList.add('hidden');
   $('startBtn').disabled = true;
   $('stopBtn').disabled = false;
-  const pending = queue.filter(q => q.status === 'pending');
-  for (const q of pending) {
-    if (!running) break;
-    $('upStatus').textContent = `⏳ Uploading: ${q.title}`;
-    try {
-      const safe = q.file.name.replace(/[^\w.\-]+/g, '_').slice(0, 80);
-      const path = `eri_music/${Date.now()}_${safe}`;
-      const task = uploadBytesResumable(ref(st, path), q.file,
-        { contentType: q.file.type || 'audio/mpeg' });
-      await new Promise((res, rej) => task.on('state_changed', null, rej, res));
-      const url = await getDownloadURL(task.snapshot.ref);
-      const duration = await readDuration(q.file);
-      await addDoc(collection(db, 'tracks'), {
-        title: q.title, artist: q.artist, album: q.album,
-        duration, size: q.file.size, url, storagePath: path,
-        hashKey: q.hashKey, addedAt: Date.now(), playCount: 0,
-      });
-      q.status = 'done';
-      existing.add(q.hashKey);
-    } catch (e) {
-      q.status = 'fail';
-      q.err = e.code || e.message;
-    }
-    logRow(q);
-    renderStats();
-  }
+  runStart = Date.now(); runStartBytes = doneBytes;
+
+  let next = 0, active = 0, rulesHit = false;
+  await new Promise(resolveAll => {
+    const pump = () => {
+      if (!running || next >= pending.length) {
+        if (active === 0) resolveAll();
+        return;
+      }
+      while (running && active < 3 && next < pending.length) {
+        const q = pending[next++];
+        active++;
+        $('upStatus').textContent = `⏳ Uploading ${next} of ${pending.length}: ${q.title}`;
+        uploadOne(q)
+          .then(() => { q.status = 'done'; existing.add(q.hashKey); doneBytes += q.file.size; })
+          .catch(e => {
+            q.status = 'fail';
+            q.err = e.code || e.message;
+            if (isRulesError(e) || isSetupError(e)) { rulesHit = true; running = false; }
+          })
+          .finally(() => { active--; logRow(q); renderStats(); pump(); });
+      }
+    };
+    pump();
+  });
+
   running = false;
   $('startBtn').disabled = false;
   $('stopBtn').disabled = true;
   const done = queue.filter(q => q.status === 'done').length;
-  $('upStatus').className = 'status ok';
-  $('upStatus').textContent = `✅ Finished — ${done} songs uploaded. Open the app and pull-refresh to see them.`;
+  const fail = queue.filter(q => q.status === 'fail').length;
+  renderStats();
+  if (rulesHit) {
+    $('rulesWarn').classList.remove('hidden');
+    $('upStatus').className = 'status err';
+    $('upStatus').textContent = '⛔ Upload blocked — Firebase needs its one-time setup. Follow the steps below, then try again.';
+  } else if (fail > 0) {
+    $('upStatus').className = 'status err';
+    $('upStatus').textContent = `Finished with ${fail} failed — tap “Retry failed”. ${done} uploaded OK.`;
+  } else {
+    $('upStatus').className = 'status ok';
+    $('upStatus').textContent = `✅ Finished — ${done} songs uploaded. Open the app and refresh to see them.`;
+  }
+}
+
+$('startBtn').addEventListener('click', runUpload);
+$('retryBtn').addEventListener('click', () => {
+  queue.forEach(q => { if (q.status === 'fail') { q.status = 'pending'; q.err = null; } });
+  renderStats();
+  runUpload();
 });
-$('stopBtn').addEventListener('click', () => { running = false; $('stopBtn').disabled = true; });
+$('stopBtn').addEventListener('click', () => { running = false; $('stopBtn').disabled = true; $('upStatus').textContent = '⏸ Stopping after current songs…'; });
 window.addEventListener('beforeunload', e => { if (running) { e.preventDefault(); e.returnValue = ''; } });
 </script>
 </body>
