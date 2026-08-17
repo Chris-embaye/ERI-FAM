@@ -437,7 +437,19 @@ function titleFromUrl(url) {
 async function addTrackFromUrl() {
   const input = document.getElementById('urlAddInput');
   const url   = input.value.trim();
-  if (!url.startsWith('http')) { toast('Enter a valid https:// URL', 'error'); return; }
+  if (!url.startsWith('http')) { toast('Enter a valid https:// URL'); return; }
+
+  // Video-page links are not audio files — the player can't stream them
+  if (/youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|facebook\.com|instagram\.com/i.test(url)) {
+    toast('⚠ That\'s a video page, not an MP3 file. Use YT → MP3 to convert it, then add the downloaded file.', 5000);
+    input.value = '';
+    if (/youtube\.com|youtu\.be/i.test(url)) {
+      openModal('ytModal');
+      const ytInput = document.getElementById('ytUrl');
+      if (ytInput) ytInput.value = url;
+    }
+    return;
+  }
   const all = [...S.tracks, ...S.cloudTracks];
   if (all.find(t => t.url === url)) { toast('Already in your library'); return; }
   const id    = uid();
@@ -627,7 +639,13 @@ window.addEventListener('beforeunload', savePlaybackState);
 window.addEventListener('pagehide', savePlaybackState);
 document.addEventListener('visibilitychange', () => { if (document.hidden) savePlaybackState(); });
 setInterval(() => { if (S.playing && !audio.paused) savePlaybackState(); }, 15000);
-audio.addEventListener('error', () => toast('⚠ Could not play this track'));
+audio.addEventListener('error', () => {
+  if (S.currentTrack?.type === 'link') {
+    toast('⚠ This link isn\'t a playable audio file. Remove it (⋯ → Delete) — for YouTube, use YT → MP3 and add the downloaded file.', 5500);
+  } else {
+    toast('⚠ Could not play this track');
+  }
+});
 
 // ── Media Session API (lock screen / background) ───────────────
 function updateMediaSession() {
@@ -1875,7 +1893,7 @@ async function tryCobalt(url) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ url, downloadMode: 'audio', audioFormat: 'mp3', filenamePattern: 'basic' }),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) return null;
     const data = await res.json();
